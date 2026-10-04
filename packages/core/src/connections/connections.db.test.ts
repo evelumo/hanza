@@ -140,6 +140,20 @@ describe.skipIf(!databaseUrl)('connections', () => {
     })
   })
 
+  it('a later failure does not turn auth_expired into failing', async () => {
+    const ctx = context()
+    const org = await createTestOrganization(ctx.db)
+    const connectionId = await createTestConnection(ctx, org)
+    await failSyncRun(ctx, org, connectionId, 'offers_pull', { kind: 'auth_expired', message: '401 Unauthorized', health: 'auth_expired' })
+    await failSyncRun(ctx, org, connectionId, 'stock_push', { kind: 'permanent', message: '400 Bad Request', health: 'failing' })
+    await failSyncRun(ctx, org, connectionId, 'orders_pull', { kind: 'transient', message: '503', health: 'failing' })
+
+    const connection = await ctx.db.connection.findFirstOrThrow({ where: { id: connectionId } })
+    expect(connection.health).toBe('auth_expired')
+    const events = await ctx.db.eventLog.findMany({ where: { organizationId: org, type: 'connection.health_changed' } })
+    expect(events.map((event) => event.payload)).toEqual([{ from: 'unknown', to: 'auth_expired', errorKind: 'auth_expired' }])
+  })
+
   it('lists every tenant\'s Connections for the tick with their last start per stream', async () => {
     const ctx = context()
     const org = await createTestOrganization(ctx.db)
