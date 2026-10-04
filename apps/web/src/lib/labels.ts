@@ -70,6 +70,7 @@ export const syncResultLabels: Record<string, string> = {
   factsApplied: 'zmiany z kanału',
   pages: 'strony',
   pushed: 'wysłane',
+  truncated: 'przerwane na limicie stron',
 }
 
 /** Lookup that never throws on a value this build does not know yet. */
