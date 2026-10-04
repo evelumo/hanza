@@ -20,12 +20,13 @@ Items marked **planned** do not exist yet. Do not assume them.
 | Path | What it is |
 | --- | --- |
 | `apps/web` | `@hanza/web` — Next.js App Router: panel, Better Auth routes, `GET /api/health`. UI strings are Polish. |
-| `apps/worker` | `@hanza/worker` — BullMQ worker (run with `tsx`, no build step). Runs the jobs from the core registry. |
-| `packages/core` | `@hanza/core` — `createContext()`, env validation, logger, `JobQueue` + BullMQ implementation, `defineJob`, job registry. |
+| `apps/worker` | `@hanza/worker` — the worker process (run with `tsx`, no build step): `startWorker` with the jobs from the core registry and the connectors from `@hanza/connector-registry`; schedules `sync.tick`. Holds the end-to-end engine test (`src/engine.db.test.ts`). |
+| `packages/core` | `@hanza/core` — `createContext()`, env validation, logger, `JobQueue` + BullMQ implementation (`startWorker`), `defineJob`, job registry, domain services, sync engine (`src/sync`, `src/jobs`). Test helpers at `@hanza/core/testing`. |
 | `packages/db` | `@hanza/db` — Prisma schema (split per module), migrations, client factory `createDb()`. |
 | `packages/connector-sdk` | `@hanza/connector-sdk` — `defineConnector`, capability types, canonical `Order` / `Offer` / `StockLevel` zod schemas, error taxonomy (`ConnectorError`), conformance kit at `@hanza/connector-sdk/testing`. |
 | `packages/connectors/<id>` | One package per connector, `@hanza/connector-<id>`. Only `fake` (`@hanza/connector-fake`, an in-memory Channel for tests) so far. |
-| `scripts/check-boundaries.mjs` | Enforces connector dependency boundaries. |
+| `packages/connector-registry` | `@hanza/connector-registry` — the list of connectors this build knows; the only package that depends on connectors. The apps pass it to `createContext({ connectors })`. |
+| `scripts/check-boundaries.mjs` | Enforces the dependency boundaries below. |
 | `.ai/specs`, `.ai/skills` | Specs (spec-first workflow) and agent skills. |
 | `docs/plan-architektury.html` | Architecture plan and roadmap (Polish). |
 
@@ -40,9 +41,9 @@ Run from the repo root. Local infra uses non-default host ports: Postgres 5442, 
 | `pnpm db:generate` | Generate the Prisma client into `packages/db/src/generated` (needs no database). |
 | `pnpm db:migrate` | `prisma migrate dev`: create and apply a migration after a schema change (needs the database). |
 | `pnpm db:deploy` | `prisma migrate deploy`: apply existing migrations. |
-| `pnpm check:boundaries` | Fail if a connector depends on anything but `@hanza/connector-sdk` and `zod`. |
+| `pnpm check:boundaries` | Fail if a connector depends on anything but `@hanza/connector-sdk` and `zod`, if `core`, `db` or the SDK depend on a connector or the registry, or if anything but the registry lists a connector in `dependencies` (apps may in `devDependencies`). |
 | `pnpm typecheck` | `turbo run typecheck` (the web package runs `next typegen` first). |
-| `pnpm test` | `turbo run test` (Vitest in `core`, `connector-sdk` and `connectors/fake`). Database-backed tests (`*.db.test.ts`) run when `HANZA_TEST_DATABASE_URL` is set: each run creates a throwaway database on that server, applies every migration and drops it afterwards; with the variable unset they are skipped. |
+| `pnpm test` | `turbo run test` (Vitest in `core`, `connector-sdk`, `connectors/fake` and `apps/worker`). Database-backed tests (`*.db.test.ts`) run when `HANZA_TEST_DATABASE_URL` is set: each run creates a throwaway database on that server, applies every migration and drops it afterwards; with the variable unset they are skipped. |
 | `pnpm build` | `turbo run build` (only `apps/web` has a build; the worker runs from source). |
 
 Config: copy `.env.example` to `.env` at the repo root (read by web, worker and Prisma); set `BETTER_AUTH_SECRET` and `HANZA_ENCRYPTION_KEY` (each `openssl rand -base64 32`; the key seals Connection credentials, and losing it means signing in to every connector again). Keep `HANZA_TEST_DATABASE_URL` pointing at the local Postgres (`pnpm infra:up`) so `pnpm test` runs the database tests. Not available yet (**planned**): `pnpm generate` (connector auto-discovery), `pnpm create-connector`, `pnpm test:connector <id>`, panel E2E tests (the `e2e` package, github.com/tester-army/e2e).
@@ -54,7 +55,7 @@ Config: copy `.env.example` to `.env` at the repo root (read by web, worker and 
 | Adding a DB table | New `packages/db/prisma/schema/<module>.prisma` (or extend the module's file); tenant-owned tables get `organizationId` + relation to `Organization` + an index starting with it (see `EventLog` in `core.prisma`). Then `pnpm db:migrate`, commit the migration. Add the back-relation to `Organization` in `auth.prisma`. |
 | Adding a background job | `packages/core/src/jobs/<name>.ts` using `defineJob` (see `system-ping.ts`): dotted name, zod payload including `organizationId`. Register it in `packages/core/src/registry.ts`, export from `index.ts`. Enqueue with `ctx.queue.enqueue(job, payload)`. Add a Vitest test for non-trivial logic. |
 | Adding a panel page / API route / server action | `apps/web/src/app/...`. Page groups: `(auth)` public, `(panel)` behind login. Call `requireTenant()` (`apps/web/src/lib/session.ts`) first and scope every query by the returned `organizationId`. Get dependencies from `getContext()` (`lib/context.ts`). Validate input with zod. See `(panel)/dashboard/` for page + server action + queue. |
-| Adding a connector | `.ai/skills/add-connector/SKILL.md`, `packages/connectors/README.md`, `packages/connector-sdk/src`. Need an SDK or core change to finish? Stop and write a spec. |
+| Adding a connector | `.ai/skills/add-connector/SKILL.md`, `packages/connectors/README.md`, `packages/connector-sdk/src`. Make it available to the apps with a dependency and one line in `packages/connector-registry/src/index.ts`. Need an SDK or core change to finish? Stop and write a spec. |
 | Changing auth | `apps/web/src/lib/auth.ts` (Better Auth config), `auth-client.ts`, `session.ts`, `packages/db/prisma/schema/auth.prisma`. Ask first. After changing Better Auth plugins, regenerate the reference schema with the Better Auth CLI and write a migration. |
 | Changing the canonical model | `packages/connector-sdk/src/model/*`. Spec first, ask first. Then update every mapper/connector and the DB schema that stores it. |
 | Changing the Connector SDK contract | `packages/connector-sdk/src/connector.ts`. Spec first, ask first. |
@@ -63,10 +64,10 @@ Config: copy `.env.example` to `.env` at the repo root (read by web, worker and 
 
 ## Architecture rules
 
-- **Dependency direction:** `apps/*` → `@hanza/core` → `@hanza/db`; connectors → `@hanza/connector-sdk` only. Packages never import from `apps/*`. `@hanza/db` imports nothing from the workspace.
+- **Dependency direction:** `apps/*` → `@hanza/core` → `@hanza/db` (and `@hanza/core` → `@hanza/connector-sdk`); `apps/*` → `@hanza/connector-registry` → connectors → `@hanza/connector-sdk` only. The core never depends on a connector or the registry: the apps pass connector definitions into `createContext()`. Packages never import from `apps/*`. `@hanza/db` imports nothing from the workspace. `pnpm check:boundaries` enforces this.
 - **Connectors** live in `packages/connectors/<id>/`, depend only on `@hanza/connector-sdk` and `zod` (`pnpm check:boundaries`), contain no UI, never touch the database, never import the core or another connector. The core hands them a `CapabilityContext` (validated config, decrypted credentials, plain `fetch` with a 30 s timeout, logger); a connector adds its own authentication to its requests, never logs credentials, and throws `ConnectorError` subclasses so the core knows whether to retry.
 - **Tenant scoping:** an organization is the tenant. Every tenant-owned table has `organizationId`; every panel page/route/action takes it from `requireTenant()`; every job payload carries it. Never trust an `organizationId` from client input.
-- **Queue behind an interface:** callers use `JobQueue` from the context, never `bullmq` directly (only `queue.ts` and the worker touch it). Temporal is deliberately postponed; the interface exists so it can be swapped in later.
+- **Queue behind an interface:** callers use `JobQueue` from the context, never `bullmq` directly (only `packages/core/src/queue.ts` touches it; the worker calls `startWorker`). Temporal is deliberately postponed; the interface exists so it can be swapped in later.
 - **Background work runs in the worker**, never in the Next.js process. Jobs must be idempotent (the queue retries: 5 attempts, exponential backoff).
 - **Explicit context, no DI container:** dependencies are composed in `createContext()` (`packages/core/src/context.ts`) and passed down. Add a service by adding a field there.
 - **Validate at boundaries with zod** (env, job payloads, connector config, external API responses, request input). Infer types from schemas instead of duplicating them.

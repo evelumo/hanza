@@ -17,6 +17,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@hanza/connector-registry':
+        specifier: workspace:*
+        version: link:../../packages/connector-registry
       '@hanza/core':
         specifier: workspace:*
         version: link:../../packages/core
@@ -57,22 +60,41 @@ importers:
 
   apps/worker:
     dependencies:
+      '@hanza/connector-registry':
+        specifier: workspace:*
+        version: link:../../packages/connector-registry
       '@hanza/core':
         specifier: workspace:*
         version: link:../../packages/core
-      bullmq:
-        specifier: ^6.3.11
-        version: 6.3.11(ioredis@5.11.1)(pg@8.23.1)
-      ioredis:
-        specifier: ^5.11.1
-        version: 5.11.1
       tsx:
         specifier: ^4.23.15
         version: 4.23.15
     devDependencies:
+      '@hanza/connector-fake':
+        specifier: workspace:*
+        version: link:../../packages/connectors/fake
+      '@hanza/db':
+        specifier: workspace:*
+        version: link:../../packages/db
       '@types/node':
         specifier: ^24.0.0
         version: 24.19.1
+      typescript:
+        specifier: ^6.0.3
+        version: 6.0.3
+      vitest:
+        specifier: ^5.0.3
+        version: 5.0.3(@types/node@24.19.1)(vite@8.3.2(@types/node@24.19.1)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15))
+
+  packages/connector-registry:
+    dependencies:
+      '@hanza/connector-fake':
+        specifier: workspace:*
+        version: link:../connectors/fake
+      '@hanza/connector-sdk':
+        specifier: workspace:*
+        version: link:../connector-sdk
+    devDependencies:
       typescript:
         specifier: ^6.0.3
         version: 6.0.3
