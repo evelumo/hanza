@@ -1,5 +1,6 @@
 import type { z } from 'zod'
 import type { Actor } from '../actor'
+import { afterCommit } from '../after-commit'
 import { createConnection } from '../connections/connections'
 import type { Context } from '../context'
 import { DomainError } from '../errors'
@@ -42,10 +43,10 @@ export async function addConnection(
     },
     actor,
   )
-  await ctx.queue.enqueue(
-    offersPullRef,
-    { organizationId, connectionId, trigger: 'manual' },
-    { coalesceKey: coalesceKeys.offersPull(connectionId) },
+  // The Connection exists now: a failed enqueue must not tell the caller otherwise (a retry would add
+  // a duplicate). The tick starts every stream of a never-synced Connection within a minute anyway.
+  await afterCommit(ctx, { job: offersPullRef.name, organizationId, connectionId }, () =>
+    ctx.queue.enqueue(offersPullRef, { organizationId, connectionId, trigger: 'manual' }, { coalesceKey: coalesceKeys.offersPull(connectionId) }),
   )
   return { connectionId }
 }

@@ -77,6 +77,32 @@ describe.skipIf(!databaseUrl)('addConnection and requestSync', () => {
     ])
   })
 
+  it('a failed enqueue after the Connection is stored is logged, not thrown', async () => {
+    const base = context()
+    const errors: Array<[string, Record<string, unknown> | undefined]> = []
+    const ctx = {
+      ...base,
+      log: { info() {}, error: (message: string, fields?: Record<string, unknown>) => void errors.push([message, fields]) },
+      queue: {
+        ...base.queue,
+        enqueue: async () => {
+          throw new Error('Redis is down')
+        },
+      },
+    }
+    const org = await createTestOrganization(ctx.db)
+    const { connectionId } = await addConnection(
+      ctx,
+      org,
+      { connectorId: 'requests-shop', name: 'Sklep', config: { shopUrl: 'https://shop.example.com' }, credentials: { apiKey: 'k' } },
+      user,
+    )
+    expect(await ctx.db.connection.count({ where: { id: connectionId, organizationId: org } })).toBe(1)
+    expect(errors).toEqual([
+      ['post-commit step failed', { job: 'offers.pull', organizationId: org, connectionId, error: 'Redis is down' }],
+    ])
+  })
+
   it('requestSync enqueues an Offer pull and a stock push, only for the organization\'s own Connection', async () => {
     const ctx = context()
     const org = await createTestOrganization(ctx.db)
