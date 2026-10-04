@@ -36,6 +36,16 @@ describe('createSecretBox', () => {
     expect(() => createSecretBox(key()).open(sealed, 'org-1')).toThrow()
   })
 
+  it('rejects an IV or auth tag of the wrong length with the format error', () => {
+    const box = createSecretBox(key())
+    const [version, iv, tag, ciphertext] = box.seal('secret', 'org-1').split(':') as [string, string, string, string]
+    const longIv = Buffer.concat([Buffer.from(iv, 'base64'), Buffer.alloc(4)]).toString('base64')
+    const shortTag = Buffer.from(tag, 'base64').subarray(0, 12).toString('base64')
+    for (const sealed of [[version, longIv, tag, ciphertext], [version, '', tag, ciphertext], [version, iv, shortTag, ciphertext]]) {
+      expect(() => box.open(sealed.join(':'), 'org-1')).toThrow(/^Unsupported sealed value format$/)
+    }
+  })
+
   it('rejects an unknown format', () => {
     expect(() => createSecretBox(key()).open('v2:a:b:c', 'org-1')).toThrow(/format/)
   })

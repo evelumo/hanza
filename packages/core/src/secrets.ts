@@ -8,6 +8,8 @@ export interface SecretBox {
 
 const VERSION = 'v1'
 const ALGORITHM = 'aes-256-gcm'
+const IV_LENGTH = 12
+const TAG_LENGTH = 16
 
 export function createSecretBox(keyBase64: string): SecretBox {
   const key = Buffer.from(keyBase64, 'base64')
@@ -15,7 +17,7 @@ export function createSecretBox(keyBase64: string): SecretBox {
 
   return {
     seal(plaintext, aad) {
-      const iv = randomBytes(12)
+      const iv = randomBytes(IV_LENGTH)
       const cipher = createCipheriv(ALGORITHM, key, iv)
       cipher.setAAD(Buffer.from(aad, 'utf8'))
       const ciphertext = Buffer.concat([cipher.update(plaintext, 'utf8'), cipher.final()])
@@ -27,9 +29,13 @@ export function createSecretBox(keyBase64: string): SecretBox {
       if (version !== VERSION || iv === undefined || tag === undefined || ciphertext === undefined || rest.length > 0) {
         throw new Error('Unsupported sealed value format')
       }
-      const decipher = createDecipheriv(ALGORITHM, key, Buffer.from(iv, 'base64'), { authTagLength: 16 })
+      const ivBytes = Buffer.from(iv, 'base64')
+      const tagBytes = Buffer.from(tag, 'base64')
+      // GCM accepts other IV lengths, but this format only ever writes 12 bytes.
+      if (ivBytes.length !== IV_LENGTH || tagBytes.length !== TAG_LENGTH) throw new Error('Unsupported sealed value format')
+      const decipher = createDecipheriv(ALGORITHM, key, ivBytes, { authTagLength: TAG_LENGTH })
       decipher.setAAD(Buffer.from(aad, 'utf8'))
-      decipher.setAuthTag(Buffer.from(tag, 'base64'))
+      decipher.setAuthTag(tagBytes)
       return Buffer.concat([decipher.update(Buffer.from(ciphertext, 'base64')), decipher.final()]).toString('utf8')
     },
   }
