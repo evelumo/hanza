@@ -114,8 +114,8 @@ export default async function ProductPage({ params }: { params: Promise<{ produc
           <EmptyState>Brak otwartych rezerwacji.</EmptyState>
         ) : (
           <ul className="divide-y divide-line">
-            {product.openReservations.map((reservation) => (
-              <li key={`${reservation.orderId}-${reservation.createdAt.toISOString()}`} className="flex flex-wrap items-center justify-between gap-3 px-5 py-3 text-sm">
+            {product.openReservations.map((reservation, index) => (
+              <li key={`${reservation.orderId}-${index}`} className="flex flex-wrap items-center justify-between gap-3 px-5 py-3 text-sm">
                 <Link href={`/orders/${reservation.orderId}`} className={linkClass}>
                   Zamówienie {reservation.orderExternalId}
                 </Link>

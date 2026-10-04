@@ -52,7 +52,8 @@ export function ConnectorFields({
             error={error}
             type={field.control}
             required={field.required}
-            autoComplete={secret ? 'off' : undefined}
+            // Browsers ignore "off" on password inputs and may fill in the user's Hanza password.
+            autoComplete={secret ? 'new-password' : undefined}
             step={field.control === 'number' ? (field.integer ? 1 : 'any') : undefined}
             defaultValue={secret ? undefined : (values[field.name] ?? (field.defaultValue === null ? '' : String(field.defaultValue)))}
           />

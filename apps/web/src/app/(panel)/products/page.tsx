@@ -1,10 +1,11 @@
 import { listProducts } from '@hanza/core'
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
 import { buttonClass } from '@/components/button-class'
 import { Pagination } from '@/components/pagination'
 import { EmptyState, linkClass, rowClass, tableClass, tdClass, thClass } from '@/components/section'
 import { getContext } from '@/lib/context'
-import { firstParam, pageWindow, parsePage } from '@/lib/pagination'
+import { firstParam, outOfRangeRedirect, pageWindow, parsePage } from '@/lib/pagination'
 import { requireTenant } from '@/lib/session'
 
 export const dynamic = 'force-dynamic'
@@ -15,6 +16,8 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
   const search = firstParam(params.q)?.trim().slice(0, 100) || undefined
   const page = parsePage(params.page)
   const { total, items } = await listProducts(getContext(), organizationId, { search, ...pageWindow(page) })
+  const outOfRange = outOfRangeRedirect(page, total, '/products', { q: search })
+  if (outOfRange) redirect(outOfRange)
 
   return (
     <div className="space-y-6">
@@ -53,7 +56,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
       </form>
 
       <div className="rounded-lg border border-line bg-white">
-        {items.length === 0 ? (
+        {total === 0 ? (
           <EmptyState>
             {search ? 'Żaden produkt nie pasuje do wyszukiwania.' : 'Nie ma jeszcze produktów. Dodaj pierwszy albo utwórz je z ofert pobranych z kanału.'}
           </EmptyState>

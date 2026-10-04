@@ -1,10 +1,11 @@
 import { listOffers } from '@hanza/core'
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
 import { Pagination } from '@/components/pagination'
 import { EmptyState, Section, linkClass, rowClass, tableClass, tdClass, thClass } from '@/components/section'
 import { getContext } from '@/lib/context'
 import { formatDateTime } from '@/lib/format'
-import { pageWindow, parsePage } from '@/lib/pagination'
+import { outOfRangeRedirect, pageWindow, parsePage } from '@/lib/pagination'
 import { safeHttpUrl } from '@/lib/safe-url'
 import { requireTenant } from '@/lib/session'
 import { CREATE_PRODUCTS_FORM_ID, CreateProductsForm } from './create-products-form'
@@ -17,6 +18,8 @@ export default async function UnlinkedOffersPage({ searchParams }: { searchParam
   const { organizationId } = await requireTenant()
   const page = parsePage((await searchParams).page)
   const { total, items } = await listOffers(getContext(), organizationId, { linked: false, ...pageWindow(page) })
+  const outOfRange = outOfRangeRedirect(page, total, '/products/offers')
+  if (outOfRange) redirect(outOfRange)
 
   return (
     <div className="space-y-6">
@@ -35,7 +38,7 @@ export default async function UnlinkedOffersPage({ searchParams }: { searchParam
       </Section>
 
       <div className="rounded-lg border border-line bg-white">
-        {items.length === 0 ? (
+        {total === 0 ? (
           <EmptyState>Wszystkie oferty mają produkty. Nowe oferty pojawią się po synchronizacji połączenia.</EmptyState>
         ) : (
           <div className="overflow-x-auto">

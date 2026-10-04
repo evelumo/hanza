@@ -1,5 +1,6 @@
 import { listOrders } from '@hanza/core'
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
 import { buttonClass } from '@/components/button-class'
 import { Pagination } from '@/components/pagination'
 import { EmptyState, linkClass, rowClass, tableClass, tdClass, thClass } from '@/components/section'
@@ -7,7 +8,7 @@ import { AttentionBadge, OrderStatusBadge } from '@/components/status-badge'
 import { getContext } from '@/lib/context'
 import { formatDateTime, formatMoney } from '@/lib/format'
 import { orderStatusLabels } from '@/lib/labels'
-import { firstParam, pageWindow, parsePage } from '@/lib/pagination'
+import { firstParam, outOfRangeRedirect, pageWindow, parsePage } from '@/lib/pagination'
 import { requireTenant } from '@/lib/session'
 import { orderListFiltersSchema } from './schemas'
 
@@ -23,6 +24,8 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
     needsAttention: filters.attention === '1' ? true : undefined,
     ...pageWindow(page),
   })
+  const outOfRange = outOfRangeRedirect(page, total, '/orders', { status: filters.status, attention: filters.attention })
+  if (outOfRange) redirect(outOfRange)
   const filtered = Boolean(filters.status || filters.attention)
 
   return (
@@ -60,7 +63,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
       </form>
 
       <div className="rounded-lg border border-line bg-white">
-        {items.length === 0 ? (
+        {total === 0 ? (
           <EmptyState>
             {filtered ? 'Żadne zamówienie nie pasuje do filtrów.' : 'Nie ma jeszcze zamówień. Pojawią się po synchronizacji połączenia z kanałem.'}
           </EmptyState>
