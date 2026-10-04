@@ -1,14 +1,13 @@
-import { orderSchema, type Order, type PullResult } from '@hanza/connector-sdk'
+import type { Order, PullResult } from '@hanza/connector-sdk'
 import { finishSyncRun, saveSyncCursor } from '../connections/sync-state'
 import { defineJob } from '../jobs'
 import { importOrder } from '../orders/import'
 import { beginSyncRun } from '../sync/begin-run'
-import { pullResultSchema } from '../sync/pull-result'
+import { parseOrdersPage } from '../sync/pull-result'
 import { runConnectorCall } from '../sync/run-connector'
 import { coalesceKeys, ordersPullRef } from './refs'
 
 const MAX_PAGES = 20
-const pageSchema = pullResultSchema(orderSchema)
 
 /**
  * Follows the Channel's incremental Order feed from the persisted cursor. The cursor is saved after
@@ -27,7 +26,7 @@ export const ordersPullJob = defineJob({
     let hasMore = true
     while (counts.pages < MAX_PAGES && hasMore) {
       const result: PullResult<Order> = await runConnectorCall(ctx, scope, async () =>
-        pageSchema.parse(await connector.capabilities['orders.pull']!(context, cursor)),
+        parseOrdersPage(await connector.capabilities['orders.pull']!(context, cursor), cursor),
       )
       for (const order of result.items) {
         const imported = await importOrder(ctx, organizationId, connectionId, order)

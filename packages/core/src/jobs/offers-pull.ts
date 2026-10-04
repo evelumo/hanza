@@ -1,16 +1,15 @@
-import { offerSchema, type Offer, type PullResult } from '@hanza/connector-sdk'
+import type { Offer, PullResult } from '@hanza/connector-sdk'
 import { upsertOffers } from '../catalog/offers'
 import { finishSyncRun } from '../connections/sync-state'
 import { defineJob } from '../jobs'
 import { rematchUnmatchedLines } from '../orders/rematch'
 import { requestStockPush } from '../stock/push'
 import { beginSyncRun } from '../sync/begin-run'
-import { pullResultSchema } from '../sync/pull-result'
+import { parseOffersPage } from '../sync/pull-result'
 import { runConnectorCall } from '../sync/run-connector'
 import { coalesceKeys, offersPullRef, ordersPullRef } from './refs'
 
 const MAX_PAGES = 50
-const pageSchema = pullResultSchema(offerSchema)
 
 /** Reads every Offer on the Channel; Offers that disappeared there are left as they are. */
 export const offersPullJob = defineJob({
@@ -27,7 +26,7 @@ export const offersPullJob = defineJob({
     let hasMore = true
     for (let page = 0; page < MAX_PAGES && hasMore; page++) {
       const result: PullResult<Offer> = await runConnectorCall(ctx, scope, async () =>
-        pageSchema.parse(await connector.capabilities['offers.pull']!(context, cursor)),
+        parseOffersPage(await connector.capabilities['offers.pull']!(context, cursor), cursor),
       )
       if (result.items.length > 0) {
         const upserted = await upsertOffers(ctx, organizationId, connectionId, result.items, seenAt)

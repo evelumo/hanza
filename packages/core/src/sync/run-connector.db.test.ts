@@ -16,7 +16,7 @@ import { PermanentJobError, RetryLaterError, type JobRunInfo } from '../jobs'
 import { ordersPullJob } from '../jobs/orders-pull'
 import { createTestOrganization } from '../testing/context'
 import { databaseUrl, useTestContext } from '../testing/db-test'
-import { buildOrder, user } from '../testing/fixtures'
+import { buildOrder, orderLine, user } from '../testing/fixtures'
 
 type Pull = (cursor: string | null) => Promise<PullResult<Order>>
 let pull: Pull = async () => ({ items: [], nextCursor: null, hasMore: false })
@@ -157,6 +157,69 @@ describe.skipIf(!databaseUrl)('runConnectorCall (through orders.pull)', () => {
     await expect(runPull()).rejects.toBeInstanceOf(PermanentJobError)
     expect(await state()).toMatchObject({ health: 'failing', sync: { cursor: '3', lastErrorKind: 'permanent' } })
     expect(await ctx.db.order.count({ where: { organizationId } })).toBe(0)
+  })
+
+  it('a page with an Order the database cannot store fails as permanent, naming the Order, and imports nothing of the page', async () => {
+    const { ctx, organizationId, connectionId, runPull, state } = await setup()
+    await saveSyncCursor(ctx, organizationId, connectionId, 'orders_pull', '3')
+    // Passes the canonical schema, but its two lines share an externalId (a unique constraint).
+    const poison = buildOrder({ externalId: 'poison-1', lines: [orderLine('l1'), orderLine('l1')] })
+    const good = buildOrder({ externalId: 'good-1' })
+    let calls = 0
+    pull = async (cursor) => {
+      calls++
+      expect(cursor).toBe('3')
+      return { items: [poison, good], nextCursor: '5', hasMore: false }
+    }
+    await expect(runPull()).rejects.toBeInstanceOf(PermanentJobError)
+    expect(calls).toBe(1)
+    const { health, sync } = await state()
+    expect(health).toBe('failing')
+    expect(sync).toMatchObject({ cursor: '3', lastErrorKind: 'permanent', lastSucceededAt: null })
+    expect(sync?.lastError).toContain('Order "poison-1": lines.1.externalId')
+    expect(sync?.lastError).not.toContain('good-1')
+    expect(sync?.lastError).not.toMatch(/Jan Testowy|jan\.testowy|Przykładowa/)
+    expect(await ctx.db.order.count({ where: { organizationId } })).toBe(0)
+
+    // Nothing was skipped: once the connector is fixed, the same page imports both Orders.
+    const fixed = { ...poison, lines: [orderLine('l1'), orderLine('l2')] }
+    pull = async (cursor) => {
+      expect(cursor).toBe('3')
+      return { items: [fixed, good], nextCursor: '5', hasMore: false }
+    }
+    await runPull()
+    expect(await state()).toMatchObject({ health: 'ok', sync: { cursor: '5', lastErrorKind: null } })
+    expect(await ctx.db.order.count({ where: { organizationId } })).toBe(2)
+  })
+
+  it('a line quantity above the int4 maximum is a contract breach', async () => {
+    const { ctx, organizationId, runPull, state } = await setup()
+    pull = async () => ({ items: [buildOrder({ externalId: 'huge-1', lines: [orderLine('l1', { quantity: 2 ** 31 })] })], nextCursor: '1', hasMore: false })
+    await expect(runPull()).rejects.toBeInstanceOf(PermanentJobError)
+    const { health, sync } = await state()
+    expect(health).toBe('failing')
+    expect(sync?.lastError).toContain('Order "huge-1": lines.0.quantity')
+    expect(await ctx.db.order.count({ where: { organizationId } })).toBe(0)
+  })
+
+  it.each([
+    ['null', null],
+    ['unchanged', '7'],
+  ])('hasMore with a %s nextCursor breaks the paging contract: permanent, after one call', async (_label, nextCursor) => {
+    const { ctx, organizationId, connectionId, runPull, state } = await setup()
+    await saveSyncCursor(ctx, organizationId, connectionId, 'orders_pull', '7')
+    let calls = 0
+    pull = async () => {
+      calls++
+      return { items: [], nextCursor, hasMore: true }
+    }
+    await expect(runPull()).rejects.toBeInstanceOf(PermanentJobError)
+    expect(calls).toBe(1)
+    const { health, sync } = await state()
+    expect(health).toBe('failing')
+    expect(sync).toMatchObject({ cursor: '7', lastErrorKind: 'permanent' })
+    expect(sync?.lastError).toContain('paging contract')
+    expect(ctx.queue.waiting.filter((job) => (job.payload as { connectionId: string }).connectionId === connectionId)).toEqual([])
   })
 
   it('stored credentials that no longer match the connector fail the run as permanent, naming only the field', async () => {
