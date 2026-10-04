@@ -20,6 +20,7 @@
     },
     "dev": {
       "dependsOn": ["^generate"],
+      "env": ["WORKER_CONCURRENCY"],
       "cache": false,
       "persistent": true
     }

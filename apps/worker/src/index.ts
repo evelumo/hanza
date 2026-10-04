@@ -1,9 +1,10 @@
 import { connectors } from '@hanza/connector-registry'
-import { TICK_EVERY_MS, closeContext, createContext, jobs, startWorker, syncTickRef } from '@hanza/core'
+import { TICK_EVERY_MS, closeContext, createContext, jobs, loadWorkerEnv, startWorker, syncTickRef } from '@hanza/core'
 
+const { WORKER_CONCURRENCY } = loadWorkerEnv()
 const ctx = createContext('worker', { connectors })
 
-const worker = startWorker(ctx, jobs, { concurrency: Number(process.env.WORKER_CONCURRENCY ?? 10) })
+const worker = startWorker(ctx, jobs, { concurrency: WORKER_CONCURRENCY })
 
 // Idempotent: every worker start updates the same scheduler instead of adding one.
 await ctx.queue.schedule('sync.tick', syncTickRef, {}, { everyMs: TICK_EVERY_MS })

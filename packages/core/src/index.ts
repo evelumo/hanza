@@ -1,5 +1,5 @@
 export { createContext, closeContext, type Context, type CreateContextOptions } from './context'
-export { loadEnv, type Env } from './env'
+export { loadEnv, loadWorkerEnv, type Env, type WorkerEnv } from './env'
 export { createLogger, type Logger } from './logger'
 export { defineJob, RetryLaterError, PermanentJobError, type JobDefinition, type JobRef, type JobRunInfo } from './jobs'
 export { jobs, findJob } from './registry'
