@@ -1,10 +1,9 @@
 import { getContext } from '@/lib/context'
+import { formatDateTime } from '@/lib/format'
 import { requireTenant } from '@/lib/session'
 import { PingButton } from './ping-button'
 
 export const dynamic = 'force-dynamic'
-
-const dateFormat = new Intl.DateTimeFormat('pl-PL', { dateStyle: 'short', timeStyle: 'medium' })
 
 export default async function DashboardPage() {
   const { organizationId } = await requireTenant()
@@ -37,7 +36,7 @@ export default async function DashboardPage() {
               <li key={event.id} className="flex items-center justify-between gap-4 px-5 py-3 text-sm">
                 <code className="font-mono">{event.type}</code>
                 <time dateTime={event.createdAt.toISOString()} className="text-muted">
-                  {dateFormat.format(event.createdAt)}
+                  {formatDateTime(event.createdAt)}
                 </time>
               </li>
             ))}
