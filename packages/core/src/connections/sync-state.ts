@@ -96,6 +96,8 @@ export async function finishSyncRun(
   connectionId: string,
   stream: SyncStream,
   result: Record<string, number>,
+  /** `calledChannel: false` = the run had nothing to send, so it proves nothing about Connection health. */
+  options: { calledChannel?: boolean } = {},
 ): Promise<void> {
   await ctx.db.$transaction(async (tx) => {
     await requireConnection(tx, organizationId, connectionId)
@@ -107,7 +109,7 @@ export async function finishSyncRun(
       lastErrorKind: null,
       lastError: null,
     })
-    await setHealth(tx, organizationId, connectionId, 'ok', null)
+    if (options.calledChannel !== false) await setHealth(tx, organizationId, connectionId, 'ok', null)
   }, TX_OPTIONS)
 }
 
