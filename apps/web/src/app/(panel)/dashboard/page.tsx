@@ -18,7 +18,7 @@ export default async function DashboardPage() {
     <div className="space-y-8">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Pulpit</h1>
-        <p className="mt-1 text-muted">Konektory, zamówienia i produkty pojawią się tu w kolejnych etapach.</p>
+        <p className="mt-1 text-muted">Produkty, zamówienia i połączenia znajdziesz w menu powyżej.</p>
       </div>
 
       <section className="rounded-lg border border-line bg-white">
