@@ -36,9 +36,13 @@ export const offersPullJob = defineJob({
         cursor = result.nextCursor
         hasMore = result.hasMore
       }
-      if (hasMore) ctx.log.info('offers pull stopped at the page limit', { organizationId, connectionId, pages: MAX_PAGES })
+      // Offers past the limit are not read at all; say so where a person looks.
+      const truncated = hasMore
+      if (truncated) {
+        ctx.log.error('offers pull stopped at the page limit; later Offers were not read', { organizationId, connectionId, pages: MAX_PAGES })
+      }
 
-      await finishSyncRun(ctx, organizationId, connectionId, 'offers_pull', counts)
+      await finishSyncRun(ctx, organizationId, connectionId, 'offers_pull', truncated ? { ...counts, truncated: 1 } : counts)
       // Every run, not only when this one linked an Offer: a retry of a run that linked on an
       // earlier page sees linked 0. Cheap when nothing can match (the candidate query is empty).
       await rematchUnmatchedLines(ctx, organizationId)

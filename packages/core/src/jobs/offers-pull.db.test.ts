@@ -105,6 +105,22 @@ describe.skipIf(!databaseUrl)('offers.pull', () => {
     expect(sync?.lastError).toContain('paging contract')
   })
 
+  it('stops after 50 pages and says so in the result and the log', async () => {
+    const { ctx: base, organizationId, connectionId, state } = await setup()
+    const errors: string[] = []
+    const ctx = { ...base, log: { info() {}, error: (message: string) => void errors.push(message) } }
+    pull = async (cursor) => {
+      const page = cursor === null ? 0 : Number(cursor)
+      return { items: [offer(`o${page}`)], nextCursor: String(page + 1), hasMore: true }
+    }
+    await offersPullJob.handler(ctx, { organizationId, connectionId, trigger: 'schedule' }, run())
+    expect(calls).toBe(50)
+    const { health, sync } = await state()
+    expect(health).toBe('ok')
+    expect(sync?.lastResult).toEqual({ seen: 50, created: 50, updated: 0, linked: 0, truncated: 1 })
+    expect(errors).toEqual(['offers pull stopped at the page limit; later Offers were not read'])
+  })
+
   it('a payload naming another organization does nothing', async () => {
     const { ctx, connectionId, state } = await setup()
     const other = await createTestOrganization(ctx.db)
