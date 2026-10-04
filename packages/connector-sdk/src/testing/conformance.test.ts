@@ -134,6 +134,7 @@ const broken: Array<[id: string, connector: AnyConnectorDefinition, fixtures?: C
   ['C11', validConnector(), { ...fixtures, unauthorized: { credentials: { apiKey: 'also-fine' } } }],
   ['C11', withCapabilities({ 'orders.pull': async () => { throw new PermanentError('wrong kind') } })],
   ['C12', withCapabilities({ 'stock.push': async () => { throw new Error('plain error') } })],
+  ['C12', withCapabilities({ 'orders.pull': async () => { throw new Error('plain error') } })],
 ]
 
 describe('assertConformance', () => {

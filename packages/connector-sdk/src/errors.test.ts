@@ -94,6 +94,10 @@ describe('errorFromResponse', () => {
     expect(error.retryAfterMs).toBeLessThanOrEqual(30_000)
   })
 
+  it.each(['7.5', '1.5', '-1', ''])('defaults to 60 s for the non-seconds, non-date Retry-After "%s"', async (value) => {
+    expect(((await respond(429, '', { 'Retry-After': value })) as RateLimitedError).retryAfterMs).toBe(60_000)
+  })
+
   it('defaults to 60 s when Retry-After is missing or unreadable', async () => {
     expect(((await respond(429)) as RateLimitedError).retryAfterMs).toBe(60_000)
     expect(((await respond(429, '', { 'Retry-After': 'soon' })) as RateLimitedError).retryAfterMs).toBe(60_000)

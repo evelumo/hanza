@@ -98,10 +98,14 @@ export function classifyConnectorError(error: unknown): {
   return { kind: 'transient', retryAfterMs: null, message }
 }
 
+const IMF_FIXDATE = /^[A-Z][a-z]{2}, \d{2} [A-Z][a-z]{2} \d{4} \d{2}:\d{2}:\d{2} GMT$/
+
 function parseRetryAfter(header: string | null): number {
   if (header === null) return DEFAULT_RETRY_AFTER_MS
   const value = header.trim()
   if (/^\d+$/.test(value)) return Number(value) * 1000
+  // Date.parse is lenient ("7.5" or "-1" parse as dates), so check the IMF-fixdate shape first.
+  if (!IMF_FIXDATE.test(value)) return DEFAULT_RETRY_AFTER_MS
   const date = Date.parse(value)
   if (Number.isNaN(date)) return DEFAULT_RETRY_AFTER_MS
   return Math.max(0, date - Date.now())

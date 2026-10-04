@@ -35,9 +35,8 @@ const PAGE_SIZE = 2
 
 function parseCursor(cursor: string | null): number {
   if (cursor === null) return 0
-  const value = Number(cursor)
-  if (!Number.isInteger(value) || value < 0) throw new PermanentError(`Invalid cursor "${cursor}"`)
-  return value
+  if (!/^\d+$/.test(cursor)) throw new PermanentError(`Invalid cursor "${cursor}"`)
+  return Number(cursor)
 }
 
 function failIfRequested(ctx: FakeContext): void {

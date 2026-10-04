@@ -39,6 +39,8 @@ export function createFakeChannel(): FakeChannel {
       const order = state.orders.get(orderExternalId)
       if (!order) throw new Error(`Unknown Order "${orderExternalId}"`)
       order.facts.push(structuredClone(fact))
+      // The contract wants facts oldest-first; Array.sort is stable, so equal times keep insertion order.
+      order.facts.sort((a, b) => Date.parse(a.occurredAt) - Date.parse(b.occurredAt))
       appendToJournal(orderExternalId)
     },
     // The arrays are emptied in place on reset so references held by a test stay valid.

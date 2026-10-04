@@ -15,6 +15,6 @@ Every connector proves it follows the contract with the conformance kit
 
 | Id | Package | Kind | What it is |
 | --- | --- | --- | --- |
-| `fake` | `@hanza/connector-fake` | marketplace | In-memory Channel for tests and demos. The reference for how a connector looks. Not a real integration. |
+| `fake` | `@hanza/connector-fake` | marketplace | In-memory Channel for tests and demos. The reference for how a connector looks. Not a real Channel. |
 
 Allegro and WooCommerce come first among the real ones (stage 2 of the plan).

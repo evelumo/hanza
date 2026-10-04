@@ -135,6 +135,14 @@ describe('orders.pull', () => {
     expect(next).toMatchObject({ nextCursor: '6', hasMore: false })
   })
 
+  it('addFact keeps the facts oldest-first when an older fact arrives later', async () => {
+    const channel = createFakeChannel()
+    channel.addFact('fake-order-4', { id: 'newer', type: 'cancelled', occurredAt: '2026-10-03T10:00:00Z', note: null })
+    channel.addFact('fake-order-4', { id: 'older', type: 'shipped', occurredAt: '2026-10-03T08:00:00Z', note: null })
+    const { items } = await channel.connector.capabilities['orders.pull']!(context(), '5')
+    expect(items[0]?.facts.map((fact) => fact.id)).toEqual(['older', 'newer'])
+  })
+
   it('addFact throws for an unknown Order', () => {
     const channel = createFakeChannel()
     expect(() => channel.addFact('nope', { id: 'f', type: 'cancelled', occurredAt: '2026-10-03T08:00:00Z', note: null })).toThrow(
@@ -150,7 +158,9 @@ describe('orders.pull', () => {
 
   it('rejects a malformed cursor as permanent', async () => {
     const { pull } = pullOrders()
-    await expect(pull('abc')).rejects.toBeInstanceOf(PermanentError)
+    for (const cursor of ['abc', '', '1e0', ' 2 ', '0x2', '2.0', '-1']) {
+      await expect(pull(cursor), `cursor "${cursor}"`).rejects.toBeInstanceOf(PermanentError)
+    }
   })
 
   it('does not let callers mutate the Channel through returned Orders', async () => {
