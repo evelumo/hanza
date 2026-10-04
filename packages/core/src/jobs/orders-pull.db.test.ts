@@ -73,4 +73,43 @@ describe.skipIf(!databaseUrl)('orders.pull', () => {
     expect((await ctx.db.order.findFirstOrThrow({ where: { id: orderId } })).attentionReasons).toEqual([])
     expect((await getAvailability(ctx.db, organizationId, [product.id])).get(product.id)?.available).toBe(3)
   })
+
+  it('stops after 20 pages, keeps the cursor and enqueues itself to continue', async () => {
+    const { ctx, organizationId, connectionId, runPull, waitingFor } = await setup()
+    pull = async (cursor) => {
+      const page = cursor === null ? 0 : Number(cursor)
+      return { items: [buildOrder({ externalId: `page-${page}` })], nextCursor: String(page + 1), hasMore: true }
+    }
+    await runPull()
+    expect(calls).toBe(20)
+    const sync = await ctx.db.syncState.findFirstOrThrow({ where: { connectionId, stream: 'orders_pull' } })
+    expect(sync).toMatchObject({ cursor: '20', lastResult: { pulled: 20, imported: 20, factsApplied: 0, pages: 20 } })
+    expect(waitingFor()).toEqual([
+      {
+        name: 'orders.pull',
+        payload: { organizationId, connectionId, trigger: 'schedule' },
+        options: { coalesceKey: `orders.pull:${connectionId}` },
+      },
+    ])
+
+    // The continuation picks up at the saved cursor.
+    ctx.queue.waiting.splice(0)
+    pull = async (cursor) => {
+      expect(cursor).toBe('20')
+      return { items: [], nextCursor: '20', hasMore: false }
+    }
+    await runPull()
+    expect(waitingFor()).toEqual([])
+  })
+
+  it('a payload naming another organization does nothing', async () => {
+    const { ctx, connectionId } = await setup()
+    const other = await createTestOrganization(ctx.db)
+    pull = async () => ({ items: [buildOrder()], nextCursor: '1', hasMore: false })
+    await ordersPullJob.handler(ctx, { organizationId: other, connectionId, trigger: 'manual' }, run)
+    expect(calls).toBe(0)
+    expect(await ctx.db.order.count({ where: { connectionId } })).toBe(0)
+    expect(await ctx.db.syncState.count({ where: { connectionId } })).toBe(0)
+    expect((await ctx.db.connection.findFirstOrThrow({ where: { id: connectionId } })).health).toBe('unknown')
+  })
 })

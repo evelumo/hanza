@@ -105,6 +105,37 @@ describe.skipIf(!databaseUrl)('stock.push', () => {
     expect(state.lastFinishedAt!.getTime()).toBeGreaterThan(longAgo.getTime())
   })
 
+  it('stops after 10 full batches of 100 and enqueues itself for the rest', async () => {
+    const { ctx, organizationId, connectionId } = await setup()
+    const prefix = uniqueSku('BULK')
+    const products = await ctx.db.product.createManyAndReturn({
+      data: Array.from({ length: 1_050 }, (_, i) => ({ organizationId, sku: `${prefix}-${i}`, name: `P${i}` })),
+      select: { id: true, sku: true },
+    })
+    await ctx.db.offer.createMany({
+      data: products.map((product) => ({
+        organizationId,
+        connectionId,
+        externalId: `offer-${product.sku}`,
+        sku: product.sku,
+        name: product.sku,
+        productId: product.id,
+        linkedBy: 'sku' as const,
+        stockPushSeq: 1,
+        lastSeenAt: new Date(),
+      })),
+    })
+
+    pushes.length = 0
+    await stockPushJob.handler(ctx, { organizationId, connectionId }, run)
+    expect(pushes.map((levels) => levels.length)).toEqual(Array(10).fill(100))
+    expect(await ctx.db.offer.count({ where: { connectionId, stockPushedSeq: 0 } })).toBe(50)
+    expect(ctx.queue.waiting.filter((job) => (job.payload as { connectionId: string }).connectionId === connectionId)).toEqual([
+      { name: 'stock.push', payload: { organizationId, connectionId }, options: { coalesceKey: `stock.push:${connectionId}` } },
+    ])
+    expect((await ctx.db.syncState.findFirstOrThrow({ where: { connectionId, stream: 'stock_push' } })).lastResult).toEqual({ pushed: 1_000 })
+  })
+
   it('a payload naming another organization does nothing', async () => {
     const { ctx, organizationId, connectionId } = await setup()
     const sku = uniqueSku()
