@@ -4,8 +4,8 @@ import { systemActor } from '../actor'
 import type { Context } from '../context'
 import { DomainError } from '../errors'
 import { appendEvent } from '../events'
-import { rematchUnmatchedLines } from '../orders/rematch'
-import { requestStockPush } from '../stock/push'
+import { rematchAfterCommit } from '../orders/rematch'
+import { requestStockPushAfterCommit } from '../stock/push'
 import { TX_OPTIONS } from '../transaction'
 import { normalizeSku } from './sku'
 
@@ -27,6 +27,10 @@ export interface OfferRow {
  * Stores one pulled page of Offers and applies automatic linking (§2): a
  * never-linked Offer is linked by SKU; one linked by SKU follows its SKU
  * (relinked or unlinked); a manually linked or unlinked Offer is left alone.
+ *
+ * Unlike the panel-facing services this enqueues nothing: when `linked > 0` the
+ * caller (the `offers.pull` job) must call `requestStockPush` for the
+ * Connection and `rematchUnmatchedLines` itself, after this returns.
  */
 export async function upsertOffers(
   ctx: Context,
@@ -155,8 +159,8 @@ export async function linkOffer(ctx: Context, organizationId: string, offerId: s
     return offer.connectionId
   }, TX_OPTIONS)
 
-  await requestStockPush(ctx, organizationId, [connectionId])
-  await rematchUnmatchedLines(ctx, organizationId)
+  await requestStockPushAfterCommit(ctx, organizationId, [connectionId])
+  await rematchAfterCommit(ctx, organizationId, { offerId })
 }
 
 /** Unlinks by hand; pushes nothing, and automatic linking never touches the Offer again. */

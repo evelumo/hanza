@@ -4,7 +4,7 @@ import { DomainError } from '../errors'
 import { appendEvent } from '../events'
 import { TX_OPTIONS } from '../transaction'
 import { lockStock } from './locks'
-import { markOffersForStockPush, requestStockPush } from './push'
+import { markOffersForStockPush, requestStockPushAfterCommit } from './push'
 import { ensureDefaultWarehouse } from './warehouse'
 
 /** Sets the absolute Stock of a Product in the default Warehouse. */
@@ -31,5 +31,5 @@ export async function setStock(ctx: Context, organizationId: string, productId: 
     return markOffersForStockPush(tx, organizationId, [productId])
   }, TX_OPTIONS)
 
-  await requestStockPush(ctx, organizationId, connectionIds)
+  await requestStockPushAfterCommit(ctx, organizationId, connectionIds)
 }

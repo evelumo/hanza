@@ -7,7 +7,7 @@ import type { Context } from '../context'
 import { DomainError } from '../errors'
 import { appendEvent } from '../events'
 import { lockStock } from '../stock/locks'
-import { markOffersForStockPush, requestStockPush } from '../stock/push'
+import { markOffersForStockPush, requestStockPushAfterCommit } from '../stock/push'
 import { reserveLine } from '../stock/reservations'
 import { ensureDefaultWarehouse } from '../stock/warehouse'
 import { TX_OPTIONS } from '../transaction'
@@ -44,7 +44,7 @@ export async function importOrder(
     return { orderId, created: existing.length === 0, factsApplied, connectionIds }
   }, TX_OPTIONS)
 
-  await requestStockPush(ctx, organizationId, result.connectionIds)
+  await requestStockPushAfterCommit(ctx, organizationId, result.connectionIds)
   return { orderId: result.orderId, created: result.created, factsApplied: result.factsApplied }
 }
 

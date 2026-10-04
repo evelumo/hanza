@@ -1,0 +1,95 @@
+import { describe, expect, it } from 'vitest'
+import { linkOffer, upsertOffers } from './catalog/offers'
+import { createProduct } from './catalog/products'
+import type { Context } from './context'
+import { changeOrderStatus } from './orders/change-status'
+import { importOrder } from './orders/import'
+import { linkOrderLine } from './orders/link-line'
+import { getAvailability } from './stock/availability'
+import { setStock } from './stock/set-stock'
+import { createTestOrganization, type TestContext } from './testing/context'
+import { databaseUrl, useTestContext } from './testing/db-test'
+import { buildOrder, createTestConnection, orderLine, user } from './testing/fixtures'
+
+// The queue is down after commit: the change is durable, so the operation must
+// succeed anyway and only log what it could not enqueue (ids, no personal data).
+
+function withBrokenQueue(ctx: TestContext) {
+  const logged: Array<Record<string, unknown>> = []
+  const broken: Context = {
+    ...ctx,
+    queue: {
+      ...ctx.queue,
+      enqueue: async () => {
+        throw new Error('Redis unavailable')
+      },
+    },
+    log: { info() {}, error: (message, fields) => logged.push({ message, ...fields }) },
+  }
+  return { broken, logged }
+}
+
+describe.skipIf(!databaseUrl)('post-commit enqueue failures', () => {
+  const context = useTestContext()
+
+  async function setup() {
+    const ctx = context()
+    const org = await createTestOrganization(ctx.db)
+    const connectionId = await createTestConnection(ctx, org)
+    await upsertOffers(ctx, org, connectionId, [{ externalId: 'offer-p', sku: 'P', name: 'Oferta', url: null }], new Date())
+    const { productId } = await createProduct(ctx, org, { sku: 'P', name: 'Produkt', stock: 5 }, user)
+    const stockPushFailure = { message: 'post-commit step failed', job: 'stock.push', organizationId: org, connectionId, error: 'Redis unavailable' }
+    return { ctx, org, connectionId, productId, stockPushFailure, ...withBrokenQueue(ctx) }
+  }
+
+  it('changeOrderStatus succeeds, changes the Order and logs both failed enqueues', async () => {
+    const { ctx, org, connectionId, productId, broken, logged, stockPushFailure } = await setup()
+    const order = buildOrder({ lines: [orderLine('l1', { sku: 'P', quantity: 2 })] })
+    const { orderId } = await importOrder(ctx, org, connectionId, order)
+
+    await expect(changeOrderStatus(broken, org, orderId, 'shipped', user)).resolves.toBeUndefined()
+
+    expect((await ctx.db.order.findFirstOrThrow({ where: { id: orderId } })).status).toBe('shipped')
+    expect((await getAvailability(ctx.db, org, [productId])).get(productId)).toEqual({ stock: 3, reserved: 0, available: 3 })
+    expect(logged).toEqual([
+      stockPushFailure,
+      { message: 'post-commit step failed', job: 'orders.updateStatus', organizationId: org, orderId, error: 'Redis unavailable' },
+    ])
+    const text = JSON.stringify(logged)
+    for (const personal of [order.buyer.name, order.buyer.email!, order.shippingAddress.street]) expect(text).not.toContain(personal)
+  })
+
+  it('createProduct succeeds, links the Offer and rematches the line despite failed stock pushes', async () => {
+    const { ctx, org, connectionId, broken, logged, stockPushFailure } = await setup()
+    await upsertOffers(ctx, org, connectionId, [{ externalId: 'offer-new', sku: 'NEW', name: 'Nowa', url: null }], new Date())
+    const { orderId } = await importOrder(ctx, org, connectionId, buildOrder({ lines: [orderLine('l1', { sku: 'NEW' })] }))
+
+    const { productId } = await createProduct(broken, org, { sku: 'NEW', name: 'Nowy', stock: 1 }, user)
+
+    expect(await ctx.db.offer.findFirstOrThrow({ where: { organizationId: org, externalId: 'offer-new' } })).toMatchObject({ productId })
+    expect((await ctx.db.orderLine.findFirstOrThrow({ where: { orderId } })).productId).toBe(productId)
+    // Once for the Product's own commit, once for the rematch's.
+    expect(logged).toEqual([stockPushFailure, stockPushFailure])
+  })
+
+  it('setStock, importOrder, linkOffer and linkOrderLine succeed and log the failed stock push', async () => {
+    const { ctx, org, connectionId, productId, broken, logged, stockPushFailure } = await setup()
+    await upsertOffers(ctx, org, connectionId, [{ externalId: 'offer-x', sku: null, name: 'X', url: null }], new Date())
+
+    await setStock(broken, org, productId, 9, user)
+    expect((await getAvailability(ctx.db, org, [productId])).get(productId)?.stock).toBe(9)
+
+    const { orderId } = await importOrder(broken, org, connectionId, buildOrder({ lines: [orderLine('l1', { sku: 'P' }), orderLine('l2', { sku: 'NOPE' })] }))
+    expect(await ctx.db.reservation.count({ where: { organizationId: org } })).toBe(1)
+
+    const offerX = await ctx.db.offer.findFirstOrThrow({ where: { organizationId: org, externalId: 'offer-x' } })
+    await linkOffer(broken, org, offerX.id, productId, user)
+    expect((await ctx.db.offer.findFirstOrThrow({ where: { id: offerX.id } })).productId).toBe(productId)
+
+    const unmatched = await ctx.db.orderLine.findFirstOrThrow({ where: { orderId, productId: null } })
+    await linkOrderLine(broken, org, unmatched.id, productId, user)
+    expect((await ctx.db.orderLine.findFirstOrThrow({ where: { id: unmatched.id } })).productId).toBe(productId)
+
+    expect(logged).toEqual([stockPushFailure, stockPushFailure, stockPushFailure, stockPushFailure])
+  })
+})

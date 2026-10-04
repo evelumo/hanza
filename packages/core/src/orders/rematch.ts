@@ -1,7 +1,8 @@
 import { systemActor } from '../actor'
+import { afterCommit } from '../after-commit'
 import type { Context } from '../context'
 import { DomainError } from '../errors'
-import { requestStockPush } from '../stock/push'
+import { requestStockPushAfterCommit } from '../stock/push'
 import { ensureDefaultWarehouse } from '../stock/warehouse'
 import { TX_OPTIONS } from '../transaction'
 import { linkLineInTx } from './link-line'
@@ -47,7 +48,14 @@ export async function rematchUnmatchedLines(ctx: Context, organizationId: string
       throw error
     }
   }
-  await requestStockPush(ctx, organizationId, [...connectionIds])
+  await requestStockPushAfterCommit(ctx, organizationId, [...connectionIds])
   return { linked }
 }
 
+/**
+ * Rematch run by a service right after its own commit: a failure is logged and
+ * never fails that operation; the lines are matched on the next trigger (or by hand).
+ */
+export async function rematchAfterCommit(ctx: Context, organizationId: string, subject: Record<string, string>): Promise<void> {
+  await afterCommit(ctx, { step: 'orders.rematch', organizationId, ...subject }, () => rematchUnmatchedLines(ctx, organizationId))
+}

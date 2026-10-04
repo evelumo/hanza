@@ -2,9 +2,9 @@ import type { Actor } from '../actor'
 import type { Context } from '../context'
 import { DomainError, isUniqueViolation } from '../errors'
 import { appendEvent } from '../events'
-import { rematchUnmatchedLines } from '../orders/rematch'
+import { rematchAfterCommit } from '../orders/rematch'
 import { getAvailability } from '../stock/availability'
-import { requestStockPush } from '../stock/push'
+import { requestStockPushAfterCommit } from '../stock/push'
 import { ensureDefaultWarehouse } from '../stock/warehouse'
 import { TX_OPTIONS } from '../transaction'
 import { autoLinkOffersBySku } from './auto-link'
@@ -66,8 +66,8 @@ export async function createProduct(
     return { productId: product.id, connectionIds: linked.connectionIds }
   }, TX_OPTIONS)
 
-  await requestStockPush(ctx, organizationId, connectionIds)
-  await rematchUnmatchedLines(ctx, organizationId)
+  await requestStockPushAfterCommit(ctx, organizationId, connectionIds)
+  await rematchAfterCommit(ctx, organizationId, { productId })
   return { productId }
 }
 
@@ -284,7 +284,7 @@ export async function createProductsFromOffers(
     return { created, skipped, connectionIds: [...connectionIds] }
   }, TX_OPTIONS)
 
-  await requestStockPush(ctx, organizationId, result.connectionIds)
-  if (result.created.length > 0) await rematchUnmatchedLines(ctx, organizationId)
+  await requestStockPushAfterCommit(ctx, organizationId, result.connectionIds)
+  if (result.created.length > 0) await rematchAfterCommit(ctx, organizationId, { productIds: result.created.join(',') })
   return { created: result.created, skipped: result.skipped }
 }

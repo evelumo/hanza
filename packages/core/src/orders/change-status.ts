@@ -1,11 +1,12 @@
 import type { OrderStatus } from '@hanza/connector-sdk'
 import type { Actor } from '../actor'
+import { afterCommit } from '../after-commit'
 import type { Context } from '../context'
 import { DomainError } from '../errors'
 import { appendEvent } from '../events'
 import { coalesceKeys, ordersUpdateStatusRef } from '../jobs/refs'
 import { lockOrder } from '../stock/locks'
-import { markOffersForStockPush, requestStockPush } from '../stock/push'
+import { markOffersForStockPush, requestStockPushAfterCommit } from '../stock/push'
 import { ensureDefaultWarehouse } from '../stock/warehouse'
 import { TX_OPTIONS } from '../transaction'
 import { removeReasons } from './reasons'
@@ -40,6 +41,9 @@ export async function changeOrderStatus(ctx: Context, organizationId: string, or
     return markOffersForStockPush(tx, organizationId, touched)
   }, TX_OPTIONS)
 
-  await requestStockPush(ctx, organizationId, connectionIds)
-  await ctx.queue.enqueue(ordersUpdateStatusRef, { organizationId, orderId }, { coalesceKey: coalesceKeys.ordersUpdateStatus(orderId) })
+  await requestStockPushAfterCommit(ctx, organizationId, connectionIds)
+  // No sweep re-sends a status push in stage 1, so a failed enqueue here leaves the Channel behind (issue #13).
+  await afterCommit(ctx, { job: ordersUpdateStatusRef.name, organizationId, orderId }, () =>
+    ctx.queue.enqueue(ordersUpdateStatusRef, { organizationId, orderId }, { coalesceKey: coalesceKeys.ordersUpdateStatus(orderId) }),
+  )
 }

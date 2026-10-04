@@ -1,4 +1,5 @@
 import type { Tx } from '@hanza/db'
+import { afterCommit } from '../after-commit'
 import type { Context } from '../context'
 import { coalesceKeys, stockPushRef } from '../jobs/refs'
 
@@ -25,5 +26,16 @@ export async function markOffersForStockPush(tx: Tx, organizationId: string, pro
 export async function requestStockPush(ctx: Context, organizationId: string, connectionIds: string[]): Promise<void> {
   for (const connectionId of new Set(connectionIds)) {
     await ctx.queue.enqueue(stockPushRef, { organizationId, connectionId }, { coalesceKey: coalesceKeys.stockPush(connectionId) })
+  }
+}
+
+/**
+ * `requestStockPush` for services right after their commit: a failed enqueue
+ * is logged and never fails the operation, because the tick's 10-minute sweep
+ * pushes every Offer whose push sequence is still ahead.
+ */
+export async function requestStockPushAfterCommit(ctx: Context, organizationId: string, connectionIds: string[]): Promise<void> {
+  for (const connectionId of new Set(connectionIds)) {
+    await afterCommit(ctx, { job: stockPushRef.name, organizationId, connectionId }, () => requestStockPush(ctx, organizationId, [connectionId]))
   }
 }
