@@ -13,6 +13,8 @@ export interface SyncRun {
   scope: RunScope
   /** The persisted cursor (only `orders_pull` keeps one). */
   cursor: string | null
+  /** Requests the connector made through `context.fetch` so far: 0 means the Channel was not contacted. */
+  channelRequests(): number
 }
 
 type SyncRunInput = { organizationId: string; connectionId: string; stream: SyncStream; capability: CapabilityName; run: JobRunInfo }
@@ -38,8 +40,16 @@ async function beginSyncRun(ctx: Context, input: SyncRunInput): Promise<SyncRun 
 
   const scope: RunScope = { organizationId, connectionId, stream, run }
   const { cursor } = await startSyncRun(ctx, organizationId, connectionId, stream)
-  const context = await runConnectorCall(ctx, scope, async () => buildCapabilityContext(ctx, opened, connector))
-  return { connector, context, scope, cursor }
+  const built = await runConnectorCall(ctx, scope, async () => buildCapabilityContext(ctx, opened, connector))
+  let requests = 0
+  const context: CapabilityContext = {
+    ...built,
+    fetch: (resource, init) => {
+      requests++
+      return built.fetch(resource, init)
+    },
+  }
+  return { connector, context, scope, cursor, channelRequests: () => requests }
 }
 
 /**

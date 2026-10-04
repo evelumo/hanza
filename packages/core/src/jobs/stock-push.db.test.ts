@@ -90,16 +90,19 @@ describe.skipIf(!databaseUrl)('stock.push', () => {
     expect(pushes).toEqual([])
   })
 
-  it('with nothing to push it calls nothing and leaves Connection health alone', async () => {
+  it('with nothing to push it calls nothing and records only that it finished', async () => {
     const { ctx, organizationId, connectionId } = await setup()
-    await failSyncRun(ctx, organizationId, connectionId, 'offers_pull', { kind: 'auth_expired', message: '401', health: 'auth_expired' })
+    await failSyncRun(ctx, organizationId, connectionId, 'stock_push', { kind: 'auth_expired', message: '401', health: 'auth_expired' })
+    const longAgo = new Date('2026-01-01T00:00:00Z')
+    await ctx.db.syncState.updateMany({ where: { connectionId, stream: 'stock_push' }, data: { lastFinishedAt: longAgo } })
 
     pushes.length = 0
     await stockPushJob.handler(ctx, { organizationId, connectionId }, run)
     expect(pushes).toEqual([])
     expect((await ctx.db.connection.findFirstOrThrow({ where: { id: connectionId } })).health).toBe('auth_expired')
     const state = await ctx.db.syncState.findFirstOrThrow({ where: { connectionId, stream: 'stock_push' } })
-    expect(state.lastResult).toEqual({ pushed: 0 })
+    expect(state).toMatchObject({ lastResult: null, lastSucceededAt: null, lastErrorKind: 'auth_expired', lastError: '401' })
+    expect(state.lastFinishedAt!.getTime()).toBeGreaterThan(longAgo.getTime())
   })
 
   it('a payload naming another organization does nothing', async () => {

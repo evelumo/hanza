@@ -19,11 +19,13 @@ export const ordersUpdateStatusJob = defineJob({
     }
     const { connectionId } = order
     const input = { organizationId, connectionId, stream: 'order_status_push', capability: 'orders.updateStatus', run } as const
-    await withSyncRun(ctx, input, async ({ connector, context, scope }) => {
+    await withSyncRun(ctx, input, async ({ connector, context, scope, channelRequests }) => {
       await runConnectorCall(ctx, scope, () =>
         connector.capabilities['orders.updateStatus']!(context, { orderExternalId: order.externalId, status: order.status }),
       )
-      await finishSyncRun(ctx, organizationId, connectionId, 'order_status_push', { pushed: 1 })
+      // A connector resolves without a request when the Channel has no equivalent status; that
+      // run proves nothing about the Connection, so it must not clear auth_expired (like an empty stock push).
+      await finishSyncRun(ctx, organizationId, connectionId, 'order_status_push', { pushed: 1 }, { calledChannel: channelRequests() > 0 })
     })
   },
 })
