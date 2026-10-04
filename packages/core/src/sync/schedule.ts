@@ -9,10 +9,14 @@ export type ScheduledStream = keyof typeof SYNC_INTERVALS_MS
 
 const SCHEDULED_STREAMS = Object.keys(SYNC_INTERVALS_MS) as ScheduledStream[]
 
-/** Streams never started, or last started longer ago than their interval. */
+// A run starts a little after the tick that enqueued it, so without slack a stream would
+// miss the tick exactly one interval later and run every interval + one tick.
+const SLACK_MS = TICK_EVERY_MS / 2
+
+/** Streams never started, or last started at least their interval (less half a tick) ago. */
 export function dueStreams(lastStartedAt: Partial<Record<SyncStream, Date>>, now: Date): ScheduledStream[] {
   return SCHEDULED_STREAMS.filter((stream) => {
     const last = lastStartedAt[stream]
-    return last === undefined || now.getTime() - last.getTime() >= SYNC_INTERVALS_MS[stream]
+    return last === undefined || now.getTime() - last.getTime() >= SYNC_INTERVALS_MS[stream] - SLACK_MS
   })
 }
