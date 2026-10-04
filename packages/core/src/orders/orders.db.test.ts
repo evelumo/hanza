@@ -10,6 +10,7 @@ import { changeOrderStatus } from './change-status'
 import { importOrder } from './import'
 import { linkOrderLine } from './link-line'
 import { getOrder, listOrders } from './queries'
+import { rematchUnmatchedLines } from './rematch'
 
 describe.skipIf(!databaseUrl)('orders', () => {
   const context = useTestContext()
@@ -151,6 +152,39 @@ describe.skipIf(!databaseUrl)('orders', () => {
       expect((await env.ctx.db.orderLine.findFirstOrThrow({ where: { id: shipped.lineId } })).productId).toBeNull()
       const linked = await env.ctx.db.eventLog.findFirstOrThrow({ where: { organizationId: env.org, type: 'order.line_linked' } })
       expect(linked.payload).toMatchObject({ actor: { type: 'system' } })
+    })
+  })
+
+  describe('rematchUnmatchedLines', () => {
+    it('is not starved by 500 older lines that never match', async () => {
+      const { ctx, org, connectionId } = await setup()
+      const never = Array.from({ length: 500 }, (_, index) => orderLine(`n${index}`, { sku: 'NEVER' }))
+      await importOrder(ctx, org, connectionId, buildOrder({ lines: never }))
+      const { orderId } = await importOrder(ctx, org, connectionId, buildOrder({ lines: [orderLine('l1', { sku: 'LATER' })] }))
+
+      const { productId } = await createProduct(ctx, org, { sku: 'LATER', name: 'Później', stock: 1 }, user)
+
+      expect((await ctx.db.orderLine.findFirstOrThrow({ where: { orderId } })).productId).toBe(productId)
+      expect(await ctx.db.orderLine.count({ where: { organizationId: org, productId: null } })).toBe(500)
+    })
+
+    it('prefers the linked Offer over the SKU, like import', async () => {
+      const { ctx, org, connectionId } = await setup()
+      await upsertOffers(ctx, org, connectionId, [{ externalId: 'offer-z', sku: null, name: 'Z', url: null }], new Date())
+      const { orderId } = await importOrder(
+        ctx,
+        org,
+        connectionId,
+        buildOrder({ lines: [orderLine('l1', { offerExternalId: 'offer-z', sku: 'ZED' })] }),
+      )
+      // Written directly, so that both rules can match when rematch runs.
+      await ctx.db.product.create({ data: { organizationId: org, sku: 'ZED', name: 'Po SKU' } })
+      const byOffer = await ctx.db.product.create({ data: { organizationId: org, sku: 'OTHER', name: 'Po ofercie' } })
+      await ctx.db.offer.updateMany({ where: { organizationId: org, externalId: 'offer-z' }, data: { productId: byOffer.id, linkedBy: 'manual' } })
+
+      expect(await rematchUnmatchedLines(ctx, org)).toEqual({ linked: 1 })
+
+      expect((await ctx.db.orderLine.findFirstOrThrow({ where: { orderId } })).productId).toBe(byOffer.id)
     })
   })
 

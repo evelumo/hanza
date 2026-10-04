@@ -5,35 +5,30 @@ import { requestStockPush } from '../stock/push'
 import { ensureDefaultWarehouse } from '../stock/warehouse'
 import { TX_OPTIONS } from '../transaction'
 import { linkLineInTx } from './link-line'
-import { matchLines } from './match'
 
 const MAX_LINES = 500
 
 /** Matches Unmatched lines of new/processing Orders again (§2) and links them as the system. */
 export async function rematchUnmatchedLines(ctx: Context, organizationId: string): Promise<{ linked: number }> {
-  const lines = await ctx.db.orderLine.findMany({
-    where: { organizationId, productId: null, order: { status: { in: ['new', 'processing'] } } },
-    orderBy: [{ orderId: 'asc' }, { id: 'asc' }],
-    take: MAX_LINES,
-    select: { id: true, sku: true, offerExternalId: true, order: { select: { connectionId: true } } },
-  })
-  if (lines.length === 0) return { linked: 0 }
+  // Only lines that match now count against the limit: otherwise 500 lines that
+  // never match would hide every newer line from rematch for good. The match
+  // rule is the one of `matchLines`: the linked Offer first, then the exact SKU
+  // (line SKUs are stored normalised). Oldest Order first.
+  const candidates = await ctx.db.$queryRaw<Array<{ lineId: string; productId: string }>>`
+    SELECT l."id" AS "lineId", COALESCE(f."productId", p."id") AS "productId"
+    FROM "order_line" l
+    JOIN "order" o ON o."id" = l."orderId" AND o."organizationId" = ${organizationId}
+    LEFT JOIN "offer" f
+      ON f."organizationId" = ${organizationId} AND f."connectionId" = o."connectionId"
+      AND f."externalId" = l."offerExternalId" AND f."productId" IS NOT NULL
+    LEFT JOIN "product" p ON p."organizationId" = ${organizationId} AND p."sku" = l."sku"
+    WHERE l."organizationId" = ${organizationId} AND l."productId" IS NULL
+      AND o."status" IN ('new', 'processing')
+      AND COALESCE(f."productId", p."id") IS NOT NULL
+    ORDER BY l."orderId", l."id"
+    LIMIT ${MAX_LINES}`
+  if (candidates.length === 0) return { linked: 0 }
   await ensureDefaultWarehouse(ctx.db, organizationId)
-
-  const byConnection = new Map<string, typeof lines>()
-  for (const line of lines) {
-    const group = byConnection.get(line.order.connectionId)
-    if (group) group.push(line)
-    else byConnection.set(line.order.connectionId, [line])
-  }
-  const candidates: Array<{ lineId: string; productId: string }> = []
-  for (const [connectionId, group] of byConnection) {
-    const productIds = await matchLines(ctx.db, organizationId, connectionId, group)
-    group.forEach((line, index) => {
-      const productId = productIds[index]
-      if (productId) candidates.push({ lineId: line.id, productId })
-    })
-  }
 
   let linked = 0
   const connectionIds = new Set<string>()
@@ -55,3 +50,4 @@ export async function rematchUnmatchedLines(ctx: Context, organizationId: string
   await requestStockPush(ctx, organizationId, [...connectionIds])
   return { linked }
 }
+
