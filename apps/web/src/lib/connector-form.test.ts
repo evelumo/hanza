@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { describe, expect, it } from 'vitest'
-import { describeFields, fieldErrorsFromIssues, issuesOf, readFields } from './connector-form'
+import { describeFields, fieldErrorsFromIssues, issuesOf, publicValues, readFields } from './connector-form'
 
 const config = z.object({
   region: z.enum(['pl', 'de']).default('pl').describe('Region'),
@@ -92,5 +92,43 @@ describe('issuesOf', () => {
     expect(issuesOf({ issues: [{ path: 'config.a', message: 'm' }, { nope: true }, 5] })).toEqual([{ path: 'config.a', message: 'm' }])
     expect(issuesOf(undefined)).toEqual([])
     expect(issuesOf({ issues: 'x' })).toEqual([])
+  })
+})
+
+describe('publicValues', () => {
+  const configFields = describeFields('config', config)
+  const credentialsFields = describeFields('credentials', z.object({ apiKey: z.string(), token: z.string().optional() }))
+  const submitted = {
+    connectorId: 'fake',
+    name: 'Sklep',
+    'config.shopUrl': 'https://shop.example',
+    'config.sandbox': 'on',
+    'credentials.apiKey': 'sk-secret',
+    'credentials.token': 'tok-secret',
+    'config.undeclared': 'x',
+    password: 'hunter2',
+    organizationId: 'org-1',
+  }
+
+  it('echoes the base fields and the declared config fields only', () => {
+    expect(publicValues(submitted, configFields)).toEqual({
+      connectorId: 'fake',
+      name: 'Sklep',
+      'config.shopUrl': 'https://shop.example',
+      'config.sandbox': 'on',
+    })
+  })
+
+  it('never echoes a credentials field, even when its fields are passed by mistake', () => {
+    for (const fields of [configFields, [...configFields, ...credentialsFields], []]) {
+      const echoed = JSON.stringify(publicValues(submitted, fields))
+      expect(echoed).not.toContain('sk-secret')
+      expect(echoed).not.toContain('tok-secret')
+      expect(echoed).not.toContain('hunter2')
+    }
+  })
+
+  it('echoes only the base fields before the connector is known', () => {
+    expect(publicValues(submitted)).toEqual({ connectorId: 'fake', name: 'Sklep' })
   })
 })

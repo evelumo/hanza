@@ -1,10 +1,10 @@
 'use server'
 
 import { createProduct } from '@hanza/core'
-import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { failure, formText, invalidInput, type ActionState } from '@/lib/action-state'
 import { getContext } from '@/lib/context'
+import { revalidateCatalogAndOrders } from '@/lib/revalidate'
 import { requireTenant } from '@/lib/session'
 import { createProductSchema } from '../schemas'
 
@@ -20,6 +20,6 @@ export async function createProductAction(_previous: ActionState, formData: Form
   } catch (error) {
     return failure(error, { values })
   }
-  revalidatePath('/products', 'layout')
+  revalidateCatalogAndOrders()
   redirect(`/products/${productId}`)
 }

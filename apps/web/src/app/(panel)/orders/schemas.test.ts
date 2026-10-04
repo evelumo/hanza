@@ -13,10 +13,10 @@ describe('changeOrderStatusSchema', () => {
 })
 
 describe('linkOrderLineSchema', () => {
-  it('needs both ids and a trimmed SKU', () => {
-    expect(linkOrderLineSchema.parse({ orderLineId: 'l', orderId: 'o', sku: ' UNKNOWN-SKU ' }).sku).toBe('UNKNOWN-SKU')
-    expect(linkOrderLineSchema.safeParse({ orderLineId: 'l', orderId: 'o', sku: ' ' }).success).toBe(false)
-    expect(linkOrderLineSchema.safeParse({ orderId: 'o', sku: 'x' }).success).toBe(false)
+  it('needs a line id and a trimmed SKU', () => {
+    expect(linkOrderLineSchema.parse({ orderLineId: 'l', sku: ' UNKNOWN-SKU ' }).sku).toBe('UNKNOWN-SKU')
+    expect(linkOrderLineSchema.safeParse({ orderLineId: 'l', sku: ' ' }).success).toBe(false)
+    expect(linkOrderLineSchema.safeParse({ sku: 'x' }).success).toBe(false)
   })
 })
 

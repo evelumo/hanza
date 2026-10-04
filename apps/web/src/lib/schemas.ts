@@ -1,14 +1,17 @@
 import { z } from 'zod'
 
-export const idSchema = z.string().min(1)
+const ID_MESSAGE = 'Nieprawidłowy identyfikator.'
 
-export const skuSchema = z.string().trim().min(1, 'Podaj SKU.').max(64, 'SKU może mieć najwyżej 64 znaki.')
+/** Ids come from hidden fields, so the message is for the logs more than for the user; it must still never be English. */
+export const idSchema = z.string({ error: ID_MESSAGE }).min(1, ID_MESSAGE).max(64, ID_MESSAGE)
+
+export const skuSchema = z.string({ error: 'Podaj SKU.' }).trim().min(1, 'Podaj SKU.').max(64, 'SKU może mieć najwyżej 64 znaki.')
 
 const UNITS_MESSAGE = 'Podaj liczbę całkowitą od 0 do 1 000 000.'
 
 /** Stock units from a text input; `z.coerce.number()` would turn an empty field into 0. */
 export const unitsSchema = z
-  .string()
+  .string({ error: UNITS_MESSAGE })
   .trim()
   .regex(/^\d{1,7}$/, UNITS_MESSAGE)
   .transform(Number)

@@ -94,6 +94,18 @@ export function readFields(fields: ConnectorField[], formData: FormData): Record
   return result
 }
 
+/** Form fields every Connection form has, besides the connector's own config fields. */
+const BASE_FIELDS = ['connectorId', 'name']
+
+/**
+ * The submitted values that may be echoed back into a failed form: an allowlist (the base fields and
+ * the declared config fields), so credentials and anything undeclared are never sent back to the browser.
+ */
+export function publicValues(submitted: Record<string, string>, configFields: ConnectorField[] = []): Record<string, string> {
+  const allowed = new Set([...BASE_FIELDS, ...configFields.filter((field) => field.name.startsWith('config.')).map((field) => field.name)])
+  return Object.fromEntries(Object.entries(submitted).filter(([key]) => allowed.has(key)))
+}
+
 export const REQUIRED_FIELD_MESSAGE = 'To pole jest wymagane.'
 export const INVALID_FIELD_MESSAGE = 'Nieprawidłowa wartość.'
 

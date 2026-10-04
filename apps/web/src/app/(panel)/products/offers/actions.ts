@@ -1,9 +1,9 @@
 'use server'
 
 import { createProductsFromOffers, findProductBySku, linkOffer } from '@hanza/core'
-import { revalidatePath } from 'next/cache'
 import { INVALID_INPUT_MESSAGE, failure, formText, invalidInput, type ActionState } from '@/lib/action-state'
 import { getContext } from '@/lib/context'
+import { revalidateCatalogAndOrders } from '@/lib/revalidate'
 import { requireTenant } from '@/lib/session'
 import { createProductsFromOffersSchema, linkOfferSchema } from '../schemas'
 import type { CreateProductsState } from './state'
@@ -15,7 +15,7 @@ export async function createProductsFromOffersAction(_previous: CreateProductsSt
 
   try {
     const result = await createProductsFromOffers(getContext(), organizationId, [...new Set(parsed.data.offerIds)], { type: 'user', userId: user.id })
-    revalidatePath('/products', 'layout')
+    revalidateCatalogAndOrders()
     return { ok: true, created: result.created.length, skipped: result.skipped }
   } catch (error) {
     return failure(error)
@@ -36,6 +36,6 @@ export async function linkOfferAction(_previous: ActionState, formData: FormData
   } catch (error) {
     return failure(error, { values })
   }
-  revalidatePath('/products', 'layout')
+  revalidateCatalogAndOrders()
   return { ok: true }
 }

@@ -4,13 +4,12 @@ import { ActionForm } from '@/components/action-form'
 import { ActionButton } from '@/components/form'
 import { linkOrderLineAction } from './actions'
 
-export function LinkLineForm({ orderId, lineId, suggestedSku }: { orderId: string; lineId: string; suggestedSku: string | null }) {
+export function LinkLineForm({ lineId, suggestedSku }: { lineId: string; suggestedSku: string | null }) {
   return (
     <ActionForm action={linkOrderLineAction} className="space-y-1">
       {(state) => (
         <>
           <div className="flex flex-wrap gap-2">
-            <input type="hidden" name="orderId" value={orderId} />
             <input type="hidden" name="orderLineId" value={lineId} />
             <label className="sr-only" htmlFor={`sku-${lineId}`}>
               SKU produktu, z którym połączyć pozycję

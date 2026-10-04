@@ -123,7 +123,7 @@ export default async function OrderPage({ params }: { params: Promise<{ orderId:
                     ) : (
                       <div className="space-y-2">
                         <AttentionBadge label="Niepołączona" />
-                        <LinkLineForm orderId={order.id} lineId={line.id} suggestedSku={line.sku} />
+                        <LinkLineForm lineId={line.id} suggestedSku={line.sku} />
                       </div>
                     )}
                   </td>

@@ -4,27 +4,23 @@ import { DomainError, addConnection, requestSync } from '@hanza/core'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { failure, formText, invalidInput, type ActionState } from '@/lib/action-state'
-import { describeFields, fieldErrorsFromIssues, issuesOf, readFields } from '@/lib/connector-form'
+import { describeFields, fieldErrorsFromIssues, issuesOf, publicValues, readFields } from '@/lib/connector-form'
 import { getContext } from '@/lib/context'
 import { domainErrorMessage } from '@/lib/domain-errors'
 import { requireTenant } from '@/lib/session'
 import { addConnectionSchema, requestSyncSchema } from './schemas'
 
-/** Credentials are never echoed back into the form. */
-function publicValues(formData: FormData): Record<string, string> {
-  return Object.fromEntries(Object.entries(formText(formData)).filter(([key]) => !key.startsWith('credentials.')))
-}
-
 export async function addConnectionAction(_previous: ActionState, formData: FormData): Promise<ActionState> {
   const { user, organizationId } = await requireTenant()
-  const values = publicValues(formData)
-  const parsed = addConnectionSchema.safeParse(values)
-  if (!parsed.success) return invalidInput(parsed.error, values)
+  const submitted = formText(formData)
+  const parsed = addConnectionSchema.safeParse(submitted)
+  if (!parsed.success) return invalidInput(parsed.error, publicValues(submitted))
 
   const ctx = getContext()
   const connector = ctx.connectors.get(parsed.data.connectorId)
-  if (!connector) return { error: domainErrorMessage('unknown_connector'), values }
+  if (!connector) return { error: domainErrorMessage('unknown_connector'), values: publicValues(submitted) }
   const configFields = describeFields('config', connector.configSchema)
+  const values = publicValues(submitted, configFields)
   const credentialsFields = describeFields('credentials', connector.credentialsSchema)
 
   let connectionId: string
