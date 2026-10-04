@@ -7,9 +7,13 @@ model EventLog {
   type           String
   payload        Json     @default("{}")
   createdAt      DateTime @default(now())
+  /// "product" | "offer" | "order" | "connection"; null for system Events such as system.ping.
+  subjectType    String?
+  subjectId      String?
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   @@index([organizationId, createdAt(sort: Desc)])
+  @@index([organizationId, subjectType, subjectId, createdAt(sort: Desc)])
   @@map("event_log")
 }

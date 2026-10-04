@@ -81,6 +81,17 @@ model Organization {
   invitations Invitation[]
   events      EventLog[]
 
+  products          Product[]
+  offers            Offer[]
+  warehouses        Warehouse[]
+  stock             Stock[]
+  reservations      Reservation[]
+  orders            Order[]
+  orderLines        OrderLine[]
+  orderChannelFacts OrderChannelFact[]
+  connections       Connection[]
+  syncStates        SyncState[]
+
   @@map("organization")
 }
 

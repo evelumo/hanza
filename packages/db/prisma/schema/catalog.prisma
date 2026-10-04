@@ -1,0 +1,58 @@
+// Catalog: Products (owned by Hanza) and Offers (pulled from Channels).
+
+model Product {
+  id             String   @id @default(uuid(7))
+  organizationId String
+  sku            String
+  name           String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  stock        Stock[]
+  offers       Offer[]
+  orderLines   OrderLine[]
+  reservations Reservation[]
+
+  @@unique([organizationId, sku])
+  @@index([organizationId, name])
+  @@map("product")
+}
+
+enum OfferLinkMethod {
+  sku
+  manual
+
+  @@map("offer_link_method")
+}
+
+model Offer {
+  id                  String           @id @default(uuid(7))
+  organizationId      String
+  connectionId        String
+  externalId          String
+  sku                 String?
+  name                String
+  url                 String?
+  productId           String?
+  linkedBy            OfferLinkMethod?
+  /// Incremented whenever the linked Product's Available may have changed.
+  stockPushSeq        Int              @default(0)
+  /// The `stockPushSeq` value last pushed successfully; the Offer needs a push while `stockPushSeq > stockPushedSeq`.
+  stockPushedSeq      Int              @default(0)
+  lastPushedAvailable Int?
+  lastPushedAt        DateTime?
+  lastSeenAt          DateTime
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  connection   Connection   @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+  product      Product?     @relation(fields: [productId], references: [id], onDelete: SetNull)
+
+  @@unique([connectionId, externalId])
+  @@index([organizationId, productId])
+  @@index([organizationId, sku])
+  @@index([connectionId, productId])
+  @@map("offer")
+}
