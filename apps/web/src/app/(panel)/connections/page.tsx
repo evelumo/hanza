@@ -7,6 +7,7 @@ import { getContext } from '@/lib/context'
 import { formatDateTime } from '@/lib/format'
 import { streamLabels, syncErrorLabels } from '@/lib/labels'
 import { requireTenant } from '@/lib/session'
+import { isSyncRunning } from '@/lib/sync-status'
 import { formatSyncResult } from './sync-summary'
 
 export const dynamic = 'force-dynamic'
@@ -67,7 +68,7 @@ export default async function ConnectionsPage() {
                                   {formatSyncResult(state.lastResult) ? <span className="text-muted"> · {formatSyncResult(state.lastResult)}</span> : null}
                                 </>
                               ) : (
-                                <span className="text-muted">w toku</span>
+                                <span className="text-muted">{isSyncRunning(state) ? 'w toku' : '—'}</span>
                               )}
                             </li>
                           ))}

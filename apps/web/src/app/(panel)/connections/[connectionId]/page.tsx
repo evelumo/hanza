@@ -10,6 +10,7 @@ import { describeEvent } from '@/lib/events'
 import { formatDateTime } from '@/lib/format'
 import { streamLabels, syncErrorLabels } from '@/lib/labels'
 import { requireTenant } from '@/lib/session'
+import { isSyncRunning } from '@/lib/sync-status'
 import { requestSyncAction } from '../actions'
 import { formatSyncResult } from '../sync-summary'
 
@@ -71,7 +72,7 @@ export default async function ConnectionPage({ params }: { params: Promise<{ con
                   <tr key={state.stream} className={rowClass}>
                     <th scope="row" className={`${tdClass} font-medium`}>{streamLabels[state.stream]}</th>
                     <td className={tdClass}>{time(state.lastStartedAt)}</td>
-                    <td className={tdClass}>{time(state.lastFinishedAt)}</td>
+                    <td className={tdClass}>{isSyncRunning(state) ? 'w toku' : time(state.lastFinishedAt)}</td>
                     <td className={tdClass}>{time(state.lastSucceededAt)}</td>
                     <td className={tdClass}>{formatSyncResult(state.lastResult) ?? '—'}</td>
                     <td className={tdClass}>
