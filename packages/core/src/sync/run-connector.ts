@@ -22,6 +22,18 @@ export function retryLaterDelay(retryAfterMs: number | null): number {
   return Math.min(RETRY_LATER_MAX_MS, Math.max(RETRY_LATER_MIN_MS, wanted))
 }
 
+// Failures already written to sync_state, so the guard around the whole run (`withSyncRun`) does not record them again.
+const recorded = new WeakSet<object>()
+
+function markRecorded<T>(error: T): T {
+  if (typeof error === 'object' && error !== null) recorded.add(error)
+  return error
+}
+
+export function isRecordedFailure(error: unknown): boolean {
+  return typeof error === 'object' && error !== null && recorded.has(error)
+}
+
 /**
  * Runs one connector call and turns its failure into the job outcome, Connection health and
  * `sync_state` of spec §5.4. A success is left to the caller, which finishes the run once.
@@ -41,16 +53,16 @@ export async function runConnectorCall<T>(ctx: Context, scope: RunScope, call: (
     switch (kind) {
       case 'auth_expired':
         await fail('auth_expired')
-        throw new PermanentJobError(message)
+        throw markRecorded(new PermanentJobError(message))
       case 'rate_limited':
         await fail(null)
-        throw new RetryLaterError(retryLaterDelay(retryAfterMs), message)
+        throw markRecorded(new RetryLaterError(retryLaterDelay(retryAfterMs), message))
       case 'transient':
         await fail(run.attempt >= run.maxAttempts ? 'failing' : null)
-        throw error
+        throw markRecorded(error)
       case 'permanent':
         await fail('failing')
-        throw new PermanentJobError(message)
+        throw markRecorded(new PermanentJobError(message))
     }
   }
 }

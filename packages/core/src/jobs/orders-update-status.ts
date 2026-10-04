@@ -1,6 +1,6 @@
 import { finishSyncRun } from '../connections/sync-state'
 import { defineJob } from '../jobs'
-import { beginSyncRun } from '../sync/begin-run'
+import { withSyncRun } from '../sync/begin-run'
 import { runConnectorCall } from '../sync/run-connector'
 import { ordersUpdateStatusRef } from './refs'
 
@@ -18,19 +18,12 @@ export const ordersUpdateStatusJob = defineJob({
       return
     }
     const { connectionId } = order
-    const sync = await beginSyncRun(ctx, {
-      organizationId,
-      connectionId,
-      stream: 'order_status_push',
-      capability: 'orders.updateStatus',
-      run,
+    const input = { organizationId, connectionId, stream: 'order_status_push', capability: 'orders.updateStatus', run } as const
+    await withSyncRun(ctx, input, async ({ connector, context, scope }) => {
+      await runConnectorCall(ctx, scope, () =>
+        connector.capabilities['orders.updateStatus']!(context, { orderExternalId: order.externalId, status: order.status }),
+      )
+      await finishSyncRun(ctx, organizationId, connectionId, 'order_status_push', { pushed: 1 })
     })
-    if (!sync) return
-    const { connector, context, scope } = sync
-
-    await runConnectorCall(ctx, scope, () =>
-      connector.capabilities['orders.updateStatus']!(context, { orderExternalId: order.externalId, status: order.status }),
-    )
-    await finishSyncRun(ctx, organizationId, connectionId, 'order_status_push', { pushed: 1 })
   },
 })
