@@ -1,0 +1,134 @@
+<!-- BEGIN:turborepo-agent-rules -->
+
+# This is NOT the Turborepo you know
+
+Turborepo configuration, task behavior, and CLI commands can vary between installed versions and may differ from your training data. Resolve the `turbo` package from this file's directory or relevant workspace; in monorepos, it may not be visible from the repository root. For example, run `node -p "require.resolve('turbo/package.json')"` from a workspace that depends on `turbo`.
+
+Read `docs/README.md` inside that installed package first, then read the relevant pages from its `docs/` directory before changing Turborepo configuration or commands. Heed deprecation notices. These bundled docs match the installed package version and are available without network access.
+
+This block is written and re-added by `turbo` before repository-scoped commands when an AI agent is detected. In the Turborepo source repository, its template is defined in `crates/turborepo-cli/src/cli/agent_guidance.rs`. Removing the managed block while updates are enabled means a later qualifying invocation will add it again. Set `"agentGuidance": false` in the root `turbo.json` or `turbo.jsonc` to opt out; this does not remove an existing block. Keep the block committed with your work to avoid an uncommitted change on the next agent invocation.
+<!-- END:turborepo-agent-rules -->
+
+# Hanza — guide for contributors and AI agents
+
+Hanza is an open-source (MIT), self-hosted, AI-native e-commerce integration hub (an alternative to base.com / BaseLinker). A small, stable core (canonical data model + sync engine) talks to marketplaces, shops, couriers and invoicing tools through replaceable **connectors**. Stack: Next.js (panel + API), Prisma + PostgreSQL, BullMQ + Redis, a separate worker process, Better Auth, zod, pnpm + Turborepo, Vitest. Early scaffold: auth, tenants and the queue pipeline work; there are no connectors yet. The vision and roadmap live in `docs/plan-architektury.html` (Polish).
+
+Items marked **planned** do not exist yet. Do not assume them.
+
+## Repo map
+
+| Path | What it is |
+| --- | --- |
+| `apps/web` | `@hanza/web` — Next.js App Router: panel, Better Auth routes, `GET /api/health`. UI strings are Polish. |
+| `apps/worker` | `@hanza/worker` — BullMQ worker (run with `tsx`, no build step). Runs the jobs from the core registry. |
+| `packages/core` | `@hanza/core` — `createContext()`, env validation, logger, `JobQueue` + BullMQ implementation, `defineJob`, job registry. |
+| `packages/db` | `@hanza/db` — Prisma schema (split per module), migrations, client factory `createDb()`. |
+| `packages/connector-sdk` | `@hanza/connector-sdk` — `defineConnector`, capability types, canonical `Order` / `StockLevel` zod schemas. **Draft** until stage 1. |
+| `packages/connectors/<id>` | One package per connector, `@hanza/connector-<id>`. None yet. |
+| `scripts/check-boundaries.mjs` | Enforces connector dependency boundaries. |
+| `.ai/specs`, `.ai/skills` | Specs (spec-first workflow) and agent skills. |
+| `docs/plan-architektury.html` | Architecture plan and roadmap (Polish). |
+
+## Commands
+
+Run from the repo root. Local infra uses non-default host ports: Postgres 5442, Redis 6389.
+
+| Command | What it does |
+| --- | --- |
+| `pnpm infra:up` / `pnpm infra:down` | Start / stop Postgres + Redis via Docker Compose. |
+| `pnpm dev` | `turbo run dev`: Next.js dev server (http://localhost:3000) and the worker (watch mode). |
+| `pnpm db:generate` | Generate the Prisma client into `packages/db/src/generated` (needs no database). |
+| `pnpm db:migrate` | `prisma migrate dev`: create and apply a migration after a schema change (needs the database). |
+| `pnpm db:deploy` | `prisma migrate deploy`: apply existing migrations. |
+| `pnpm check:boundaries` | Fail if a connector depends on anything but `@hanza/connector-sdk` and `zod`. |
+| `pnpm typecheck` | `turbo run typecheck` (the web package runs `next typegen` first). |
+| `pnpm test` | `turbo run test` (Vitest in `core` and `connector-sdk`; other packages have no tests yet). |
+| `pnpm build` | `turbo run build` (only `apps/web` has a build; the worker runs from source). |
+
+Config: copy `.env.example` to `.env` at the repo root (read by web, worker and Prisma); set `BETTER_AUTH_SECRET` (`openssl rand -base64 32`). Not available yet (**planned**): `pnpm generate` (connector auto-discovery), `pnpm create-connector`, `pnpm test:connector <id>`, the conformance test kit, panel E2E tests (the `e2e` package, github.com/tester-army/e2e).
+
+## Task router
+
+| If you are... | Read / edit |
+| --- | --- |
+| Adding a DB table | New `packages/db/prisma/schema/<module>.prisma` (or extend the module's file); tenant-owned tables get `organizationId` + relation to `Organization` + an index starting with it (see `EventLog` in `core.prisma`). Then `pnpm db:migrate`, commit the migration. Add the back-relation to `Organization` in `auth.prisma`. |
+| Adding a background job | `packages/core/src/jobs/<name>.ts` using `defineJob` (see `system-ping.ts`): dotted name, zod payload including `organizationId`. Register it in `packages/core/src/registry.ts`, export from `index.ts`. Enqueue with `ctx.queue.enqueue(job, payload)`. Add a Vitest test for non-trivial logic. |
+| Adding a panel page / API route / server action | `apps/web/src/app/...`. Page groups: `(auth)` public, `(panel)` behind login. Call `requireTenant()` (`apps/web/src/lib/session.ts`) first and scope every query by the returned `organizationId`. Get dependencies from `getContext()` (`lib/context.ts`). Validate input with zod. See `(panel)/dashboard/` for page + server action + queue. |
+| Adding a connector | `.ai/skills/add-connector/SKILL.md`, `packages/connectors/README.md`, `packages/connector-sdk/src`. Need an SDK or core change to finish? Stop and write a spec. |
+| Changing auth | `apps/web/src/lib/auth.ts` (Better Auth config), `auth-client.ts`, `session.ts`, `packages/db/prisma/schema/auth.prisma`. Ask first. After changing Better Auth plugins, regenerate the reference schema with the Better Auth CLI and write a migration. |
+| Changing the canonical model | `packages/connector-sdk/src/model/*`. Spec first, ask first. Then update every mapper/connector and the DB schema that stores it. |
+| Changing the Connector SDK contract | `packages/connector-sdk/src/connector.ts`. Spec first, ask first. |
+| Adding an env variable | Add to the zod schema in `packages/core/src/env.ts`, `.env.example`, and the dummy env in `.github/workflows/ci.yml`. |
+| Changing the queue | `packages/core/src/queue.ts`. Keep the `JobQueue` interface engine-neutral. |
+
+## Architecture rules
+
+- **Dependency direction:** `apps/*` → `@hanza/core` → `@hanza/db`; connectors → `@hanza/connector-sdk` only. Packages never import from `apps/*`. `@hanza/db` imports nothing from the workspace.
+- **Connectors** live in `packages/connectors/<id>/`, depend only on `@hanza/connector-sdk` and `zod` (`pnpm check:boundaries`), contain no UI, never touch the database, never import the core or another connector. The core hands them a `CapabilityContext` (validated config, authenticated `fetch`, logger).
+- **Tenant scoping:** an organization is the tenant. Every tenant-owned table has `organizationId`; every panel page/route/action takes it from `requireTenant()`; every job payload carries it. Never trust an `organizationId` from client input.
+- **Queue behind an interface:** callers use `JobQueue` from the context, never `bullmq` directly (only `queue.ts` and the worker touch it). Temporal is deliberately postponed; the interface exists so it can be swapped in later.
+- **Background work runs in the worker**, never in the Next.js process. Jobs must be idempotent (the queue retries: 5 attempts, exponential backoff).
+- **Explicit context, no DI container:** dependencies are composed in `createContext()` (`packages/core/src/context.ts`) and passed down. Add a service by adding a field there.
+- **Validate at boundaries with zod** (env, job payloads, connector config, external API responses, request input). Infer types from schemas instead of duplicating them.
+- **Money is a decimal string** plus ISO currency (`{ amount: "129.99", currency: "PLN" }`), never a float.
+- **Prisma schema is split per module** in `packages/db/prisma/schema/*.prisma`; `base.prisma` holds the generator and datasource only.
+- **Better Auth owns** `user`, `session`, `account`, `verification`, `organization`, `member`, `invitation`. Do not repurpose them for domain data.
+
+## Spec-first
+
+A non-trivial change (new module, DB model, SDK/canonical-model change, new capability, anything touching auth, stock or sync semantics) starts with a spec in `.ai/specs/YYYY-MM-DD-title.md` from `.ai/specs/TEMPLATE.md`. Get it reviewed before implementing; keep its Changelog current. Small fixes and refactors with no contract change do not need one. See `.ai/specs/README.md`.
+
+## Always / Ask first / Never
+
+**Always**
+- Scope tenant data by `organizationId`; start panel code with `requireTenant()`.
+- Add a Prisma migration with every schema change (`pnpm db:migrate`) and commit it.
+- Run the validation gate below before declaring work done; report anything you could not run.
+- Write or update tests for logic you add (Vitest, deterministic, no real network or accounts).
+- Mark anything unfinished as a `TODO`/**planned**, and keep docs true to the code.
+
+**Ask first**
+- Adding a production dependency.
+- Changing the canonical model or the Connector SDK contract.
+- Changing Better Auth configuration or the auth tables.
+- Touching stock-reservation or inventory-sync logic (races sell goods that do not exist; this is not agent-only code).
+- Changing `turbo.json`, CI, or the Docker Compose setup.
+
+**Never**
+- Expose or query data across tenants.
+- Import `@hanza/db` (or `@hanza/core`) from a connector, or add any other dependency to a connector.
+- Edit `packages/db/src/generated` (git-ignored; produced by `pnpm db:generate`).
+- Hand-edit an applied migration; add a new one.
+- Run sync or other long work inside the Next.js process.
+- Commit `.env` or secrets; log tokens or personal data.
+- Use floats for money.
+
+## Validation gate
+
+Run the smallest relevant subset, in this order:
+
+1. `pnpm db:generate` — after any `*.prisma` change, or on a fresh checkout.
+2. `pnpm check:boundaries` — after touching `packages/connectors/**`.
+3. `pnpm typecheck`
+4. `pnpm test`
+5. `pnpm build` — after touching `apps/web` or shared config.
+
+CI (`.github/workflows/ci.yml`) runs all of them with dummy env values; no database or Redis is needed.
+
+## Code style
+
+TypeScript strict, ESM. No semicolons, single quotes, trailing commas in multi-line literals, 2-space indent, `import type` for types (`verbatimModuleSyntax`). Small focused files; one concept per file. Comments only explain *why* (a constraint, a gotcha), not what. Names: files `kebab-case.ts`, job names `domain.action`, connector ids lowercase slugs. Code, identifiers and docs are in English; the panel UI copy is currently Polish.
+
+## Agent skills
+
+### Issue tracker
+
+Issues live in this repo's GitHub Issues (via the `gh` CLI). See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+The five default triage labels: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Multi-context: a root `CONTEXT-MAP.md` points to per-package `CONTEXT.md` files; system-wide ADRs in `docs/adr/`. See `docs/agents/domain.md`.

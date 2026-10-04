@@ -1,0 +1,10 @@
+packages:
+  - apps/*
+  - packages/*
+  - packages/connectors/*
+
+onlyBuiltDependencies:
+  - '@prisma/engines'
+  - esbuild
+  - msgpackr-extract
+  - prisma

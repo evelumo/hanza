@@ -1,0 +1,24 @@
+{
+  "name": "hanza",
+  "private": true,
+  "packageManager": "pnpm@10.34.6",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "check:boundaries": "node scripts/check-boundaries.mjs",
+    "db:generate": "pnpm --filter @hanza/db generate",
+    "db:migrate": "pnpm --filter @hanza/db migrate:dev",
+    "db:deploy": "pnpm --filter @hanza/db migrate:deploy",
+    "infra:up": "docker compose up -d --wait",
+    "infra:down": "docker compose down"
+  },
+  "devDependencies": {
+    "turbo": "^2.11.7",
+    "typescript": "^6.0.3"
+  }
+}

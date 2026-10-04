@@ -1,0 +1,15 @@
+// Core tables. Every tenant-owned table carries `organizationId`.
+
+/// Append-only log of everything that happened in the system.
+model EventLog {
+  id             String   @id @default(uuid(7))
+  organizationId String
+  type           String
+  payload        Json     @default("{}")
+  createdAt      DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, createdAt(sort: Desc)])
+  @@map("event_log")
+}

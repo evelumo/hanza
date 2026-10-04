@@ -1,0 +1,372 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hanza — plan architektury</title>
+<style>
+  :root {
+    --bg: #f6f5f1; --panel: #ffffff; --ink: #1b1d21; --muted: #62676f; --line: #dedbd3;
+    --accent: #2b4acb; --accent-soft: #e9edfb;
+    --green: #1f7a4d; --green-soft: #e3f3ea;
+    --amber: #9a6200; --amber-soft: #fbf0d9;
+    --red: #b3261e; --red-soft: #fbe6e4;
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #14161a; --panel: #1c1f25; --ink: #e9eaec; --muted: #9aa0a9; --line: #2e323a;
+      --accent: #8ea5ff; --accent-soft: #232b4a;
+      --green: #6fd09c; --green-soft: #17301f;
+      --amber: #f0bb5c; --amber-soft: #37290f;
+      --red: #ff8a80; --red-soft: #3a1917;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+    font: 16px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif; }
+  main { max-width: 1040px; margin: 0 auto; padding: 40px 24px 96px; }
+  h1 { font-size: 30px; line-height: 1.2; margin: 0 0 6px; letter-spacing: -0.02em; }
+  .sub { color: var(--muted); margin: 0 0 28px; }
+  h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.09em; color: var(--muted);
+    margin: 48px 0 14px; font-weight: 650; }
+  h3 { font-size: 16px; margin: 0 0 6px; }
+  p { margin: 0 0 10px; }
+  code { font-family: var(--mono); font-size: 0.87em; background: var(--accent-soft);
+    padding: 1px 5px; border-radius: 4px; }
+  pre { font-family: var(--mono); font-size: 13px; line-height: 1.5; background: var(--bg);
+    border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; margin: 10px 0 0; }
+  pre code { background: none; padding: 0; font-size: inherit; }
+  .tldr { background: var(--panel); border: 1px solid var(--line); border-left: 5px solid var(--accent);
+    border-radius: 10px; padding: 20px 24px; }
+  .tldr .tag { font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: var(--accent); }
+  .tldr p { font-size: 17px; margin: 8px 0 0; }
+  .grid { display: grid; gap: 12px; }
+  .g2 { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+  .g3 { grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; }
+  .card p:last-child { margin-bottom: 0; }
+  .card p, .card li { color: var(--muted); font-size: 14.5px; }
+  .card b, .card strong { color: var(--ink); }
+  .card ul { margin: 6px 0 0; padding-left: 18px; }
+  .pill { display: inline-block; font-size: 11.5px; font-weight: 650; padding: 2px 9px; border-radius: 99px;
+    margin-bottom: 8px; letter-spacing: 0.02em; }
+  .green { background: var(--green-soft); color: var(--green); }
+  .amber { background: var(--amber-soft); color: var(--amber); }
+  .red { background: var(--red-soft); color: var(--red); }
+  .blue { background: var(--accent-soft); color: var(--accent); }
+  .b-green { border-left: 4px solid var(--green); }
+  .b-amber { border-left: 4px solid var(--amber); }
+  .b-red { border-left: 4px solid var(--red); }
+
+  /* diagram */
+  .diagram { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 20px; }
+  .layer { display: grid; gap: 8px; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); margin-bottom: 4px; }
+  .layer-label { font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted);
+    margin: 14px 0 6px; font-weight: 650; }
+  .layer-label:first-child { margin-top: 0; }
+  .box { border: 1px solid var(--line); border-radius: 8px; padding: 9px 10px; text-align: center;
+    font-size: 13.5px; font-weight: 600; background: var(--bg); }
+  .box small { display: block; font-weight: 400; color: var(--muted); font-size: 11.5px; margin-top: 2px; }
+  .box.core { background: var(--accent-soft); border-color: var(--accent); }
+  .box.ai { background: var(--green-soft); border-color: var(--green); }
+  .arrow { text-align: center; color: var(--muted); font-size: 13px; margin: 6px 0 0; }
+
+  table { width: 100%; border-collapse: collapse; background: var(--panel); border: 1px solid var(--line);
+    border-radius: 10px; overflow: hidden; font-size: 14.5px; }
+  th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-size: 12px; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); font-weight: 650; }
+  tr:last-child td { border-bottom: 0; }
+  td:first-child { font-weight: 600; white-space: nowrap; }
+  td.why { color: var(--muted); }
+  .tablewrap { overflow-x: auto; }
+
+  .step { display: grid; grid-template-columns: 44px 1fr; gap: 14px; background: var(--panel);
+    border: 1px solid var(--line); border-radius: 10px; padding: 14px 18px; margin-bottom: 10px; }
+  .num { width: 36px; height: 36px; border-radius: 50%; background: var(--accent-soft); color: var(--accent);
+    display: grid; place-items: center; font-weight: 700; }
+  .step p { color: var(--muted); font-size: 14.5px; margin: 2px 0 0; }
+  .step .out { font-size: 13.5px; margin-top: 6px; }
+  details { margin-top: 8px; font-size: 14px; }
+  summary { cursor: pointer; color: var(--accent); font-weight: 600; font-size: 13.5px; }
+  details ul { margin: 8px 0 0; padding-left: 18px; color: var(--muted); }
+  .note { font-size: 13.5px; color: var(--muted); margin-top: 10px; }
+  a { color: var(--accent); }
+</style>
+</head>
+<body>
+<main>
+
+<h1>Hanza — plan architektury</h1>
+<p class="sub">Open source'owy, AI-native hub integracji e-commerce (alternatywa dla base.com) · wersja 5 · 2026-10-04</p>
+
+<section class="tldr">
+  <span class="tag">TLDR</span>
+  <p><b>Budujemy mały, stabilny rdzeń w TypeScripcie</b> (kanoniczny model danych + silnik synchronizacji) i <b>konektory jako wymienne paczki</b> o identycznym układzie plików — tak, żeby agent AI dopisywał kolejny marketplace według jednego przepisu i sam sprawdzał wynik testami kontraktowymi.</p>
+  <p>Z Open Mercato bierzemy <b>konwencje i Next.js</b>, ale nie cały stack: <b>Prisma</b> zamiast MikroORM, <b>pnpm + Turborepo</b>, bez kontenera DI. Dokładamy to, czego CRM nie potrzebuje: <b>osobne workery, kolejkę i testy zgodności konektorów</b>. Licencja <b>MIT</b>, self-host jako pierwszy model wdrożenia.</p>
+  <p><b>Koszt/ryzyko:</b> pierwszym konektorem jest <b>Allegro</b> — ma środowisko testowe i przewidywalne API, więc MVP jest realne szybko. Prawdziwym kosztem pozostaje <b>utrzymanie konektorów</b> i poprawność stanów magazynowych.</p>
+</section>
+
+<h2>1 · Architektura w jednym obrazku</h2>
+<div class="diagram">
+  <div class="layer-label">Wejścia</div>
+  <div class="layer">
+    <div class="box">Panel web<small>Next.js</small></div>
+    <div class="box">REST API<small>OpenAPI z zod</small></div>
+    <div class="box ai">MCP server<small>agenci zewnętrzni</small></div>
+    <div class="box ai">Asystent w panelu<small>zapisy za zgodą</small></div>
+    <div class="box">Powiadomienia<small>webhooki · dzienniki zdarzeń</small></div>
+  </div>
+  <div class="arrow">↓ wszystko przechodzi przez te same <b>komendy</b> (jedna definicja = API + tool AI + formularz)</div>
+
+  <div class="layer-label">Rdzeń (stabilny, mały, pisany ręcznie i pilnowany)</div>
+  <div class="layer">
+    <div class="box core">Model kanoniczny<small>Product · Offer · Order · Stock · Shipment · Invoice</small></div>
+    <div class="box core">Silnik synchronizacji<small>joby · kursory · retry · rate-limit</small></div>
+    <div class="box core">Event log + outbox<small>każda zmiana = zdarzenie</small></div>
+    <div class="box core">Automatyzacje<small>wyzwalacz → warunek → akcja</small></div>
+    <div class="box core">Konta i sekrety<small>tenant · OAuth · szyfrowanie</small></div>
+  </div>
+  <div class="arrow">↕ kontrakt <code>Connector SDK</code> — jedyna rzecz, którą widzi konektor</div>
+
+  <div class="layer-label">Konektory (paczki, tu rośnie projekt — głównie siłami AI i społeczności)</div>
+  <div class="layer">
+    <div class="box">Marketplace<small>Allegro · Erli · Amazon</small></div>
+    <div class="box">Sklepy<small>WooCommerce · Shopify · Presta</small></div>
+    <div class="box">Kurierzy<small>InPost · DPD · DHL</small></div>
+    <div class="box">Faktury / ERP<small>KSeF · inFakt · Fakturownia</small></div>
+    <div class="box">Hurtownie<small>feedy XML/CSV</small></div>
+  </div>
+
+  <div class="layer-label">Infrastruktura</div>
+  <div class="layer">
+    <div class="box">PostgreSQL<small>dane + event log</small></div>
+    <div class="box">Redis + BullMQ<small>kolejka zadań</small></div>
+    <div class="box">Workery<small>skalowane poziomo</small></div>
+    <div class="box">Docker Compose<small>self-host jedną komendą</small></div>
+  </div>
+</div>
+
+<h2>2 · Co czyni projekt AI-native</h2>
+<div class="grid g3">
+  <div class="card b-green">
+    <h3>Jeden przepis na konektor</h3>
+    <p>Każdy konektor ma <b>identyczne pliki</b> i deklaruje <b>capabilities</b>. Agent nie projektuje — wypełnia szablon.</p>
+  </div>
+  <div class="card b-green">
+    <h3>Pętla zwrotna bez człowieka</h3>
+    <p><b>Zestaw testów zgodności</b> + nagrane odpowiedzi HTTP. Agent wie, że skończył, gdy <code>pnpm test:connector allegro</code> jest zielone — bez prawdziwych kluczy.</p>
+  </div>
+  <div class="card b-green">
+    <h3>Kontekst w repo, nie w głowie</h3>
+    <p><code>AGENTS.md</code> z <b>task routerem</b> („dodajesz kuriera → czytaj X”), specyfikacje w <code>.ai/specs/</code>, gotowe skille w <code>.ai/skills/</code>.</p>
+  </div>
+  <div class="card b-green">
+    <h3>Typy jako barierki</h3>
+    <p><b>zod</b> jako jedyne źródło prawdy, strict TS, lint pilnujący granic: konektor <b>nie może</b> importować bazy ani innego konektora.</p>
+  </div>
+  <div class="card b-green">
+    <h3>Komenda = API = tool AI</h3>
+    <p>Jedna definicja <code>defineCommand</code> generuje endpoint REST, narzędzie MCP i wpis w audycie. Nowa funkcja jest od razu dostępna dla agentów.</p>
+  </div>
+  <div class="card b-amber">
+    <h3>AI w produkcie, ale na smyczy</h3>
+    <p>Mapowanie kategorii/parametrów, opisy ofert, diagnoza błędów synchronizacji. <b>Każdy zapis wymaga karty zatwierdzenia</b> (wzorzec z Open Mercato).</p>
+  </div>
+</div>
+
+<div class="card" style="margin-top:12px">
+  <h3>Tak wygląda konektor</h3>
+  <pre><code>packages/connectors/allegro/
+├── connector.ts        # defineConnector({ id, auth, capabilities })
+├── auth.ts             # OAuth / klucze — tylko deklaracja, sekrety trzyma rdzeń
+├── client.ts           # klient HTTP + limity zapytań
+├── capabilities/
+│   ├── orders.pull.ts      # zewnętrzne → kanoniczne Order
+│   ├── stock.push.ts       # kanoniczny Stock → zewnętrzne
+│   ├── offers.push.ts
+│   └── notifications.ts    # webhooki lub odpytywanie dziennika zdarzeń
+├── mapping.ts          # czyste funkcje: obcy JSON ⇄ model kanoniczny
+├── fixtures/           # nagrane odpowiedzi API (do testów bez kluczy)
+├── connector.test.ts   # odpala wspólny zestaw testów zgodności
+└── AGENTS.md           # pułapki tego konkretnego API</code></pre>
+  <p class="note">Rdzeń odkrywa konektory automatycznie (<code>pnpm generate</code> buduje rejestr). Panel sam rysuje formularz konfiguracji ze schematu zod — konektor <b>nie zawiera UI</b>.</p>
+</div>
+
+<h2>3 · Stack</h2>
+<div class="tablewrap">
+<table>
+  <tr><th>Warstwa</th><th>Wybór</th><th>Dlaczego</th></tr>
+  <tr><td>Panel + API</td><td>Next.js (App Router) + React + TypeScript</td><td class="why"><span class="pill green">jak Open Mercato</span><br>Strony i endpointy modułu w jednym miejscu, auto-discovery. Bezstanowe — skaluje się przez dokładanie instancji.</td></tr>
+  <tr><td>Monorepo</td><td>pnpm workspaces + Turborepo</td><td class="why">Konektor = paczka npm; społeczność może publikować własne.</td></tr>
+  <tr><td>Baza</td><td>PostgreSQL + Prisma</td><td class="why">Jeden czytelny schemat, generowane typy — bardzo dobrze znana agentom AI. Schemat <b>dzielony na pliki per moduł</b>. Partycjonowanie tabel zdarzeń i zamówień dopisujemy ręcznie w migracjach SQL (Prisma tego nie generuje).</td></tr>
+  <tr><td>Zależności</td><td>Bez kontenera DI — jawny <code>createContext()</code></td><td class="why"><span class="pill green">podjęta</span><br>Awilix w Open Mercato służy do podmieniania usług przez moduły. Nam wystarczy jedna funkcja składająca usługi; konektor dostaje gotowy <code>ctx</code>. Mniej magii = łatwiej dla agentów. Kontener można dodać później.</td></tr>
+  <tr><td>Walidacja</td><td>zod</td><td class="why"><span class="pill green">jak Open Mercato</span><br>Jedno źródło prawdy: API, formularze, narzędzia AI.</td></tr>
+  <tr><td>Kolejka</td><td>BullMQ + Redis, za interfejsem</td><td class="why"><span class="pill blue">pod skalowanie</span><br>Kolejka nie obciąża głównej bazy; limity zapytań per konto sprzedawcy w Redisie.</td></tr>
+  <tr><td>Workery</td><td>Osobny proces Node (ten sam kod modułów)</td><td class="why"><span class="pill blue">pod skalowanie</span><br>Synchronizacja nigdy nie działa w procesie Next.js. Więcej ruchu = więcej kontenerów workera.</td></tr>
+  <tr><td>Długie procesy</td><td>Na start joby + event log; Temporal później</td><td class="why"><span class="pill amber">odłożone</span><br>Interfejs workflowów w rdzeniu od początku, żeby wymiana nie dotknęła konektorów.</td></tr>
+  <tr><td>AI</td><td>MCP SDK + <code>defineAiTool</code> / <code>defineAiAgent</code></td><td class="why"><span class="pill green">jak Open Mercato</span><br>Dowolny dostawca modelu; bez klucza AI produkt dalej działa.</td></tr>
+  <tr><td>Testy panelu (E2E)</td><td><code>e2e</code> (tester-army, Apache-2.0)</td><td class="why">Testy pisane celem w języku naturalnym (<code>agent.act</code>, <code>agent.assert</code>), agent klika po panelu przez Playwright. Nagrane kroki odtwarzają się <b>bez wywołań modelu</b>, dopóki UI się nie zmieni. Pierwsze nagranie wymaga klucza do modelu.</td></tr>
+  <tr><td>Testy konektorów i rdzenia</td><td>Vitest + nagrane odpowiedzi HTTP + Testcontainers</td><td class="why">Deterministyczne testy zgodności bez przeglądarki i bez prawdziwych kont — <code>e2e</code> tego poziomu nie obejmuje.</td></tr>
+  <tr><td>Licencja</td><td>MIT</td><td class="why"><span class="pill green">jak Open Mercato</span></td></tr>
+</table>
+</div>
+<p class="note">Wzorce Open Mercato (fabryki tras CRUD, generator rejestrów, szyfrowanie pól) przenosimy jako pomysły — przy innym ORM-ie kod trzeba napisać po swojemu.</p>
+
+<h2>4 · Co bierzemy z Open Mercato, a co dokładamy</h2>
+<div class="grid g2">
+  <div class="card b-green">
+    <span class="pill green">bierzemy</span>
+    <ul>
+      <li><b>Ze stacku</b>: Next.js, zod, Redis</li>
+      <li><b>Układ modułu</b>: <code>src/modules/&lt;modul&gt;/</code> z auto-discovery (<code>schema.prisma</code>, <code>api/</code>, <code>pages/</code>, <code>acl.ts</code>, <code>events.ts</code>, <code>ai-tools.ts</code>, <code>setup.ts</code>)</li>
+      <li><b><code>AGENTS.md</code> z task routerem</b> — główny i per paczka</li>
+      <li><b>Spec-first</b>: <code>.ai/specs/RRRR-MM-DD-tytul.md</code> przed większą zmianą</li>
+      <li><b><code>.ai/skills/</code></b> i listy <b>Always / Ask first / Never</b></li>
+      <li><b>Zatwierdzanie mutacji</b> wykonywanych przez AI</li>
+      <li>Integracje <b>zawsze w osobnej paczce</b>, nigdy w rdzeniu</li>
+      <li><code>tenant_id</code> + <code>organization_id</code> w każdej tabeli, szyfrowanie pól z danymi osobowymi</li>
+    </ul>
+  </div>
+  <div class="card b-amber">
+    <span class="pill amber">dokładamy / pomijamy</span>
+    <ul>
+      <li><b>Worker jako pierwszoplanowy proces</b> — u nas serce to synchronizacja w tle, nie żądania HTTP</li>
+      <li><b>Connector SDK + testy zgodności</b> jako główny mechanizm jakości</li>
+      <li><b>Limity zapytań per konto</b>, kursory, idempotencja, dead-letter w panelu</li>
+      <li><b>Wąski rdzeń</b>: nie budujemy CRM-a, custom entities ani workflowów dokumentów</li>
+      <li><b>Bez Meilisearch na start</b> — wyszukiwanie w Postgresie</li>
+      <li><b>Bez MikroORM i Awilix</b> — Prisma i jawne składanie usług</li>
+    </ul>
+  </div>
+</div>
+
+<h2>5 · Kolejność budowy</h2>
+
+<div class="step">
+  <div class="num">0</div>
+  <div>
+    <h3>Fundament repo i konwencje <span class="pill green">mechaniczne</span></h3>
+    <p>Monorepo, CI, Docker Compose, <code>AGENTS.md</code>, szablon specyfikacji, lint granic między paczkami.</p>
+    <p class="out"><b>Efekt:</b> <code>docker compose up</code> stawia pusty panel z logowaniem.</p>
+  </div>
+</div>
+
+<div class="step">
+  <div class="num">1</div>
+  <div>
+    <h3>Rdzeń: model kanoniczny + silnik synchronizacji <span class="pill amber">kluczowe decyzje</span></h3>
+    <p>Tu powstaje kontrakt, na którym stanie wszystko inne. Robimy powoli i ręcznie.</p>
+    <details>
+      <summary>Co dokładnie</summary>
+      <ul>
+        <li>Encje: <code>Product</code>, <code>Variant</code>, <code>Offer</code> (wystawienie w kanale), <code>Order</code>, <code>StockLevel</code>, <code>Shipment</code>, <code>Invoice</code>, <code>Connection</code></li>
+        <li>Tabela powiązań <code>external_ref</code> (nasze ID ⇄ ID w kanale) — bez niej nie ma idempotencji</li>
+        <li>Event log + outbox: zmiana stanu i zdarzenie w jednej transakcji</li>
+        <li>Joby: kursor na połączenie, retry z backoffem, limit zapytań per konto, dead-letter widoczny w panelu</li>
+        <li>Surowy payload z kanału zapisywany obok danych kanonicznych (debug + ponowne mapowanie)</li>
+        <li><code>Connector SDK</code>: <code>defineConnector</code>, <code>defineCapability</code>, zestaw testów zgodności</li>
+      </ul>
+    </details>
+  </div>
+</div>
+
+<div class="step">
+  <div class="num">2</div>
+  <div>
+    <h3>Pierwszy pionowy przekrój: Allegro <span class="pill amber">weryfikuje kontrakt</span></h3>
+    <p>Zamówienia z Allegro do panelu, stany magazynowe z panelu do Allegro. Konektor <b>pisany ręcznie</b>, razem z drugim, prostym kanałem (WooCommerce) — dopiero dwa pokażą, czy SDK jest dobre.</p>
+    <details>
+      <summary>Co Allegro wymusza w rdzeniu</summary>
+      <ul>
+        <li>OAuth z odświeżaniem tokenów; tryb „device flow” pasuje do self-hostu (nie wymaga publicznego adresu zwrotnego)</li>
+        <li>Zamówienia przez <b>dziennik zdarzeń odpytywany kursorem</b>, nie webhooki — kursor per połączenie w rdzeniu</li>
+        <li>Limit zapytań per aplikacja — limiter w Redisie</li>
+        <li>Oferty wymagają kategorii i parametrów Allegro — później dobre pole dla AI-mapowania</li>
+        <li>Środowisko sandbox — nagrywamy z niego odpowiedzi do testów zgodności</li>
+      </ul>
+    </details>
+    <p class="out"><b>Efekt:</b> realnie używalne MVP dla polskiego sprzedawcy.</p>
+    <p class="out"><b>Efekt:</b> realnie używalne MVP dla sprzedawcy na Amazonie.</p>
+  </div>
+</div>
+
+<div class="step">
+  <div class="num">3</div>
+  <div>
+    <h3>Test tezy AI-native: trzeci konektor pisze agent <span class="pill green">punkt kontrolny</span></h3>
+    <p>Skill <code>add-connector</code> + generator <code>pnpm create-connector</code>. Agent dostaje dokumentację API (np. InPost) i ma dowieźć zielone testy <b>bez dotykania rdzenia</b>.</p>
+    <p class="out"><b>Jeśli musi ruszać rdzeń</b> — poprawiamy SDK, zanim konektorów będzie dziesięć.</p>
+  </div>
+</div>
+
+<div class="step">
+  <div class="num">4</div>
+  <div>
+    <h3>Wysyłki i faktury <span class="pill green">powtarzalne</span></h3>
+    <p>Etykiety kurierskie, statusy przesyłek, wystawianie faktur. Nowe capabilities, ten sam wzorzec.</p>
+  </div>
+</div>
+
+<div class="step">
+  <div class="num">5</div>
+  <div>
+    <h3>Automatyzacje + MCP + asystent <span class="pill amber">wyróżnik produktu</span></h3>
+    <p>Reguły „gdy zamówienie opłacone → nadaj paczkę → wyślij fakturę”. Serwer MCP, asystent w panelu, AI-mapowanie kategorii i parametrów ofert.</p>
+  </div>
+</div>
+
+<div class="step">
+  <div class="num">6</div>
+  <div>
+    <h3>Ekosystem <span class="pill green">skalowanie</span></h3>
+    <p>Rejestr konektorów społeczności, dokumentacja dla autorów, wystawianie ofert z katalogu, hurtownie.</p>
+  </div>
+</div>
+
+<h2>6 · Decyzje</h2>
+<div class="tablewrap">
+<table>
+  <tr><th>Temat</th><th>Ustalone</th></tr>
+  <tr><td>Projekt</td><td><span class="pill green">podjęta</span> Własny, niezależny od OpenLinker; nazwa: <b>Hanza</b></td></tr>
+  <tr><td>Rdzeń</td><td><span class="pill green">podjęta</span> Budujemy sami, wzorzec: Open Mercato</td></tr>
+  <tr><td>Wdrożenie</td><td><span class="pill green">podjęta</span> Self-host na start (schemat wielotenantowy mimo to od pierwszego dnia)</td></tr>
+  <tr><td>Licencja</td><td><span class="pill green">podjęta</span> MIT, jak Open Mercato</td></tr>
+  <tr><td>Pierwszy konektor</td><td><span class="pill green">podjęta</span> Allegro, drugi kanał w MVP: WooCommerce</td></tr>
+  <tr><td>Testy E2E</td><td><span class="pill green">podjęta</span> paczka <code>e2e</code> (tester-army)</td></tr>
+  <tr><td>Stack</td><td><span class="pill green">podjęta</span> Next.js, Prisma, pnpm + Turborepo, BullMQ + Redis, bez kontenera DI (jawny <code>createContext()</code>)</td></tr>
+</table>
+</div>
+<div class="grid g2" style="margin-top:12px">
+  <div class="card b-amber">
+    <span class="pill amber">otwarta</span>
+    <h3>Temporal: kiedy?</h3>
+    <p><b>Rekomendacja:</b> nie na start. BullMQ + interfejs workflowów; Temporal, gdy pojawią się wieloetapowe automatyzacje (etap 5).</p>
+  </div>
+</div>
+
+<h2>7 · Ryzyka</h2>
+<div class="grid g2">
+  <div class="card b-red">
+    <h3>Utrzymanie konektorów</h3>
+    <p>API marketplace'ów zmieniają się bez pytania. <b>Odpowiedź:</b> testy zgodności w CI, cotygodniowy test „na żywo” na kontach sandbox, agent otwierający PR z poprawką.</p>
+  </div>
+  <div class="card b-red">
+    <h3>Poprawność stanów magazynowych</h3>
+    <p>Wyścigi = sprzedaż towaru, którego nie ma. <b>Odpowiedź:</b> rezerwacje w transakcji, idempotentne joby, to <b>nie jest</b> kod do pisania przez agenta bez przeglądu.</p>
+  </div>
+  <div class="card b-amber">
+    <h3>Dostęp do API Allegro</h3>
+    <p>Przy self-hoście <b>każdy użytkownik rejestruje własną aplikację</b> w Allegro — trzeba to dobrze poprowadzić w onboardingu. Do sprawdzenia: aktualne wymogi weryfikacji aplikacji i limity dla niezweryfikowanych.</p>
+  </div>
+  <div class="card b-amber">
+    <h3>Rozrost rdzenia</h3>
+    <p>Base.com to setki funkcji. <b>Odpowiedź:</b> twarda zasada — wszystko, co da się zrobić konektorem lub automatyzacją, nie trafia do rdzenia.</p>
+  </div>
+</div>
+
+<p class="note" style="margin-top:32px">Źródła: <a href="https://github.com/open-mercato/open-mercato">Open Mercato (README, AGENTS.md)</a> · <a href="https://www.saashub.com/openlinker">OpenLinker — opis</a> · <a href="https://tomevault.io/tome/openlinker-project/openlinker">OpenLinker — repo (opis)</a></p>
+
+</main>
+</body>
+</html>
