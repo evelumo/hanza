@@ -42,10 +42,10 @@ Run from the repo root. Local infra uses non-default host ports: Postgres 5442, 
 | `pnpm db:deploy` | `prisma migrate deploy`: apply existing migrations. |
 | `pnpm check:boundaries` | Fail if a connector depends on anything but `@hanza/connector-sdk` and `zod`. |
 | `pnpm typecheck` | `turbo run typecheck` (the web package runs `next typegen` first). |
-| `pnpm test` | `turbo run test` (Vitest in `core` and `connector-sdk`). Database-backed tests (`*.db.test.ts`) run when `HANZA_TEST_DATABASE_URL` is set: each run creates a throwaway database on that server, applies every migration and drops it afterwards; with the variable unset they are skipped. |
+| `pnpm test` | `turbo run test` (Vitest in `core`, `connector-sdk` and `connectors/fake`). Database-backed tests (`*.db.test.ts`) run when `HANZA_TEST_DATABASE_URL` is set: each run creates a throwaway database on that server, applies every migration and drops it afterwards; with the variable unset they are skipped. |
 | `pnpm build` | `turbo run build` (only `apps/web` has a build; the worker runs from source). |
 
-Config: copy `.env.example` to `.env` at the repo root (read by web, worker and Prisma); set `BETTER_AUTH_SECRET` and `HANZA_ENCRYPTION_KEY` (each `openssl rand -base64 32`; the key seals Connection credentials, and losing it means signing in to every connector again). Keep `HANZA_TEST_DATABASE_URL` pointing at the local Postgres (`pnpm infra:up`) so `pnpm test` runs the database tests. Not available yet (**planned**): `pnpm generate` (connector auto-discovery), `pnpm create-connector`, `pnpm test:connector <id>`, the conformance test kit, panel E2E tests (the `e2e` package, github.com/tester-army/e2e).
+Config: copy `.env.example` to `.env` at the repo root (read by web, worker and Prisma); set `BETTER_AUTH_SECRET` and `HANZA_ENCRYPTION_KEY` (each `openssl rand -base64 32`; the key seals Connection credentials, and losing it means signing in to every connector again). Keep `HANZA_TEST_DATABASE_URL` pointing at the local Postgres (`pnpm infra:up`) so `pnpm test` runs the database tests. Not available yet (**planned**): `pnpm generate` (connector auto-discovery), `pnpm create-connector`, `pnpm test:connector <id>`, panel E2E tests (the `e2e` package, github.com/tester-army/e2e).
 
 ## Task router
 
