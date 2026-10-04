@@ -42,10 +42,10 @@ Run from the repo root. Local infra uses non-default host ports: Postgres 5442, 
 | `pnpm db:deploy` | `prisma migrate deploy`: apply existing migrations. |
 | `pnpm check:boundaries` | Fail if a connector depends on anything but `@hanza/connector-sdk` and `zod`. |
 | `pnpm typecheck` | `turbo run typecheck` (the web package runs `next typegen` first). |
-| `pnpm test` | `turbo run test` (Vitest in `core` and `connector-sdk`; other packages have no tests yet). |
+| `pnpm test` | `turbo run test` (Vitest in `core` and `connector-sdk`). Database-backed tests (`*.db.test.ts`) run when `HANZA_TEST_DATABASE_URL` is set: each run creates a throwaway database on that server, applies every migration and drops it afterwards; with the variable unset they are skipped. |
 | `pnpm build` | `turbo run build` (only `apps/web` has a build; the worker runs from source). |
 
-Config: copy `.env.example` to `.env` at the repo root (read by web, worker and Prisma); set `BETTER_AUTH_SECRET` (`openssl rand -base64 32`). Not available yet (**planned**): `pnpm generate` (connector auto-discovery), `pnpm create-connector`, `pnpm test:connector <id>`, the conformance test kit, panel E2E tests (the `e2e` package, github.com/tester-army/e2e).
+Config: copy `.env.example` to `.env` at the repo root (read by web, worker and Prisma); set `BETTER_AUTH_SECRET` and `HANZA_ENCRYPTION_KEY` (each `openssl rand -base64 32`; the key seals Connection credentials, and losing it means signing in to every connector again). Keep `HANZA_TEST_DATABASE_URL` pointing at the local Postgres (`pnpm infra:up`) so `pnpm test` runs the database tests. Not available yet (**planned**): `pnpm generate` (connector auto-discovery), `pnpm create-connector`, `pnpm test:connector <id>`, the conformance test kit, panel E2E tests (the `e2e` package, github.com/tester-army/e2e).
 
 ## Task router
 
@@ -58,7 +58,7 @@ Config: copy `.env.example` to `.env` at the repo root (read by web, worker and 
 | Changing auth | `apps/web/src/lib/auth.ts` (Better Auth config), `auth-client.ts`, `session.ts`, `packages/db/prisma/schema/auth.prisma`. Ask first. After changing Better Auth plugins, regenerate the reference schema with the Better Auth CLI and write a migration. |
 | Changing the canonical model | `packages/connector-sdk/src/model/*`. Spec first, ask first. Then update every mapper/connector and the DB schema that stores it. |
 | Changing the Connector SDK contract | `packages/connector-sdk/src/connector.ts`. Spec first, ask first. |
-| Adding an env variable | Add to the zod schema in `packages/core/src/env.ts`, `.env.example`, and the dummy env in `.github/workflows/ci.yml`. |
+| Adding an env variable | Add to the zod schema in `packages/core/src/env.ts`, `.env.example`, the dummy env in `.github/workflows/ci.yml`, and `globalEnv` (or the task's `env`) in `turbo.json` — Turborepo's strict env mode hides undeclared variables from tasks. |
 | Changing the queue | `packages/core/src/queue.ts`. Keep the `JobQueue` interface engine-neutral. |
 
 ## Architecture rules
