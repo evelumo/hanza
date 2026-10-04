@@ -7,6 +7,7 @@ import {
   getAvailability,
   jobs,
   linkOffer,
+  MAX_RATE_LIMIT_RETRIES,
   ordersPullRef,
   PermanentJobError,
   requestSync,
@@ -229,6 +230,22 @@ describe.skipIf(!databaseUrl)('sync engine end to end (real Postgres, in-memory 
     expect(await health(limited)).toBe('unknown')
     expect(await syncState(limited, 'offers_pull')).toMatchObject({ lastErrorKind: 'rate_limited', lastSucceededAt: null })
     ctx.queue.waiting.length = 0
+  })
+
+  it('rate_limited for good: each attempt is retried later 10 times, then used; the job ends and the Connection is failing', async () => {
+    const { connectionId: throttled } = await addConnection(
+      ctx,
+      org,
+      { connectorId: 'fake', name: 'Stały limit', config: { failMode: 'rate_limited' }, credentials: { apiKey: 'test' } },
+      user,
+    )
+    const result = await ctx.queue.drain(ctx, jobs)
+    expect(result.ran).toBe(5 * (MAX_RATE_LIMIT_RETRIES + 1))
+    expect(result.failed).toHaveLength(1)
+    expect(result.failed[0]).toMatchObject({ name: 'offers.pull', attempts: 5 })
+    expect(ctx.queue.waiting).toEqual([])
+    expect(await health(throttled)).toBe('failing')
+    expect(await syncState(throttled, 'offers_pull')).toMatchObject({ lastErrorKind: 'transient', lastSucceededAt: null })
   })
 
   it('transient: retried up to 5 attempts, then the Connection is failing', async () => {

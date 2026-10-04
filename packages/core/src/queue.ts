@@ -86,7 +86,22 @@ export function createJobQueue(redisUrl: string): JobQueue {
   }
 }
 
-type ProcessedJob = Pick<Job, 'id' | 'name' | 'data' | 'attemptsMade' | 'opts' | 'moveToDelayed'>
+type ProcessedJob = Pick<Job, 'id' | 'name' | 'data' | 'attemptsMade' | 'opts' | 'moveToDelayed' | 'updateData'>
+
+/**
+ * Job data key holding the `RetryLaterError` count of the current attempt. It lives in the
+ * job's data so it survives the move to delayed; it is stripped before the payload is parsed.
+ */
+export const RETRY_LATER_KEY = '__retryLater'
+
+function splitJobData(data: unknown, attempt: number): { payload: unknown; retriedLater: number } {
+  if (typeof data !== 'object' || data === null || !(RETRY_LATER_KEY in data)) return { payload: data, retriedLater: 0 }
+  const { [RETRY_LATER_KEY]: marker, ...payload } = data as Record<string, unknown>
+  const { attempt: markedAttempt, count } = (marker ?? {}) as { attempt?: unknown; count?: unknown }
+  // A count recorded during an earlier attempt does not carry over: an attempt was used since.
+  const retriedLater = markedAttempt === attempt && typeof count === 'number' && Number.isInteger(count) && count > 0 ? count : 0
+  return { payload, retriedLater }
+}
 
 /** Runs one BullMQ job and maps the engine-neutral job errors to BullMQ's. */
 export function createJobProcessor(ctx: Context, jobs: JobDefinition[]): (job: ProcessedJob, token?: string) => Promise<void> {
@@ -94,13 +109,16 @@ export function createJobProcessor(ctx: Context, jobs: JobDefinition[]): (job: P
   return async (job, token) => {
     const definition = byName.get(job.name)
     if (!definition) throw new UnrecoverableError(`Unknown job "${job.name}"`)
-    const payload = definition.schema.safeParse(job.data)
+    const attempt = job.attemptsMade + 1
+    const { payload: data, retriedLater } = splitJobData(job.data, attempt)
+    const payload = definition.schema.safeParse(data)
     if (!payload.success) throw new UnrecoverableError(`Invalid payload for "${job.name}": ${payload.error.message}`)
     try {
-      await definition.handler(ctx, payload.data, { attempt: job.attemptsMade + 1, maxAttempts: job.opts.attempts ?? 1 })
+      await definition.handler(ctx, payload.data, { attempt, maxAttempts: job.opts.attempts ?? 1, retriedLater })
     } catch (error) {
       if (error instanceof RetryLaterError) {
         ctx.log.info('job retries later', { name: job.name, id: job.id, delayMs: error.delayMs, reason: error.message })
+        await job.updateData({ ...(data as Record<string, unknown>), [RETRY_LATER_KEY]: { attempt, count: retriedLater + 1 } })
         // Moving to delayed this way does not count as an attempt.
         await job.moveToDelayed(Date.now() + error.delayMs, token)
         throw new DelayedError()

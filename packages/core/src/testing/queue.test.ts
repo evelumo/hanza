@@ -81,6 +81,29 @@ describe('drain', () => {
     expect(queue.failed).toEqual(result.failed)
   })
 
+  it('tells the handler how many RetryLaterError retries the current attempt had, starting again after a used attempt', async () => {
+    const queue = createInMemoryJobQueue()
+    const runs: Array<[number, number]> = []
+    const job = defineJob({
+      name: 'test.job',
+      schema,
+      async handler(_ctx, _payload, run) {
+        runs.push([run.attempt, run.retriedLater])
+        if (runs.length === 3) throw new Error('used an attempt')
+        if (runs.length < 5) throw new RetryLaterError(1_000, 'rate limited')
+      },
+    }) as JobDefinition
+    await queue.enqueue(job, { key: 'x' })
+    expect(await queue.drain(ctx, [job])).toEqual({ ran: 5, failed: [] })
+    expect(runs).toEqual([
+      [1, 0],
+      [1, 1],
+      [1, 2],
+      [2, 0],
+      [2, 1],
+    ])
+  })
+
   it('stops after maxJobs handler runs', async () => {
     const queue = createInMemoryJobQueue()
     const job = defineJob({

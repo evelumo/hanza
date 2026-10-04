@@ -4,7 +4,7 @@ import { z } from 'zod'
 import type { Context } from './context'
 import { defineJob, PermanentJobError, RetryLaterError, type JobDefinition } from './jobs'
 import { stockPushRef, syncTickRef } from './jobs/refs'
-import { bullJobOptions, createJobProcessor, createJobQueue, redisConnection } from './queue'
+import { bullJobOptions, createJobProcessor, createJobQueue, redisConnection, RETRY_LATER_KEY } from './queue'
 
 const bull = vi.hoisted(() => ({ add: vi.fn(), upsertJobScheduler: vi.fn() }))
 
@@ -88,13 +88,14 @@ describe('createJobProcessor', () => {
     attemptsMade: 2,
     opts: { attempts: 5 },
     moveToDelayed: vi.fn(async () => {}),
+    updateData: vi.fn(async (_data: unknown) => {}),
     ...overrides,
   })
 
   it('runs the handler with the parsed payload and 1-based run info', async () => {
     handler.mockResolvedValueOnce()
     await process(bullJob())
-    expect(handler).toHaveBeenLastCalledWith(ctx, { organizationId: 'o' }, { attempt: 3, maxAttempts: 5 })
+    expect(handler).toHaveBeenLastCalledWith(ctx, { organizationId: 'o' }, { attempt: 3, maxAttempts: 5, retriedLater: 0 })
   })
 
   it('moves the job to delayed on RetryLaterError, without using an attempt', async () => {
@@ -105,6 +106,27 @@ describe('createJobProcessor', () => {
     expect(target.moveToDelayed).toHaveBeenCalledWith(expect.any(Number), 'token-1')
     const [timestamp] = target.moveToDelayed.mock.calls[0] as unknown as [number]
     expect(timestamp).toBeGreaterThanOrEqual(before + 5_000)
+  })
+
+  it('counts rate-limit retries of the current attempt in the job data, stripped from the payload', async () => {
+    handler.mockRejectedValueOnce(new RetryLaterError(1_000, 'rate limited'))
+    const first = bullJob()
+    await expect(process(first)).rejects.toBeInstanceOf(DelayedError)
+    expect(handler).toHaveBeenLastCalledWith(ctx, { organizationId: 'o' }, { attempt: 3, maxAttempts: 5, retriedLater: 0 })
+    expect(first.updateData).toHaveBeenCalledWith({ organizationId: 'o', [RETRY_LATER_KEY]: { attempt: 3, count: 1 } })
+    expect(first.updateData.mock.invocationCallOrder[0]!).toBeLessThan(first.moveToDelayed.mock.invocationCallOrder[0]!)
+
+    handler.mockRejectedValueOnce(new RetryLaterError(1_000, 'rate limited'))
+    const second = bullJob({ data: first.updateData.mock.calls[0]![0] })
+    await expect(process(second)).rejects.toBeInstanceOf(DelayedError)
+    expect(handler).toHaveBeenLastCalledWith(ctx, { organizationId: 'o' }, { attempt: 3, maxAttempts: 5, retriedLater: 1 })
+    expect(second.updateData).toHaveBeenCalledWith({ organizationId: 'o', [RETRY_LATER_KEY]: { attempt: 3, count: 2 } })
+  })
+
+  it('starts the count again once an attempt was used since it was recorded', async () => {
+    handler.mockResolvedValueOnce()
+    await process(bullJob({ attemptsMade: 3, data: { organizationId: 'o', [RETRY_LATER_KEY]: { attempt: 3, count: 7 } } }))
+    expect(handler).toHaveBeenLastCalledWith(ctx, { organizationId: 'o' }, { attempt: 4, maxAttempts: 5, retriedLater: 0 })
   })
 
   it('maps PermanentJobError to UnrecoverableError and rethrows anything else', async () => {

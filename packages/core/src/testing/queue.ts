@@ -43,7 +43,8 @@ export interface InMemoryJobQueue extends JobQueue {
   readonly failed: FailedJob[]
   /**
    * Runs waiting jobs FIFO, including the ones they enqueue, until none wait or `maxJobs` handler runs happened.
-   * `RetryLaterError` re-queues at the end without using an attempt; other errors retry at once up to 5 attempts;
+   * `RetryLaterError` re-queues at the end without using an attempt (counted in `retriedLater` until an attempt is
+   * used); other errors retry at once up to 5 attempts;
    * `PermanentJobError` fails at once.
    */
   drain(ctx: Context, jobs: JobDefinition[], options?: { maxJobs?: number }): Promise<DrainResult>
@@ -56,6 +57,7 @@ export function createInMemoryJobQueue(): InMemoryJobQueue {
   const schedules: RecordedSchedule[] = []
   const failed: FailedJob[] = []
   const attempts = new WeakMap<RecordedJob, number>()
+  const retriedLater = new WeakMap<RecordedJob, number>()
 
   const isWaiting = (coalesceKey: string | undefined) =>
     coalesceKey !== undefined && waiting.some((queued) => queued.options.coalesceKey === coalesceKey)
@@ -98,14 +100,20 @@ export function createInMemoryJobQueue(): InMemoryJobQueue {
         const attempt = (attempts.get(job) ?? 0) + 1
         result.ran++
         try {
-          await definition.handler(ctx, definition.schema.parse(job.payload), { attempt, maxAttempts: MAX_ATTEMPTS })
+          await definition.handler(ctx, definition.schema.parse(job.payload), {
+            attempt,
+            maxAttempts: MAX_ATTEMPTS,
+            retriedLater: retriedLater.get(job) ?? 0,
+          })
         } catch (error) {
           if (error instanceof RetryLaterError) {
+            retriedLater.set(job, (retriedLater.get(job) ?? 0) + 1)
             // At most one waiting job per coalesce key; payloads only identify the work, so either one will do.
             if (!isWaiting(job.options.coalesceKey)) waiting.push(job)
             continue
           }
           attempts.set(job, attempt)
+          retriedLater.delete(job)
           if (error instanceof PermanentJobError || attempt >= MAX_ATTEMPTS) fail(job, error)
           else waiting.unshift(job)
         }

@@ -54,7 +54,7 @@ describe.skipIf(!databaseUrl)('sync.tick', () => {
   async function tick(connectionIds: string[]) {
     const ctx = context()
     const before = ctx.queue.enqueued.length
-    await syncTickJob.handler(ctx, {}, { attempt: 1, maxAttempts: 5 })
+    await syncTickJob.handler(ctx, {}, { attempt: 1, maxAttempts: 5, retriedLater: 0 })
     return ctx.queue.enqueued
       .slice(before)
       .filter((job) => connectionIds.includes((job.payload as { connectionId: string }).connectionId))

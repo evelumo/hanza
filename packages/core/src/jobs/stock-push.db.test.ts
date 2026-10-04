@@ -33,7 +33,7 @@ const channel = defineConnector({
   },
 })
 
-const run = { attempt: 1, maxAttempts: 5 }
+const run = { attempt: 1, maxAttempts: 5, retriedLater: 0 }
 
 describe.skipIf(!databaseUrl)('stock.push', () => {
   const context = useTestContext({ connectors: [channel] })

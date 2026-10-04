@@ -39,8 +39,8 @@ const testChannel = defineConnector({
   },
 })
 
-const firstAttempt: JobRunInfo = { attempt: 1, maxAttempts: 5 }
-const lastAttempt: JobRunInfo = { attempt: 5, maxAttempts: 5 }
+const firstAttempt: JobRunInfo = { attempt: 1, maxAttempts: 5, retriedLater: 0 }
+const lastAttempt: JobRunInfo = { attempt: 5, maxAttempts: 5, retriedLater: 0 }
 
 describe.skipIf(!databaseUrl)('runConnectorCall (through orders.pull)', () => {
   const context = useTestContext({ connectors: [testChannel] })
@@ -109,6 +109,17 @@ describe.skipIf(!databaseUrl)('runConnectorCall (through orders.pull)', () => {
     const zero = new Response(null, { status: 429, headers: { 'Retry-After': '0' } })
     expect(await delayFor(await errorFromResponse(zero))).toBe(1_000)
     expect(await delayFor(new RateLimitedError('slow down', { retryAfterMs: 3_600_000 }))).toBe(900_000)
+  })
+
+  it('rate_limited: after 10 rate-limit retries of an attempt, the next one uses the attempt like a transient error', async () => {
+    const { runPull, state } = await setup()
+    const limited = new RateLimitedError('429 Too Many Requests', { retryAfterMs: 5_000 })
+    pull = failWith(limited)
+    await expect(runPull({ ...firstAttempt, retriedLater: 9 })).rejects.toBeInstanceOf(RetryLaterError)
+    await expect(runPull({ ...firstAttempt, retriedLater: 10 })).rejects.toBe(limited)
+    expect(await state()).toMatchObject({ health: 'unknown', sync: { lastErrorKind: 'transient', lastError: '429 Too Many Requests' } })
+    await expect(runPull({ ...lastAttempt, retriedLater: 10 })).rejects.toBe(limited)
+    expect((await state()).health).toBe('failing')
   })
 
   it('transient: rethrown for a normal retry; health turns failing only on the last attempt', async () => {
