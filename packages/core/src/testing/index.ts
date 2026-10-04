@@ -1,3 +1,5 @@
+// Brings the `inject('hanzaTestDatabaseUrl')` typing to every package that imports `@hanza/core/testing`.
+/// <reference path="./vitest-context.d.ts" />
 export { createTestContext, createTestOrganization, type TestContext } from './context'
 export {
   createInMemoryJobQueue,
