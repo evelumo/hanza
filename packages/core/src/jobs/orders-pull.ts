@@ -2,6 +2,7 @@ import type { Order, PullResult } from '@hanza/connector-sdk'
 import { finishSyncRun, saveSyncCursor } from '../connections/sync-state'
 import { defineJob } from '../jobs'
 import { importOrder } from '../orders/import'
+import { rematchUnmatchedLines } from '../orders/rematch'
 import { withSyncRun } from '../sync/begin-run'
 import { parseOrdersPage } from '../sync/pull-result'
 import { runConnectorCall } from '../sync/run-connector'
@@ -40,6 +41,9 @@ export const ordersPullJob = defineJob({
       }
 
       await finishSyncRun(ctx, organizationId, connectionId, 'orders_pull', counts)
+      // Catches lines that missed every other rematch trigger, e.g. an Order imported while its
+      // Product was being created. Cheap when nothing can match.
+      await rematchUnmatchedLines(ctx, organizationId)
       if (hasMore) {
         // Runs after this one finishes (coalesced), so a large backlog never holds a worker slot for long.
         await ctx.queue.enqueue(ordersPullRef, { organizationId, connectionId, trigger }, { coalesceKey: coalesceKeys.ordersPull(connectionId) })

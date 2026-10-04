@@ -39,10 +39,10 @@ export const offersPullJob = defineJob({
       if (hasMore) ctx.log.info('offers pull stopped at the page limit', { organizationId, connectionId, pages: MAX_PAGES })
 
       await finishSyncRun(ctx, organizationId, connectionId, 'offers_pull', counts)
-      if (counts.linked > 0) {
-        await rematchUnmatchedLines(ctx, organizationId)
-        await requestStockPush(ctx, organizationId, [connectionId])
-      }
+      // Every run, not only when this one linked an Offer: a retry of a run that linked on an
+      // earlier page sees linked 0. Cheap when nothing can match (the candidate query is empty).
+      await rematchUnmatchedLines(ctx, organizationId)
+      if (counts.linked > 0) await requestStockPush(ctx, organizationId, [connectionId])
       if (trigger === 'manual') {
         await ctx.queue.enqueue(
           ordersPullRef,

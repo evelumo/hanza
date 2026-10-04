@@ -1,11 +1,14 @@
-import { defineConnector, type Offer, type PullResult } from '@hanza/connector-sdk'
+import { defineConnector, TransientError, type Offer, type PullResult } from '@hanza/connector-sdk'
 import { describe, expect, it } from 'vitest'
 import { z } from 'zod'
+import { createProduct } from '../catalog/products'
 import { createConnection } from '../connections/connections'
 import { PermanentJobError, type JobRunInfo } from '../jobs'
+import { importOrder } from '../orders/import'
+import { getAvailability } from '../stock/availability'
 import { createTestOrganization } from '../testing/context'
 import { databaseUrl, useTestContext } from '../testing/db-test'
-import { user } from '../testing/fixtures'
+import { buildOrder, orderLine, uniqueSku, user } from '../testing/fixtures'
 import { offersPullJob } from './offers-pull'
 
 type Pull = (cursor: string | null) => Promise<PullResult<Offer>>
@@ -56,6 +59,36 @@ describe.skipIf(!databaseUrl)('offers.pull', () => {
   }
 
   const offer = (externalId: string, sku: string | null = null): Offer => ({ externalId, sku, name: externalId, url: null })
+
+  it('a retry still rematches the line waiting for an Offer that the failed attempt linked', async () => {
+    const { ctx, organizationId, connectionId, runPull, state } = await setup()
+    const sku = uniqueSku()
+    const { productId } = await createProduct(ctx, organizationId, { sku, name: 'A', stock: 5 }, user)
+    const { orderId } = await importOrder(
+      ctx,
+      organizationId,
+      connectionId,
+      buildOrder({ lines: [orderLine('l1', { offerExternalId: 'o1', quantity: 2 })] }),
+    )
+    let failed = false
+    pull = async (cursor) => {
+      if (cursor === null) return { items: [offer('o1', sku)], nextCursor: 'p1', hasMore: true }
+      if (!failed) {
+        failed = true
+        throw new TransientError('503 Service Unavailable')
+      }
+      return { items: [offer('o2')], nextCursor: 'p2', hasMore: false }
+    }
+    // Page 1 links o1 and commits; page 2 fails, so the attempt ends before any rematch.
+    await expect(runPull(run(1))).rejects.toBeInstanceOf(TransientError)
+    // The retry sees o1 already linked (linked: 0) and must rematch anyway.
+    await runPull(run(2))
+    expect((await state()).sync?.lastResult).toMatchObject({ linked: 0 })
+    const line = await ctx.db.orderLine.findFirstOrThrow({ where: { orderId }, include: { reservation: true } })
+    expect(line.productId).toBe(productId)
+    expect(line.reservation).toMatchObject({ status: 'open', units: 2 })
+    expect((await getAvailability(ctx.db, organizationId, [productId])).get(productId)?.available).toBe(3)
+  })
 
   it.each([
     ['null', null],
