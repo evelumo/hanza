@@ -8,7 +8,10 @@ const worker = new Worker(
   async (job) => {
     const definition = findJob(job.name)
     if (!definition) throw new Error(`Unknown job "${job.name}"`)
-    await definition.handler(ctx, definition.schema.parse(job.data))
+    await definition.handler(ctx, definition.schema.parse(job.data), {
+      attempt: job.attemptsMade + 1,
+      maxAttempts: job.opts.attempts ?? 1,
+    })
   },
   {
     connection: redisConnection(ctx.env.REDIS_URL),

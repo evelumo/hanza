@@ -1,15 +1,21 @@
-import { Queue, type ConnectionOptions } from 'bullmq'
+import { Queue, type ConnectionOptions, type JobsOptions } from 'bullmq'
 import type { z } from 'zod'
-import type { JobDefinition } from './jobs'
+import type { JobRef } from './jobs'
 
 export const QUEUE_NAME = 'hanza'
+
+export interface EnqueueOptions {
+  /** Jobs with the same key are coalesced: at most one waiting and one running; while one runs, the newest request runs after it. */
+  coalesceKey?: string
+  delayMs?: number
+}
 
 /**
  * The only queue API the rest of the code sees. BullMQ stays behind it so the
  * engine can be swapped (e.g. for Temporal) without touching callers.
  */
 export interface JobQueue {
-  enqueue<TSchema extends z.ZodType>(job: JobDefinition<TSchema>, payload: z.input<TSchema>): Promise<void>
+  enqueue<TSchema extends z.ZodType>(job: JobRef<TSchema>, payload: z.input<TSchema>, options?: EnqueueOptions): Promise<void>
   ping(): Promise<void>
   close(): Promise<void>
 }
@@ -28,6 +34,15 @@ export function redisConnection(redisUrl: string): ConnectionOptions {
   }
 }
 
+export function bullJobOptions(options: EnqueueOptions = {}): JobsOptions {
+  const jobOptions: JobsOptions = {}
+  if (options.coalesceKey !== undefined) {
+    jobOptions.deduplication = { id: options.coalesceKey, keepLastIfActive: true }
+  }
+  if (options.delayMs !== undefined) jobOptions.delay = options.delayMs
+  return jobOptions
+}
+
 export function createJobQueue(redisUrl: string): JobQueue {
   // Created on first use, so importing the context never opens a connection.
   let instance: Queue | undefined
@@ -43,8 +58,8 @@ export function createJobQueue(redisUrl: string): JobQueue {
     }))
 
   return {
-    async enqueue(job, payload) {
-      await queue().add(job.name, job.schema.parse(payload))
+    async enqueue(job, payload, options) {
+      await queue().add(job.name, job.schema.parse(payload), bullJobOptions(options))
     },
     async ping() {
       // BullMQ 6 hides the raw client behind a pluggable backend; reading the

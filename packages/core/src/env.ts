@@ -3,6 +3,7 @@ import { z } from 'zod'
 const envSchema = z.object({
   DATABASE_URL: z.url(),
   REDIS_URL: z.url(),
+  HANZA_ENCRYPTION_KEY: z.string().refine((v) => Buffer.from(v, 'base64').length === 32, 'must be base64 of exactly 32 bytes'),
 })
 
 export type Env = z.infer<typeof envSchema>
