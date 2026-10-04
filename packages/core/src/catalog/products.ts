@@ -209,18 +209,21 @@ export async function createProductsFromOffers(
   const requested = [...new Set(offerIds)]
 
   const result = await ctx.db.$transaction(async (tx) => {
+    // Every Offer this transaction may link, locked in id order (see markOffersForStockPush)
+    // before they are read, so an Offer linked concurrently is seen as already linked.
+    await tx.$queryRaw`
+      SELECT "id" FROM "offer"
+      WHERE "organizationId" = ${organizationId}
+        AND ("id" = ANY(${requested}::text[])
+          OR ("linkedBy" IS NULL AND "sku" IN (
+            SELECT "sku" FROM "offer" WHERE "organizationId" = ${organizationId} AND "id" = ANY(${requested}::text[]))))
+      ORDER BY "id"
+      FOR UPDATE`
     const offers = await tx.offer.findMany({
       where: { organizationId, id: { in: requested } },
       select: { id: true, sku: true, name: true, productId: true },
     })
     const skus = [...new Set(offers.map((offer) => offer.sku).filter((sku): sku is string => sku !== null))]
-    // Every Offer this transaction may link, locked in id order (see markOffersForStockPush).
-    await tx.$queryRaw`
-      SELECT "id" FROM "offer"
-      WHERE "organizationId" = ${organizationId}
-        AND ("id" = ANY(${requested}::text[]) OR ("sku" = ANY(${skus}::text[]) AND "linkedBy" IS NULL))
-      ORDER BY "id"
-      FOR UPDATE`
     const existing = await tx.product.findMany({ where: { organizationId, sku: { in: skus } }, select: { sku: true } })
     const taken = new Set(existing.map((product) => product.sku))
 

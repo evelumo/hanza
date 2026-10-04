@@ -26,15 +26,24 @@ async function writeState(
     lastError?: string | null
   },
 ): Promise<{ cursor: string | null }> {
-  return db.syncState.upsert({
-    where: { connectionId_stream: { connectionId, stream } },
+  const row: { cursor: string | null } | null = await db.syncState.upsert({
+    where: { connectionId_stream: { connectionId, stream }, organizationId },
     create: { organizationId, connectionId, stream, ...data },
     update: data,
     select: { cursor: true },
   })
+  // With the organizationId filter, a row recorded under another organization is
+  // neither updated nor replaced; Prisma then returns null despite the type.
+  if (!row) throw new DomainError('not_found')
+  return row
 }
 
-/** Locks the Connection row so concurrent runs record health transitions (and their Events) exactly once. */
+/**
+ * Locks the Connection row so concurrent runs record health transitions (and
+ * their Events) exactly once. NO KEY UPDATE: a FOR UPDATE lock would also wait
+ * for every in-flight Order/Offer insert on this Connection (their foreign keys
+ * take KEY SHARE locks on it).
+ */
 async function setHealth(
   tx: Tx,
   organizationId: string,
@@ -43,7 +52,8 @@ async function setHealth(
   errorKind: SyncErrorKind | null,
 ): Promise<void> {
   const rows = await tx.$queryRaw<Array<{ health: ConnectionHealth }>>`
-    SELECT "health" FROM "connection" WHERE "id" = ${connectionId} AND "organizationId" = ${organizationId} FOR UPDATE`
+    SELECT "health" FROM "connection" WHERE "id" = ${connectionId} AND "organizationId" = ${organizationId}
+    FOR NO KEY UPDATE`
   const from = rows[0]?.health
   if (from === undefined) throw new DomainError('not_found')
   if (from === to) return

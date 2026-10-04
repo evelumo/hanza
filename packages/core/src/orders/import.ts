@@ -36,7 +36,7 @@ export async function importOrder(
     const existing = await tx.$queryRaw<Array<{ id: string }>>`
       SELECT "id" FROM "order"
       WHERE "connectionId" = ${connectionId} AND "externalId" = ${order.externalId} AND "organizationId" = ${organizationId}
-      FOR UPDATE`
+      FOR NO KEY UPDATE`
     const touched = new Set<string>()
     const orderId = existing[0]?.id ?? (await insertOrder(tx, organizationId, connectionId, order, touched))
     const factsApplied = await applyNewFacts(tx, organizationId, orderId, order.facts, touched)

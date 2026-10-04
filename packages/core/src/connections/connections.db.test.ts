@@ -1,7 +1,9 @@
+import { createDb } from '@hanza/db'
 import { describe, expect, it } from 'vitest'
 import { createTestOrganization } from '../testing/context'
 import { databaseUrl, useTestContext } from '../testing/db-test'
 import { createTestConnection, user } from '../testing/fixtures'
+import { TX_OPTIONS } from '../transaction'
 import { createConnection, getConnection, listConnections, listConnectionsForTick, openConnection } from './connections'
 import { failSyncRun, finishSyncRun, saveSyncCursor, startSyncRun } from './sync-state'
 
@@ -90,6 +92,52 @@ describe.skipIf(!databaseUrl)('connections', () => {
     expect(stream('orders_pull')).toMatchObject({ lastResult: { pulled: 5, imported: 4 }, lastErrorKind: 'rate_limited', lastError: 'slow down' })
     expect(stream('offers_pull')).toMatchObject({ lastResult: { seen: 1 }, lastErrorKind: null, lastError: null })
     expect(stream('offers_pull')?.lastSucceededAt).toBeInstanceOf(Date)
+  })
+
+  it('changes health without waiting for an in-flight Offer insert on the Connection', async () => {
+    const ctx = context()
+    const org = await createTestOrganization(ctx.db)
+    const connectionId = await createTestConnection(ctx, org)
+
+    // The insert's foreign key holds a KEY SHARE lock on the Connection row until it commits.
+    const holder = createDb(databaseUrl!)
+    let release!: () => void
+    const released = new Promise<void>((resolve) => (release = resolve))
+    let inserted!: () => void
+    const isInserted = new Promise<void>((resolve) => (inserted = resolve))
+    const writer = holder.$transaction(async (tx) => {
+      await tx.offer.create({ data: { organizationId: org, connectionId, externalId: 'in-flight', name: 'X', lastSeenAt: new Date() } })
+      inserted()
+      await released
+    }, TX_OPTIONS)
+    try {
+      await isInserted
+      const finished = finishSyncRun(ctx, org, connectionId, 'offers_pull', { seen: 0 }).then(() => 'finished')
+      const blocked = new Promise((resolve) => setTimeout(() => resolve('blocked'), 2_000))
+      expect(await Promise.race([finished, blocked])).toBe('finished')
+      expect((await ctx.db.connection.findFirstOrThrow({ where: { id: connectionId } })).health).toBe('ok')
+    } finally {
+      release()
+      await writer
+      await holder.$disconnect()
+    }
+  })
+
+  it('never writes a sync_state row recorded under another organization', async () => {
+    const ctx = context()
+    const org = await createTestOrganization(ctx.db)
+    const connectionId = await createTestConnection(ctx, org)
+    const other = await createTestOrganization(ctx.db)
+    // Inconsistent on purpose: this Connection's stream recorded under another organization.
+    await ctx.db.syncState.create({ data: { organizationId: other, connectionId, stream: 'orders_pull', cursor: 'theirs' } })
+
+    await expect(saveSyncCursor(ctx, org, connectionId, 'orders_pull', 'ours')).rejects.toMatchObject({ code: 'not_found' })
+    await expect(startSyncRun(ctx, org, connectionId, 'orders_pull')).rejects.toMatchObject({ code: 'not_found' })
+
+    expect(await ctx.db.syncState.findFirstOrThrow({ where: { connectionId, stream: 'orders_pull' } })).toMatchObject({
+      organizationId: other,
+      cursor: 'theirs',
+    })
   })
 
   it('lists every tenant\'s Connections for the tick with their last start per stream', async () => {

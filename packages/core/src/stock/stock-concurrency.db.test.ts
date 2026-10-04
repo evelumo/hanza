@@ -8,37 +8,19 @@ import { importOrder } from '../orders/import'
 import { createTestOrganization } from '../testing/context'
 import { databaseUrl, useTestContext } from '../testing/db-test'
 import { buildOrder, createTestConnection, orderLine, user } from '../testing/fixtures'
+import { uniqueApplicationName, untilLockWait, watchLockWaits } from '../testing/lock-waits'
 import { TX_OPTIONS } from '../transaction'
 import { getAvailability } from './availability'
 
 // Real parallel transactions against Postgres: every call below runs on its own
 // pooled connection, and `watchLockWaits` proves they actually contended for
-// the Stock row lock instead of happening to run one after another.
+// the Stock row lock instead of happening to run one after another. Only this
+// file's sessions (its own `application_name`) are counted.
 
-function watchLockWaits(url: string): { stop(): Promise<number> } {
-  const observer: Db = createDb(url)
-  let running = true
-  let max = 0
-  const loop = (async () => {
-    while (running) {
-      const [row] = await observer.$queryRaw<Array<{ waiting: bigint }>>`
-        SELECT count(*) AS "waiting" FROM pg_stat_activity
-        WHERE datname = current_database() AND wait_event_type = 'Lock'`
-      max = Math.max(max, Number(row?.waiting ?? 0))
-    }
-  })()
-  return {
-    async stop() {
-      running = false
-      await loop
-      await observer.$disconnect()
-      return max
-    },
-  }
-}
+const applicationName = uniqueApplicationName('hanza-stock-concurrency')
 
 describe.skipIf(!databaseUrl)('Stock and Reservations under concurrency', () => {
-  const context = useTestContext()
+  const context = useTestContext({ applicationName })
 
   async function setup(stock: number) {
     const ctx = context()
@@ -52,7 +34,7 @@ describe.skipIf(!databaseUrl)('Stock and Reservations under concurrency', () => 
 
   it('(1) 20 parallel imports against Stock 10: exactly 10 Shortages, Available −10', async () => {
     const { ctx, org, connectionId, productId, order } = await setup(10)
-    const watcher = watchLockWaits(databaseUrl!)
+    const watcher = watchLockWaits(databaseUrl!, applicationName)
 
     const results = await Promise.all(Array.from({ length: 20 }, () => importOrder(ctx, org, connectionId, order())))
 
@@ -82,7 +64,7 @@ describe.skipIf(!databaseUrl)('Stock and Reservations under concurrency', () => 
     const { ctx, org, connectionId, productId, order } = await setup(0)
     const orderIds: string[] = []
     for (let i = 0; i < 10; i++) orderIds.push((await importOrder(ctx, org, connectionId, order())).orderId)
-    const watcher = watchLockWaits(databaseUrl!)
+    const watcher = watchLockWaits(databaseUrl!, applicationName)
 
     await Promise.all(orderIds.map((orderId) => changeOrderStatus(ctx, org, orderId, 'shipped', user)))
 
@@ -138,12 +120,7 @@ describe.skipIf(!databaseUrl)('Stock and Reservations under concurrency', () => 
       return result
     })
     // Wait until the import is blocked on the lock, then let the writer commit.
-    for (let i = 0; i < 200; i++) {
-      const [row] = await holder.$queryRaw<Array<{ waiting: bigint }>>`
-        SELECT count(*) AS "waiting" FROM pg_stat_activity WHERE datname = current_database() AND wait_event_type = 'Lock'`
-      if (Number(row?.waiting) > 0) break
-      await new Promise((resolve) => setTimeout(resolve, 25))
-    }
+    await untilLockWait(holder, applicationName)
     expect(importDone).toBe(false)
     release()
     await writer

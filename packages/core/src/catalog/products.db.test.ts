@@ -1,13 +1,18 @@
+import { createDb } from '@hanza/db'
 import { describe, expect, it } from 'vitest'
 import { createTestOrganization } from '../testing/context'
 import { databaseUrl, useTestContext } from '../testing/db-test'
 import { createTestConnection, uniqueSku, user } from '../testing/fixtures'
+import { uniqueApplicationName, untilLockWait } from '../testing/lock-waits'
 import { getAvailability } from '../stock/availability'
+import { TX_OPTIONS } from '../transaction'
 import { upsertOffers } from './offers'
 import { createProduct, createProductsFromOffers, findProductBySku, getProduct, listProducts, updateProduct } from './products'
 
+const applicationName = uniqueApplicationName('hanza-products')
+
 describe.skipIf(!databaseUrl)('products', () => {
-  const context = useTestContext()
+  const context = useTestContext({ applicationName })
 
   it('creates a Product with its Stock row in the default Warehouse and a product.created Event', async () => {
     const ctx = context()
@@ -99,6 +104,40 @@ describe.skipIf(!databaseUrl)('products', () => {
     expect((await getAvailability(ctx.db, org, [product.id])).get(product.id)).toEqual({ stock: 0, reserved: 0, available: 0 })
     const created = await ctx.db.eventLog.findMany({ where: { organizationId: org, type: 'product.created', subjectId: product.id } })
     expect(created[0]?.payload).toEqual({ sku: 'NEW-1', origin: 'offer', actor: user })
+  })
+
+  it('reads the Offers only once they are locked: an Offer linked concurrently is skipped, no Product created', async () => {
+    const ctx = context()
+    const org = await createTestOrganization(ctx.db)
+    const connectionId = await createTestConnection(ctx, org)
+    await upsertOffers(ctx, org, connectionId, [{ externalId: 'race', sku: 'RACE', name: 'Wyścig', url: null }], new Date())
+    const offer = await ctx.db.offer.findFirstOrThrow({ where: { organizationId: org, externalId: 'race' } })
+    const { productId: other } = await createProduct(ctx, org, { sku: 'OTHER', name: 'Inny', stock: 0 }, user)
+
+    // Another session links the Offer by hand and holds the row until we let it commit.
+    const holder = createDb(databaseUrl!)
+    let release!: () => void
+    const released = new Promise<void>((resolve) => (release = resolve))
+    let locked!: () => void
+    const isLocked = new Promise<void>((resolve) => (locked = resolve))
+    const writer = holder.$transaction(async (tx) => {
+      await tx.offer.updateMany({ where: { id: offer.id, organizationId: org }, data: { productId: other, linkedBy: 'manual' } })
+      locked()
+      await released
+    }, TX_OPTIONS)
+    try {
+      await isLocked
+      const creating = createProductsFromOffers(ctx, org, [offer.id], user)
+      await untilLockWait(holder, applicationName)
+      release()
+      await writer
+
+      expect(await creating).toEqual({ created: [], skipped: [{ offerId: offer.id, reason: 'already_linked' }] })
+      expect(await ctx.db.product.count({ where: { organizationId: org, sku: 'RACE' } })).toBe(0)
+    } finally {
+      release()
+      await holder.$disconnect()
+    }
   })
 
   it('updates the name with a product.updated Event; finds, lists and details Products', async () => {

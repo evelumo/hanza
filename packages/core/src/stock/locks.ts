@@ -27,9 +27,13 @@ export async function lockStock(tx: Tx, organizationId: string, productIds: stri
     FOR UPDATE`
 }
 
-/** Locks the Order row; returns false when the organization has no such Order. Take it before any Stock lock. */
+/**
+ * Locks the Order row; returns false when the organization has no such Order. Take it before any Stock lock.
+ * NO KEY UPDATE is enough to serialise the Order's writers (it conflicts with itself) without blocking
+ * inserts that only reference the Order.
+ */
 export async function lockOrder(tx: Tx, organizationId: string, orderId: string): Promise<boolean> {
   const rows = await tx.$queryRaw<Array<{ id: string }>>`
-    SELECT "id" FROM "order" WHERE "id" = ${orderId} AND "organizationId" = ${organizationId} FOR UPDATE`
+    SELECT "id" FROM "order" WHERE "id" = ${orderId} AND "organizationId" = ${organizationId} FOR NO KEY UPDATE`
   return rows.length > 0
 }
