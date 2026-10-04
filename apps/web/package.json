@@ -10,6 +10,7 @@
     "typecheck": "next typegen && tsc --noEmit"
   },
   "dependencies": {
+    "@hanza/connector-registry": "workspace:*",
     "@hanza/core": "workspace:*",
     "@hanza/db": "workspace:*",
     "better-auth": "^1.7.7",

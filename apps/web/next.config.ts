@@ -8,7 +8,7 @@ if (existsSync(rootEnv)) process.loadEnvFile(rootEnv)
 
 const nextConfig: NextConfig = {
   // Workspace packages ship TypeScript sources.
-  transpilePackages: ['@hanza/core', '@hanza/db'],
+  transpilePackages: ['@hanza/core', '@hanza/db', '@hanza/connector-sdk', '@hanza/connector-registry', '@hanza/connector-fake'],
 }
 
 export default nextConfig

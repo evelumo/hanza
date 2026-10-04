@@ -1,4 +1,6 @@
+import type { AnyConnectorDefinition } from '@hanza/connector-sdk'
 import { createDb, type Db } from '@hanza/db'
+import { createConnectorRegistry, type ConnectorRegistry } from './connectors/registry'
 import { loadEnv, type Env } from './env'
 import { createLogger, type Logger } from './logger'
 import { createJobQueue, type JobQueue } from './queue'
@@ -14,10 +16,13 @@ export interface Context {
   queue: JobQueue
   log: Logger
   secrets: SecretBox
+  connectors: ConnectorRegistry
 }
 
 export interface CreateContextOptions {
   env?: Env
+  /** Usually `connectors` from `@hanza/connector-registry`; empty when omitted. */
+  connectors?: AnyConnectorDefinition[]
 }
 
 export function createContext(scope: string, options: CreateContextOptions = {}): Context {
@@ -28,6 +33,7 @@ export function createContext(scope: string, options: CreateContextOptions = {})
     queue: createJobQueue(env.REDIS_URL),
     log: createLogger(scope),
     secrets: createSecretBox(env.HANZA_ENCRYPTION_KEY),
+    connectors: createConnectorRegistry(options.connectors ?? []),
   }
 }
 
