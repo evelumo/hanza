@@ -3,6 +3,9 @@ import {
   createProductSchema,
   createProductsFromOffersSchema,
   linkOfferSchema,
+  priceFromForm,
+  setBasePriceSchema,
+  setOfferPriceSchema,
   setStockSchema,
 } from './schemas'
 
@@ -46,5 +49,40 @@ describe('createProductsFromOffersSchema', () => {
     expect(createProductsFromOffersSchema.safeParse({ offerIds: [] }).success).toBe(false)
     expect(createProductsFromOffersSchema.safeParse({ offerIds: Array.from({ length: 200 }, (_, i) => String(i + 1)) }).success).toBe(true)
     expect(createProductsFromOffersSchema.safeParse({ offerIds: Array.from({ length: 201 }, (_, i) => String(i + 1)) }).success).toBe(false)
+  })
+})
+
+describe('price forms', () => {
+  it('read a comma as the decimal separator, keep the amount a string and upper-case the currency', () => {
+    expect(setBasePriceSchema.parse({ productId: 'p', intent: 'set', amount: ' 49,90 ', currency: ' pln ' })).toEqual({
+      productId: 'p',
+      intent: 'set',
+      amount: '49.90',
+      currency: 'PLN',
+    })
+    expect(setOfferPriceSchema.parse({ offerId: 'o', intent: 'set', amount: '0.0001', currency: 'EUR' })).toMatchObject({ amount: '0.0001' })
+  })
+
+  it.each(['', '0', '0,00', '-1', '1.23456', '1e3', 'abc', '1.000.000', '1000000000000000'])('reject the amount %j', (amount) => {
+    expect(setBasePriceSchema.safeParse({ productId: 'p', intent: 'set', amount, currency: 'PLN' }).success).toBe(false)
+  })
+
+  it.each(['', 'PL', 'PLNN', 'zł', '123'])('reject the currency %j', (currency) => {
+    expect(setOfferPriceSchema.safeParse({ offerId: 'o', intent: 'set', amount: '1', currency }).success).toBe(false)
+  })
+
+  it('remove the price with intent clear, whatever the fields hold', () => {
+    const parsed = setBasePriceSchema.parse({ productId: 'p', intent: 'clear', amount: 'not a price', currency: '' })
+    expect(priceFromForm(parsed)).toBeNull()
+    expect(priceFromForm(setOfferPriceSchema.parse({ offerId: 'o', intent: 'set', amount: '5', currency: 'eur' }))).toEqual({
+      amount: '5',
+      currency: 'EUR',
+    })
+  })
+
+  it('need an id and a known intent', () => {
+    expect(setBasePriceSchema.safeParse({ productId: '', intent: 'clear' }).success).toBe(false)
+    expect(setOfferPriceSchema.safeParse({ offerId: 'o', intent: 'drop' }).success).toBe(false)
+    expect(setOfferPriceSchema.safeParse({ productId: 'p', intent: 'clear' }).success).toBe(false)
   })
 })

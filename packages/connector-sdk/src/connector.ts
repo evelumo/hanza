@@ -1,6 +1,7 @@
 import type { z } from 'zod'
 import type { Offer } from './model/offer'
 import type { Order, OrderStatus } from './model/order'
+import type { OfferPrice } from './model/price'
 import type { StockLevel } from './model/stock'
 
 export const CONNECTOR_KINDS = ['marketplace', 'shop', 'courier', 'invoicing'] as const
@@ -36,6 +37,11 @@ export interface Capabilities<TConfig, TCredentials> {
   'orders.pull'?(ctx: CapabilityContext<TConfig, TCredentials>, cursor: string | null): Promise<PullResult<Order>>
   /** Set absolute availability for up to 100 Offers of this Connection. Must be repeatable. */
   'stock.push'?(ctx: CapabilityContext<TConfig, TCredentials>, levels: StockLevel[]): Promise<void>
+  /**
+   * Optional. Set the price of up to 100 Offers of this Connection. Each price is in the currency the
+   * Channel reported for that Offer in `offers.pull` (Hanza never converts). Must be repeatable.
+   */
+  'price.push'?(ctx: CapabilityContext<TConfig, TCredentials>, prices: OfferPrice[]): Promise<void>
   /** Translate a Hanza Order status to the Channel's and set it. Resolve without a call if the Channel has no equivalent. Must be repeatable. */
   'orders.updateStatus'?(
     ctx: CapabilityContext<TConfig, TCredentials>,

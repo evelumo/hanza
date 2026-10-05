@@ -46,3 +46,4 @@ export {
 } from './model/order'
 export { offerSchema, type Offer } from './model/offer'
 export { stockLevelSchema, type StockLevel } from './model/stock'
+export { offerPriceSchema, type OfferPrice } from './model/price'

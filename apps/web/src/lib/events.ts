@@ -10,11 +10,19 @@ function arrow(from: string | null, to: string | null): string | null {
   return from !== null && to !== null ? `${from} → ${to}` : null
 }
 
-function nested(value: unknown, key: 'from' | 'to'): unknown {
+function nested(value: unknown, key: string): unknown {
   return typeof value === 'object' && value !== null ? (value as Payload)[key] : undefined
 }
 
 type NumberFormat = (value: number) => string
+
+// "45 PLN": the payload is untrusted, so only a well-formed price is shown; null means "no price".
+function priceText(t: Translator, value: unknown): string | null {
+  if (value === null) return t('prices.none')
+  const amount = text(nested(value, 'amount'))
+  const currency = text(nested(value, 'currency'))
+  return amount !== null && currency !== null ? `${amount} ${currency}` : null
+}
 
 const formatted = (value: unknown, number: NumberFormat): string | null => {
   const n = count(value)
@@ -34,6 +42,9 @@ function detail(t: Translator, number: NumberFormat, type: string, payload: Payl
     }
     case 'product.updated':
       return arrow(text(nested(payload.name, 'from')), text(nested(payload.name, 'to')))
+    case 'product.price_changed':
+    case 'offer.price_changed':
+      return arrow(priceText(t, payload.from), priceText(t, payload.to))
     case 'order.status_changed':
       return arrow(statusLabel(t, text(payload.from)), statusLabel(t, text(payload.to)))
     case 'order.channel_fact_recorded':

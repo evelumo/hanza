@@ -27,6 +27,16 @@ describe('describeEvent', () => {
     expect(describeEvent('order.attention_raised', { reasons: ['unmatched_line', 'shortage'] }, t, number).detail).toBe('Unmatched line, Shortage')
   })
 
+  it('describes price changes, a removed price included, and ignores a malformed one', () => {
+    const pln = { amount: '45', currency: 'PLN' }
+    expect(describeEvent('product.price_changed', { from: null, to: pln }, t, number)).toEqual({ title: 'Base price changed', detail: 'No price → 45 PLN' })
+    expect(describeEvent('offer.price_changed', { from: pln, to: null }, translatorFor('pl'), numberPl)).toEqual({
+      title: catalogues.pl.events.title.offer_price_changed,
+      detail: `45 PLN → ${catalogues.pl.prices.none}`,
+    })
+    expect(describeEvent('offer.price_changed', { from: 45, to: pln }, t, number).detail).toBeNull()
+  })
+
   it('pluralises counts the way each language does', () => {
     expect(describeEvent('stock.reserved', { units: 1 }, t, number).detail).toBe('1 unit')
     expect(describeEvent('stock.reserved', { units: 5 }, t, number).detail).toBe('5 units')

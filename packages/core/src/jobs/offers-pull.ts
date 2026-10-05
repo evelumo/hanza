@@ -3,6 +3,7 @@ import { upsertOffers } from '../catalog/offers'
 import { finishSyncRun } from '../connections/sync-state'
 import { defineJob } from '../jobs'
 import { rematchUnmatchedLines } from '../orders/rematch'
+import { requestPricePush } from '../prices/push'
 import { requestStockPush } from '../stock/push'
 import { withSyncRun } from '../sync/begin-run'
 import { parseOffersPage } from '../sync/pull-result'
@@ -20,6 +21,7 @@ export const offersPullJob = defineJob({
     await withSyncRun(ctx, input, async ({ connector, context, scope }) => {
       const seenAt = new Date()
       const counts = { seen: 0, created: 0, updated: 0, linked: 0 }
+      let repriced = 0
       let cursor: string | null = null
       let hasMore = true
       for (let page = 0; page < MAX_PAGES && hasMore; page++) {
@@ -32,6 +34,7 @@ export const offersPullJob = defineJob({
           counts.created += upserted.created
           counts.updated += upserted.updated
           counts.linked += upserted.linked
+          repriced += upserted.repriced
         }
         cursor = result.nextCursor
         hasMore = result.hasMore
@@ -47,6 +50,7 @@ export const offersPullJob = defineJob({
       // earlier page sees linked 0. Cheap when nothing can match (the candidate query is empty).
       await rematchUnmatchedLines(ctx, organizationId)
       if (counts.linked > 0) await requestStockPush(ctx, organizationId, [connectionId])
+      if (counts.linked > 0 || repriced > 0) await requestPricePush(ctx, organizationId, [connectionId])
       if (trigger === 'manual') {
         await ctx.queue.enqueue(
           ordersPullRef,

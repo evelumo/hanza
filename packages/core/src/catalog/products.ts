@@ -1,8 +1,12 @@
+import type { Money } from '@hanza/connector-sdk'
 import type { Actor } from '../actor'
 import type { Context } from '../context'
 import { DomainError, isUniqueViolation } from '../errors'
 import { appendEvent } from '../events'
 import { rematchAfterCommit } from '../orders/rematch'
+import { describeOfferPrice, offerPriceColumns, type OfferPriceView } from '../prices/offer-price'
+import { moneyFromColumns, parsePrice } from '../prices/price'
+import { requestPricePushAfterCommit } from '../prices/push'
 import { getAvailability } from '../stock/availability'
 import { requestStockPushAfterCommit } from '../stock/push'
 import { ensureDefaultWarehouse } from '../stock/warehouse'
@@ -21,16 +25,19 @@ export interface ProductRow {
 }
 
 export interface ProductDetail extends ProductRow {
-  offers: Array<{
-    id: string
-    connectionId: string
-    connectionName: string
-    externalId: string
-    name: string
-    linkedBy: 'sku' | 'manual'
-    lastPushedAvailable: number | null
-    lastPushedAt: Date | null
-  }>
+  basePrice: Money | null
+  offers: Array<
+    {
+      id: string
+      connectionId: string
+      connectionName: string
+      externalId: string
+      name: string
+      linkedBy: 'sku' | 'manual'
+      lastPushedAvailable: number | null
+      lastPushedAt: Date | null
+    } & OfferPriceView
+  >
   openReservations: Array<{ orderId: string; orderExternalId: string; units: number; createdAt: Date }>
 }
 
@@ -67,6 +74,7 @@ export async function createProduct(
   }, TX_OPTIONS)
 
   await requestStockPushAfterCommit(ctx, organizationId, connectionIds)
+  await requestPricePushAfterCommit(ctx, organizationId, connectionIds)
   await rematchAfterCommit(ctx, organizationId, { productId })
   return { productId }
 }
@@ -146,6 +154,8 @@ export async function getProduct(ctx: Context, organizationId: string, productId
       id: true,
       sku: true,
       name: true,
+      basePriceAmount: true,
+      basePriceCurrency: true,
       offers: {
         where: { organizationId },
         orderBy: { id: 'asc' },
@@ -157,12 +167,14 @@ export async function getProduct(ctx: Context, organizationId: string, productId
           linkedBy: true,
           lastPushedAvailable: true,
           lastPushedAt: true,
-          connection: { select: { name: true } },
+          ...offerPriceColumns,
+          connection: { select: { name: true, connectorId: true } },
         },
       },
     },
   })
   if (!product) return null
+  const basePrice = moneyFromColumns(product.basePriceAmount, product.basePriceCurrency)
 
   const [availability, reservations] = await Promise.all([
     getAvailability(ctx.db, organizationId, [product.id]),
@@ -178,6 +190,7 @@ export async function getProduct(ctx: Context, organizationId: string, productId
     name: product.name,
     ...(availability.get(product.id) ?? { stock: 0, reserved: 0, available: 0 }),
     linkedOffers: product.offers.length,
+    basePrice,
     offers: product.offers.map((offer) => ({
       id: offer.id,
       connectionId: offer.connectionId,
@@ -188,6 +201,7 @@ export async function getProduct(ctx: Context, organizationId: string, productId
       linkedBy: offer.linkedBy ?? 'manual',
       lastPushedAvailable: offer.lastPushedAvailable,
       lastPushedAt: offer.lastPushedAt,
+      ...describeOfferPrice(ctx, { ...offer, connectorId: offer.connection.connectorId }, { basePrice }),
     })),
     openReservations: reservations.map((reservation) => ({
       orderId: reservation.orderLine.order.id,
@@ -198,7 +212,10 @@ export async function getProduct(ctx: Context, organizationId: string, productId
   }
 }
 
-/** One Product per Offer (its SKU and name, Stock 0), the Offer linked by SKU. One transaction for all. */
+/**
+ * One Product per Offer (its SKU and name, Stock 0, and the Offer's Channel price as base price: the one-time
+ * seeding of ADR 0011), the Offer linked by SKU. One transaction for all.
+ */
 export async function createProductsFromOffers(
   ctx: Context,
   organizationId: string,
@@ -221,7 +238,7 @@ export async function createProductsFromOffers(
       FOR UPDATE`
     const offers = await tx.offer.findMany({
       where: { organizationId, id: { in: requested } },
-      select: { id: true, sku: true, name: true, productId: true },
+      select: { id: true, sku: true, name: true, productId: true, channelPriceAmount: true, channelPriceCurrency: true },
     })
     const skus = [...new Set(offers.map((offer) => offer.sku).filter((sku): sku is string => sku !== null))]
     const existing = await tx.product.findMany({ where: { organizationId, sku: { in: skus } }, select: { sku: true } })
@@ -229,7 +246,7 @@ export async function createProductsFromOffers(
 
     const byId = new Map(offers.map((offer) => [offer.id, offer]))
     const skipped: Array<{ offerId: string; reason: CreateProductsSkipReason }> = []
-    const toCreate: Array<{ offerId: string; sku: string; name: string }> = []
+    const toCreate: Array<{ offerId: string; sku: string; name: string; basePrice: Money | null }> = []
     for (const offerId of requested) {
       const offer = byId.get(offerId)
       const sku = offer?.sku ?? null
@@ -239,13 +256,19 @@ export async function createProductsFromOffers(
       else if (taken.has(sku)) skipped.push({ offerId, reason: 'sku_taken' })
       else {
         taken.add(sku)
-        toCreate.push({ offerId, sku, name: offer.name })
+        toCreate.push({ offerId, sku, name: offer.name, basePrice: seedPrice(moneyFromColumns(offer.channelPriceAmount, offer.channelPriceCurrency)) })
       }
     }
 
     // skipDuplicates covers a Product created concurrently since the check above.
     const products = await tx.product.createManyAndReturn({
-      data: toCreate.map((item) => ({ organizationId, sku: item.sku, name: item.name })),
+      data: toCreate.map((item) => ({
+        organizationId,
+        sku: item.sku,
+        name: item.name,
+        basePriceAmount: item.basePrice?.amount ?? null,
+        basePriceCurrency: item.basePrice?.currency ?? null,
+      })),
       skipDuplicates: true,
       select: { id: true, sku: true },
     })
@@ -265,11 +288,11 @@ export async function createProductsFromOffers(
         organizationId,
         type: 'product.created',
         subject: { type: 'product', id: productId },
-        payload: { sku: item.sku, origin: 'offer', actor },
+        payload: { sku: item.sku, origin: 'offer', basePrice: item.basePrice, actor },
       })
       const linked = await tx.offer.updateManyAndReturn({
         where: { id: item.offerId, organizationId, productId: null },
-        data: { productId, linkedBy: 'sku', stockPushSeq: { increment: 1 } },
+        data: { productId, linkedBy: 'sku', stockPushSeq: { increment: 1 }, pricePushSeq: { increment: 1 } },
         select: { connectionId: true },
       })
       for (const offer of linked) {
@@ -288,6 +311,17 @@ export async function createProductsFromOffers(
   }, TX_OPTIONS)
 
   await requestStockPushAfterCommit(ctx, organizationId, result.connectionIds)
+  await requestPricePushAfterCommit(ctx, organizationId, result.connectionIds)
   if (result.created.length > 0) await rematchAfterCommit(ctx, organizationId, { productIds: result.created.join(',') })
   return { created: result.created, skipped: result.skipped }
+}
+
+/** A Channel price is a usable base price only if Hanza would accept it as one (a zero price is not). */
+function seedPrice(channelPrice: Money | null): Money | null {
+  if (channelPrice === null) return null
+  try {
+    return parsePrice(channelPrice)
+  } catch {
+    return null
+  }
 }

@@ -5,6 +5,10 @@ model Product {
   organizationId String
   sku            String
   name           String
+  /// Base price: the price of every Offer without an override. Null = no price, nothing is pushed (ADR 0011).
+  /// Amount and currency are set together (CHECK constraint in the migration).
+  basePriceAmount   Decimal? @db.Decimal(19, 4)
+  basePriceCurrency String?  @db.Char(3)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
@@ -42,6 +46,19 @@ model Offer {
   stockPushedSeq      Int              @default(0)
   lastPushedAvailable Int?
   lastPushedAt        DateTime?
+  /// The price the Channel reported at the last pull: tells Hanza the Channel's currency, never adopted (ADR 0011).
+  channelPriceAmount      Decimal?  @db.Decimal(19, 4)
+  channelPriceCurrency    String?   @db.Char(3)
+  /// Price override for this Offer only; wins over the Product's base price. Amount and currency set together.
+  priceOverrideAmount     Decimal?  @db.Decimal(19, 4)
+  priceOverrideCurrency   String?   @db.Char(3)
+  /// Incremented whenever the Offer's effective price, link or Channel currency may have changed.
+  pricePushSeq            Int       @default(0)
+  /// The `pricePushSeq` value last handled: pushed, or skipped because there was nothing that could be pushed.
+  pricePushedSeq          Int       @default(0)
+  lastPushedPriceAmount   Decimal?  @db.Decimal(19, 4)
+  lastPushedPriceCurrency String?   @db.Char(3)
+  lastPricePushedAt       DateTime?
   lastSeenAt          DateTime
   createdAt           DateTime         @default(now())
   updatedAt           DateTime         @updatedAt

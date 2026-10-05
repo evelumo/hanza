@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { offerSchema } from './offer'
 import { moneySchema } from './money'
 import { orderSchema } from './order'
+import { offerPriceSchema } from './price'
 import { stockLevelSchema } from './stock'
 
 const address = {
@@ -89,8 +90,21 @@ describe('offerSchema and stockLevelSchema', () => {
     expect(offerSchema.safeParse({ externalId: 'a', sku: null, name: 'Stickers', url: null }).success).toBe(true)
   })
 
+  it('accepts an Offer with, without or with a null Channel price, and rejects a float price', () => {
+    const offer = { externalId: 'a', sku: null, name: 'Stickers', url: null }
+    expect(offerSchema.safeParse({ ...offer, price: { amount: '12.50', currency: 'EUR' } }).success).toBe(true)
+    expect(offerSchema.safeParse({ ...offer, price: null }).success).toBe(true)
+    expect(offerSchema.safeParse({ ...offer, price: { amount: 12.5, currency: 'EUR' } }).success).toBe(false)
+  })
+
   it('rejects an Offer with a malformed url', () => {
     expect(offerSchema.safeParse({ externalId: 'a', sku: null, name: 'x', url: 'not a url' }).success).toBe(false)
+  })
+
+  it('requires a price on an OfferPrice', () => {
+    expect(offerPriceSchema.safeParse({ offerExternalId: 'a', sku: null, price: { amount: '9.99', currency: 'PLN' } }).success).toBe(true)
+    expect(offerPriceSchema.safeParse({ offerExternalId: 'a', sku: null, price: null }).success).toBe(false)
+    expect(offerPriceSchema.safeParse({ offerExternalId: '', sku: null, price: { amount: '9.99', currency: 'PLN' } }).success).toBe(false)
   })
 
   it('rejects negative and fractional availability', () => {
