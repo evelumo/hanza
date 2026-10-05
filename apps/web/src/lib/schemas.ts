@@ -1,13 +1,15 @@
 import { z } from 'zod'
+import { messageKey } from '@/i18n/keys'
 
-const ID_MESSAGE = 'Nieprawidłowy identyfikator.'
+// Messages are catalogue keys, not text: `invalidInput` translates them for the request's locale.
+const ID_MESSAGE = messageKey('validation.idInvalid')
+const SKU_REQUIRED = messageKey('validation.skuRequired')
+const UNITS_MESSAGE = messageKey('validation.unitsInvalid')
 
-/** Ids come from hidden fields, so the message is for the logs more than for the user; it must still never be English. */
+/** Ids come from hidden fields, so the message is for the logs more than for the user. */
 export const idSchema = z.string({ error: ID_MESSAGE }).min(1, ID_MESSAGE).max(64, ID_MESSAGE)
 
-export const skuSchema = z.string({ error: 'Podaj SKU.' }).trim().min(1, 'Podaj SKU.').max(64, 'SKU może mieć najwyżej 64 znaki.')
-
-const UNITS_MESSAGE = 'Podaj liczbę całkowitą od 0 do 1 000 000.'
+export const skuSchema = z.string({ error: SKU_REQUIRED }).trim().min(1, SKU_REQUIRED).max(64, messageKey('validation.skuTooLong'))
 
 /** Stock units from a text input; `z.coerce.number()` would turn an empty field into 0. */
 export const unitsSchema = z

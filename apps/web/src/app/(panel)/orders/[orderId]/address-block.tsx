@@ -1,6 +1,8 @@
 import type { Address } from '@hanza/connector-sdk'
+import { useT } from '@/i18n/use-t'
 
 export function AddressBlock({ title, address }: { title: string; address: Address | null }) {
+  const t = useT()
   return (
     <div>
       <h3 className="text-sm font-medium text-muted">{title}</h3>
@@ -16,18 +18,18 @@ export function AddressBlock({ title, address }: { title: string; address: Addre
           {address.phone ? (
             <>
               <br />
-              tel. {address.phone}
+              {t('orders.detail.phone', { phone: address.phone })}
             </>
           ) : null}
           {address.taxId ? (
             <>
               <br />
-              NIP: {address.taxId}
+              {t('orders.detail.taxId', { taxId: address.taxId })}
             </>
           ) : null}
         </address>
       ) : (
-        <p className="mt-1 text-sm text-muted">Nie podano.</p>
+        <p className="mt-1 text-sm text-muted">{t('orders.detail.addressMissing')}</p>
       )}
     </div>
   )

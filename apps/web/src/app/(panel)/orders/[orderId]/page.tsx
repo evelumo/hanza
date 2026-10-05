@@ -5,10 +5,11 @@ import { ActionForm } from '@/components/action-form'
 import { ActionButton } from '@/components/form'
 import { EmptyState, Section, linkClass, rowClass, tableClass, tdClass, thClass } from '@/components/section'
 import { AttentionBadge, OrderStatusBadge } from '@/components/status-badge'
+import { getT } from '@/i18n/server'
 import { getContext } from '@/lib/context'
 import { describeEvent } from '@/lib/events'
-import { formatDateTime, formatMoney } from '@/lib/format'
-import { attentionReasonLabels, factLabels, orderStatusLabels, paymentLabels, reservationLabels } from '@/lib/labels'
+import { getFormatters } from '@/lib/formatters'
+import { attentionReasonLabel, factLabel, orderStatusLabel, paymentLabel, reservationLabel } from '@/lib/labels'
 import { requireTenant } from '@/lib/session'
 import { changeOrderStatusAction, resolveAttentionAction } from './actions'
 import { AddressBlock } from './address-block'
@@ -16,13 +17,9 @@ import { LinkLineForm } from './link-line-form'
 
 export const dynamic = 'force-dynamic'
 
-const statusConfirm = {
-  shipped: 'Oznaczyć zamówienie jako wysłane? Zarezerwowany towar zostanie zdjęty ze stanu.',
-  cancelled: 'Anulować zamówienie? Rezerwacje zostaną zwolnione, a tej zmiany nie można cofnąć.',
-} as const
-
 export default async function OrderPage({ params }: { params: Promise<{ orderId: string }> }) {
   const { organizationId } = await requireTenant()
+  const [t, format] = await Promise.all([getT(), getFormatters()])
   const { orderId } = await params
   const order = await getOrder(getContext(), organizationId, orderId)
   if (!order) notFound()
@@ -34,46 +31,51 @@ export default async function OrderPage({ params }: { params: Promise<{ orderId:
     <div className="space-y-6">
       <div>
         <Link href="/orders" className={linkClass}>
-          ← Zamówienia
+          ← {t('orders.title')}
         </Link>
         <div className="mt-2 flex flex-wrap items-center gap-3">
           <h1 className="text-2xl font-semibold tracking-tight">
-            Zamówienie <span className="font-mono">{order.externalId}</span>
+            {t('orders.detail.title')} <span className="font-mono">{order.externalId}</span>
           </h1>
           <OrderStatusBadge status={order.status} />
           {order.attentionReasons.length > 0 ? <AttentionBadge /> : null}
         </div>
         <p className="mt-1 text-sm text-muted">
-          Kanał: {order.connectionName} · {formatDateTime(order.placedAt)} · {paymentLabels[order.payment]} · {formatMoney(order.total)}
+          {t('orders.detail.summary', {
+            channel: order.connectionName,
+            date: format.dateTime(order.placedAt),
+            payment: paymentLabel(t, order.payment),
+            total: format.money(order.total),
+          })}
         </p>
       </div>
 
       {order.attentionReasons.length > 0 ? (
-        <section role="region" aria-label="Wymaga uwagi" className="rounded-lg border border-red-300 bg-red-50 px-5 py-4">
-          <h2 className="font-semibold text-red-900">Wymaga uwagi</h2>
+        <section role="region" aria-label={t('orders.needsAttention')} className="rounded-lg border border-red-300 bg-red-50 px-5 py-4">
+          <h2 className="font-semibold text-red-900">{t('orders.needsAttention')}</h2>
           <ul className="mt-2 list-disc pl-5 text-sm text-red-900">
             {order.attentionReasons.map((reason) => (
-              <li key={reason}>{attentionReasonLabels[reason]}</li>
+              <li key={reason}>{attentionReasonLabel(t, reason)}</li>
             ))}
           </ul>
           {order.attentionReasons.includes('unmatched_line') ? (
-            <p className="mt-2 text-sm text-red-900">Połącz niepołączone pozycje z produktami poniżej, a to oznaczenie zniknie samo.</p>
+            <p className="mt-2 text-sm text-red-900">{t('orders.detail.attentionHint')}</p>
           ) : null}
           {manualReasons.length > 0 ? (
             <ActionForm action={resolveAttentionAction} className="mt-3">
               <input type="hidden" name="orderId" value={order.id} />
-              <ActionButton variant="secondary" pendingLabel="Zapisywanie…">
-                Oznacz jako sprawdzone
+              <ActionButton variant="secondary" pendingLabel={t('common.saving')}>
+                {t('orders.detail.markReviewed')}
               </ActionButton>
             </ActionForm>
           ) : null}
         </section>
       ) : null}
 
-      <Section title="Status" description="Postęp realizacji prowadzi Hanza; zmiana jest przekazywana do kanału, jeśli kanał to obsługuje.">
+      <Section title={t('orders.detail.statusTitle')} description={t('orders.detail.statusDescription')}>
         <div className="px-5 py-4">
           {order.allowedTransitions.length === 0 ? (
-            <p className="text-sm text-muted">Zamówienie ma status końcowy ({orderStatusLabels[order.status]}), nie można go zmienić.</p>
+            <p className="text-sm text-muted">{t('orders.detail.finalStatus', { status: orderStatusLabel(t, order.status) })}</p>
           ) : (
             <div className="flex flex-wrap gap-3">
               {order.allowedTransitions.map((status) => (
@@ -81,12 +83,18 @@ export default async function OrderPage({ params }: { params: Promise<{ orderId:
                   // A new key after lines get linked drops the stale "link the lines first" error.
                   key={`${status}:${unmatchedLines}`}
                   action={changeOrderStatusAction}
-                  confirm={status === 'shipped' || status === 'cancelled' ? statusConfirm[status] : undefined}
+                  confirm={
+                    status === 'shipped'
+                      ? t('orders.detail.confirmShipped')
+                      : status === 'cancelled'
+                        ? t('orders.detail.confirmCancelled')
+                        : undefined
+                  }
                 >
                   <input type="hidden" name="orderId" value={order.id} />
                   <input type="hidden" name="status" value={status} />
-                  <ActionButton variant={status === 'cancelled' ? 'danger' : 'secondary'} pendingLabel="Zapisywanie…">
-                    Zmień na: {orderStatusLabels[status]}
+                  <ActionButton variant={status === 'cancelled' ? 'danger' : 'secondary'} pendingLabel={t('common.saving')}>
+                    {t('orders.detail.changeTo', { status: orderStatusLabel(t, status) })}
                   </ActionButton>
                 </ActionForm>
               ))}
@@ -95,26 +103,26 @@ export default async function OrderPage({ params }: { params: Promise<{ orderId:
         </div>
       </Section>
 
-      <Section title="Pozycje">
+      <Section title={t('orders.detail.linesTitle')}>
         <div className="overflow-x-auto">
           <table className={tableClass}>
             <thead>
               <tr>
-                <th scope="col" className={thClass}>SKU</th>
-                <th scope="col" className={thClass}>Nazwa</th>
-                <th scope="col" className={`${thClass} text-right`}>Ilość</th>
-                <th scope="col" className={`${thClass} text-right`}>Cena</th>
-                <th scope="col" className={thClass}>Produkt</th>
-                <th scope="col" className={thClass}>Rezerwacja</th>
+                <th scope="col" className={thClass}>{t('orders.detail.lineColumns.sku')}</th>
+                <th scope="col" className={thClass}>{t('orders.detail.lineColumns.name')}</th>
+                <th scope="col" className={`${thClass} text-right`}>{t('orders.detail.lineColumns.quantity')}</th>
+                <th scope="col" className={`${thClass} text-right`}>{t('orders.detail.lineColumns.price')}</th>
+                <th scope="col" className={thClass}>{t('orders.detail.lineColumns.product')}</th>
+                <th scope="col" className={thClass}>{t('orders.detail.lineColumns.reservation')}</th>
               </tr>
             </thead>
             <tbody>
               {order.lines.map((line) => (
                 <tr key={line.id} className={rowClass}>
-                  <td className={`${tdClass} font-mono`}>{line.sku ?? <span className="font-sans text-muted">brak</span>}</td>
+                  <td className={`${tdClass} font-mono`}>{line.sku ?? <span className="font-sans text-muted">{t('common.none')}</span>}</td>
                   <td className={tdClass}>{line.name}</td>
-                  <td className={`${tdClass} text-right tabular-nums`}>{line.quantity}</td>
-                  <td className={`${tdClass} text-right tabular-nums`}>{formatMoney(line.unitPrice)}</td>
+                  <td className={`${tdClass} text-right tabular-nums`}>{format.number(line.quantity)}</td>
+                  <td className={`${tdClass} text-right tabular-nums`}>{format.money(line.unitPrice)}</td>
                   <td className={tdClass}>
                     {line.productId ? (
                       <Link href={`/products/${line.productId}`} className={linkClass}>
@@ -122,15 +130,15 @@ export default async function OrderPage({ params }: { params: Promise<{ orderId:
                       </Link>
                     ) : (
                       <div className="space-y-2">
-                        <AttentionBadge label="Niepołączona" />
+                        <AttentionBadge label={t('orders.detail.unlinked')} />
                         <LinkLineForm lineId={line.id} suggestedSku={line.sku} />
                       </div>
                     )}
                   </td>
                   <td className={tdClass}>
                     <span className="flex flex-wrap items-center gap-1.5">
-                      {line.reservationStatus ? reservationLabels[line.reservationStatus] : <span className="text-muted">brak</span>}
-                      {line.shortage ? <AttentionBadge label="Brak na stanie" /> : null}
+                      {line.reservationStatus ? reservationLabel(t, line.reservationStatus) : <span className="text-muted">{t('common.none')}</span>}
+                      {line.shortage ? <AttentionBadge label={t('orders.detail.shortage')} /> : null}
                     </span>
                   </td>
                 </tr>
@@ -140,10 +148,10 @@ export default async function OrderPage({ params }: { params: Promise<{ orderId:
         </div>
       </Section>
 
-      <Section title="Kupujący">
+      <Section title={t('orders.detail.buyerTitle')}>
         <div className="grid gap-6 px-5 py-4 sm:grid-cols-3">
           <div>
-            <h3 className="text-sm font-medium text-muted">Dane kontaktowe</h3>
+            <h3 className="text-sm font-medium text-muted">{t('orders.detail.contact')}</h3>
             <p className="mt-1 text-sm leading-6">
               {order.buyer.name}
               {order.buyer.email ? (
@@ -155,35 +163,35 @@ export default async function OrderPage({ params }: { params: Promise<{ orderId:
               {order.buyer.phone ? (
                 <>
                   <br />
-                  tel. {order.buyer.phone}
+                  {t('orders.detail.phone', { phone: order.buyer.phone })}
                 </>
               ) : null}
               {order.buyer.login ? (
                 <>
                   <br />
-                  Login w kanale: {order.buyer.login}
+                  {t('orders.detail.channelLogin', { login: order.buyer.login })}
                 </>
               ) : null}
             </p>
           </div>
-          <AddressBlock title="Adres dostawy" address={order.shippingAddress} />
-          <AddressBlock title="Adres do faktury" address={order.billingAddress} />
+          <AddressBlock title={t('orders.detail.shippingAddress')} address={order.shippingAddress} />
+          <AddressBlock title={t('orders.detail.billingAddress')} address={order.billingAddress} />
         </div>
       </Section>
 
-      <Section title="Zmiany zgłoszone przez kanał">
+      <Section title={t('orders.detail.factsTitle')}>
         {order.facts.length === 0 ? (
-          <EmptyState>Kanał nie zgłosił żadnych zmian.</EmptyState>
+          <EmptyState>{t('orders.detail.factsEmpty')}</EmptyState>
         ) : (
           <ul className="divide-y divide-line">
             {order.facts.map((fact) => (
               <li key={fact.externalId} className="flex flex-wrap items-center justify-between gap-3 px-5 py-3 text-sm">
                 <span>
-                  {factLabels[fact.type]}
+                  {factLabel(t, fact.type)}
                   {fact.note ? <span className="text-muted"> · {fact.note}</span> : null}
                 </span>
                 <time dateTime={fact.occurredAt.toISOString()} className="text-muted">
-                  {formatDateTime(fact.occurredAt)}
+                  {format.dateTime(fact.occurredAt)}
                 </time>
               </li>
             ))}
@@ -191,13 +199,13 @@ export default async function OrderPage({ params }: { params: Promise<{ orderId:
         )}
       </Section>
 
-      <Section title="Historia">
+      <Section title={t('orders.detail.historyTitle')}>
         {order.events.length === 0 ? (
-          <EmptyState>Brak zdarzeń.</EmptyState>
+          <EmptyState>{t('orders.detail.historyEmpty')}</EmptyState>
         ) : (
           <ul className="divide-y divide-line">
             {order.events.map((event) => {
-              const { title, detail } = describeEvent(event.type, event.payload)
+              const { title, detail } = describeEvent(event.type, event.payload, t)
               return (
                 <li key={event.id} className="flex flex-wrap items-center justify-between gap-3 px-5 py-3 text-sm">
                   <span>
@@ -205,7 +213,7 @@ export default async function OrderPage({ params }: { params: Promise<{ orderId:
                     {detail ? <span className="text-muted"> · {detail}</span> : null}
                   </span>
                   <time dateTime={event.createdAt.toISOString()} className="text-muted">
-                    {formatDateTime(event.createdAt)}
+                    {format.dateTime(event.createdAt)}
                   </time>
                 </li>
               )

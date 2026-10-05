@@ -1,10 +1,12 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
+import { useT } from '@/i18n/use-t'
 import { authClient } from '@/lib/auth-client'
 
 export function SignOutButton() {
   const router = useRouter()
+  const t = useT()
 
   async function signOut() {
     await authClient.signOut()
@@ -14,7 +16,7 @@ export function SignOutButton() {
 
   return (
     <button type="button" onClick={signOut} className="font-medium text-accent underline">
-      Wyloguj
+      {t('auth.signOut')}
     </button>
   )
 }

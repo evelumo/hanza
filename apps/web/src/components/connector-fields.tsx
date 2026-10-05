@@ -1,3 +1,4 @@
+import { useT } from '@/i18n/use-t'
 import { Field, Select } from './form'
 import type { ConnectorField } from '@/lib/connector-form'
 
@@ -11,11 +12,12 @@ export function ConnectorFields({
   values?: Record<string, string>
   errors?: Record<string, string>
 }) {
+  const t = useT()
   return (
     <>
       {fields.map((field) => {
         const error = errors[field.name]
-        const label = field.required ? field.label : `${field.label} (opcjonalnie)`
+        const label = field.required ? field.label : t('connections.new.optionalField', { label: field.label })
         if (field.control === 'checkbox') {
           const checked = field.name in values ? values[field.name] === 'on' : field.defaultValue === true
           return (

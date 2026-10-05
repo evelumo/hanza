@@ -1,6 +1,7 @@
 import type { OrderStatus } from '@hanza/connector-sdk'
 import type { ConnectionHealth } from '@hanza/db'
-import { healthLabels, orderStatusLabels } from '@/lib/labels'
+import { useT } from '@/i18n/use-t'
+import { healthLabel, orderStatusLabel } from '@/lib/labels'
 
 const base = 'inline-flex items-center whitespace-nowrap rounded-full border px-2 py-0.5 text-xs font-medium'
 
@@ -20,13 +21,16 @@ const healthTone: Record<ConnectionHealth, string> = {
 
 // The meaning is always in the text; colour only reinforces it.
 export function OrderStatusBadge({ status }: { status: OrderStatus }) {
-  return <span className={`${base} ${statusTone[status]}`}>{orderStatusLabels[status]}</span>
+  const t = useT()
+  return <span className={`${base} ${statusTone[status]}`}>{orderStatusLabel(t, status)}</span>
 }
 
 export function HealthBadge({ health }: { health: ConnectionHealth }) {
-  return <span className={`${base} ${healthTone[health]}`}>{healthLabels[health]}</span>
+  const t = useT()
+  return <span className={`${base} ${healthTone[health]}`}>{healthLabel(t, health)}</span>
 }
 
-export function AttentionBadge({ label = 'Wymaga uwagi' }: { label?: string }) {
-  return <span className={`${base} border-red-300 bg-red-50 text-red-900`}>{label}</span>
+export function AttentionBadge({ label }: { label?: string }) {
+  const t = useT()
+  return <span className={`${base} border-red-300 bg-red-50 text-red-900`}>{label ?? t('orders.needsAttention')}</span>
 }

@@ -8,7 +8,7 @@ import {
 
 describe('createProductSchema', () => {
   it('trims the SKU and name and reads the stock as a number', () => {
-    expect(createProductSchema.parse({ sku: '  ABC-1 ', name: ' Kubek ', stock: '12' })).toEqual({ sku: 'ABC-1', name: 'Kubek', stock: 12 })
+    expect(createProductSchema.parse({ sku: '  ABC-1 ', name: ' Mug ', stock: '12' })).toEqual({ sku: 'ABC-1', name: 'Mug', stock: 12 })
   })
 
   it('rejects an empty or too long SKU and name', () => {
