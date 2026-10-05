@@ -8,6 +8,8 @@ if (existsSync(rootEnv)) process.loadEnvFile(rootEnv)
 export default defineConfig({
   test: {
     globalSetup: ['./vitest.global-setup.ts'],
+    // The files share one test database and `sync.tick` is global: run them one after another.
+    fileParallelism: false,
     testTimeout: 30_000,
     hookTimeout: 60_000,
   },

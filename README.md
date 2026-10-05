@@ -48,6 +48,10 @@ pnpm test
 pnpm build
 ```
 
+### Upgrading
+
+Stop web and worker, run `pnpm db:deploy`, then start the new version. Some migrations rewrite a whole table under an exclusive lock and the code of either side of them fails against the other schema; the Order statuses migration (ADR 0014) is one of them.
+
 ## Repo layout
 
 ```

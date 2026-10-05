@@ -46,6 +46,7 @@ export default async function OrderStatusesPage() {
               {inPhase.map((status, index) => {
                 const label = orderStatusName(t, status)
                 const inUse = status.orderCount + status.mappingCount > 0
+                const replacedBy = status.replacedById ? inPhase.find((other) => other.id === status.replacedById) : undefined
                 const replacements = inPhase
                   .filter((other) => other.id !== status.id && other.active)
                   .map((other) => ({ id: other.id, label: orderStatusName(t, other) }))
@@ -62,7 +63,12 @@ export default async function OrderStatusesPage() {
                       ) : null}
                     </div>
                     {status.isDefault ? <p className="text-xs text-muted">{t('settings.orderStatuses.defaultHint')}</p> : null}
-                    {canManage ? (
+                    {status.replacedById ? (
+                      <p role="status" className="text-sm font-medium">
+                        {t('settings.orderStatuses.deletionInProgress', { status: replacedBy ? orderStatusName(t, replacedBy) : '—' })}
+                      </p>
+                    ) : null}
+                    {canManage && !status.replacedById ? (
                       <>
                         <StatusEditForm status={status} label={label} phaseName={orderPhaseLabel(t, phase)} options={options} />
                         <div className="flex flex-wrap items-end gap-2">

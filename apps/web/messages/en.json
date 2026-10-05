@@ -383,7 +383,8 @@
       "order_status_created": "Status added",
       "order_status_updated": "Status edited",
       "order_status_deleted": "Status deleted",
-      "connection_status_mapping_changed": "Order statuses from the channel changed"
+      "connection_status_mapping_changed": "Order statuses from the channel changed",
+      "order_status_deletion_requested": "Status deletion started"
     },
     "lines": "{count, plural, one {# line} other {# lines}}",
     "defaultStatus": "default status"
@@ -402,7 +403,10 @@
       "status_in_use": "This status is still used. Choose a status to move its orders to.",
       "invalid_replacement": "Choose another active status of the same phase.",
       "status_name_taken": "An active status with this name already exists.",
-      "status_inactive": "This status is inactive. Activate it first."
+      "status_inactive": "This status is inactive. Activate it first.",
+      "status_name_required": "Enter a name. Only a default status can go without one.",
+      "status_pending_deletion": "This status is being deleted.",
+      "status_is_replacement": "Orders of a status being deleted are moving to this one. Try again when that deletion is done."
     },
     "unexpected": "Something went wrong. Please try again.",
     "invalidInput": "Check the fields.",
@@ -427,7 +431,6 @@
     "nameRequired": "Enter a name.",
     "productNameTooLong": "The name can have at most 200 characters.",
     "connectionNameTooLong": "The name can have at most 100 characters.",
-    "statusInvalid": "Choose a valid status.",
     "offersRequired": "Select at least one offer.",
     "offersTooMany": "Select at most 200 offers at a time.",
     "fieldRequired": "This field is required.",
@@ -435,7 +438,8 @@
     "statusNameRequired": "Enter a name.",
     "statusNameTooLong": "The name can have at most 60 characters.",
     "colorInvalid": "Choose a colour from the list.",
-    "phaseInvalid": "Choose a valid phase."
+    "phaseInvalid": "Choose a valid phase.",
+    "statusNameReserved": "This is the name of a phase. Leave the name of the default status empty to use it."
   },
   "settings": {
     "title": "Settings",
@@ -461,7 +465,7 @@
       "name": "Name",
       "nameFor": "Name of {status}",
       "namePlaceholder": "e.g. Waiting for packaging",
-      "nameHint": "Empty: the phase name, in each person’s language.",
+      "nameHint": "Empty (default status only): the phase name, in each person’s language.",
       "color": "Colour",
       "colorFor": "Colour of {status}",
       "colorNone": "Phase colour",
@@ -483,7 +487,8 @@
       "usedByChannels": "{count, plural, one {Used by # channel} other {Used by # channels}}",
       "defaultHint": "The status an order gets when it enters this phase, unless a channel says otherwise. It cannot be deactivated or deleted.",
       "deleteScheduled": "Deleting: its orders are being moved to the chosen status. The status disappears when that is done.",
-      "deleteFor": "Delete {status}"
+      "deleteFor": "Delete {status}",
+      "deletionInProgress": "Being deleted: its orders are moving to {status}."
     }
   }
 }

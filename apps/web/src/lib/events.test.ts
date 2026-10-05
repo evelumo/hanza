@@ -32,6 +32,20 @@ describe('describeEvent', () => {
     expect(describeEvent('order.status_changed', { from: 'new', to: 'new', toStatus: 'garbage' }, t, number).detail).toBe('New → New')
   })
 
+  it('shows an unnamed status by the phase it kept, in the viewer\'s language', () => {
+    const payload = { from: 'processing', to: 'processing', fromStatus: { id: 'a', name: null, phase: 'processing' }, toStatus: { id: 'b', name: 'Packed', phase: 'processing' } }
+    expect(describeEvent('order.status_changed', payload, translatorFor('pl'), numberPl).detail).toBe(`${catalogues.pl.labels.orderPhase.processing} → Packed`)
+    expect(describeEvent('order.status_changed', payload, t, number).detail).toBe('Processing → Packed')
+  })
+
+  it('shows a former default (no name) in a Status mapping change as its phase, and no status as the default', () => {
+    const formerDefault = { phase: 'new', from: { id: 'x', name: null, phase: 'new' }, to: { id: 'y', name: 'To check', phase: 'new' } }
+    expect(describeEvent('connection.status_mapping_changed', formerDefault, t, number).detail).toBe('New: New → To check')
+    expect(describeEvent('connection.status_mapping_changed', { phase: 'new', from: { id: 'y', name: 'To check', phase: 'new' }, to: null }, t, number).detail).toBe(
+      'New: To check → default status',
+    )
+  })
+
   it('describes a change of a Status mapping', () => {
     const payload = { phase: 'cancelled', from: null, to: { id: 'x', name: 'Refunded' } }
     expect(describeEvent('connection.status_mapping_changed', payload, t, number)).toEqual({

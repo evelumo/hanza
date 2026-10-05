@@ -146,8 +146,8 @@ describe.skipIf(!databaseUrl)('Order statuses under concurrency', () => {
       ...Array.from({ length: 16 }, () => importOrder(ctx, org, connectionId, order())),
       // The status the imports are mapped to is deleted while they run: they land on its replacement (or the default).
       // As the panel and then the worker would.
-      deleteOrderStatus(ctx, org, incoming, toCheck, admin).then(() => finishOrderStatusDeletion(ctx, org, incoming, toCheck, admin, { batchSize: 3 })),
-      deleteOrderStatus(ctx, org, packing, packed, admin).then(() => finishOrderStatusDeletion(ctx, org, packing, packed, admin, { batchSize: 3 })),
+      deleteOrderStatus(ctx, org, incoming, toCheck, admin).then(() => finishOrderStatusDeletion(ctx, org, incoming, admin, { batchSize: 3 })),
+      deleteOrderStatus(ctx, org, packing, packed, admin).then(() => finishOrderStatusDeletion(ctx, org, packing, admin, { batchSize: 3 })),
       ...existing.slice(0, 4).map((orderId) => changeOrderStatus(ctx, org, orderId, 'shipped', admin)),
       updateOrderStatus(ctx, org, toCheck, { name: 'Checking', color: 'blue' }, admin),
       moveOrderStatus(ctx, org, toCheck, 'up', admin),

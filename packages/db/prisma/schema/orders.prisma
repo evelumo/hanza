@@ -152,19 +152,29 @@ model OrderStatus {
   active         Boolean           @default(true)
   /// The status an Order gets when it enters this phase and no Status mapping says otherwise.
   isDefault      Boolean           @default(false)
+  /// Set while the status is being deleted (it is inactive then): where its Orders and mappings move.
+  replacedById   String?
+  /// Set while the status is being deleted: when `sync.tick` may enqueue the deletion job again.
+  deletionDueAt  DateTime?
   createdAt      DateTime          @default(now())
   updatedAt      DateTime          @updatedAt
 
   organization Organization           @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   orders       Order[]
   mappings     ChannelStatusMapping[]
+  /// Composite: the replacement is of the same organization and phase. NoAction: a replacement cannot be deleted
+  /// while a deletion still moves Orders to it.
+  replacedBy   OrderStatus?           @relation("StatusReplacement", fields: [organizationId, phase, replacedById], references: [organizationId, phase, id], onDelete: NoAction, onUpdate: NoAction)
+  replacing    OrderStatus[]          @relation("StatusReplacement")
 
   // The target of the composite foreign keys. Its columns never change, so being "key" columns costs nothing.
   @@unique([organizationId, phase, id])
   // Partial on purpose: Postgres treats the columns of a non-partial unique index as "key" columns, so a rename or a
   // new default would lock the row FOR UPDATE and wait behind every Order import holding FOR KEY SHARE on it.
   @@unique([organizationId, phase], where: raw("\"isDefault\""), map: "order_status_one_default_per_phase")
-  @@unique([organizationId, name], where: raw("\"active\" AND \"name\" IS NOT NULL"), map: "order_status_active_name_key")
+  // Unique active names, case-insensitive: an expression index on lower("name"), in the migration only (Prisma cannot
+  // express it, and leaves it alone). Expression indexes do not make columns "key" columns either.
+  @@index([deletionDueAt], where: raw("\"deletionDueAt\" IS NOT NULL"))
   @@map("order_status")
 }
 

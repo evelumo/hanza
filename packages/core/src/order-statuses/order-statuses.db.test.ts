@@ -54,6 +54,36 @@ describe.skipIf(!databaseUrl)('Order statuses (Postgres)', () => {
     ])
   })
 
+  it('keeps active names unique whatever their case, even when two are created at once (the database decides)', async () => {
+    const { ctx, org, admin } = await setup()
+    const settled = await Promise.allSettled(
+      ['Packed', 'packed', 'PACKED'].map((name) => createOrderStatus(ctx, org, { phase: 'processing', name, color: null }, admin)),
+    )
+    expect(settled.filter((result) => result.status === 'fulfilled')).toHaveLength(1)
+    for (const result of settled) {
+      if (result.status === 'rejected') expect(result.reason).toMatchObject({ code: 'status_name_taken' })
+    }
+    await expect(
+      ctx.db.$executeRaw`INSERT INTO "order_status" ("id", "organizationId", "phase", "name", "updatedAt") VALUES (gen_random_uuid()::text, ${org}, 'new', 'pACKED', now())`,
+    ).rejects.toThrow(/unique/i)
+  })
+
+  it('lets a default status take a name and give it back, and keeps the phase in Event snapshots of an unnamed one', async () => {
+    const { ctx, org, admin, connectionId, defaultOf } = await setup()
+    const processing = (await defaultOf('processing')).id
+    await updateOrderStatus(ctx, org, processing, { name: 'Being prepared', color: null }, admin)
+    await updateOrderStatus(ctx, org, processing, { name: '', color: null }, admin)
+    expect((await defaultOf('processing')).name).toBeNull()
+
+    const { orderId } = await importOrder(ctx, org, connectionId, buildOrder())
+    await changeOrderStatus(ctx, org, orderId, 'processing', admin)
+    const changed = await ctx.db.eventLog.findFirstOrThrow({ where: { organizationId: org, subjectId: orderId, type: 'order.status_changed' } })
+    expect(changed.payload).toMatchObject({
+      fromStatus: { id: (await defaultOf('new')).id, name: null, phase: 'new' },
+      toStatus: { id: processing, name: null, phase: 'processing' },
+    })
+  })
+
   it('lets only owners and admins manage statuses and Status mappings; anyone may change an Order status', async () => {
     const { ctx, org, admin, connectionId, defaultOf } = await setup()
     const member = await addMember(ctx, org, 'member')
@@ -92,8 +122,10 @@ describe.skipIf(!databaseUrl)('Order statuses (Postgres)', () => {
 
     await updateOrderStatus(ctx, org, packing, { name: 'Waiting for packaging', color: 'violet' }, admin)
     expect((await statuses()).find((status) => status.id === packing)).toMatchObject({ name: 'Waiting for packaging', color: 'violet' })
-    await updateOrderStatus(ctx, org, packing, { name: '', color: null }, admin)
-    expect((await statuses()).find((status) => status.id === packing)).toMatchObject({ name: null, color: null })
+    // Only a phase default goes without a name.
+    await expect(updateOrderStatus(ctx, org, packing, { name: '', color: null }, admin)).rejects.toMatchObject({ code: 'status_name_required' })
+    await updateOrderStatus(ctx, org, packing, { name: 'Waiting for packaging', color: null }, admin)
+    expect((await statuses()).find((status) => status.id === packing)).toMatchObject({ name: 'Waiting for packaging', color: null })
 
     const processingDefault = await defaultOf('processing')
     await expect(setOrderStatusActive(ctx, org, processingDefault.id, false, admin)).rejects.toMatchObject({ code: 'status_is_default' })
@@ -239,8 +271,8 @@ describe.skipIf(!databaseUrl)('Order statuses (Postgres)', () => {
     expect(await deleteOrderStatus(ctx, org, packing, packed, admin)).toEqual({ deleted: false })
     expect((await statuses()).find((status) => status.id === packing)).toMatchObject({ active: false, orderCount: 5 })
     const job = ctx.queue.waiting.find((waiting) => waiting.name === 'orderStatuses.delete' && (waiting.payload as { statusId: string }).statusId === packing)
-    expect(job).toMatchObject({ payload: { organizationId: org, statusId: packing, replacementId: packed, actor: admin } })
-    expect(await finishOrderStatusDeletion(ctx, org, packing, packed, admin, { batchSize: 2 })).toEqual({ moved: 5 })
+    expect(job).toMatchObject({ payload: { organizationId: org, statusId: packing, actor: admin } })
+    expect(await finishOrderStatusDeletion(ctx, org, packing, admin, { batchSize: 2 })).toEqual({ moved: 5 })
     // The queued job then finds nothing left to do.
     await orderStatusesDeleteJob.handler(ctx, job!.payload as never, { attempt: 1, maxAttempts: 5, retriedLater: 0 })
 
@@ -250,7 +282,7 @@ describe.skipIf(!databaseUrl)('Order statuses (Postgres)', () => {
     expect(moved.map((event) => event.subjectId).sort()).toEqual([...orderIds].sort())
     expect(moved[0]?.payload).toMatchObject({ from: 'processing', to: 'processing', fromStatus: { id: packing, name: 'Packing' }, toStatus: { id: packed, name: 'Packed' } })
     const deleted = await ctx.db.eventLog.findFirstOrThrow({ where: { organizationId: org, type: 'order_status.deleted', subjectId: packing } })
-    expect(deleted.payload).toEqual({ phase: 'processing', name: 'Packing', replacement: { id: packed, name: 'Packed' }, moved: 5, actor: admin })
+    expect(deleted.payload).toEqual({ phase: 'processing', name: 'Packing', replacement: { id: packed, name: 'Packed', phase: 'processing' }, moved: 5, actor: admin })
   })
 
   it('moves the Status mappings of a deleted status to its replacement', async () => {
@@ -295,10 +327,10 @@ describe.skipIf(!databaseUrl)('Order statuses (Postgres)', () => {
 
     const events = await ctx.db.eventLog.findMany({ where: { organizationId: org, type: 'connection.status_mapping_changed' }, orderBy: { id: 'asc' } })
     expect(events.map((event) => event.payload)).toEqual([
-      { phase: 'new', from: null, to: { id: toCheck, name: 'To check' }, actor: admin },
-      { phase: 'cancelled', from: null, to: { id: refunded, name: 'Refunded' }, actor: admin },
-      { phase: 'shipped', from: null, to: { id: delivered, name: 'Delivered' }, actor: admin },
-      { phase: 'cancelled', from: { id: refunded, name: 'Refunded' }, to: null, actor: admin },
+      { phase: 'new', from: null, to: { id: toCheck, name: 'To check', phase: 'new' }, actor: admin },
+      { phase: 'cancelled', from: null, to: { id: refunded, name: 'Refunded', phase: 'cancelled' }, actor: admin },
+      { phase: 'shipped', from: null, to: { id: delivered, name: 'Delivered', phase: 'shipped' }, actor: admin },
+      { phase: 'cancelled', from: { id: refunded, name: 'Refunded', phase: 'cancelled' }, to: null, actor: admin },
     ])
   })
 

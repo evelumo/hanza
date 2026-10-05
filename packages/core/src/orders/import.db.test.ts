@@ -139,7 +139,7 @@ describe.skipIf(!databaseUrl)('importOrder', () => {
     const defaults = await ctx.db.orderStatus.findMany({ where: { organizationId: org, isDefault: true }, select: { id: true, name: true, phase: true } })
     const defaultOf = (phase: string) => {
       const status = defaults.find((candidate) => candidate.phase === phase)
-      return { id: status?.id, name: null }
+      return { id: status?.id, name: null, phase }
     }
     const changed = await ctx.db.eventLog.findMany({ where: { subjectId: orderId, type: 'order.status_changed' }, orderBy: { id: 'asc' } })
     expect(changed.map((event) => event.payload)).toEqual([

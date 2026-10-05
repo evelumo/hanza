@@ -155,7 +155,7 @@ async function applyNewFacts(
 
   const order = await tx.order.findFirst({
     where: { id: orderId, organizationId },
-    select: { phase: true, attentionReasons: true, status: { select: { id: true, name: true } } },
+    select: { phase: true, attentionReasons: true, status: { select: { id: true, name: true, phase: true } } },
   })
   if (!order) throw new DomainError('not_found')
   let { phase, status, attentionReasons: reasons } = order

@@ -3,7 +3,6 @@ import { addressSchema } from '@hanza/connector-sdk'
 import type { AttentionReason, ChannelFactType, OrderStatusColor, PaymentMethod } from '@hanza/db'
 import type { Context } from '../context'
 import { listEvents, type EventRow } from '../events'
-import { ensureDefaultOrderStatuses } from '../order-statuses/defaults'
 import { ORDER_PHASES, type OrderPhase } from './phases'
 import { allowedStatuses } from './status-rules'
 
@@ -149,7 +148,7 @@ export async function getOrder(ctx: Context, organizationId: string, orderId: st
   })
   if (!order) return null
 
-  await ensureDefaultOrderStatuses(ctx.db, organizationId)
+  // An Order always has a status, so its organization's defaults exist already.
   const [events, statuses] = await Promise.all([
     listEvents(ctx, organizationId, { type: 'order', id: order.id }, 50),
     ctx.db.orderStatus.findMany({

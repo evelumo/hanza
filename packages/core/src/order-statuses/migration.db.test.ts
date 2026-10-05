@@ -4,7 +4,7 @@ import { applyMigration, createTestDatabase } from '@hanza/db/testing'
 import { describe, expect, it } from 'vitest'
 import { databaseUrl } from '../testing/db-test'
 
-const MIGRATION = '20261005201428_custom_order_statuses'
+const MIGRATION = '20261005210451_custom_order_statuses'
 
 // Rows shaped like the schema before the migration (the `status` column of type `order_status`), written in SQL
 // because the Prisma client only knows the schema after it.

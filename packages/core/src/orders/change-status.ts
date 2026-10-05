@@ -4,7 +4,7 @@ import type { Context } from '../context'
 import { DomainError } from '../errors'
 import { appendEvent } from '../events'
 import { coalesceKeys, ordersUpdateStatusRef } from '../jobs/refs'
-import { defaultStatus, ensureDefaultOrderStatuses, lockedStatus } from '../order-statuses/defaults'
+import { defaultStatus, ensureDefaultOrderStatuses, lockedStatus, snapshotOf } from '../order-statuses/defaults'
 import { lockOrder } from '../stock/locks'
 import { markOffersForStockPush, requestStockPushAfterCommit } from '../stock/push'
 import { ensureDefaultWarehouse } from '../stock/warehouse'
@@ -36,7 +36,7 @@ export async function changeOrderStatus(ctx: Context, organizationId: string, or
         phase: true,
         statusId: true,
         attentionReasons: true,
-        status: { select: { id: true, name: true } },
+        status: { select: { id: true, name: true, phase: true } },
         connection: { select: { connectorId: true } },
       },
     })
@@ -70,8 +70,8 @@ export async function changeOrderStatus(ctx: Context, organizationId: string, or
       payload: {
         from: order.phase,
         to: target.phase,
-        fromStatus: order.status,
-        toStatus: { id: target.id, name: target.name },
+        fromStatus: snapshotOf(order.status),
+        toStatus: snapshotOf(target),
         cause: 'user',
         factId: null,
         actor,

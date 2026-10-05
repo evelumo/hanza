@@ -383,7 +383,8 @@
       "order_status_created": "Dodano status",
       "order_status_updated": "Zmieniono ustawienia statusu",
       "order_status_deleted": "Usunięto status",
-      "connection_status_mapping_changed": "Zmieniono statusy zamówień z kanału"
+      "connection_status_mapping_changed": "Zmieniono statusy zamówień z kanału",
+      "order_status_deletion_requested": "Rozpoczęto usuwanie statusu"
     },
     "lines": "{count, plural, one {# pozycja} few {# pozycje} many {# pozycji} other {# pozycji}}",
     "defaultStatus": "status domyślny"
@@ -402,7 +403,10 @@
       "status_in_use": "Ten status jest nadal używany. Wybierz status, do którego przenieść jego zamówienia.",
       "invalid_replacement": "Wybierz inny aktywny status z tej samej fazy.",
       "status_name_taken": "Aktywny status o tej nazwie już istnieje.",
-      "status_inactive": "Ten status jest wyłączony. Najpierw go włącz."
+      "status_inactive": "Ten status jest wyłączony. Najpierw go włącz.",
+      "status_name_required": "Wpisz nazwę. Tylko status domyślny może jej nie mieć.",
+      "status_pending_deletion": "Ten status jest właśnie usuwany.",
+      "status_is_replacement": "Do tego statusu są przenoszone zamówienia z usuwanego statusu. Spróbuj ponownie, gdy usuwanie się skończy."
     },
     "unexpected": "Coś poszło nie tak. Spróbuj ponownie.",
     "invalidInput": "Sprawdź poprawność pól.",
@@ -427,7 +431,6 @@
     "nameRequired": "Podaj nazwę.",
     "productNameTooLong": "Nazwa może mieć najwyżej 200 znaków.",
     "connectionNameTooLong": "Nazwa może mieć najwyżej 100 znaków.",
-    "statusInvalid": "Wybierz poprawny status.",
     "offersRequired": "Zaznacz co najmniej jedną ofertę.",
     "offersTooMany": "Zaznacz najwyżej 200 ofert naraz.",
     "fieldRequired": "To pole jest wymagane.",
@@ -435,7 +438,8 @@
     "statusNameRequired": "Wpisz nazwę.",
     "statusNameTooLong": "Nazwa może mieć najwyżej 60 znaków.",
     "colorInvalid": "Wybierz kolor z listy.",
-    "phaseInvalid": "Wybierz poprawną fazę."
+    "phaseInvalid": "Wybierz poprawną fazę.",
+    "statusNameReserved": "To nazwa fazy. Żeby jej użyć, zostaw pustą nazwę statusu domyślnego."
   },
   "settings": {
     "title": "Ustawienia",
@@ -461,7 +465,7 @@
       "name": "Nazwa",
       "nameFor": "Nazwa statusu {status}",
       "namePlaceholder": "np. Czeka na pakowanie",
-      "nameHint": "Puste pole: nazwa fazy, w języku każdej osoby.",
+      "nameHint": "Puste pole (tylko status domyślny): nazwa fazy, w języku każdej osoby.",
       "color": "Kolor",
       "colorFor": "Kolor statusu {status}",
       "colorNone": "Kolor fazy",
@@ -483,7 +487,8 @@
       "usedByChannels": "{count, plural, one {Używany przez # kanał} few {Używany przez # kanały} many {Używany przez # kanałów} other {Używany przez # kanału}}",
       "defaultHint": "Status, który zamówienie dostaje po wejściu w tę fazę, chyba że kanał mówi inaczej. Nie można go wyłączyć ani usunąć.",
       "deleteScheduled": "Usuwanie: zamówienia są przenoszone do wybranego statusu. Status zniknie, gdy to się skończy.",
-      "deleteFor": "Usuń status {status}"
+      "deleteFor": "Usuń status {status}",
+      "deletionInProgress": "Usuwany: jego zamówienia są przenoszone do statusu {status}."
     }
   }
 }

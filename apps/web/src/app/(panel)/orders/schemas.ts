@@ -7,9 +7,19 @@ export const changeOrderStatusSchema = z.object({ orderId: idSchema, statusId: i
 export const linkOrderLineSchema = z.object({ orderLineId: idSchema, sku: skuSchema })
 export const resolveAttentionSchema = z.object({ orderId: idSchema })
 
-/** `status` is a status id: one of another organization simply matches nothing, as the list is scoped by tenant. */
-export const orderListFiltersSchema = z.object({
-  phase: z.enum(ORDER_PHASES).optional().catch(undefined),
-  status: idSchema.optional().catch(undefined),
-  attention: z.literal('1').optional().catch(undefined),
-})
+const phaseSchema = z.enum(ORDER_PHASES)
+
+/**
+ * `status` is a status id: one of another organization simply matches nothing, as the list is scoped by tenant. Links
+ * from before organizations had statuses carry a phase there (`?status=new`); it becomes the phase filter.
+ */
+export const orderListFiltersSchema = z
+  .object({
+    phase: phaseSchema.optional().catch(undefined),
+    status: idSchema.optional().catch(undefined),
+    attention: z.literal('1').optional().catch(undefined),
+  })
+  .transform((filters) => {
+    const legacyPhase = phaseSchema.safeParse(filters.status)
+    return legacyPhase.success ? { ...filters, phase: filters.phase ?? legacyPhase.data, status: undefined } : filters
+  })

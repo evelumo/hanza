@@ -18,6 +18,16 @@ describe('createOrderStatusSchema', () => {
   })
 })
 
+describe('reserved names', () => {
+  it('refuses a phase name in any language the panel speaks, whatever its case', () => {
+    for (const name of ['Processing', 'shipped', 'W realizacji', 'ANULOWANE']) {
+      expect(createOrderStatusSchema.safeParse({ phase: 'new', name, color: '' }).success).toBe(false)
+      expect(updateOrderStatusSchema.safeParse({ statusId: 's', name, color: '' }).success).toBe(false)
+    }
+    expect(createOrderStatusSchema.safeParse({ phase: 'new', name: 'Processed by the warehouse', color: '' }).success).toBe(true)
+  })
+})
+
 describe('updateOrderStatusSchema', () => {
   it('turns an empty name into the phase name (null)', () => {
     expect(updateOrderStatusSchema.parse({ statusId: 's', name: '  ', color: '' })).toEqual({ statusId: 's', name: null, color: null })

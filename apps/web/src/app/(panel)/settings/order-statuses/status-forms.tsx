@@ -35,7 +35,7 @@ export function StatusEditForm({
   phaseName,
   options,
 }: {
-  status: { id: string; name: string | null; color: OrderStatusColor | null }
+  status: { id: string; name: string | null; color: OrderStatusColor | null; isDefault: boolean }
   label: string
   /** Shown while the name is empty: what the status is called then. */
   phaseName: string
@@ -54,6 +54,7 @@ export function StatusEditForm({
               aria-label={t('settings.orderStatuses.nameFor', { status: label })}
               maxLength={options.nameMax}
               placeholder={phaseName}
+              hint={status.isDefault ? t('settings.orderStatuses.nameHint') : undefined}
               defaultValue={state.values?.name ?? status.name ?? ''}
               error={state.fieldErrors?.name}
             />

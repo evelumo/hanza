@@ -34,10 +34,10 @@ export const ordersUpdateStatusRef = {
 
 const actor = z.discriminatedUnion('type', [z.object({ type: z.literal('user'), userId: id }), z.object({ type: z.literal('system') })])
 
-/** Finishes deleting an Order status: moves its Orders to the replacement in batches, then deletes it (ADR 0014). */
+/** Finishes deleting an Order status: moves its Orders to the replacement recorded on it, then deletes it (ADR 0014). */
 export const orderStatusesDeleteRef = {
   name: 'orderStatuses.delete',
-  schema: z.object({ organizationId: id, statusId: id, replacementId: id, actor }),
+  schema: z.object({ organizationId: id, statusId: id, actor }),
 } satisfies JobRef
 
 export const coalesceKeys = {

@@ -1,6 +1,10 @@
 -- Organization-defined Order statuses (issue #1, ADR 0014). The fixed list becomes the Order phases: renamed in
 -- place, never dropped, so every existing Order keeps its value. Each organization gets a default status per phase and
 -- every existing Order is moved to the default status of its phase.
+--
+-- Rollout: this holds an ACCESS EXCLUSIVE lock on "order" for its whole run (rename, full-table UPDATE, NOT NULL,
+-- index, foreign key), and code from before it fails against the new schema (and the reverse): stop web and worker,
+-- migrate, then start the new version.
 
 -- The old enum type must give up its name before the "order_status" table (and its row type) can be created.
 ALTER TYPE "order_status" RENAME TO "order_phase";
@@ -20,13 +24,20 @@ CREATE TABLE "order_status" (
     "position" INTEGER NOT NULL DEFAULT 0,
     "active" BOOLEAN NOT NULL DEFAULT true,
     "isDefault" BOOLEAN NOT NULL DEFAULT false,
+    "replacedById" TEXT,
+    "deletionDueAt" TIMESTAMP(3),
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "order_status_pkey" PRIMARY KEY ("id"),
     -- A default status can always be given to an Order, so it cannot be inactive.
     CONSTRAINT "order_status_default_is_active_check" CHECK (NOT "isDefault" OR "active"),
-    CONSTRAINT "order_status_name_check" CHECK ("name" IS NULL OR btrim("name") <> '')
+    CONSTRAINT "order_status_name_check" CHECK ("name" IS NULL OR btrim("name") <> ''),
+    -- Being deleted: inactive, not a default, with a replacement other than itself and a due time for the sweep.
+    CONSTRAINT "order_status_deletion_check" CHECK (
+      ("replacedById" IS NULL) = ("deletionDueAt" IS NULL)
+      AND ("replacedById" IS NULL OR (NOT "active" AND NOT "isDefault" AND "replacedById" <> "id"))
+    )
 );
 
 -- CreateTable
@@ -50,8 +61,12 @@ CREATE UNIQUE INDEX "order_status_organizationId_phase_id_key" ON "order_status"
 -- CreateIndex
 CREATE UNIQUE INDEX "order_status_one_default_per_phase" ON "order_status"("organizationId", "phase") WHERE ("isDefault");
 
--- CreateIndex
-CREATE UNIQUE INDEX "order_status_active_name_key" ON "order_status"("organizationId", "name") WHERE ("active" AND "name" IS NOT NULL);
+-- No two active statuses share a name, whatever its case. An expression index: Prisma cannot express it (and leaves it
+-- alone), and like a partial one it does not make "name" a key column.
+CREATE UNIQUE INDEX "order_status_active_name_key" ON "order_status"("organizationId", lower("name")) WHERE ("active" AND "name" IS NOT NULL);
+
+-- The sweep in sync.tick finds statuses being deleted.
+CREATE INDEX "order_status_deletionDueAt_idx" ON "order_status"("deletionDueAt") WHERE ("deletionDueAt" IS NOT NULL);
 
 -- CreateIndex
 CREATE INDEX "channel_status_mapping_organizationId_statusId_idx" ON "channel_status_mapping"("organizationId", "statusId");
@@ -61,6 +76,9 @@ CREATE UNIQUE INDEX "channel_status_mapping_connectionId_phase_key" ON "channel_
 
 -- AddForeignKey
 ALTER TABLE "order_status" ADD CONSTRAINT "order_status_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "order_status" ADD CONSTRAINT "order_status_organizationId_phase_replacedById_fkey" FOREIGN KEY ("organizationId", "phase", "replacedById") REFERENCES "order_status"("organizationId", "phase", "id") ON DELETE NO ACTION ON UPDATE NO ACTION;
 
 -- AddForeignKey
 ALTER TABLE "channel_status_mapping" ADD CONSTRAINT "channel_status_mapping_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;

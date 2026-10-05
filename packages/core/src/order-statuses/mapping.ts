@@ -1,10 +1,11 @@
+import type { Tx } from '@hanza/db'
 import type { Actor } from '../actor'
 import type { Context } from '../context'
 import { DomainError } from '../errors'
 import { appendEvent } from '../events'
 import { CHANNEL_REPORTED_PHASES, type ChannelReportedPhase } from '../orders/phases'
 import { TX_OPTIONS } from '../transaction'
-import { lockedStatus, type StatusSnapshot } from './defaults'
+import { sharedStatus, snapshotOf, type StatusSnapshot } from './defaults'
 import { assertCanManageOrderStatuses } from './permissions'
 
 /** Per reported phase, the status this Channel's Orders get instead of the phase default; null = the default. */
@@ -39,7 +40,7 @@ export async function setStatusMapping(
       if (statusId === undefined) continue
       const current = await tx.channelStatusMapping.findFirst({
         where: { organizationId, connectionId, phase },
-        select: { id: true, status: { select: { id: true, name: true } } },
+        select: { id: true, status: { select: { id: true, name: true, phase: true } } },
       })
       if ((current?.status.id ?? null) === statusId) continue
 
@@ -47,10 +48,12 @@ export async function setStatusMapping(
       if (statusId === null) {
         await tx.channelStatusMapping.deleteMany({ where: { organizationId, connectionId, phase } })
       } else {
-        const status = await lockedStatus(tx, organizationId, statusId)
+        // FOR SHARE waits for a deactivation or a deletion of the status in progress, so it never maps to one.
+        const status = await sharedStatus(tx, organizationId, statusId)
         if (!status || status.phase !== phase) throw new DomainError('not_found')
+        if (status.replacedById !== null) throw new DomainError('status_pending_deletion')
         if (!status.active) throw new DomainError('status_inactive')
-        to = { id: status.id, name: status.name }
+        to = snapshotOf(status)
         if (current) {
           await tx.channelStatusMapping.updateMany({ where: { id: current.id, organizationId }, data: { statusId } })
         } else {
@@ -61,8 +64,24 @@ export async function setStatusMapping(
         organizationId,
         type: 'connection.status_mapping_changed',
         subject: { type: 'connection', id: connectionId },
-        payload: { phase, from: current?.status ?? null, to, actor },
+        payload: { phase, from: current ? snapshotOf(current.status) : null, to, actor },
       })
     }
   }, TX_OPTIONS)
+}
+
+/** Moves every Status mapping from a status being deleted to its replacement, with an Event per Connection. */
+export async function moveMappings(tx: Tx, organizationId: string, from: StatusSnapshot, to: StatusSnapshot, actor: Actor): Promise<number> {
+  const moved = await tx.channelStatusMapping.findMany({ where: { organizationId, statusId: from.id }, select: { id: true, connectionId: true, phase: true } })
+  if (moved.length === 0) return 0
+  await tx.channelStatusMapping.updateMany({ where: { organizationId, id: { in: moved.map((row) => row.id) } }, data: { statusId: to.id } })
+  for (const row of moved) {
+    await appendEvent(tx, {
+      organizationId,
+      type: 'connection.status_mapping_changed',
+      subject: { type: 'connection', id: row.connectionId },
+      payload: { phase: row.phase, from, to, cause: 'status_deleted', actor },
+    })
+  }
+  return moved.length
 }

@@ -1,10 +1,12 @@
 import { isChannel } from '@hanza/connector-sdk'
 import { listConnectionsForTick } from '../connections/connections'
+import { systemActor } from '../actor'
 import type { Context } from '../context'
 import { defineJob } from '../jobs'
+import { claimDueDeletions, DELETION_SWEEP_LIMIT } from '../order-statuses/delete'
 import { claimDueStatusPushes, STATUS_PUSH_SWEEP_LIMIT, STATUS_PUSH_SWEEP_LIMIT_FAILING } from '../orders/status-push'
 import { dueStreams, type ScheduledStream } from '../sync/schedule'
-import { coalesceKeys, offersPullRef, ordersPullRef, ordersUpdateStatusRef, stockPushRef, syncTickRef } from './refs'
+import { coalesceKeys, offersPullRef, orderStatusesDeleteRef, ordersPullRef, ordersUpdateStatusRef, stockPushRef, syncTickRef } from './refs'
 
 async function enqueueStream(ctx: Context, stream: ScheduledStream, organizationId: string, connectionId: string): Promise<void> {
   switch (stream) {
@@ -27,7 +29,8 @@ async function enqueueStream(ctx: Context, stream: ScheduledStream, organization
 
 /**
  * One global scheduler: enqueues every due stream of every Channel, except Connections waiting for sign-in,
- * and sweeps the Channel's overdue Order status pushes (ADR 0011).
+ * sweeps the Channel's overdue Order status pushes (ADR 0011) and Order status deletions whose job was lost or keeps
+ * failing (ADR 0014).
  */
 export const syncTickJob = defineJob({
   ...syncTickRef,
@@ -54,6 +57,15 @@ export const syncTickJob = defineJob({
         statusPushes++
       }
     }
-    if (enqueued > 0 || statusPushes > 0) ctx.log.info('sync tick', { enqueued, statusPushes })
+    let deletions = 0
+    for (const { organizationId, id: statusId } of await claimDueDeletions(ctx, DELETION_SWEEP_LIMIT)) {
+      await ctx.queue.enqueue(
+        orderStatusesDeleteRef,
+        { organizationId, statusId, actor: systemActor },
+        { coalesceKey: coalesceKeys.orderStatusesDelete(statusId) },
+      )
+      deletions++
+    }
+    if (enqueued > 0 || statusPushes > 0 || deletions > 0) ctx.log.info('sync tick', { enqueued, statusPushes, deletions })
   },
 })

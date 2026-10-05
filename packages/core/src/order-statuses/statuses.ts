@@ -6,7 +6,7 @@ import { DomainError, isUniqueViolation } from '../errors'
 import { appendEvent } from '../events'
 import { ORDER_PHASES, type OrderPhase } from '../orders/phases'
 import { TX_OPTIONS } from '../transaction'
-import { ensureDefaultOrderStatuses, findStatus } from './defaults'
+import { ensureDefaultOrderStatuses, findStatus, isPendingReplacement, snapshotOf } from './defaults'
 import { assertCanManageOrderStatuses } from './permissions'
 
 export const ORDER_STATUS_COLORS = ['gray', 'blue', 'teal', 'green', 'amber', 'orange', 'red', 'violet'] as const satisfies readonly OrderStatusColor[]
@@ -22,6 +22,8 @@ export interface OrderStatusRow {
   position: number
   active: boolean
   isDefault: boolean
+  /** Set while the status is being deleted: the status its Orders move to. */
+  replacedById: string | null
   orderCount: number
   mappingCount: number
 }
@@ -33,7 +35,7 @@ export async function listOrderStatuses(ctx: Context, organizationId: string): P
     ctx.db.orderStatus.findMany({
       where: { organizationId },
       orderBy: [{ position: 'asc' }, { createdAt: 'asc' }, { id: 'asc' }],
-      select: { id: true, phase: true, name: true, color: true, position: true, active: true, isDefault: true },
+      select: { id: true, phase: true, name: true, color: true, position: true, active: true, isDefault: true, replacedById: true },
     }),
     ctx.db.order.groupBy({ by: ['statusId'], where: { organizationId }, _count: { _all: true } }),
     ctx.db.channelStatusMapping.groupBy({ by: ['statusId'], where: { organizationId }, _count: { _all: true } }),
@@ -43,6 +45,22 @@ export async function listOrderStatuses(ctx: Context, organizationId: string): P
   return statuses
     .map((status) => ({ ...status, orderCount: orderCount.get(status.id) ?? 0, mappingCount: mappingCount.get(status.id) ?? 0 }))
     .sort((a, b) => ORDER_PHASES.indexOf(a.phase) - ORDER_PHASES.indexOf(b.phase))
+}
+
+/**
+ * The statuses to offer in a filter or a select: no counts, and nothing created (an organization without statuses has
+ * no Orders either). Phase by phase, then by position.
+ */
+export async function listOrderStatusOptions(
+  ctx: Context,
+  organizationId: string,
+): Promise<Array<{ id: string; name: string | null; phase: OrderPhase; color: OrderStatusColor | null; active: boolean }>> {
+  const rows = await ctx.db.orderStatus.findMany({
+    where: { organizationId },
+    orderBy: [{ position: 'asc' }, { createdAt: 'asc' }, { id: 'asc' }],
+    select: { id: true, name: true, phase: true, color: true, active: true },
+  })
+  return rows.sort((a, b) => ORDER_PHASES.indexOf(a.phase) - ORDER_PHASES.indexOf(b.phase))
 }
 
 /** Locks the phase's statuses in id order, so reorders and default changes of one phase run one at a time. */
@@ -101,7 +119,10 @@ export async function createOrderStatus(
   )
 }
 
-/** Rename (an empty name means the phase's own name) and recolour. Orders keep the status; past Events keep the old name. */
+/**
+ * Rename and recolour. Orders keep the status; past Events keep the old name. An empty name (the phase's own name) is
+ * only for a phase default, and for a former default that never got a name.
+ */
 export async function updateOrderStatus(
   ctx: Context,
   organizationId: string,
@@ -115,6 +136,7 @@ export async function updateOrderStatus(
     ctx.db.$transaction(async (tx) => {
       await lockStatuses(tx, organizationId, [statusId])
       const status = await findStatus(tx, organizationId, statusId)
+      if (name === null && status.name !== null && !status.isDefault) throw new DomainError('status_name_required')
       if (name !== null && status.active) await assertNameFree(tx, organizationId, name, statusId)
       const changes: Record<string, { from: unknown; to: unknown }> = {}
       if (status.name !== name) changes.name = { from: status.name, to: name }
@@ -160,7 +182,10 @@ export async function moveOrderStatus(ctx: Context, organizationId: string, stat
   }, TX_OPTIONS)
 }
 
-/** An inactive status keeps its Orders and mappings' history but cannot be chosen; the default stays active. */
+/**
+ * An inactive status keeps its Orders but cannot be chosen. The default stays active, a status being deleted cannot be
+ * activated again, and a status a deletion moves Orders to cannot be deactivated.
+ */
 export async function setOrderStatusActive(ctx: Context, organizationId: string, statusId: string, active: boolean, actor: Actor): Promise<void> {
   await assertCanManageOrderStatuses(ctx, organizationId, actor)
   await withNameTaken(() =>
@@ -169,6 +194,8 @@ export async function setOrderStatusActive(ctx: Context, organizationId: string,
       const status = await findStatus(tx, organizationId, statusId)
       if (status.active === active) return
       if (!active && status.isDefault) throw new DomainError('status_is_default')
+      if (active && status.replacedById !== null) throw new DomainError('status_pending_deletion')
+      if (!active && (await isPendingReplacement(tx, organizationId, statusId))) throw new DomainError('status_is_replacement')
       if (active && status.name !== null) await assertNameFree(tx, organizationId, status.name, statusId)
       await tx.orderStatus.updateMany({ where: { id: statusId, organizationId }, data: { active } })
       await appendEvent(tx, {
@@ -191,7 +218,8 @@ export async function makeDefaultOrderStatus(ctx: Context, organizationId: strin
     const status = await findStatus(tx, organizationId, statusId)
     if (status.isDefault) return
     if (!status.active) throw new DomainError('status_inactive')
-    const previous = await tx.orderStatus.findFirst({ where: { organizationId, phase, isDefault: true }, select: { id: true, name: true } })
+    const current = await tx.orderStatus.findFirst({ where: { organizationId, phase, isDefault: true }, select: { id: true, name: true, phase: true } })
+    const previous = current ? snapshotOf(current) : null
     // Unset first: the partial unique index allows one default per phase at any moment.
     await tx.orderStatus.updateMany({ where: { organizationId, phase, isDefault: true }, data: { isDefault: false } })
     await tx.orderStatus.updateMany({ where: { id: statusId, organizationId }, data: { isDefault: true } })

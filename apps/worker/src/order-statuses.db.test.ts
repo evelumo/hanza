@@ -11,7 +11,7 @@ import {
   jobs,
   ordersPullRef,
   setStatusMapping,
-  syncTickRef,
+  syncTickJob,
   type Actor,
 } from '@hanza/core'
 import { createTestContext, createTestOrganization, type TestContext } from '@hanza/core/testing'
@@ -60,6 +60,14 @@ describe.skipIf(!databaseUrl)('Order statuses end to end (real Postgres, in-memo
 
   function statusUpdates(orderExternalId: string) {
     return fake.statusUpdates.filter((update) => update.orderExternalId === orderExternalId).map((update) => update.status)
+  }
+
+  /** The tick is global: keep only this organization's jobs (another file's Connections use another encryption key). */
+  async function tick() {
+    await syncTickJob.handler(ctx, {}, { attempt: 1, maxAttempts: 5, retriedLater: 0 })
+    const own = ctx.queue.waiting.filter((job) => (job.payload as { organizationId?: string }).organizationId === org)
+    ctx.queue.waiting.splice(0, ctx.queue.waiting.length, ...own)
+    await drain()
   }
 
   async function pullOrders(connectionId: string) {
@@ -120,8 +128,7 @@ describe.skipIf(!databaseUrl)('Order statuses end to end (real Postgres, in-memo
 
     // The sweep has nothing to send either.
     await ctx.db.$executeRaw`UPDATE "order" SET "statusPushDueAt" = now() - interval '1 second' WHERE "organizationId" = ${org} AND "statusPushDueAt" IS NOT NULL`
-    await ctx.queue.enqueue(syncTickRef, {})
-    await drain()
+    await tick()
     expect(statusUpdates('fake-order-1')).toEqual(['processing'])
   })
 
@@ -138,8 +145,7 @@ describe.skipIf(!databaseUrl)('Order statuses end to end (real Postgres, in-memo
     expect(statusUpdates('fake-order-1')).toEqual(['processing', 'shipped'])
 
     await ctx.db.$executeRaw`UPDATE "order" SET "statusPushDueAt" = now() - interval '1 second' WHERE "organizationId" = ${org} AND "statusPushDueAt" IS NOT NULL`
-    await ctx.queue.enqueue(syncTickRef, {})
-    await drain()
+    await tick()
     expect(statusUpdates('fake-order-1')).toEqual(['processing', 'shipped'])
 
     const history = (await getOrder(ctx, org, first.id))!.events.filter((event) => event.type === 'order.status_changed').reverse()

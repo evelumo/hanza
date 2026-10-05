@@ -16,14 +16,15 @@ export function allowedTransitions(phase: OrderPhase): OrderPhase[] {
 
 /**
  * Whether a person may move an Order from its status to `to` (ADR 0014): any other active status of the same phase,
- * in every phase (it changes nothing the core relies on), or of a phase `allowedTransitions` reaches.
+ * in every phase (it changes nothing the core relies on), or of a phase `allowedTransitions` reaches. Every phase
+ * rule goes through `allowedTransitions`, so a rule added there (an unpaid Order, #60) holds for statuses too.
  */
 export function canMoveToStatus(
   current: { phase: OrderPhase; statusId: string },
   to: { id: string; phase: OrderPhase; active: boolean },
 ): boolean {
   if (!to.active || to.id === current.statusId) return false
-  return to.phase === current.phase || MANUAL[current.phase].includes(to.phase)
+  return to.phase === current.phase || allowedTransitions(current.phase).includes(to.phase)
 }
 
 /** The statuses a person may move the Order to, in the order given. */

@@ -90,8 +90,14 @@ describe.skipIf(!databaseUrl)('sync engine end to end (real Postgres, in-memory 
       WHERE "organizationId" = ${org} AND "statusPushDueAt" IS NOT NULL`
   }
 
+  /**
+   * Runs the tick, then keeps only this organization's jobs: the tick is global, and another test file's Connections
+   * in the same database are sealed with another context's encryption key.
+   */
   async function tick() {
-    await ctx.queue.enqueue(syncTickRef, {})
+    await syncTickJob.handler(ctx, {}, { attempt: 1, maxAttempts: 5, retriedLater: 0 })
+    const own = ctx.queue.waiting.filter((job) => (job.payload as { organizationId?: string }).organizationId === org)
+    ctx.queue.waiting.splice(0, ctx.queue.waiting.length, ...own)
     await drain()
   }
 

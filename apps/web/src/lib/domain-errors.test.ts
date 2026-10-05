@@ -18,6 +18,9 @@ const codes: DomainErrorCode[] = [
   'invalid_replacement',
   'status_name_taken',
   'status_inactive',
+  'status_name_required',
+  'status_pending_deletion',
+  'status_is_replacement',
 ]
 const t = translatorFor('en')
 

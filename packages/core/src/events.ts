@@ -21,6 +21,7 @@ export type EventType =
   | 'order.attention_resolved'
   | 'order_status.created'
   | 'order_status.updated'
+  | 'order_status.deletion_requested'
   | 'order_status.deleted'
   | 'connection.created'
   | 'connection.health_changed'

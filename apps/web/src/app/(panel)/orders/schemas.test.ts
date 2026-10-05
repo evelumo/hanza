@@ -31,4 +31,9 @@ describe('orderListFiltersSchema', () => {
     expect(orderListFiltersSchema.parse({ phase: 'shipped', status: 'status-id', attention: '1' })).toEqual({ phase: 'shipped', status: 'status-id', attention: '1' })
     expect(orderListFiltersSchema.parse({})).toEqual({})
   })
+
+  it('reads a phase in `status` (links from before Order statuses) as the phase filter', () => {
+    expect(orderListFiltersSchema.parse({ status: 'shipped' })).toEqual({ phase: 'shipped', status: undefined })
+    expect(orderListFiltersSchema.parse({ phase: 'new', status: 'cancelled', attention: '1' })).toEqual({ phase: 'new', status: undefined, attention: '1' })
+  })
 })

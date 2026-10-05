@@ -1,4 +1,4 @@
-import { listOrders, listOrderStatuses, ORDER_PHASES } from '@hanza/core'
+import { listOrders, listOrderStatusOptions, ORDER_PHASES } from '@hanza/core'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
@@ -38,7 +38,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
       needsAttention: filters.attention === '1' ? true : undefined,
       ...pageWindow(page),
     }),
-    listOrderStatuses(ctx, organizationId),
+    listOrderStatusOptions(ctx, organizationId),
   ])
   const filterParams = { phase: filters.phase, status: filters.status, attention: filters.attention }
   const outOfRange = outOfRangeRedirect(page, total, '/orders', filterParams)
