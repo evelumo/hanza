@@ -96,7 +96,7 @@
       "name": "Nazwa",
       "saveName": "Zapisz nazwę",
       "stockTitle": "Stan",
-      "stockDescription": "Hanza jest źródłem prawdy o stanie. Kanały dostają Dostępne (Stan minus Rezerwacje) pomniejszone o bufor bezpieczeństwa i limit ustawione dla każdego połączenia.",
+      "stockDescription": "Hanza jest źródłem prawdy o stanie. Kanały dostają Dostępne (Stan minus Rezerwacje) pomniejszone o bufor bezpieczeństwa i najwyżej tyle, ile wynosi limit kanału ustawiony dla każdego połączenia.",
       "stockSaved": "Zapisano. Nowy stan zostanie wysłany do kanałów.",
       "saveStock": "Zapisz stan",
       "offersTitle": "Oferty",
@@ -377,7 +377,8 @@
       "unmatched_lines": "Najpierw połącz wszystkie pozycje z produktami.",
       "already_linked": "Ta pozycja jest już połączona.",
       "unknown_connector": "Nieznany konektor.",
-      "invalid_config": "Sprawdź poprawność pól."
+      "invalid_config": "Sprawdź poprawność pól.",
+      "not_a_channel": "To połączenie nie jest kanałem sprzedaży, więc nie ma ustawień stanu."
     },
     "unexpected": "Coś poszło nie tak. Spróbuj ponownie.",
     "invalidInput": "Sprawdź poprawność pól.",

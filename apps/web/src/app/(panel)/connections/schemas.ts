@@ -11,13 +11,12 @@ export const addConnectionSchema = z.object({
 
 export const requestSyncSchema = z.object({ connectionId: idSchema })
 
-/** An empty Channel limit means no limit. */
+/** The Channel limit field must be sent; left empty, it means no limit. A missing field is an error, never "no limit". */
 export const stockRulesSchema = z.object({
   connectionId: idSchema,
   safetyBuffer: unitsSchema,
   channelLimit: z
-    .string()
-    .optional()
-    .transform((value) => value?.trim() || null)
+    .string({ error: messageKey('validation.unitsInvalid') })
+    .transform((value) => value.trim() || null)
     .pipe(unitsSchema.nullable()),
 })

@@ -96,7 +96,7 @@
       "name": "Name",
       "saveName": "Save name",
       "stockTitle": "Stock",
-      "stockDescription": "Hanza is the source of truth for stock. Channels receive Available (Stock minus Reservations), less the safety buffer and limit set on each connection.",
+      "stockDescription": "Hanza is the source of truth for stock. Channels receive Available (Stock minus Reservations) less the safety buffer, and at most the channel limit, set on each connection.",
       "stockSaved": "Saved. The new stock will be sent to the channels.",
       "saveStock": "Save stock",
       "offersTitle": "Offers",
@@ -377,7 +377,8 @@
       "unmatched_lines": "Link all the lines to products first.",
       "already_linked": "This line is already linked.",
       "unknown_connector": "Unknown connector.",
-      "invalid_config": "Check the fields."
+      "invalid_config": "Check the fields.",
+      "not_a_channel": "This connection is not a sales channel, so it has no stock settings."
     },
     "unexpected": "Something went wrong. Please try again.",
     "invalidInput": "Check the fields.",

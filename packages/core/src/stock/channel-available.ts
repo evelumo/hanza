@@ -14,15 +14,18 @@ export type ChannelStockRules = z.infer<typeof channelStockRulesSchema>
 
 export const NO_CHANNEL_STOCK_RULES: ChannelStockRules = { safetyBuffer: 0, channelLimit: null }
 
+const isUnits = (value: unknown): value is number => Number.isInteger(value) && (value as number) >= 0
+
 /**
  * Channel Available: Available less the Safety buffer, at most the Channel limit, never below zero.
- * The one definition of the number a Channel is told (ADR 0011). Settings outside their range are
- * read as "no buffer" / "no limit", so the result always stays within 0..max(0, Available).
+ * The one definition of the number a Channel is told (ADR 0011). It fails closed: a setting or an
+ * Available that is not a whole number in range (which the schema and the database CHECKs should
+ * make impossible) tells the Channel 0 rather than guess, so the result stays within 0..max(0, Available).
  */
 export function channelAvailable(available: number, rules: ChannelStockRules): number {
-  const buffer = Number.isInteger(rules.safetyBuffer) && rules.safetyBuffer > 0 ? rules.safetyBuffer : 0
-  const limit = rules.channelLimit !== null && Number.isInteger(rules.channelLimit) && rules.channelLimit >= 0 ? rules.channelLimit : Infinity
-  return Math.max(0, Math.min(available - buffer, limit))
+  if (!Number.isInteger(available) || !isUnits(rules.safetyBuffer)) return 0
+  if (rules.channelLimit !== null && !isUnits(rules.channelLimit)) return 0
+  return Math.max(0, Math.min(available - rules.safetyBuffer, rules.channelLimit ?? Infinity))
 }
 
 /**

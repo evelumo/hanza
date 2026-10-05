@@ -13,6 +13,8 @@ import { buildOrder, orderLine, uniqueSku, user } from '../testing/fixtures'
 import { stockPushJob } from './stock-push'
 
 const pushes: StockLevel[][] = []
+/** Runs once inside the next `stock.push` call, after the levels are recorded. */
+let duringNextPush: (() => Promise<void>) | undefined
 
 const channel = defineConnector({
   id: 'push-channel',
@@ -30,6 +32,9 @@ const channel = defineConnector({
     },
     async 'stock.push'(_ctx, levels) {
       pushes.push(levels)
+      const hook = duringNextPush
+      duringNextPush = undefined
+      await hook?.()
     },
   },
 })
@@ -130,6 +135,24 @@ describe.skipIf(!databaseUrl)('stock.push', () => {
       { offerExternalId: 'offer-few', sku: few, available: 2 },
       { offerExternalId: 'offer-plenty', sku: plenty, available: 20 },
     ])
+  })
+
+  it('a settings change during a running push leaves the Offer pending, and the same run then pushes the new number', async () => {
+    const { ctx, organizationId, connectionId } = await setup()
+    const sku = uniqueSku()
+    await createProduct(ctx, organizationId, { sku, name: 'A', stock: 5 }, user)
+    await upsertOffers(ctx, organizationId, connectionId, [{ externalId: 'offer-a', sku, name: 'A', url: null }], new Date())
+    // The rules commit after this push read the Offer's sequence and the old rules, before it marks the Offer pushed.
+    duringNextPush = () => updateChannelStockRules(ctx, organizationId, connectionId, { safetyBuffer: 0, channelLimit: 2 }, user)
+
+    pushes.length = 0
+    await stockPushJob.handler(ctx, { organizationId, connectionId }, run)
+
+    expect(duringNextPush).toBeUndefined()
+    expect(pushes).toEqual([[{ offerExternalId: 'offer-a', sku, available: 5 }], [{ offerExternalId: 'offer-a', sku, available: 2 }]])
+    const offer = await ctx.db.offer.findFirstOrThrow({ where: { organizationId, connectionId, externalId: 'offer-a' } })
+    expect(offer.stockPushedSeq).toBe(offer.stockPushSeq)
+    expect(offer.lastPushedAvailable).toBe(2)
   })
 
   it('with nothing to push it calls nothing and records only that it finished', async () => {

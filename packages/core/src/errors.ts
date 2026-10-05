@@ -8,6 +8,7 @@ export type DomainErrorCode =
   | 'already_linked'
   | 'unknown_connector'
   | 'invalid_config'
+  | 'not_a_channel'
 
 /** Thrown by services for expected failures; the panel maps `code` to translated copy. */
 export class DomainError extends Error {

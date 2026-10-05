@@ -22,15 +22,22 @@ describe('requestSyncSchema', () => {
 })
 
 describe('stockRulesSchema', () => {
-  it('reads whole numbers and an empty or missing limit as no limit', () => {
+  it('reads whole numbers, and an empty limit as no limit', () => {
     expect(stockRulesSchema.parse({ connectionId: 'c', safetyBuffer: ' 2 ', channelLimit: '5' })).toEqual({
       connectionId: 'c',
       safetyBuffer: 2,
       channelLimit: 5,
     })
     expect(stockRulesSchema.parse({ connectionId: 'c', safetyBuffer: '0', channelLimit: '  ' }).channelLimit).toBeNull()
-    expect(stockRulesSchema.parse({ connectionId: 'c', safetyBuffer: '0' }).channelLimit).toBeNull()
     expect(stockRulesSchema.parse({ connectionId: 'c', safetyBuffer: '0', channelLimit: '0' }).channelLimit).toBe(0)
+  })
+
+  it('fails closed: a missing limit field is an error, not "no limit"', () => {
+    const missing = stockRulesSchema.safeParse({ connectionId: 'c', safetyBuffer: '0' })
+    expect(missing.success).toBe(false)
+    expect(missing.error?.issues[0]?.path).toEqual(['channelLimit'])
+    expect(stockRulesSchema.safeParse({ connectionId: 'c', safetyBuffer: '0', channelLimit: null }).success).toBe(false)
+    expect(stockRulesSchema.safeParse({ connectionId: 'c', channelLimit: '' }).success).toBe(false)
   })
 
   it('rejects an empty buffer, negative, fractional and too large values', () => {

@@ -5,12 +5,12 @@ import { DomainError } from '../errors'
 import { getChannelAvailability } from '../stock/channel-available'
 import { createTestOrganization } from '../testing/context'
 import { databaseUrl, useTestContext } from '../testing/db-test'
-import { createTestConnection, uniqueSku, user } from '../testing/fixtures'
-import { getConnection } from './connections'
+import { createTestConnection, testChannel, testCourier, uniqueSku, user } from '../testing/fixtures'
+import { createConnection, getConnection } from './connections'
 import { updateChannelStockRules } from './stock-rules'
 
 describe.skipIf(!databaseUrl)('Channel stock rules', () => {
-  const context = useTestContext()
+  const context = useTestContext({ connectors: [testChannel, testCourier] })
 
   async function setup() {
     const ctx = context()
@@ -86,6 +86,20 @@ describe.skipIf(!databaseUrl)('Channel stock rules', () => {
     await expect(ctx.db.connection.update({ where: { id: marketplace }, data: { safetyBuffer: -1 } })).rejects.toThrow()
     await expect(ctx.db.connection.update({ where: { id: marketplace }, data: { channelLimit: -1 } })).rejects.toThrow()
     expect((await getConnection(ctx, org, marketplace))?.stockRules).toEqual({ safetyBuffer: 0, channelLimit: null })
+  })
+
+  it('refuses a Connection that is not a Channel, or whose connector this build does not know', async () => {
+    const { ctx, org } = await setup()
+    const create = (connectorId: string) =>
+      createConnection(ctx, org, { connectorId, name: connectorId, config: {}, credentials: {} }, user).then((created) => created.connectionId)
+    for (const connectionId of [await create('test-courier'), await create('removed-connector')]) {
+      const attempt = updateChannelStockRules(ctx, org, connectionId, { safetyBuffer: 1, channelLimit: null }, user)
+      await expect(attempt).rejects.toBeInstanceOf(DomainError)
+      await expect(attempt).rejects.toMatchObject({ code: 'not_a_channel' })
+      expect((await getConnection(ctx, org, connectionId))?.stockRules).toEqual({ safetyBuffer: 0, channelLimit: null })
+    }
+    expect(ctx.queue.waiting).toEqual([])
+    expect(await ctx.db.eventLog.count({ where: { organizationId: org, type: 'connection.stock_rules_changed' } })).toBe(0)
   })
 
   it('another organization\'s Connection is not found and stays unchanged', async () => {
