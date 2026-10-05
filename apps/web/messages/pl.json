@@ -167,9 +167,7 @@
       "membersTitle": "Produkty w tej rodzinie",
       "membersDescription": "Każdy produkt ma jedną wartość dla każdego atrybutu. Dwa produkty nie mogą mieć tych samych wartości.",
       "membersEmpty": "W tej rodzinie nie ma jeszcze produktów. Dodaj pierwszy poniżej.",
-      "columns": {
-        "available": "Dostępne"
-      },
+      "availableLine": "Dostępne: {count}",
       "saveValues": "Zapisz",
       "saving": "Zapisywanie…",
       "remove": "Usuń z rodziny",
@@ -431,7 +429,7 @@
       "already_linked": "Ta pozycja jest już połączona.",
       "unknown_connector": "Nieznany konektor.",
       "invalid_config": "Sprawdź poprawność pól.",
-      "variant_taken": "Inny produkt w tej rodzinie ma już takie wartości.",
+      "combination_taken": "Inny produkt w tej rodzinie ma już takie wartości.",
       "invalid_attributes": "Wypełnij każdy atrybut (najwyżej 100 znaków) i zadbaj, by nazwy atrybutów się nie powtarzały.",
       "already_in_family": "Ten produkt jest już w rodzinie. Najpierw usuń go z niej."
     },

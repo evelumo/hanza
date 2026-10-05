@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { MAX_ATTRIBUTE_NAME_LENGTH, MAX_ATTRIBUTE_VALUE_LENGTH, MAX_FAMILY_ATTRIBUTES } from '@hanza/core'
+import { isReservedAttributeName, MAX_ATTRIBUTE_NAME_LENGTH, MAX_ATTRIBUTE_VALUE_LENGTH, MAX_FAMILY_ATTRIBUTES } from '@hanza/core'
 import { messageKey } from '@/i18n/keys'
 import type { MessageKey } from '@/i18n/types'
 import { idSchema, skuSchema } from '@/lib/schemas'
@@ -19,7 +19,7 @@ export const attributeNamesSchema = z
     (names) =>
       names.length >= 1 &&
       names.length <= MAX_FAMILY_ATTRIBUTES &&
-      names.every((name) => name.length <= MAX_ATTRIBUTE_NAME_LENGTH) &&
+      names.every((name) => name.length <= MAX_ATTRIBUTE_NAME_LENGTH && !isReservedAttributeName(name)) &&
       new Set(names.map((name) => name.toLowerCase())).size === names.length,
     ATTRIBUTES_INVALID,
   )
@@ -37,12 +37,13 @@ export function parseAttributeValues(
   attributes: readonly string[],
   input: Readonly<Record<string, string | undefined>>,
 ): { ok: true; values: Record<string, string> } | { ok: false; fieldErrors: Record<string, MessageKey> } {
-  const values: Record<string, string> = {}
+  // Own properties only: an attribute name must never reach the prototype.
+  const entries: Array<[string, string]> = []
   const fieldErrors: Record<string, MessageKey> = {}
   attributes.forEach((name, index) => {
     const parsed = valueSchema.safeParse(input[valueField(index)])
-    if (parsed.success) values[name] = parsed.data
+    if (parsed.success) entries.push([name, parsed.data])
     else fieldErrors[valueField(index)] = VALUE_REQUIRED
   })
-  return Object.keys(fieldErrors).length > 0 ? { ok: false, fieldErrors } : { ok: true, values }
+  return Object.keys(fieldErrors).length > 0 ? { ok: false, fieldErrors } : { ok: true, values: Object.fromEntries(entries) }
 }

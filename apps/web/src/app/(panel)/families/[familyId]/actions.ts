@@ -5,8 +5,8 @@ import {
   deleteFamily,
   DomainError,
   findProductBySku,
-  getFamily,
-  getProduct,
+  getFamilyAttributes,
+  getProductFamilyAttributes,
   removeProductFromFamily,
   renameFamily,
   updateFamilyMember,
@@ -68,13 +68,13 @@ export async function addProductToFamilyAction(_previous: ActionState, formData:
 
   const ctx = getContext()
   try {
-    const family = await getFamily(ctx, organizationId, parsed.data.familyId)
-    if (!family) throw new DomainError('not_found')
-    const attributes = parseAttributeValues(family.attributes, input)
+    const familyAttributes = await getFamilyAttributes(ctx, organizationId, parsed.data.familyId)
+    if (!familyAttributes) throw new DomainError('not_found')
+    const attributes = parseAttributeValues(familyAttributes, input)
     if (!attributes.ok) return invalidValues(attributes.fieldErrors, t, input)
     const product = await findProductBySku(ctx, organizationId, parsed.data.sku)
     if (!product) return { error: t('errors.unknownSku'), fieldErrors: { sku: t('errors.unknownSku') }, values: input }
-    await addProductToFamily(ctx, organizationId, family.id, product.id, attributes.values, { type: 'user', userId: user.id })
+    await addProductToFamily(ctx, organizationId, parsed.data.familyId, product.id, attributes.values, { type: 'user', userId: user.id })
   } catch (error) {
     return failure(error, t, { values: input })
   }
@@ -91,11 +91,11 @@ export async function updateFamilyMemberAction(_previous: ActionState, formData:
 
   const ctx = getContext()
   try {
-    const product = await getProduct(ctx, organizationId, parsed.data.productId)
-    if (!product?.family) throw new DomainError('not_found')
-    const attributes = parseAttributeValues(product.family.attributes.map((attribute) => attribute.name), input)
+    const familyAttributes = await getProductFamilyAttributes(ctx, organizationId, parsed.data.productId)
+    if (!familyAttributes) throw new DomainError('not_found')
+    const attributes = parseAttributeValues(familyAttributes, input)
     if (!attributes.ok) return invalidValues(attributes.fieldErrors, t, input)
-    await updateFamilyMember(ctx, organizationId, product.id, attributes.values, { type: 'user', userId: user.id })
+    await updateFamilyMember(ctx, organizationId, parsed.data.productId, attributes.values, { type: 'user', userId: user.id })
   } catch (error) {
     return failure(error, t, { values: input })
   }

@@ -7,6 +7,7 @@ import { Pagination } from '@/components/pagination'
 import { EmptyState, linkClass, rowClass, tableClass, tdClass, thClass } from '@/components/section'
 import { getT } from '@/i18n/server'
 import { getContext } from '@/lib/context'
+import { getFormatters } from '@/lib/formatters'
 import { outOfRangeRedirect, pageWindow, parsePage } from '@/lib/pagination'
 import { requireTenant } from '@/lib/session'
 
@@ -18,7 +19,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function FamiliesPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const { organizationId } = await requireTenant()
-  const t = await getT()
+  const [t, format] = await Promise.all([getT(), getFormatters()])
   const page = parsePage((await searchParams).page)
   const { total, items } = await listFamilies(getContext(), organizationId, pageWindow(page))
   const outOfRange = outOfRangeRedirect(page, total, '/families')
@@ -58,7 +59,7 @@ export default async function FamiliesPage({ searchParams }: { searchParams: Pro
                       </Link>
                     </td>
                     <td className={tdClass}>{family.attributes.join(', ')}</td>
-                    <td className={`${tdClass} text-right tabular-nums`}>{family.productCount}</td>
+                    <td className={`${tdClass} text-right tabular-nums`}>{format.number(family.productCount)}</td>
                   </tr>
                 ))}
               </tbody>

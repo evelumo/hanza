@@ -52,9 +52,7 @@ export default async function FamilyPage({ params }: { params: Promise<{ familyI
                     {member.sku}
                   </Link>
                   <p className="text-sm">{member.name}</p>
-                  <p className="text-xs text-muted">
-                    {t('families.detail.columns.available')}: {format.number(member.available)}
-                  </p>
+                  <p className="text-xs text-muted">{t('families.detail.availableLine', { count: format.number(member.available) })}</p>
                 </div>
                 <MemberValuesForm
                   productId={member.productId}

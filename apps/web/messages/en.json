@@ -167,9 +167,7 @@
       "membersTitle": "Products in this family",
       "membersDescription": "Each product has one value per attribute. No two products can have the same values.",
       "membersEmpty": "No products in this family yet. Add the first one below.",
-      "columns": {
-        "available": "Available"
-      },
+      "availableLine": "Available: {count}",
       "saveValues": "Save",
       "saving": "Saving…",
       "remove": "Remove",
@@ -431,7 +429,7 @@
       "already_linked": "This line is already linked.",
       "unknown_connector": "Unknown connector.",
       "invalid_config": "Check the fields.",
-      "variant_taken": "Another product in this family already has these values.",
+      "combination_taken": "Another product in this family already has these values.",
       "invalid_attributes": "Fill in every attribute (at most 100 characters) and keep the attribute names distinct.",
       "already_in_family": "This product is already in a family. Remove it from there first."
     },

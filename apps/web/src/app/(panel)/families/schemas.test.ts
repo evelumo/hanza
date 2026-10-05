@@ -11,6 +11,10 @@ describe('attributeNamesSchema', () => {
     expect(attributeNamesSchema.safeParse(text).success).toBe(false)
   })
 
+  it.each(['__proto__', 'constructor', 'Size, prototype'])('rejects the reserved name in %j', (text) => {
+    expect(attributeNamesSchema.safeParse(text).success).toBe(false)
+  })
+
   it('accepts 5 names of 50 characters', () => {
     const names = ['a', 'b', 'c', 'd', 'e'].map((letter) => letter.repeat(50))
     expect(attributeNamesSchema.parse(names.join(','))).toEqual(names)
@@ -42,6 +46,13 @@ describe('parseAttributeValues', () => {
 
   it('reads one value per attribute from the numbered fields', () => {
     expect(parseAttributeValues(attributes, { [valueField(0)]: ' M ', [valueField(1)]: 'Red' })).toEqual({ ok: true, values: { Size: 'M', Colour: 'Red' } })
+  })
+
+  it('builds the values with own properties, whatever the attribute is called', () => {
+    const parsed = parseAttributeValues(['__proto__'], { value0: 'M' })
+    if (!parsed.ok) throw new Error('expected values')
+    expect(Object.getPrototypeOf(parsed.values)).toBe(Object.prototype)
+    expect(Object.keys(parsed.values)).toEqual(['__proto__'])
   })
 
   it('reports each empty, missing or too long field by its field name', () => {

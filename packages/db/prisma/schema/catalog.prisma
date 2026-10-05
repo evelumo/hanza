@@ -24,7 +24,10 @@ model Product {
   reservations Reservation[]
 
   @@unique([organizationId, sku])
-  @@unique([familyId, attributeKey])
+  // Partial on purpose: Postgres treats the columns of a non-partial unique index as "key" columns, so updating them
+  // would lock the Product row FOR UPDATE and conflict with the FOR KEY SHARE that Order lines, Reservations, Stock and
+  // Offers take through their foreign keys (deadlocks with Order import). Needs the `partialIndexes` preview feature.
+  @@unique([familyId, attributeKey], where: raw("\"familyId\" IS NOT NULL"))
   @@index([organizationId, name])
   @@index([organizationId, familyId])
   @@map("product")

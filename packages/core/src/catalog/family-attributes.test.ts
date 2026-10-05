@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { MAX_ATTRIBUTE_NAME_LENGTH, MAX_ATTRIBUTE_VALUE_LENGTH, normalizeAttributeNames, normalizeAttributeValues } from './family-attributes'
+import {
+  isReservedAttributeName,
+  MAX_ATTRIBUTE_NAME_LENGTH,
+  MAX_ATTRIBUTE_VALUE_LENGTH,
+  normalizeAttributeNames,
+  normalizeAttributeValues,
+  sameAttributeValues,
+} from './family-attributes'
 
 const invalid = { code: 'invalid_attributes' }
 
@@ -22,8 +29,53 @@ describe('normalizeAttributeNames', () => {
   })
 })
 
+describe('reserved attribute names', () => {
+  it.each(['__proto__', 'constructor', 'prototype', ' __PROTO__ ', 'Constructor'])('refuses %j as an attribute name', (name) => {
+    expect(isReservedAttributeName(name)).toBe(true)
+    expect(() => normalizeAttributeNames(['Size', name])).toThrowError(expect.objectContaining(invalid))
+  })
+
+  it('still accepts ordinary names that merely contain one', () => {
+    expect(normalizeAttributeNames(['constructor type', 'proto'])).toEqual(['constructor type', 'proto'])
+  })
+})
+
+describe('Unicode normalisation', () => {
+  const composed = 'Caf\u00e9'
+  const decomposed = 'Cafe\u0301'
+
+  it('treats composed and decomposed text as the same name', () => {
+    expect(composed).not.toBe(decomposed)
+    expect(normalizeAttributeNames([composed])).toEqual([composed])
+    expect(normalizeAttributeNames([decomposed])).toEqual([composed])
+    expect(() => normalizeAttributeNames([composed, decomposed])).toThrowError(expect.objectContaining(invalid))
+  })
+
+  it('gives composed and decomposed values the same key', () => {
+    const a = normalizeAttributeValues(['Style'], { Style: composed })
+    const b = normalizeAttributeValues(['Style'], { Style: decomposed })
+    expect(a).toEqual(b)
+    expect(a.values.Style).toBe(composed)
+  })
+})
+
+describe('sameAttributeValues', () => {
+  it('compares per attribute, whatever order the keys come in', () => {
+    const attributes = ['Colour', 'Size']
+    expect(sameAttributeValues(attributes, { Colour: 'Red', Size: 'M' }, { Size: 'M', Colour: 'Red' })).toBe(true)
+    expect(sameAttributeValues(attributes, { Colour: 'Red', Size: 'M' }, { Size: 'M', Colour: 'red' })).toBe(false)
+    expect(sameAttributeValues(attributes, { Colour: 'Red', Size: 'M' }, { Size: 'M' })).toBe(false)
+  })
+})
+
 describe('normalizeAttributeValues', () => {
   const attributes = ['Size', 'Colour']
+
+  it('refuses values that smuggle in a prototype key, without a TypeError', () => {
+    const hostile = JSON.parse('{"Size":"M","Colour":"Red","__proto__":"x"}') as Record<string, string>
+    expect(() => normalizeAttributeValues(attributes, hostile)).toThrowError(expect.objectContaining(invalid))
+    expect(normalizeAttributeValues(['Size'], { Size: 'M' }).values).toEqual({ Size: 'M' })
+  })
 
   it('keeps one tidy value per attribute and builds the key in attribute order', () => {
     expect(normalizeAttributeValues(attributes, { Colour: ' Dark  blue ', Size: 'M' })).toEqual({

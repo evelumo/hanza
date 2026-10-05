@@ -5,7 +5,7 @@ import { DomainError, isUniqueViolation } from '../errors'
 import { appendEvent } from '../events'
 import { getAvailability } from '../stock/availability'
 import { TX_OPTIONS } from '../transaction'
-import { normalizeAttributeNames, normalizeAttributeValues } from './family-attributes'
+import { normalizeAttributeNames, normalizeAttributeValues, sameAttributeValues } from './family-attributes'
 
 /**
  * A Product family only groups Products. Nothing here reads or writes Stock, Reservations, Orders or Offers: they keep
@@ -34,6 +34,8 @@ export interface FamilyDetail {
   attributes: string[]
   members: FamilyMember[]
 }
+
+const MAX_EVENT_PRODUCT_IDS = 100
 
 function requireName(name: string): string {
   const trimmed = name.trim()
@@ -76,7 +78,9 @@ export async function renameFamily(ctx: Context, organizationId: string, familyI
     const family = await tx.productFamily.findFirst({ where: { id: familyId, organizationId }, select: { name: true } })
     if (!family) throw new DomainError('not_found')
     if (family.name === next) return
-    await tx.productFamily.updateMany({ where: { id: familyId, organizationId }, data: { name: next } })
+    // Not found when a delete committed since the read above: no `family.renamed` after `family.deleted`.
+    const renamed = await tx.productFamily.updateMany({ where: { id: familyId, organizationId }, data: { name: next } })
+    if (renamed.count === 0) throw new DomainError('not_found')
     await appendEvent(tx, {
       organizationId,
       type: 'family.renamed',
@@ -101,14 +105,20 @@ export async function deleteFamily(ctx: Context, organizationId: string, familyI
       organizationId,
       type: 'family.deleted',
       subject: { type: 'product_family', id: familyId },
-      payload: { name: family.name, ungrouped: ungrouped.map((product) => product.id).sort(), actor },
+      // A family can have thousands of Products: the Event keeps the count and the first ids only.
+      payload: {
+        name: family.name,
+        ungroupedCount: ungrouped.length,
+        ungrouped: ungrouped.map((product) => product.id).sort().slice(0, MAX_EVENT_PRODUCT_IDS),
+        actor,
+      },
     })
   }, TX_OPTIONS)
 }
 
 /**
  * Puts a Product into a family with one value per attribute. Refused with `already_in_family` when the Product is in one
- * (edit its values, or remove it first) and with `variant_taken` when another Product of the family has the same values.
+ * (edit its values, or remove it first) and with `combination_taken` when another Product of the family has the same values.
  */
 export async function addProductToFamily(
   ctx: Context,
@@ -133,7 +143,7 @@ export async function addProductToFamily(
         data: { familyId, attributeValues: normalized.values, attributeKey: normalized.key },
       })
     } catch (error) {
-      if (isUniqueViolation(error)) throw new DomainError('variant_taken')
+      if (isUniqueViolation(error)) throw new DomainError('combination_taken')
       throw error
     }
     if (joined.count === 0) throw new DomainError('already_in_family')
@@ -161,7 +171,7 @@ export async function updateFamilyMember(
     })
     if (!product?.familyId || !product.family) throw new DomainError('not_found')
     const normalized = normalizeAttributeValues(product.family.attributes, values)
-    if (normalized.key === product.attributeKey && JSON.stringify(normalized.values) === JSON.stringify(valuesOf(product.attributeValues))) return
+    if (normalized.key === product.attributeKey && sameAttributeValues(product.family.attributes, normalized.values, valuesOf(product.attributeValues))) return
 
     let updated: { count: number }
     try {
@@ -171,7 +181,7 @@ export async function updateFamilyMember(
         data: { attributeValues: normalized.values, attributeKey: normalized.key },
       })
     } catch (error) {
-      if (isUniqueViolation(error)) throw new DomainError('variant_taken')
+      if (isUniqueViolation(error)) throw new DomainError('combination_taken')
       throw error
     }
     if (updated.count === 0) throw new DomainError('not_found')
@@ -236,6 +246,18 @@ export async function listFamilyOptions(ctx: Context, organizationId: string): P
     take: 500,
     select: { id: true, name: true },
   })
+}
+
+/** Just the attribute names of a family, for forms that need nothing else. */
+export async function getFamilyAttributes(ctx: Context, organizationId: string, familyId: string): Promise<string[] | null> {
+  const family = await ctx.db.productFamily.findFirst({ where: { id: familyId, organizationId }, select: { attributes: true } })
+  return family?.attributes ?? null
+}
+
+/** The attribute names of the family a Product is in; null when the Product is not found or in no family. */
+export async function getProductFamilyAttributes(ctx: Context, organizationId: string, productId: string): Promise<string[] | null> {
+  const product = await ctx.db.product.findFirst({ where: { id: productId, organizationId }, select: { family: { select: { attributes: true } } } })
+  return product?.family?.attributes ?? null
 }
 
 export async function getFamily(ctx: Context, organizationId: string, familyId: string): Promise<FamilyDetail | null> {

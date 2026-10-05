@@ -80,7 +80,8 @@ async function runScenario(options: { grouped: boolean }) {
           order.attentionReasons,
           order.lines.map((line) => [line.externalId, skuOf(line.productId), line.quantity, line.shortage, line.reservation?.status ?? null, line.reservation?.units ?? null]),
         ]),
-        pushes: fake.stockPushes.map((levels) => levels.map((level) => [level.offerExternalId, level.available])),
+        // Within one push the order follows the Offers' ids, which carry no meaning.
+        pushes: fake.stockPushes.map((levels) => levels.map((level) => [level.offerExternalId, level.available]).sort((a, b) => String(a[0]).localeCompare(String(b[0])))),
         statusUpdates: fake.statusUpdates,
         // Everything the engine wrote, except the family's own Events.
         eventTypes: (await ctx.db.eventLog.findMany({ where: { organizationId: org, NOT: { type: { startsWith: 'family.' } } }, select: { type: true } }))

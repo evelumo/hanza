@@ -1,3 +1,9 @@
+/*
+  Warnings:
+
+  - A unique constraint covering the columns `[familyId,attributeKey]` on the table `product` will be added. If there are existing duplicate values, this will fail.
+
+*/
 -- AlterTable
 ALTER TABLE "product" ADD COLUMN     "attributeKey" TEXT,
 ADD COLUMN     "attributeValues" JSONB,
@@ -25,7 +31,7 @@ CREATE UNIQUE INDEX "product_family_id_organizationId_key" ON "product_family"("
 CREATE INDEX "product_organizationId_familyId_idx" ON "product"("organizationId", "familyId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "product_familyId_attributeKey_key" ON "product"("familyId", "attributeKey");
+CREATE UNIQUE INDEX "product_familyId_attributeKey_key" ON "product"("familyId", "attributeKey") WHERE ("familyId" IS NOT NULL);
 
 -- AddForeignKey
 ALTER TABLE "product" ADD CONSTRAINT "product_familyId_organizationId_fkey" FOREIGN KEY ("familyId", "organizationId") REFERENCES "product_family"("id", "organizationId") ON DELETE NO ACTION ON UPDATE CASCADE;
