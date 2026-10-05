@@ -1,6 +1,7 @@
 import { DelayedError, Queue, UnrecoverableError, Worker, type ConnectionOptions, type Job, type JobsOptions } from 'bullmq'
 import type { z } from 'zod'
 import type { Context } from './context'
+import { describeFailure } from './describe-failure'
 import { PermanentJobError, RetryLaterError, type JobDefinition, type JobRef } from './jobs'
 
 export const QUEUE_NAME = 'hanza'
@@ -137,7 +138,7 @@ export function startWorker(ctx: Context, jobs: JobDefinition[], options: { conc
   worker.on('ready', () => ctx.log.info('worker ready', { jobs: jobs.map((job) => job.name), concurrency: options.concurrency }))
   worker.on('completed', (job) => ctx.log.info('job completed', { name: job.name, id: job.id }))
   worker.on('failed', (job, error) =>
-    ctx.log.error('job failed', { name: job?.name, id: job?.id, attemptsMade: job?.attemptsMade, error: error.message }),
+    ctx.log.error('job failed', { name: job?.name, id: job?.id, attemptsMade: job?.attemptsMade, error: describeFailure(error) }),
   )
   worker.on('error', (error) => ctx.log.error('worker error', { error: error.message }))
   return { close: () => worker.close() }

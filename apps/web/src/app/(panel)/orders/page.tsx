@@ -98,7 +98,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
                     </td>
                     <td className={tdClass}>{order.connectionName}</td>
                     <td className={tdClass}>{format.dateTime(order.placedAt)}</td>
-                    <td className={tdClass}>{order.buyerName}</td>
+                    <td className={tdClass}>{order.buyerName ?? <span className="text-muted">{t('orders.buyerErased')}</span>}</td>
                     <td className={`${tdClass} text-right tabular-nums`}>{format.money(order.total)}</td>
                     <td className={tdClass}>
                       <span className="flex flex-wrap gap-1.5">

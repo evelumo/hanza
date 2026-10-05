@@ -8,6 +8,13 @@ const MANUAL: Record<OrderStatus, OrderStatus[]> = {
   cancelled: [],
 }
 
+/** No status follows these; an Order's `closedAt` is when it reached one. */
+export const FINAL_STATUSES = ['shipped', 'cancelled'] as const satisfies readonly OrderStatus[]
+
+export function isFinalStatus(status: OrderStatus): boolean {
+  return (FINAL_STATUSES as readonly OrderStatus[]).includes(status)
+}
+
 /** Where a person may move an Order from `status`; shipped and cancelled are final. */
 export function allowedTransitions(status: OrderStatus): OrderStatus[] {
   return [...MANUAL[status]]

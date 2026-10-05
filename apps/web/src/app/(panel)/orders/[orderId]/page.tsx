@@ -154,34 +154,43 @@ export default async function OrderPage({ params }: { params: Promise<{ orderId:
       </Section>
 
       <Section title={t('orders.detail.buyerTitle')}>
-        <div className="grid gap-6 px-5 py-4 sm:grid-cols-3">
-          <div>
-            <h3 className="text-sm font-medium text-muted">{t('orders.detail.contact')}</h3>
-            <p className="mt-1 text-sm leading-6">
-              {order.buyer.name}
-              {order.buyer.email ? (
-                <>
-                  <br />
-                  {order.buyer.email}
-                </>
-              ) : null}
-              {order.buyer.phone ? (
-                <>
-                  <br />
-                  {t('orders.detail.phone', { phone: order.buyer.phone })}
-                </>
-              ) : null}
-              {order.buyer.login ? (
-                <>
-                  <br />
-                  {t('orders.detail.channelLogin', { login: order.buyer.login })}
-                </>
-              ) : null}
-            </p>
+        {order.buyer === null ? (
+          <div className="space-y-1 px-5 py-4 text-sm">
+            <p>{order.buyerDataErasedAt ? t('orders.detail.buyerErased', { date: format.dateTime(order.buyerDataErasedAt) }) : null}</p>
+            {order.shippingCountryCode ? (
+              <p className="text-muted">{t('orders.detail.shippingCountry', { country: order.shippingCountryCode })}</p>
+            ) : null}
           </div>
-          <AddressBlock title={t('orders.detail.shippingAddress')} address={order.shippingAddress} />
-          <AddressBlock title={t('orders.detail.billingAddress')} address={order.billingAddress} />
-        </div>
+        ) : (
+          <div className="grid gap-6 px-5 py-4 sm:grid-cols-3">
+            <div>
+              <h3 className="text-sm font-medium text-muted">{t('orders.detail.contact')}</h3>
+              <p className="mt-1 text-sm leading-6">
+                {order.buyer.name}
+                {order.buyer.email ? (
+                  <>
+                    <br />
+                    {order.buyer.email}
+                  </>
+                ) : null}
+                {order.buyer.phone ? (
+                  <>
+                    <br />
+                    {t('orders.detail.phone', { phone: order.buyer.phone })}
+                  </>
+                ) : null}
+                {order.buyer.login ? (
+                  <>
+                    <br />
+                    {t('orders.detail.channelLogin', { login: order.buyer.login })}
+                  </>
+                ) : null}
+              </p>
+            </div>
+            <AddressBlock title={t('orders.detail.shippingAddress')} address={order.shippingAddress} />
+            <AddressBlock title={t('orders.detail.billingAddress')} address={order.billingAddress} />
+          </div>
+        )}
       </Section>
 
       <Section title={t('orders.detail.factsTitle')}>

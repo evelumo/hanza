@@ -19,3 +19,25 @@ _Avoid_: Connection status, connection state
 **Event**:
 A record that something happened to an organization's data, written together with the change it describes. Events are a trail and a trigger, never the source of truth.
 _Avoid_: Log entry, message, notification
+
+### Buyer data
+
+**Buyer data**:
+Everything personal an Order holds about its Buyer: name, email, phone, Channel login, shipping and billing address. Stored sealed with the encryption key, read in plaintext only by the panel (ADR 0011).
+_Avoid_: Customer data, PII, personal info
+
+**Closed Order**:
+An Order that reached shipped or cancelled. Its `closedAt` is when that happened; nothing changes its status afterwards.
+_Avoid_: Completed, finished, terminal Order
+
+**Erasure**:
+Clearing the Buyer data of an Order while the Order itself, its lines, amounts, dates and shipping country stay. Only Closed Orders are erased, and an Erasure cannot be undone.
+_Avoid_: Anonymisation, deletion, purge
+
+**Retention period**:
+How many days after an Order closed its Buyer data is kept before Hanza erases it. One value per organization, off by default.
+_Avoid_: TTL, expiry, data lifetime
+
+**Erasure request**:
+A person asking for their Buyer data to be erased now. Matched by exact email within the organization; matching Orders that are not closed yet are kept and reported.
+_Avoid_: Deletion request, GDPR request, right to be forgotten

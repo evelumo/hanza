@@ -32,9 +32,20 @@ export const ordersUpdateStatusRef = {
   schema: z.object({ organizationId: id, orderId: id }),
 } satisfies JobRef
 
+export const privacyTickRef = {
+  name: 'privacy.tick',
+  schema: z.object({}),
+} satisfies JobRef
+
+export const privacySweepRef = {
+  name: 'privacy.sweep',
+  schema: z.object({ organizationId: id }),
+} satisfies JobRef
+
 export const coalesceKeys = {
   offersPull: (connectionId: string) => `offers.pull:${connectionId}`,
   ordersPull: (connectionId: string) => `orders.pull:${connectionId}`,
   stockPush: (connectionId: string) => `stock.push:${connectionId}`,
   ordersUpdateStatus: (orderId: string) => `orders.updateStatus:${orderId}`,
+  privacySweep: (organizationId: string) => `privacy.sweep:${organizationId}`,
 }

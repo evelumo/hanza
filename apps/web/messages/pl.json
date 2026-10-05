@@ -16,7 +16,8 @@
     "dashboard": "Pulpit",
     "products": "Produkty",
     "orders": "Zamówienia",
-    "connections": "Połączenia"
+    "connections": "Połączenia",
+    "privacy": "Prywatność"
   },
   "pagination": {
     "label": "Paginacja",
@@ -180,6 +181,7 @@
       "status": "Status"
     },
     "needsAttention": "Wymaga uwagi",
+    "buyerErased": "Usunięte",
     "detail": {
       "title": "Zamówienie",
       "summary": "Kanał: {channel} · {date} · {payment} · {total}",
@@ -203,6 +205,8 @@
       "unmatched": "Niepołączona",
       "shortage": "Brak na stanie",
       "buyerTitle": "Kupujący",
+      "buyerErased": "Dane kupującego usunięto {date}.",
+      "shippingCountry": "Kraj dostawy: {country}",
       "contact": "Dane kontaktowe",
       "phone": "tel. {phone}",
       "channelLogin": "Login w kanale: {login}",
@@ -270,6 +274,34 @@
       "submitting": "Dodawanie…"
     }
   },
+  "privacy": {
+    "title": "Prywatność",
+    "intro": "Dane kupujących w zamówieniach (imiona i nazwiska, dane kontaktowe, adresy) są przechowywane w postaci zaszyfrowanej. Tutaj decydujesz, jak długo są przechowywane, i obsługujesz prośbę o usunięcie danych jednej osoby.",
+    "retention": {
+      "title": "Okres przechowywania danych kupujących",
+      "description": "Dane kupującego są usuwane po tylu dniach od wysłania lub anulowania zamówienia. Pozycje, kwoty i kraj dostawy zostają. Otwarte zamówienia nigdy nie są zmieniane.",
+      "label": "Dni od zamknięcia zamówienia",
+      "hint": "Od 1 do 3650 dni. Zostaw puste, aby przechowywać dane kupujących, dopóki ich nie usuniesz.",
+      "save": "Zapisz",
+      "saved": "Zapisano. Sprawdzanie odbywa się co godzinę.",
+      "currentDays": "Teraz: dane kupującego są usuwane {count, plural, one {# dzień} few {# dni} many {# dni} other {# dnia}} po zamknięciu zamówienia.",
+      "currentOff": "Teraz: dane kupujących są przechowywane, dopóki ich nie usuniesz."
+    },
+    "erasure": {
+      "title": "Usuń dane kupującego",
+      "description": "Wyszukuje zamówienia tej organizacji złożone dokładnie z tym adresem e-mail (wielkość liter nie ma znaczenia) i usuwa z nich dane kupującego. Zamówień, dla których kanał nie podał adresu e-mail, nie da się w ten sposób znaleźć.",
+      "emailLabel": "Adres e-mail kupującego",
+      "find": "Znajdź zamówienia",
+      "finding": "Wyszukiwanie…",
+      "noMatch": "Żadne zamówienie tej organizacji nie ma danych kupującego z tym adresem e-mail.",
+      "previewClosed": "{count, plural, =0 {Brak wysłanych lub anulowanych zamówień, z których można usunąć dane.} one {Dane kupującego zostaną usunięte z # wysłanego lub anulowanego zamówienia.} few {Dane kupującego zostaną usunięte z # wysłanych lub anulowanych zamówień.} many {Dane kupującego zostaną usunięte z # wysłanych lub anulowanych zamówień.} other {Dane kupującego zostaną usunięte z # wysłanego lub anulowanego zamówienia.}}",
+      "openKept": "{count, plural, one {# zamówienie jest wciąż otwarte i zostaje: jego adres jest potrzebny do wysyłki. Wyślij je lub anuluj, a potem usuń dane ponownie.} few {# zamówienia są wciąż otwarte i zostają: ich adresy są potrzebne do wysyłki. Wyślij je lub anuluj, a potem usuń dane ponownie.} many {# zamówień jest wciąż otwartych i zostaje: ich adresy są potrzebne do wysyłki. Wyślij je lub anuluj, a potem usuń dane ponownie.} other {# zamówienia jest wciąż otwarte i zostaje: jego adres jest potrzebny do wysyłki. Wyślij je lub anuluj, a potem usuń dane ponownie.}}",
+      "confirm": "Usunąć dane kupującego z tych zamówień? Tego nie można cofnąć.",
+      "submit": "Usuń dane kupującego",
+      "erasing": "Usuwanie…",
+      "done": "{count, plural, =0 {Nic nie usunięto.} one {Usunięto dane kupującego z # zamówienia.} few {Usunięto dane kupującego z # zamówień.} many {Usunięto dane kupującego z # zamówień.} other {Usunięto dane kupującego z # zamówienia.}}"
+    }
+  },
   "labels": {
     "orderStatus": {
       "new": "Nowe",
@@ -319,6 +351,10 @@
       "shop": "Sklep",
       "courier": "Kurier",
       "invoicing": "Fakturowanie"
+    },
+    "erasureCause": {
+      "retention": "okres przechowywania",
+      "erasure_request": "prośba o usunięcie"
     }
   },
   "sync": {
@@ -353,9 +389,15 @@
       "order_attention_raised": "Zamówienie wymaga uwagi",
       "order_attention_resolved": "Oznaczono jako sprawdzone",
       "connection_created": "Utworzono połączenie",
-      "connection_health_changed": "Zmienił się stan połączenia"
+      "connection_health_changed": "Zmienił się stan połączenia",
+      "order_buyer_data_erased": "Usunięto dane kupującego",
+      "privacy_retention_changed": "Zmieniono okres przechowywania danych kupujących",
+      "privacy_erasure_requested": "Obsłużono prośbę o usunięcie danych"
     },
-    "lines": "{count, plural, one {# pozycja} few {# pozycje} many {# pozycji} other {# pozycji}}"
+    "lines": "{count, plural, one {# pozycja} few {# pozycje} many {# pozycji} other {# pozycji}}",
+    "retentionDays": "{count, plural, one {# dzień} few {# dni} many {# dni} other {# dnia}}",
+    "retentionOff": "bez limitu",
+    "ordersErased": "{count, plural, one {usunięto z # zamówienia} few {usunięto z # zamówień} many {usunięto z # zamówień} other {usunięto z # zamówienia}}"
   },
   "errors": {
     "domain": {
@@ -394,6 +436,8 @@
     "offersRequired": "Zaznacz co najmniej jedną ofertę.",
     "offersTooMany": "Zaznacz najwyżej 200 ofert naraz.",
     "fieldRequired": "To pole jest wymagane.",
-    "fieldInvalid": "Nieprawidłowa wartość."
+    "fieldInvalid": "Nieprawidłowa wartość.",
+    "emailInvalid": "Podaj poprawny adres e-mail.",
+    "retentionDaysInvalid": "Podaj liczbę całkowitą dni od 1 do 3650 albo zostaw pole puste."
   }
 }

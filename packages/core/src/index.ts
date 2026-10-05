@@ -20,13 +20,26 @@ export { offersPullJob } from './jobs/offers-pull'
 export { ordersPullJob } from './jobs/orders-pull'
 export { stockPushJob } from './jobs/stock-push'
 export { ordersUpdateStatusJob } from './jobs/orders-update-status'
-export { syncTickRef, offersPullRef, ordersPullRef, stockPushRef, ordersUpdateStatusRef, coalesceKeys } from './jobs/refs'
+export { privacyTickJob, PRIVACY_TICK_EVERY_MS } from './jobs/privacy-tick'
+export { privacySweepJob } from './jobs/privacy-sweep'
+export {
+  syncTickRef,
+  offersPullRef,
+  ordersPullRef,
+  stockPushRef,
+  ordersUpdateStatusRef,
+  privacyTickRef,
+  privacySweepRef,
+  coalesceKeys,
+} from './jobs/refs'
 export { systemActor, type Actor } from './actor'
 export { DomainError, type DomainErrorCode } from './errors'
 export { createSecretBox, type SecretBox } from './secrets'
+export { describeFailure } from './describe-failure'
 export { appendEvent, listEvents, type EventRow, type EventSubject, type EventType } from './events'
 export * from './catalog/index'
 export * from './stock/index'
 export * from './orders/index'
 export * from './connections/index'
 export * from './sync/index'
+export * from './privacy/index'

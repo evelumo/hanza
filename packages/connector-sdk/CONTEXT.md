@@ -57,5 +57,5 @@ An Order line that could not be linked to any Product. The Order is still import
 _Avoid_: Unknown product, orphan line
 
 **Buyer**:
-The person who placed an Order, kept as a snapshot on that Order together with their addresses. Buyers are not linked across Orders or Channels.
+The person who placed an Order, kept as a snapshot on that Order together with their addresses. Buyers are not linked across Orders or Channels. Connectors always see the Buyer in plaintext; Hanza stores it sealed and can erase it (see Erasure in the Core glossary).
 _Avoid_: Customer, client, user

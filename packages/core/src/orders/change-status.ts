@@ -10,7 +10,7 @@ import { markOffersForStockPush, requestStockPushAfterCommit } from '../stock/pu
 import { ensureDefaultWarehouse } from '../stock/warehouse'
 import { TX_OPTIONS } from '../transaction'
 import { removeReasons } from './reasons'
-import { allowedTransitions } from './status-rules'
+import { allowedTransitions, isFinalStatus } from './status-rules'
 import { applyStockEffect } from './stock-effect'
 
 /**
@@ -34,7 +34,10 @@ export async function changeOrderStatus(ctx: Context, organizationId: string, or
 
     const touched = await applyStockEffect(tx, organizationId, orderId, to)
     const reasons = to === 'cancelled' ? removeReasons(order.attentionReasons, ['shortage']) : order.attentionReasons
-    await tx.order.updateMany({ where: { id: orderId, organizationId }, data: { status: to, attentionReasons: reasons } })
+    await tx.order.updateMany({
+      where: { id: orderId, organizationId },
+      data: { status: to, attentionReasons: reasons, ...(isFinalStatus(to) ? { closedAt: new Date() } : {}) },
+    })
     await appendEvent(tx, {
       organizationId,
       type: 'order.status_changed',

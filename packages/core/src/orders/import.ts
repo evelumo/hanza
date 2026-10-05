@@ -1,11 +1,12 @@
 import type { ChannelFact, Order } from '@hanza/connector-sdk'
-import { addressSchema } from '@hanza/connector-sdk'
-import { Prisma, type AttentionReason, type Tx } from '@hanza/db'
+import type { AttentionReason, Tx } from '@hanza/db'
 import { systemActor } from '../actor'
 import { normalizeSku } from '../catalog/sku'
 import type { Context } from '../context'
 import { DomainError } from '../errors'
 import { appendEvent } from '../events'
+import { sealBuyerData } from '../privacy/buyer-data'
+import type { SecretBox } from '../secrets'
 import { lockStock } from '../stock/locks'
 import { markOffersForStockPush, requestStockPushAfterCommit } from '../stock/push'
 import { reserveLine } from '../stock/reservations'
@@ -13,7 +14,7 @@ import { ensureDefaultWarehouse } from '../stock/warehouse'
 import { TX_OPTIONS } from '../transaction'
 import { matchLines } from './match'
 import { addReasons, removeReasons } from './reasons'
-import { factTransition } from './status-rules'
+import { factTransition, isFinalStatus } from './status-rules'
 import { applyStockEffect } from './stock-effect'
 
 /**
@@ -38,7 +39,7 @@ export async function importOrder(
       WHERE "connectionId" = ${connectionId} AND "externalId" = ${order.externalId} AND "organizationId" = ${organizationId}
       FOR NO KEY UPDATE`
     const touched = new Set<string>()
-    const orderId = existing[0]?.id ?? (await insertOrder(tx, organizationId, connectionId, order, touched))
+    const orderId = existing[0]?.id ?? (await insertOrder(tx, ctx.secrets, organizationId, connectionId, order, touched))
     const factsApplied = await applyNewFacts(tx, organizationId, orderId, order.facts, touched)
     const connectionIds = await markOffersForStockPush(tx, organizationId, [...touched])
     return { orderId, created: existing.length === 0, factsApplied, connectionIds }
@@ -48,7 +49,14 @@ export async function importOrder(
   return { orderId: result.orderId, created: result.created, factsApplied: result.factsApplied }
 }
 
-async function insertOrder(tx: Tx, organizationId: string, connectionId: string, order: Order, touched: Set<string>): Promise<string> {
+async function insertOrder(
+  tx: Tx,
+  secrets: SecretBox,
+  organizationId: string,
+  connectionId: string,
+  order: Order,
+  touched: Set<string>,
+): Promise<string> {
   const productIds = await matchLines(tx, organizationId, connectionId, order.lines)
   const created = await tx.order.create({
     data: {
@@ -59,12 +67,12 @@ async function insertOrder(tx: Tx, organizationId: string, connectionId: string,
       payment: order.payment,
       currency: order.total.currency,
       totalAmount: order.total.amount,
-      buyerName: order.buyer.name,
-      buyerEmail: order.buyer.email,
-      buyerPhone: order.buyer.phone,
-      buyerLogin: order.buyer.login,
-      shippingAddress: addressSchema.parse(order.shippingAddress),
-      billingAddress: order.billingAddress ? addressSchema.parse(order.billingAddress) : Prisma.DbNull,
+      // Buyer data never reaches the database in plaintext (ADR 0011).
+      ...sealBuyerData(
+        secrets,
+        { organizationId, connectionId, externalId: order.externalId },
+        { buyer: order.buyer, shippingAddress: order.shippingAddress, billingAddress: order.billingAddress },
+      ),
       lines: {
         create: order.lines.map((line, index) => ({
           organizationId,
@@ -141,6 +149,7 @@ async function applyNewFacts(tx: Tx, organizationId: string, orderId: string, fa
   const order = await tx.order.findFirst({ where: { id: orderId, organizationId }, select: { status: true, attentionReasons: true } })
   if (!order) throw new DomainError('not_found')
   let { status, attentionReasons: reasons } = order
+  const statusBefore = status
   const subject = { type: 'order', id: orderId } as const
 
   for (const fact of fresh) {
@@ -175,7 +184,11 @@ async function applyNewFacts(tx: Tx, organizationId: string, orderId: string, fa
     }
   }
 
-  await tx.order.updateMany({ where: { id: orderId, organizationId }, data: { status, attentionReasons: reasons } })
+  const closed = status !== statusBefore && isFinalStatus(status)
+  await tx.order.updateMany({
+    where: { id: orderId, organizationId },
+    data: { status, attentionReasons: reasons, ...(closed ? { closedAt: new Date() } : {}) },
+  })
   return fresh.length
 }
 

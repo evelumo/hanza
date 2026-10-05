@@ -49,6 +49,16 @@ function detail(t: Translator, number: NumberFormat, type: string, payload: Payl
     }
     case 'connection.health_changed':
       return arrow(healthLabel(t, text(payload.from)), healthLabel(t, text(payload.to)))
+    case 'order.buyer_data_erased': {
+      const cause = text(payload.cause)
+      return cause === null ? null : labelOrRaw(t, 'labels.erasureCause', cause)
+    }
+    case 'privacy.retention_changed':
+      return arrow(retentionLabel(t, payload.from), retentionLabel(t, payload.to))
+    case 'privacy.erasure_requested': {
+      const erased = count(payload.erased)
+      return erased === null ? null : t('events.ordersErased', { count: erased })
+    }
     default:
       return null
   }
@@ -56,6 +66,13 @@ function detail(t: Translator, number: NumberFormat, type: string, payload: Payl
 
 const statusLabel = (t: Translator, value: string | null) => (value === null ? null : labelOrRaw(t, 'labels.orderStatus', value))
 const healthLabel = (t: Translator, value: string | null) => (value === null ? null : labelOrRaw(t, 'labels.health', value))
+
+/** Null in the payload means retention off; anything that is not a number is unknown. */
+function retentionLabel(t: Translator, value: unknown): string | null {
+  if (value === null) return t('events.retentionOff')
+  const days = count(value)
+  return days === null ? null : t('events.retentionDays', { count: days })
+}
 
 /** Event types have dots, which message keys cannot contain: `order.status_changed` is `order_status_changed`. */
 const titleKey = (type: string) => type.replaceAll('.', '_')

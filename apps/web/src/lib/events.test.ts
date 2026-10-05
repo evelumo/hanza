@@ -39,6 +39,21 @@ describe('describeEvent', () => {
     expect(describeEvent('order.imported', { lineCount: 5 }, pl, numberPl).detail).toBe('5 pozycji')
   })
 
+  it('describes Buyer data erasure and retention changes without personal data', () => {
+    expect(describeEvent('order.buyer_data_erased', { cause: 'retention', retentionDays: 30 }, t, number)).toEqual({
+      title: 'Buyer data erased',
+      detail: 'retention period',
+    })
+    expect(describeEvent('order.buyer_data_erased', { cause: 'erasure_request' }, t, number).detail).toBe('erasure request')
+    expect(describeEvent('privacy.retention_changed', { from: null, to: 30 }, t, number).detail).toBe('kept → 30 days')
+    expect(describeEvent('privacy.retention_changed', { from: 1, to: null }, t, number).detail).toBe('1 day → kept')
+    expect(describeEvent('privacy.erasure_requested', { erased: 2, keptOpen: 1 }, t, number)).toEqual({
+      title: 'Erasure request handled',
+      detail: '2 orders erased',
+    })
+    expect(describeEvent('privacy.erasure_requested', { erased: 5 }, translatorFor('pl'), numberPl).detail).toBe('usunięto z 5 zamówień')
+  })
+
   it('shows a value this build does not know as it is', () => {
     expect(describeEvent('order.status_changed', { from: 'new', to: 'teleported' }, t, number).detail).toBe('New → teleported')
     expect(describeEvent('order.channel_fact_recorded', { type: 'exploded' }, t, number).detail).toBe('exploded')

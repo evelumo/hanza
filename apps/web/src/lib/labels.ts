@@ -19,6 +19,7 @@ type OpenGroup =
   | 'labels.health'
   | 'labels.attentionReason'
   | 'labels.channelFact'
+  | 'labels.erasureCause'
   | 'sync.result'
   | 'events.title'
 

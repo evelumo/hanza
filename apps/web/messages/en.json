@@ -16,7 +16,8 @@
     "dashboard": "Dashboard",
     "products": "Products",
     "orders": "Orders",
-    "connections": "Connections"
+    "connections": "Connections",
+    "privacy": "Privacy"
   },
   "pagination": {
     "label": "Pagination",
@@ -180,6 +181,7 @@
       "status": "Status"
     },
     "needsAttention": "Needs attention",
+    "buyerErased": "Erased",
     "detail": {
       "title": "Order",
       "summary": "Channel: {channel} · {date} · {payment} · {total}",
@@ -203,6 +205,8 @@
       "unmatched": "Unmatched",
       "shortage": "Shortage",
       "buyerTitle": "Buyer",
+      "buyerErased": "Buyer data was erased on {date}.",
+      "shippingCountry": "Shipping country: {country}",
       "contact": "Contact details",
       "phone": "Phone: {phone}",
       "channelLogin": "Channel login: {login}",
@@ -270,6 +274,34 @@
       "submitting": "Adding…"
     }
   },
+  "privacy": {
+    "title": "Privacy",
+    "intro": "Buyer data on orders (names, contact details, addresses) is stored encrypted. Here you decide how long it is kept and handle a request to erase one person's data.",
+    "retention": {
+      "title": "Buyer data retention",
+      "description": "Buyer data is erased this many days after an order was shipped or cancelled. Order lines, amounts and the shipping country are kept. Open orders are never affected.",
+      "label": "Days after the order closed",
+      "hint": "From 1 to 3650 days. Leave empty to keep buyer data until you erase it.",
+      "save": "Save",
+      "saved": "Saved. The check runs every hour.",
+      "currentDays": "Now: buyer data is erased {count, plural, one {# day} other {# days}} after an order closed.",
+      "currentOff": "Now: buyer data is kept until you erase it."
+    },
+    "erasure": {
+      "title": "Erase a buyer's data",
+      "description": "Finds this organization's orders placed with exactly this email address (letter case does not matter) and erases their buyer data. Orders for which the channel gave no email cannot be found this way.",
+      "emailLabel": "Buyer's email address",
+      "find": "Find orders",
+      "finding": "Searching…",
+      "noMatch": "No order of this organization has buyer data with this email address.",
+      "previewClosed": "{count, plural, =0 {No shipped or cancelled order to erase.} one {# shipped or cancelled order will have its buyer data erased.} other {# shipped or cancelled orders will have their buyer data erased.}}",
+      "openKept": "{count, plural, one {# order is still open and is kept: its address is needed to ship it. Ship or cancel it, then erase again.} other {# orders are still open and are kept: their address is needed to ship them. Ship or cancel them, then erase again.}}",
+      "confirm": "Erase the buyer data of these orders? This cannot be undone.",
+      "submit": "Erase buyer data",
+      "erasing": "Erasing…",
+      "done": "{count, plural, =0 {Nothing was erased.} one {Buyer data erased on # order.} other {Buyer data erased on # orders.}}"
+    }
+  },
   "labels": {
     "orderStatus": {
       "new": "New",
@@ -319,6 +351,10 @@
       "shop": "Shop",
       "courier": "Courier",
       "invoicing": "Invoicing"
+    },
+    "erasureCause": {
+      "retention": "retention period",
+      "erasure_request": "erasure request"
     }
   },
   "sync": {
@@ -353,9 +389,15 @@
       "order_attention_raised": "Order needs attention",
       "order_attention_resolved": "Marked as reviewed",
       "connection_created": "Connection created",
-      "connection_health_changed": "Connection health changed"
+      "connection_health_changed": "Connection health changed",
+      "order_buyer_data_erased": "Buyer data erased",
+      "privacy_retention_changed": "Buyer data retention changed",
+      "privacy_erasure_requested": "Erasure request handled"
     },
-    "lines": "{count, plural, one {# line} other {# lines}}"
+    "lines": "{count, plural, one {# line} other {# lines}}",
+    "retentionDays": "{count, plural, one {# day} other {# days}}",
+    "retentionOff": "kept",
+    "ordersErased": "{count, plural, one {# order erased} other {# orders erased}}"
   },
   "errors": {
     "domain": {
@@ -394,6 +436,8 @@
     "offersRequired": "Select at least one offer.",
     "offersTooMany": "Select at most 200 offers at a time.",
     "fieldRequired": "This field is required.",
-    "fieldInvalid": "Invalid value."
+    "fieldInvalid": "Invalid value.",
+    "emailInvalid": "Enter a valid email address.",
+    "retentionDaysInvalid": "Enter a whole number of days from 1 to 3650, or leave the field empty."
   }
 }
