@@ -16,7 +16,8 @@
     "dashboard": "Dashboard",
     "products": "Products",
     "orders": "Orders",
-    "connections": "Connections"
+    "connections": "Connections",
+    "settings": "Settings"
   },
   "pagination": {
     "label": "Pagination",
@@ -167,7 +168,8 @@
       "all": "All",
       "attentionOnly": "Only those needing attention",
       "apply": "Filter",
-      "clear": "Clear"
+      "clear": "Clear",
+      "phase": "Phase"
     },
     "emptyFiltered": "No order matches the filters.",
     "empty": "There are no orders yet. They will appear after a connection syncs with a channel.",
@@ -186,8 +188,8 @@
       "attentionHint": "Link the unmatched lines to products below and Needs attention clears on its own.",
       "markReviewed": "Mark as reviewed",
       "statusTitle": "Status",
-      "statusDescription": "Hanza leads the fulfilment; a change is passed on to the channel if the channel supports it.",
-      "finalStatus": "The order has a final status ({status}) and cannot be changed.",
+      "statusDescription": "Hanza leads the fulfilment. Moving the order to another phase is passed on to the channel if the channel supports it; statuses within one phase are your own labels and stay in Hanza.",
+      "finalStatus": "The order is in a final phase ({status}) and has no other status to move to.",
       "changeTo": "Change to: {status}",
       "confirmShipped": "Mark the order as shipped? The reserved goods will be taken off stock.",
       "confirmCancelled": "Cancel the order? The reservations will be released and this cannot be undone.",
@@ -213,7 +215,8 @@
       "factsTitle": "Changes reported by the channel",
       "factsEmpty": "The channel has not reported any changes.",
       "historyTitle": "History",
-      "historyEmpty": "No events."
+      "historyEmpty": "No events.",
+      "phaseLine": "Phase: {phase}"
     },
     "linkLine": {
       "skuLabel": "SKU of the product to link the line to",
@@ -253,7 +256,14 @@
         "error": "Error"
       },
       "eventsTitle": "Recent events",
-      "eventsEmpty": "No events."
+      "eventsEmpty": "No events.",
+      "statusMapping": {
+        "title": "Order statuses from this channel",
+        "description": "Which of your statuses an order of this channel gets when the channel reports it. Orders already imported keep their status.",
+        "defaultOption": "Default status of the phase ({status})",
+        "save": "Save",
+        "adminsOnly": "Only an owner or admin of the organization can change this."
+      }
     },
     "new": {
       "title": "Add connection",
@@ -271,7 +281,7 @@
     }
   },
   "labels": {
-    "orderStatus": {
+    "orderPhase": {
       "new": "New",
       "processing": "Processing",
       "shipped": "Shipped",
@@ -320,6 +330,21 @@
       "shop": "Shop",
       "courier": "Courier",
       "invoicing": "Invoicing"
+    },
+    "statusColor": {
+      "gray": "Grey",
+      "blue": "Blue",
+      "teal": "Teal",
+      "green": "Green",
+      "amber": "Amber",
+      "orange": "Orange",
+      "red": "Red",
+      "violet": "Violet"
+    },
+    "reportedPhase": {
+      "new": "A new order arrives",
+      "shipped": "The channel reports it shipped",
+      "cancelled": "The channel reports it cancelled"
     }
   },
   "sync": {
@@ -354,9 +379,14 @@
       "order_attention_raised": "Order needs attention",
       "order_attention_resolved": "Marked as reviewed",
       "connection_created": "Connection created",
-      "connection_health_changed": "Connection health changed"
+      "connection_health_changed": "Connection health changed",
+      "order_status_created": "Status added",
+      "order_status_updated": "Status edited",
+      "order_status_deleted": "Status deleted",
+      "connection_status_mapping_changed": "Order statuses from the channel changed"
     },
-    "lines": "{count, plural, one {# line} other {# lines}}"
+    "lines": "{count, plural, one {# line} other {# lines}}",
+    "defaultStatus": "default status"
   },
   "errors": {
     "domain": {
@@ -366,7 +396,13 @@
       "unmatched_lines": "Link all the lines to products first.",
       "already_linked": "This line is already linked.",
       "unknown_connector": "Unknown connector.",
-      "invalid_config": "Check the fields."
+      "invalid_config": "Check the fields.",
+      "forbidden": "Only an owner or admin of the organization can do this.",
+      "status_is_default": "A default status cannot be deactivated or deleted. Make another status the default first.",
+      "status_in_use": "This status is still used. Choose a status to move its orders to.",
+      "invalid_replacement": "Choose another active status of the same phase.",
+      "status_name_taken": "An active status with this name already exists.",
+      "status_inactive": "This status is inactive. Activate it first."
     },
     "unexpected": "Something went wrong. Please try again.",
     "invalidInput": "Check the fields.",
@@ -395,6 +431,59 @@
     "offersRequired": "Select at least one offer.",
     "offersTooMany": "Select at most 200 offers at a time.",
     "fieldRequired": "This field is required.",
-    "fieldInvalid": "Invalid value."
+    "fieldInvalid": "Invalid value.",
+    "statusNameRequired": "Enter a name.",
+    "statusNameTooLong": "The name can have at most 60 characters.",
+    "colorInvalid": "Choose a colour from the list.",
+    "phaseInvalid": "Choose a valid phase."
+  },
+  "settings": {
+    "title": "Settings",
+    "orderStatuses": {
+      "title": "Order statuses",
+      "description": "Your own statuses for the order workflow. Each one belongs to a phase: Hanza keeps stock and channels in step by the phase, and the status is your finer label within it.",
+      "adminsOnly": "Only an owner or admin of the organization can change the order statuses.",
+      "phaseHint": {
+        "new": "Orders arrive here from the channels. Stock is reserved.",
+        "processing": "Being prepared. Stock stays reserved.",
+        "shipped": "Final: the reserved goods have been taken off stock.",
+        "cancelled": "Final: the reservations have been released."
+      },
+      "columns": {
+        "status": "Status",
+        "orders": "Orders",
+        "edit": "Name and colour",
+        "actions": "Actions"
+      },
+      "default": "Default",
+      "inactive": "Inactive",
+      "phaseName": "Uses the phase name",
+      "name": "Name",
+      "nameFor": "Name of {status}",
+      "namePlaceholder": "e.g. Waiting for packaging",
+      "nameHint": "Empty: the phase name, in each person’s language.",
+      "color": "Colour",
+      "colorFor": "Colour of {status}",
+      "colorNone": "Phase colour",
+      "save": "Save",
+      "addTitle": "Add a status",
+      "add": "Add",
+      "adding": "Adding…",
+      "moveUp": "Move {status} up",
+      "moveDown": "Move {status} down",
+      "makeDefault": "Make default",
+      "deactivate": "Deactivate",
+      "activate": "Activate",
+      "delete": "Delete",
+      "deleting": "Deleting…",
+      "replacementFor": "Status the orders of {status} move to",
+      "confirmDelete": "Delete the status {status}?",
+      "confirmDeleteMoving": "Delete the status {status} and move its orders to the chosen status?",
+      "orderCount": "{count, plural, one {# order} other {# orders}}",
+      "usedByChannels": "{count, plural, one {Used by # channel} other {Used by # channels}}",
+      "defaultHint": "The status an order gets when it enters this phase, unless a channel says otherwise. It cannot be deactivated or deleted.",
+      "deleteScheduled": "Deleting: its orders are being moved to the chosen status. The status disappears when that is done.",
+      "deleteFor": "Delete {status}"
+    }
   }
 }

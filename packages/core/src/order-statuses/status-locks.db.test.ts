@@ -11,7 +11,7 @@ import { databaseUrl, useTestContext } from '../testing/db-test'
 import { buildOrder, createTestConnection, orderLine } from '../testing/fixtures'
 import { uniqueApplicationName, watchLockWaits } from '../testing/lock-waits'
 import { TX_OPTIONS } from '../transaction'
-import { deleteOrderStatus } from './delete'
+import { deleteOrderStatus, finishOrderStatusDeletion } from './delete'
 import { setStatusMapping } from './mapping'
 import { createOrderStatus, listOrderStatuses, makeDefaultOrderStatus, moveOrderStatus, setOrderStatusActive, updateOrderStatus } from './statuses'
 
@@ -145,8 +145,9 @@ describe.skipIf(!databaseUrl)('Order statuses under concurrency', () => {
     const work: Array<Promise<unknown>> = [
       ...Array.from({ length: 16 }, () => importOrder(ctx, org, connectionId, order())),
       // The status the imports are mapped to is deleted while they run: they land on its replacement (or the default).
-      deleteOrderStatus(ctx, org, incoming, toCheck, admin, { batchSize: 3 }),
-      deleteOrderStatus(ctx, org, packing, packed, admin, { batchSize: 3 }),
+      // As the panel and then the worker would.
+      deleteOrderStatus(ctx, org, incoming, toCheck, admin).then(() => finishOrderStatusDeletion(ctx, org, incoming, toCheck, admin, { batchSize: 3 })),
+      deleteOrderStatus(ctx, org, packing, packed, admin).then(() => finishOrderStatusDeletion(ctx, org, packing, packed, admin, { batchSize: 3 })),
       ...existing.slice(0, 4).map((orderId) => changeOrderStatus(ctx, org, orderId, 'shipped', admin)),
       updateOrderStatus(ctx, org, toCheck, { name: 'Checking', color: 'blue' }, admin),
       moveOrderStatus(ctx, org, toCheck, 'up', admin),

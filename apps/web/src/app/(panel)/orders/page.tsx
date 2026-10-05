@@ -1,5 +1,4 @@
-import { orderStatusSchema } from '@hanza/connector-sdk'
-import { listOrders } from '@hanza/core'
+import { listOrders, listOrderStatuses, ORDER_PHASES } from '@hanza/core'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
@@ -10,7 +9,7 @@ import { AttentionBadge, OrderStatusBadge } from '@/components/status-badge'
 import { getT } from '@/i18n/server'
 import { getContext } from '@/lib/context'
 import { getFormatters } from '@/lib/formatters'
-import { orderStatusLabel } from '@/lib/labels'
+import { orderPhaseLabel, orderStatusName } from '@/lib/labels'
 import { firstParam, outOfRangeRedirect, pageWindow, parsePage } from '@/lib/pagination'
 import { requireTenant } from '@/lib/session'
 import { orderListFiltersSchema } from './schemas'
@@ -25,16 +24,28 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
   const { organizationId } = await requireTenant()
   const [t, format] = await Promise.all([getT(), getFormatters()])
   const params = await searchParams
-  const filters = orderListFiltersSchema.parse({ status: firstParam(params.status), attention: firstParam(params.attention) })
-  const page = parsePage(params.page)
-  const { total, items } = await listOrders(getContext(), organizationId, {
-    status: filters.status,
-    needsAttention: filters.attention === '1' ? true : undefined,
-    ...pageWindow(page),
+  const filters = orderListFiltersSchema.parse({
+    phase: firstParam(params.phase),
+    status: firstParam(params.status),
+    attention: firstParam(params.attention),
   })
-  const outOfRange = outOfRangeRedirect(page, total, '/orders', { status: filters.status, attention: filters.attention })
+  const page = parsePage(params.page)
+  const ctx = getContext()
+  const [{ total, items }, statuses] = await Promise.all([
+    listOrders(ctx, organizationId, {
+      phase: filters.phase,
+      statusId: filters.status,
+      needsAttention: filters.attention === '1' ? true : undefined,
+      ...pageWindow(page),
+    }),
+    listOrderStatuses(ctx, organizationId),
+  ])
+  const filterParams = { phase: filters.phase, status: filters.status, attention: filters.attention }
+  const outOfRange = outOfRangeRedirect(page, total, '/orders', filterParams)
   if (outOfRange) redirect(outOfRange)
-  const filtered = Boolean(filters.status || filters.attention)
+  const filtered = Boolean(filters.phase || filters.status || filters.attention)
+  const selectClass =
+    'mt-1 block rounded-md border border-line bg-white px-3 py-1.5 text-sm font-normal outline-none focus:border-accent focus:ring-2 focus:ring-accent/20'
 
   return (
     <div className="space-y-6">
@@ -42,17 +53,30 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
 
       <form method="get" className="flex flex-wrap items-end gap-4">
         <label className="block text-sm font-medium">
-          {t('orders.filters.status')}
-          <select
-            name="status"
-            defaultValue={filters.status ?? ''}
-            className="mt-1 block rounded-md border border-line bg-white px-3 py-1.5 text-sm font-normal outline-none focus:border-accent focus:ring-2 focus:ring-accent/20"
-          >
+          {t('orders.filters.phase')}
+          <select name="phase" defaultValue={filters.phase ?? ''} className={selectClass}>
             <option value="">{t('orders.filters.all')}</option>
-            {orderStatusSchema.options.map((value) => (
+            {ORDER_PHASES.map((value) => (
               <option key={value} value={value}>
-                {orderStatusLabel(t, value)}
+                {orderPhaseLabel(t, value)}
               </option>
+            ))}
+          </select>
+        </label>
+        <label className="block text-sm font-medium">
+          {t('orders.filters.status')}
+          <select name="status" defaultValue={filters.status ?? ''} className={selectClass}>
+            <option value="">{t('orders.filters.all')}</option>
+            {ORDER_PHASES.map((phase) => (
+              <optgroup key={phase} label={orderPhaseLabel(t, phase)}>
+                {statuses
+                  .filter((status) => status.phase === phase)
+                  .map((status) => (
+                    <option key={status.id} value={status.id}>
+                      {orderStatusName(t, status)}
+                    </option>
+                  ))}
+              </optgroup>
             ))}
           </select>
         </label>
@@ -114,7 +138,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
         )}
       </div>
 
-      <Pagination page={page} total={total} basePath="/orders" params={{ status: filters.status, attention: filters.attention }} />
+      <Pagination page={page} total={total} basePath="/orders" params={filterParams} />
     </div>
   )
 }

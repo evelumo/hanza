@@ -2,13 +2,11 @@ import { describe, expect, it } from 'vitest'
 import { changeOrderStatusSchema, linkOrderLineSchema, orderListFiltersSchema, resolveAttentionSchema } from './schemas'
 
 describe('changeOrderStatusSchema', () => {
-  it('accepts only the four Order statuses', () => {
-    for (const status of ['new', 'processing', 'shipped', 'cancelled']) {
-      expect(changeOrderStatusSchema.safeParse({ orderId: 'o', status }).success).toBe(true)
-    }
-    expect(changeOrderStatusSchema.safeParse({ orderId: 'o', status: 'delivered' }).success).toBe(false)
+  it('needs an order id and a status id', () => {
+    expect(changeOrderStatusSchema.safeParse({ orderId: 'o', statusId: 's' }).success).toBe(true)
     expect(changeOrderStatusSchema.safeParse({ orderId: 'o' }).success).toBe(false)
-    expect(changeOrderStatusSchema.safeParse({ orderId: '', status: 'new' }).success).toBe(false)
+    expect(changeOrderStatusSchema.safeParse({ orderId: '', statusId: 's' }).success).toBe(false)
+    expect(changeOrderStatusSchema.safeParse({ orderId: 'o', statusId: 'x'.repeat(65) }).success).toBe(false)
   })
 })
 
@@ -29,8 +27,8 @@ describe('resolveAttentionSchema', () => {
 
 describe('orderListFiltersSchema', () => {
   it('ignores filter values it does not know instead of failing the page', () => {
-    expect(orderListFiltersSchema.parse({ status: 'bogus', attention: 'yes' })).toEqual({ status: undefined, attention: undefined })
-    expect(orderListFiltersSchema.parse({ status: 'shipped', attention: '1' })).toEqual({ status: 'shipped', attention: '1' })
+    expect(orderListFiltersSchema.parse({ phase: 'bogus', status: '', attention: 'yes' })).toEqual({ phase: undefined, status: undefined, attention: undefined })
+    expect(orderListFiltersSchema.parse({ phase: 'shipped', status: 'status-id', attention: '1' })).toEqual({ phase: 'shipped', status: 'status-id', attention: '1' })
     expect(orderListFiltersSchema.parse({})).toEqual({})
   })
 })

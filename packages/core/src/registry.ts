@@ -2,6 +2,7 @@ import type { JobDefinition } from './jobs'
 import { offersPullJob } from './jobs/offers-pull'
 import { ordersPullJob } from './jobs/orders-pull'
 import { ordersUpdateStatusJob } from './jobs/orders-update-status'
+import { orderStatusesDeleteJob } from './jobs/order-statuses-delete'
 import { stockPushJob } from './jobs/stock-push'
 import { syncTickJob } from './jobs/sync-tick'
 import { systemPingJob } from './jobs/system-ping'
@@ -14,6 +15,7 @@ export const jobs: JobDefinition[] = [
   ordersPullJob,
   stockPushJob,
   ordersUpdateStatusJob,
+  orderStatusesDeleteJob,
 ] as JobDefinition[]
 
 export function findJob(name: string): JobDefinition | undefined {

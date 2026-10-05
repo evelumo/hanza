@@ -9,7 +9,8 @@ import { getAvailability } from '../stock/availability'
 import { createTestOrganization, type TestContext } from '../testing/context'
 import { databaseUrl, useTestContext } from '../testing/db-test'
 import { buildOrder, createTestConnection, fact, orderLine, testChannel } from '../testing/fixtures'
-import { deleteOrderStatus } from './delete'
+import { orderStatusesDeleteJob } from '../jobs/order-statuses-delete'
+import { deleteOrderStatus, finishOrderStatusDeletion } from './delete'
 import { getStatusMapping, setStatusMapping } from './mapping'
 import {
   createOrderStatus,
@@ -207,7 +208,7 @@ describe.skipIf(!databaseUrl)('Order statuses (Postgres)', () => {
     ])
   })
 
-  it('deletes a status: never a default, only with an active replacement of its phase while in use, moving Orders in batches', async () => {
+  it('deletes a status: never a default, only with an active replacement of its phase while in use, its Orders moved in batches by the worker', async () => {
     const { ctx, org, admin, connectionId, statuses, defaultOf, stored } = await setup()
     const packing = (await createOrderStatus(ctx, org, { phase: 'processing', name: 'Packing', color: null }, admin)).statusId
     const packed = (await createOrderStatus(ctx, org, { phase: 'processing', name: 'Packed', color: null }, admin)).statusId
@@ -231,8 +232,17 @@ describe.skipIf(!databaseUrl)('Order statuses (Postgres)', () => {
     await setOrderStatusActive(ctx, org, packed, true, admin)
     expect((await statuses()).find((status) => status.id === packing)?.active).toBe(true)
 
-    expect(await deleteOrderStatus(ctx, org, unused, null, admin)).toEqual({ moved: 0 })
-    expect(await deleteOrderStatus(ctx, org, packing, packed, admin, { batchSize: 2 })).toEqual({ moved: 5 })
+    expect(await deleteOrderStatus(ctx, org, unused, null, admin)).toEqual({ deleted: true })
+    expect((await statuses()).map((status) => status.id)).not.toContain(unused)
+
+    // In use: deactivated at once, its Orders moved by the job (here run by hand with small batches, as the worker would).
+    expect(await deleteOrderStatus(ctx, org, packing, packed, admin)).toEqual({ deleted: false })
+    expect((await statuses()).find((status) => status.id === packing)).toMatchObject({ active: false, orderCount: 5 })
+    const job = ctx.queue.waiting.find((waiting) => waiting.name === 'orderStatuses.delete' && (waiting.payload as { statusId: string }).statusId === packing)
+    expect(job).toMatchObject({ payload: { organizationId: org, statusId: packing, replacementId: packed, actor: admin } })
+    expect(await finishOrderStatusDeletion(ctx, org, packing, packed, admin, { batchSize: 2 })).toEqual({ moved: 5 })
+    // The queued job then finds nothing left to do.
+    await orderStatusesDeleteJob.handler(ctx, job!.payload as never, { attempt: 1, maxAttempts: 5, retriedLater: 0 })
 
     expect((await statuses()).map((status) => status.id)).not.toContain(packing)
     for (const orderId of orderIds) expect(await stored(orderId)).toMatchObject({ phase: 'processing', statusId: packed, statusPushSeq: 1 })
@@ -249,7 +259,7 @@ describe.skipIf(!databaseUrl)('Order statuses (Postgres)', () => {
     const returned = (await createOrderStatus(ctx, org, { phase: 'cancelled', name: 'Returned', color: null }, admin)).statusId
     await setStatusMapping(ctx, org, connectionId, { cancelled: refunded }, admin)
     await expect(deleteOrderStatus(ctx, org, refunded, null, admin)).rejects.toMatchObject({ code: 'status_in_use' })
-    await deleteOrderStatus(ctx, org, refunded, returned, admin)
+    expect(await deleteOrderStatus(ctx, org, refunded, returned, admin)).toEqual({ deleted: true })
     expect(await getStatusMapping(ctx, org, connectionId)).toEqual({ new: null, shipped: null, cancelled: returned })
   })
 

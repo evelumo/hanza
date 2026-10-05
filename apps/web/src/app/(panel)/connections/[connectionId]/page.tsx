@@ -1,4 +1,5 @@
-import { getConnection, listEvents } from '@hanza/core'
+import { canManageOrderStatuses, CHANNEL_REPORTED_PHASES, getConnection, getStatusMapping, listEvents, listOrderStatuses } from '@hanza/core'
+import { isChannel } from '@hanza/connector-sdk'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
@@ -10,11 +11,12 @@ import { getActiveLocale, getT } from '@/i18n/server'
 import { getContext } from '@/lib/context'
 import { describeEvent } from '@/lib/events'
 import { getFormatters } from '@/lib/formatters'
-import { streamLabel, syncErrorLabel } from '@/lib/labels'
+import { orderStatusName, reportedPhaseLabel, streamLabel, syncErrorLabel } from '@/lib/labels'
 import { requireTenant } from '@/lib/session'
 import { isSyncRunning } from '@/lib/sync-status'
 import { requestSyncAction } from '../actions'
 import { formatSyncResult } from '../sync-summary'
+import { StatusMappingForm, type MappingRow } from './status-mapping-form'
 
 export const dynamic = 'force-dynamic'
 
@@ -23,15 +25,35 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function ConnectionPage({ params }: { params: Promise<{ connectionId: string }> }) {
-  const { organizationId } = await requireTenant()
+  const { user, organizationId } = await requireTenant()
   const [t, format, locale] = await Promise.all([getT(), getFormatters(), getActiveLocale()])
   const time = (date: Date | null) => (date ? format.dateTime(date) : '—')
   const { connectionId } = await params
   const ctx = getContext()
   const connection = await getConnection(ctx, organizationId, connectionId)
   if (!connection) notFound()
-  const connectorName = ctx.connectors.get(connection.connectorId)?.name ?? connection.connectorId
-  const events = await listEvents(ctx, organizationId, { type: 'connection', id: connection.id }, 20)
+  const connector = ctx.connectors.get(connection.connectorId)
+  const connectorName = connector?.name ?? connection.connectorId
+  const [events, statuses, mapping, canManage] = await Promise.all([
+    listEvents(ctx, organizationId, { type: 'connection', id: connection.id }, 20),
+    listOrderStatuses(ctx, organizationId),
+    getStatusMapping(ctx, organizationId, connection.id),
+    canManageOrderStatuses(ctx, organizationId, user.id),
+  ])
+  const mappingRows: MappingRow[] = CHANNEL_REPORTED_PHASES.map((phase) => {
+    const inPhase = statuses.filter((status) => status.phase === phase)
+    const defaultStatus = inPhase.find((status) => status.isDefault)
+    const current = mapping[phase] ?? ''
+    return {
+      phase,
+      label: reportedPhaseLabel(t, phase),
+      defaultLabel: defaultStatus ? orderStatusName(t, defaultStatus) : '',
+      current,
+      options: inPhase
+        .filter((status) => status.active || status.id === current)
+        .map((status) => ({ id: status.id, label: orderStatusName(t, status) })),
+    }
+  })
 
   return (
     <div className="space-y-6">
@@ -100,6 +122,13 @@ export default async function ConnectionPage({ params }: { params: Promise<{ con
           </div>
         )}
       </Section>
+
+      {connector && isChannel(connector) ? (
+        <Section title={t('connections.detail.statusMapping.title')} description={t('connections.detail.statusMapping.description')}>
+          {canManage ? null : <p className="px-5 pt-4 text-sm font-medium">{t('connections.detail.statusMapping.adminsOnly')}</p>}
+          <StatusMappingForm connectionId={connection.id} rows={mappingRows} disabled={!canManage} />
+        </Section>
+      ) : null}
 
       <Section title={t('connections.detail.eventsTitle')}>
         {events.length === 0 ? (

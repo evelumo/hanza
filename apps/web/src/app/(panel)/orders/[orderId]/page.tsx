@@ -1,4 +1,4 @@
-import { getOrder } from '@hanza/core'
+import { getOrder, ORDER_PHASES } from '@hanza/core'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
@@ -10,7 +10,7 @@ import { getT } from '@/i18n/server'
 import { getContext } from '@/lib/context'
 import { describeEvent } from '@/lib/events'
 import { getFormatters } from '@/lib/formatters'
-import { attentionReasonLabel, factLabel, orderStatusLabel, paymentLabel, reservationLabel } from '@/lib/labels'
+import { attentionReasonLabel, factLabel, orderPhaseLabel, orderStatusName, paymentLabel, reservationLabel } from '@/lib/labels'
 import { requireTenant } from '@/lib/session'
 import { changeOrderStatusAction, resolveAttentionAction } from './actions'
 import { AddressBlock } from './address-block'
@@ -31,6 +31,9 @@ export default async function OrderPage({ params }: { params: Promise<{ orderId:
 
   const unmatchedLines = order.lines.filter((line) => !line.productId).length
   const manualReasons = order.attentionReasons.filter((reason) => reason !== 'unmatched_line')
+  const statusGroups = ORDER_PHASES.map((phase) => ({ phase, statuses: order.allowedStatuses.filter((status) => status.phase === phase) })).filter(
+    (group) => group.statuses.length > 0,
+  )
 
   return (
     <div className="space-y-6">
@@ -43,6 +46,7 @@ export default async function OrderPage({ params }: { params: Promise<{ orderId:
             {t('orders.detail.title')} <span className="font-mono">{order.externalId}</span>
           </h1>
           <OrderStatusBadge status={order.status} />
+          <span className="text-sm text-muted">{t('orders.detail.phaseLine', { phase: orderPhaseLabel(t, order.phase) })}</span>
           {order.attentionReasons.length > 0 ? <AttentionBadge /> : null}
         </div>
         <p className="mt-1 text-sm text-muted">
@@ -79,29 +83,40 @@ export default async function OrderPage({ params }: { params: Promise<{ orderId:
 
       <Section title={t('orders.detail.statusTitle')} description={t('orders.detail.statusDescription')}>
         <div className="px-5 py-4">
-          {order.allowedTransitions.length === 0 ? (
-            <p className="text-sm text-muted">{t('orders.detail.finalStatus', { status: orderStatusLabel(t, order.status) })}</p>
+          {statusGroups.length === 0 ? (
+            <p className="text-sm text-muted">{t('orders.detail.finalStatus', { status: orderStatusName(t, order.status) })}</p>
           ) : (
-            <div className="flex flex-wrap gap-3">
-              {order.allowedTransitions.map((status) => (
-                <ActionForm
-                  // A new key after lines get linked drops the stale "link the lines first" error.
-                  key={`${status}:${unmatchedLines}`}
-                  action={changeOrderStatusAction}
-                  confirm={
-                    status === 'shipped'
-                      ? t('orders.detail.confirmShipped')
-                      : status === 'cancelled'
-                        ? t('orders.detail.confirmCancelled')
-                        : undefined
-                  }
-                >
-                  <input type="hidden" name="orderId" value={order.id} />
-                  <input type="hidden" name="status" value={status} />
-                  <ActionButton variant={status === 'cancelled' ? 'danger' : 'secondary'} pendingLabel={t('common.saving')}>
-                    {t('orders.detail.changeTo', { status: orderStatusLabel(t, status) })}
-                  </ActionButton>
-                </ActionForm>
+            <div className="space-y-4">
+              {statusGroups.map((group) => (
+                <div key={group.phase}>
+                  <h3 className="text-sm font-medium text-muted">{orderPhaseLabel(t, group.phase)}</h3>
+                  <div className="mt-2 flex flex-wrap gap-3">
+                    {group.statuses.map((status) => {
+                      // Only a change of phase takes goods off stock or releases them; a move within the phase is a label.
+                      const phaseChange = status.phase !== order.phase
+                      return (
+                        <ActionForm
+                          // A new key after lines get linked drops the stale "link the lines first" error.
+                          key={`${status.id}:${unmatchedLines}`}
+                          action={changeOrderStatusAction}
+                          confirm={
+                            phaseChange && status.phase === 'shipped'
+                              ? t('orders.detail.confirmShipped')
+                              : phaseChange && status.phase === 'cancelled'
+                                ? t('orders.detail.confirmCancelled')
+                                : undefined
+                          }
+                        >
+                          <input type="hidden" name="orderId" value={order.id} />
+                          <input type="hidden" name="statusId" value={status.id} />
+                          <ActionButton variant={phaseChange && status.phase === 'cancelled' ? 'danger' : 'secondary'} pendingLabel={t('common.saving')}>
+                            {t('orders.detail.changeTo', { status: orderStatusName(t, status) })}
+                          </ActionButton>
+                        </ActionForm>
+                      )
+                    })}
+                  </div>
+                </div>
               ))}
             </div>
           )}

@@ -5,11 +5,13 @@ import { usePathname } from 'next/navigation'
 import { useT } from '@/i18n/use-t'
 import type { MessageKey } from '@/i18n/types'
 
-const links: Array<{ href: string; label: MessageKey }> = [
+// `section` is the path prefix that marks the link as current, when it differs from `href`.
+const links: Array<{ href: string; label: MessageKey; section?: string }> = [
   { href: '/dashboard', label: 'nav.dashboard' },
   { href: '/products', label: 'nav.products' },
   { href: '/orders', label: 'nav.orders' },
   { href: '/connections', label: 'nav.connections' },
+  { href: '/settings/order-statuses', label: 'nav.settings', section: '/settings' },
 ]
 
 export function NavLinks() {
@@ -18,7 +20,8 @@ export function NavLinks() {
   return (
     <nav aria-label={t('nav.label')} className="flex flex-wrap gap-1 text-sm">
       {links.map((link) => {
-        const active = pathname === link.href || pathname.startsWith(`${link.href}/`)
+        const section = link.section ?? link.href
+        const active = pathname === section || pathname.startsWith(`${section}/`)
         return (
           <Link
             key={link.href}

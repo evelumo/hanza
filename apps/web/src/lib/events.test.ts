@@ -9,14 +9,35 @@ const number = createFormatters('en').number
 const numberPl = createFormatters('pl').number
 
 describe('describeEvent', () => {
-  it('describes a status change with the status labels', () => {
+  it('describes a status change with the phase names when the Event has no status names', () => {
     expect(describeEvent('order.status_changed', { from: 'new', to: 'shipped' }, t, number)).toEqual({ title: 'Status changed', detail: 'New → Shipped' })
-    const { orderStatus } = catalogues.pl.labels
+    const { orderPhase } = catalogues.pl.labels
     expect(describeEvent('order.status_changed', { from: 'new', to: 'shipped' }, translatorFor('pl'), numberPl)).toEqual({
       title: catalogues.pl.events.title.order_status_changed,
-      detail: `${orderStatus.new} → ${orderStatus.shipped}`,
+      detail: `${orderPhase.new} → ${orderPhase.shipped}`,
     })
-    expect(orderStatus.new).not.toBe(catalogues.en.labels.orderStatus.new)
+    expect(orderPhase.new).not.toBe(catalogues.en.labels.orderPhase.new)
+  })
+
+  it('describes a status change with the status names the Event kept, a null name being the phase', () => {
+    const payload = {
+      from: 'processing',
+      to: 'processing',
+      fromStatus: { id: 'a', name: 'Waiting for packaging' },
+      toStatus: { id: 'b', name: 'Packed' },
+    }
+    expect(describeEvent('order.status_changed', payload, t, number).detail).toBe('Waiting for packaging → Packed')
+    const toDefault = { from: 'processing', to: 'shipped', fromStatus: { id: 'b', name: 'Packed' }, toStatus: { id: 'c', name: null } }
+    expect(describeEvent('order.status_changed', toDefault, translatorFor('pl'), numberPl).detail).toBe(`Packed → ${catalogues.pl.labels.orderPhase.shipped}`)
+    expect(describeEvent('order.status_changed', { from: 'new', to: 'new', toStatus: 'garbage' }, t, number).detail).toBe('New → New')
+  })
+
+  it('describes a change of a Status mapping', () => {
+    const payload = { phase: 'cancelled', from: null, to: { id: 'x', name: 'Refunded' } }
+    expect(describeEvent('connection.status_mapping_changed', payload, t, number)).toEqual({
+      title: 'Order statuses from the channel changed',
+      detail: 'Cancelled: default status → Refunded',
+    })
   })
 
   it('describes stock and health changes', () => {

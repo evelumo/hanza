@@ -11,5 +11,5 @@ export {
   ORDER_STATUS_NAME_MAX,
   type OrderStatusRow,
 } from './statuses'
-export { deleteOrderStatus, DELETE_BATCH_SIZE } from './delete'
+export { deleteOrderStatus, finishOrderStatusDeletion, DELETE_BATCH_SIZE } from './delete'
 export { getStatusMapping, setStatusMapping, type StatusMapping } from './mapping'

@@ -1,8 +1,10 @@
 import type { Prisma } from '@hanza/db'
 import type { Actor } from '../actor'
+import { afterCommit } from '../after-commit'
 import type { Context } from '../context'
 import { DomainError } from '../errors'
 import { appendEvent } from '../events'
+import { coalesceKeys, orderStatusesDeleteRef } from '../jobs/refs'
 import type { OrderPhase } from '../orders/phases'
 import { TX_OPTIONS } from '../transaction'
 import { findStatus, type StatusSnapshot } from './defaults'
@@ -11,14 +13,15 @@ import { lockStatuses } from './statuses'
 
 /** Orders moved per transaction: each batch holds its row locks only briefly. */
 export const DELETE_BATCH_SIZE = 500
-/** How often deleting retries when Orders still reference the status at the end (moved to it by a racing transaction). */
+/** How often one run retries when Orders still reference the status at the end (moved to it by a racing transaction). */
 const DELETE_ROUNDS = 5
 
 /**
  * Deletes a status that is not a phase default. A status still used by Orders or Status mappings needs a replacement:
- * an active status of the same phase. The status is first deactivated and its mappings retargeted (so nothing new
- * picks it), then its Orders are moved in batches, each its own transaction, and finally the status is deleted.
- * Interrupted half-way, it leaves an inactive status with fewer Orders: running it again finishes the job.
+ * an active status of the same phase. The status is deactivated and its mappings move to the replacement at once, so
+ * nothing new picks it; an unused status is deleted right away (`deleted: true`). Otherwise its Orders are moved by
+ * the `orderStatuses.delete` job, in the worker. If that enqueue is lost (ADR 0010), the status stays inactive with
+ * its Orders, and deleting it again resumes the move.
  */
 export async function deleteOrderStatus(
   ctx: Context,
@@ -26,17 +29,16 @@ export async function deleteOrderStatus(
   statusId: string,
   replacementId: string | null,
   actor: Actor,
-  options: { batchSize?: number } = {},
-): Promise<{ moved: number }> {
+): Promise<{ deleted: boolean }> {
   await assertCanManageOrderStatuses(ctx, organizationId, actor)
-  const { status, replacement } = await ctx.db.$transaction(async (tx) => {
+  const { status, replacement, inUse } = await ctx.db.$transaction(async (tx) => {
     await lockStatuses(tx, organizationId, replacementId ? [statusId, replacementId] : [statusId])
     const status = await findStatus(tx, organizationId, statusId)
     if (status.isDefault) throw new DomainError('status_is_default')
+    const inUse = (await tx.order.count({ where: { organizationId, statusId } })) + (await tx.channelStatusMapping.count({ where: { organizationId, statusId } })) > 0
     if (!replacementId) {
-      const used = (await tx.order.count({ where: { organizationId, statusId }, take: 1 })) + (await tx.channelStatusMapping.count({ where: { organizationId, statusId } }))
-      if (used > 0) throw new DomainError('status_in_use')
-      return { status, replacement: null }
+      if (inUse) throw new DomainError('status_in_use')
+      return { status, replacement: null, inUse }
     }
     const replacement = await tx.orderStatus.findFirst({
       where: { id: replacementId, organizationId },
@@ -47,25 +49,54 @@ export async function deleteOrderStatus(
     }
     if (status.active) await tx.orderStatus.updateMany({ where: { id: statusId, organizationId }, data: { active: false } })
     await tx.channelStatusMapping.updateMany({ where: { organizationId, statusId }, data: { statusId: replacement.id } })
-    return { status, replacement }
+    return { status, replacement, inUse }
   }, TX_OPTIONS)
 
   const from: StatusSnapshot = { id: status.id, name: status.name }
   const to: StatusSnapshot | null = replacement ? { id: replacement.id, name: replacement.name } : null
+  if (await deleteIfUnused(ctx, organizationId, status.phase, from, to, 0, actor)) return { deleted: true }
+  if (!replacement || !inUse) throw new DomainError('status_in_use')
+
+  const payload = { organizationId, statusId, replacementId: replacement.id, actor }
+  await afterCommit(ctx, { job: orderStatusesDeleteRef.name, organizationId, statusId }, () =>
+    ctx.queue.enqueue(orderStatusesDeleteRef, payload, { coalesceKey: coalesceKeys.orderStatusesDelete(statusId) }),
+  )
+  return { deleted: false }
+}
+
+/**
+ * The worker's part: moves the status's Orders to the replacement in batches, each its own transaction, then deletes
+ * the status. Idempotent: a status already gone is done. Throws while something still references it, so the job retries.
+ */
+export async function finishOrderStatusDeletion(
+  ctx: Context,
+  organizationId: string,
+  statusId: string,
+  replacementId: string,
+  actor: Actor,
+  options: { batchSize?: number } = {},
+): Promise<{ moved: number }> {
+  const status = await ctx.db.orderStatus.findFirst({ where: { id: statusId, organizationId }, select: { id: true, name: true, phase: true } })
+  if (!status) return { moved: 0 }
+  const replacement = await ctx.db.orderStatus.findFirst({
+    where: { id: replacementId, organizationId, phase: status.phase },
+    select: { id: true, name: true },
+  })
+  if (!replacement) throw new DomainError('invalid_replacement')
+  const from: StatusSnapshot = { id: status.id, name: status.name }
+  const to: StatusSnapshot = { id: replacement.id, name: replacement.name }
+
   let moved = 0
   for (let round = 0; round < DELETE_ROUNDS; round++) {
-    if (to) {
-      let batch: number
-      do {
-        batch = await moveOrdersBatch(ctx, organizationId, status.phase, from, to, actor, options.batchSize ?? DELETE_BATCH_SIZE)
-        moved += batch
-      } while (batch > 0)
-    }
+    let batch: number
+    do {
+      batch = await moveOrdersBatch(ctx, organizationId, status.phase, from, to, actor, options.batchSize ?? DELETE_BATCH_SIZE)
+      moved += batch
+    } while (batch > 0)
     if (await deleteIfUnused(ctx, organizationId, status.phase, from, to, moved, actor)) return { moved }
-    if (!to) throw new DomainError('status_in_use')
     await new Promise((resolve) => setTimeout(resolve, 50 * (round + 1)))
   }
-  throw new DomainError('status_in_use')
+  throw new DomainError('status_in_use', `Order status ${statusId} is still referenced after ${DELETE_ROUNDS} rounds`)
 }
 
 /**
@@ -120,9 +151,11 @@ async function deleteIfUnused(
   actor: Actor,
 ): Promise<boolean> {
   return ctx.db.$transaction(async (tx) => {
-    const locked = await tx.$queryRaw<Array<{ id: string }>>`
-      SELECT "id" FROM "order_status" WHERE "id" = ${from.id} AND "organizationId" = ${organizationId} FOR UPDATE`
-    if (locked.length === 0) return true
+    const locked = await tx.$queryRaw<Array<{ isDefault: boolean }>>`
+      SELECT "isDefault" FROM "order_status" WHERE "id" = ${from.id} AND "organizationId" = ${organizationId} FOR UPDATE`
+    if (!locked[0]) return true
+    // Made the default since it was checked (only possible while it was still active).
+    if (locked[0].isDefault) throw new DomainError('status_is_default')
     const orders = await tx.order.count({ where: { organizationId, statusId: from.id } })
     const mappings = await tx.channelStatusMapping.count({ where: { organizationId, statusId: from.id } })
     if (orders + mappings > 0) return false

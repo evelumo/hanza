@@ -1,6 +1,6 @@
 'use server'
 
-import { DomainError, addConnection, requestSync } from '@hanza/core'
+import { DomainError, addConnection, requestSync, setStatusMapping } from '@hanza/core'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { getT } from '@/i18n/server'
@@ -9,7 +9,7 @@ import { describeFields, fieldErrorsFromIssues, issuesOf, publicValues, readFiel
 import { getContext } from '@/lib/context'
 import { domainErrorMessage } from '@/lib/domain-errors'
 import { requireTenant } from '@/lib/session'
-import { addConnectionSchema, requestSyncSchema } from './schemas'
+import { addConnectionSchema, requestSyncSchema, statusMappingSchema } from './schemas'
 
 export async function addConnectionAction(_previous: ActionState, formData: FormData): Promise<ActionState> {
   const { user, organizationId } = await requireTenant()
@@ -60,5 +60,24 @@ export async function requestSyncAction(_previous: ActionState, formData: FormDa
   } catch (error) {
     return failure(error, t)
   }
+  return { ok: true }
+}
+
+/** Owners and admins only, checked by the core (`forbidden`). */
+export async function setStatusMappingAction(_previous: ActionState, formData: FormData): Promise<ActionState> {
+  const { user, organizationId } = await requireTenant()
+  const t = await getT()
+  const values = formText(formData)
+  const parsed = statusMappingSchema.safeParse(values)
+  if (!parsed.success) return invalidInput(parsed.error, t, values)
+
+  const { connectionId, ...mapping } = parsed.data
+  try {
+    await setStatusMapping(getContext(), organizationId, connectionId, mapping, { type: 'user', userId: user.id })
+  } catch (error) {
+    return failure(error, t, { values })
+  }
+  revalidatePath('/connections', 'layout')
+  revalidatePath('/settings', 'layout')
   return { ok: true }
 }

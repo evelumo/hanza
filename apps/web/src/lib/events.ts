@@ -35,7 +35,12 @@ function detail(t: Translator, number: NumberFormat, type: string, payload: Payl
     case 'product.updated':
       return arrow(text(nested(payload.name, 'from')), text(nested(payload.name, 'to')))
     case 'order.status_changed':
-      return arrow(statusLabel(t, text(payload.from)), statusLabel(t, text(payload.to)))
+      return arrow(statusName(t, payload.fromStatus, text(payload.from)), statusName(t, payload.toStatus, text(payload.to)))
+    case 'connection.status_mapping_changed': {
+      const phase = text(payload.phase)
+      const change = arrow(mappedName(t, payload.from), mappedName(t, payload.to))
+      return phase && change ? `${labelOrRaw(t, 'labels.orderPhase', phase)}: ${change}` : change
+    }
     case 'order.channel_fact_recorded':
       return labelOrRaw(t, 'labels.channelFact', text(payload.type) ?? '')
     case 'order.attention_raised':
@@ -54,7 +59,19 @@ function detail(t: Translator, number: NumberFormat, type: string, payload: Payl
   }
 }
 
-const statusLabel = (t: Translator, value: string | null) => (value === null ? null : labelOrRaw(t, 'labels.orderStatus', value))
+const phaseLabel = (t: Translator, value: string | null) => (value === null ? null : labelOrRaw(t, 'labels.orderPhase', value))
+
+/** The status name kept in the Event (renaming the status later does not change it); a null name is the phase's. */
+function statusName(t: Translator, snapshot: unknown, phase: string | null): string | null {
+  const name = typeof snapshot === 'object' && snapshot !== null ? text((snapshot as Payload).name) : null
+  return name ?? phaseLabel(t, phase)
+}
+
+/** A Status mapping side: null is the phase default; an unnamed status is the default too. */
+function mappedName(t: Translator, snapshot: unknown): string {
+  const name = typeof snapshot === 'object' && snapshot !== null ? text((snapshot as Payload).name) : null
+  return name ?? t('events.defaultStatus')
+}
 const healthLabel = (t: Translator, value: string | null) => (value === null ? null : labelOrRaw(t, 'labels.health', value))
 
 /** Event types have dots, which message keys cannot contain: `order.status_changed` is `order_status_changed`. */
