@@ -1,4 +1,5 @@
 import { getOrder } from '@hanza/core'
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { ActionForm } from '@/components/action-form'
@@ -16,6 +17,10 @@ import { AddressBlock } from './address-block'
 import { LinkLineForm } from './link-line-form'
 
 export const dynamic = 'force-dynamic'
+
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getT())('orders.detail.title') }
+}
 
 export default async function OrderPage({ params }: { params: Promise<{ orderId: string }> }) {
   const { organizationId } = await requireTenant()
@@ -130,7 +135,7 @@ export default async function OrderPage({ params }: { params: Promise<{ orderId:
                       </Link>
                     ) : (
                       <div className="space-y-2">
-                        <AttentionBadge label={t('orders.detail.unlinked')} />
+                        <AttentionBadge label={t('orders.detail.unmatched')} />
                         <LinkLineForm lineId={line.id} suggestedSku={line.sku} />
                       </div>
                     )}
@@ -205,7 +210,7 @@ export default async function OrderPage({ params }: { params: Promise<{ orderId:
         ) : (
           <ul className="divide-y divide-line">
             {order.events.map((event) => {
-              const { title, detail } = describeEvent(event.type, event.payload, t)
+              const { title, detail } = describeEvent(event.type, event.payload, t, format.number)
               return (
                 <li key={event.id} className="flex flex-wrap items-center justify-between gap-3 px-5 py-3 text-sm">
                   <span>

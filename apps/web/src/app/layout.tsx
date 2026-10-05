@@ -1,6 +1,8 @@
 import type { Metadata } from 'next'
 import { NextIntlClientProvider } from 'next-intl'
 import type { ReactNode } from 'react'
+import { catalogues } from '@/i18n/catalogues'
+import { clientMessages } from '@/i18n/client-messages'
 import { getActiveLocale, getT } from '@/i18n/server'
 import './globals.css'
 
@@ -14,7 +16,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   return (
     <html lang={locale}>
       <body className="min-h-screen antialiased">
-        <NextIntlClientProvider>{children}</NextIntlClientProvider>
+        <NextIntlClientProvider messages={clientMessages(catalogues[locale])}>{children}</NextIntlClientProvider>
       </body>
     </html>
   )

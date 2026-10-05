@@ -88,6 +88,7 @@
     },
     "shortageHint": "(brak towaru)",
     "detail": {
+      "title": "Produkt",
       "skuLine": "SKU: {sku}",
       "shortage": "Brak towaru: sprzedano więcej, niż jest na stanie.",
       "dataTitle": "Dane produktu",
@@ -199,7 +200,7 @@
         "product": "Produkt",
         "reservation": "Rezerwacja"
       },
-      "unlinked": "Niepołączona",
+      "unmatched": "Niepołączona",
       "shortage": "Brak na stanie",
       "buyerTitle": "Kupujący",
       "contact": "Dane kontaktowe",
@@ -234,6 +235,7 @@
     "neverSynced": "jeszcze nie uruchomiono",
     "running": "w toku",
     "detail": {
+      "title": "Połączenie",
       "connectorLine": "Konektor: {connector}",
       "connectorLineChanged": "Konektor: {connector} · stan zmieniony {date}",
       "syncTitle": "Synchronizacja",

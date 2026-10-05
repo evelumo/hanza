@@ -1,4 +1,5 @@
 import { getProduct } from '@hanza/core'
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import { ActionForm } from '@/components/action-form'
 import { ActionButton } from '@/components/form'
@@ -13,6 +14,10 @@ import { NameForm } from './name-form'
 import { StockForm } from './stock-form'
 
 export const dynamic = 'force-dynamic'
+
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getT())('products.detail.title') }
+}
 
 function Figure({ label, value, negative, note }: { label: string; value: string; negative?: boolean; note?: string }) {
   return (

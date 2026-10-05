@@ -15,7 +15,8 @@ function flatten(node: unknown, prefix = ''): Map<string, string> {
 
 /**
  * The ICU arguments of a message as `name:type` (`count:plural`, `total:number`, `name:string`) plus, for
- * plurals, the selectors they spell out. A small parser: `{name}`, `{name, type}`, `{name, type, style}`
+ * plurals, the selectors they spell out (`select` and `selectordinal` are parsed but not reported: their
+ * selectors are not the CLDR plural categories). A small parser: `{name}`, `{name, type}`, `{name, type, style}`
  * and `{name, plural|select, selector {message} ...}` with nesting.
  */
 function icuArguments(message: string): { args: Set<string>; selectors: Map<string, Set<string>> } {
@@ -56,7 +57,7 @@ function icuArguments(message: string): { args: Set<string>; selectors: Map<stri
     position++ // ,
     if (type === 'plural' || type === 'select' || type === 'selectordinal') {
       const found = new Set<string>()
-      selectors.set(name, found)
+      if (type === 'plural') selectors.set(name, found)
       skipSpaces()
       while (position < message.length && message[position] !== '}') {
         const selector = readUntil('{')
@@ -122,6 +123,12 @@ describe('icuArguments', () => {
     const { args, selectors } = icuArguments('Hi {name}: {total, number} {count, plural, =0 {none} one {# of {kind}} other {# items}}')
     expect([...args].sort()).toEqual(['count:plural', 'kind:string', 'name:string', 'total:number'])
     expect([...(selectors.get('count') ?? [])]).toEqual(['=0', 'one', 'other'])
+  })
+
+  it('reports plural selectors only, not those of select or selectordinal', () => {
+    const { args, selectors } = icuArguments('{kind, select, a {x} other {y}} {n, selectordinal, one {#st} other {#th}}')
+    expect([...args].sort()).toEqual(['kind:select', 'n:selectordinal'])
+    expect(selectors.size).toBe(0)
   })
 })
 

@@ -14,11 +14,18 @@ function nested(value: unknown, key: 'from' | 'to'): unknown {
   return typeof value === 'object' && value !== null ? (value as Payload)[key] : undefined
 }
 
+type NumberFormat = (value: number) => string
+
+const formatted = (value: unknown, number: NumberFormat): string | null => {
+  const n = count(value)
+  return n === null ? null : number(n)
+}
+
 // Payloads are untrusted JSON, and a status or reason this build does not know yet is shown as it is.
-function detail(t: Translator, type: string, payload: Payload): string | null {
+function detail(t: Translator, number: NumberFormat, type: string, payload: Payload): string | null {
   switch (type) {
     case 'stock.set':
-      return arrow(count(payload.from)?.toString() ?? null, count(payload.to)?.toString() ?? null)
+      return arrow(formatted(payload.from, number), formatted(payload.to, number))
     case 'stock.reserved':
     case 'stock.released':
     case 'stock.consumed': {
@@ -53,9 +60,17 @@ const healthLabel = (t: Translator, value: string | null) => (value === null ? n
 /** Event types have dots, which message keys cannot contain: `order.status_changed` is `order_status_changed`. */
 const titleKey = (type: string) => type.replaceAll('.', '_')
 
-/** One-liner for an Event in the request's language; payloads are untrusted JSON, so every field is type-checked. */
-export function describeEvent(type: string, payload: Payload, t: Translator): { title: string; detail: string | null } {
-  const result = detail(t, type, payload)
+/**
+ * One-liner for an Event in the request's language; payloads are untrusted JSON, so every field is type-checked.
+ * `number` is the locale's number formatter (`getFormatters().number`).
+ */
+export function describeEvent(
+  type: string,
+  payload: Payload,
+  t: Translator,
+  number: NumberFormat,
+): { title: string; detail: string | null } {
+  const result = detail(t, number, type, payload)
   const title = hasLabel('events.title', titleKey(type)) ? labelOrRaw(t, 'events.title', titleKey(type)) : type
   return { title, detail: result && result.trim() !== '' ? result : null }
 }

@@ -1,6 +1,8 @@
+import { listEvents } from '@hanza/core'
 import type { Metadata } from 'next'
 import { getT } from '@/i18n/server'
 import { getContext } from '@/lib/context'
+import { describeEvent } from '@/lib/events'
 import { getFormatters } from '@/lib/formatters'
 import { requireTenant } from '@/lib/session'
 import { PingButton } from './ping-button'
@@ -14,11 +16,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function DashboardPage() {
   const { organizationId } = await requireTenant()
   const [t, format] = await Promise.all([getT(), getFormatters()])
-  const events = await getContext().db.eventLog.findMany({
-    where: { organizationId },
-    orderBy: { createdAt: 'desc' },
-    take: 10,
-  })
+  const events = await listEvents(getContext(), organizationId, null, 10)
 
   return (
     <div className="space-y-8">
@@ -39,14 +37,20 @@ export default async function DashboardPage() {
           <p className="px-5 py-6 text-sm text-muted">{t('dashboard.eventsEmpty')}</p>
         ) : (
           <ul className="divide-y divide-line">
-            {events.map((event) => (
-              <li key={event.id} className="flex items-center justify-between gap-4 px-5 py-3 text-sm">
-                <code className="font-mono">{event.type}</code>
-                <time dateTime={event.createdAt.toISOString()} className="text-muted">
-                  {format.dateTime(event.createdAt)}
-                </time>
-              </li>
-            ))}
+            {events.map((event) => {
+              const { title, detail } = describeEvent(event.type, event.payload, t, format.number)
+              return (
+                <li key={event.id} className="flex flex-wrap items-center justify-between gap-3 px-5 py-3 text-sm">
+                  <span>
+                    {title}
+                    {detail ? <span className="text-muted"> · {detail}</span> : null}
+                  </span>
+                  <time dateTime={event.createdAt.toISOString()} className="text-muted">
+                    {format.dateTime(event.createdAt)}
+                  </time>
+                </li>
+              )
+            })}
           </ul>
         )}
       </section>

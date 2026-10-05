@@ -1,4 +1,5 @@
 import { getConnection, listEvents } from '@hanza/core'
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { ActionForm } from '@/components/action-form'
@@ -16,6 +17,10 @@ import { requestSyncAction } from '../actions'
 import { formatSyncResult } from '../sync-summary'
 
 export const dynamic = 'force-dynamic'
+
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getT())('connections.detail.title') }
+}
 
 export default async function ConnectionPage({ params }: { params: Promise<{ connectionId: string }> }) {
   const { organizationId } = await requireTenant()
@@ -102,7 +107,7 @@ export default async function ConnectionPage({ params }: { params: Promise<{ con
         ) : (
           <ul className="divide-y divide-line">
             {events.map((event) => {
-              const { title, detail } = describeEvent(event.type, event.payload, t)
+              const { title, detail } = describeEvent(event.type, event.payload, t, format.number)
               return (
                 <li key={event.id} className="flex flex-wrap items-center justify-between gap-3 px-5 py-3 text-sm">
                   <span>

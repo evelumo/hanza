@@ -86,10 +86,11 @@
       "available": "Available",
       "offers": "Offers"
     },
-    "shortageHint": "(out of stock)",
+    "shortageHint": "(shortage)",
     "detail": {
+      "title": "Product",
       "skuLine": "SKU: {sku}",
-      "shortage": "Out of stock: more was sold than is in stock.",
+      "shortage": "Shortage: more was sold than is in stock.",
       "dataTitle": "Product details",
       "dataDescription": "The SKU is fixed and cannot be changed.",
       "name": "Name",
@@ -182,7 +183,7 @@
     "detail": {
       "title": "Order",
       "summary": "Channel: {channel} · {date} · {payment} · {total}",
-      "attentionHint": "Link the unlinked lines to products below and this flag will clear on its own.",
+      "attentionHint": "Link the unmatched lines to products below and Needs attention clears on its own.",
       "markReviewed": "Mark as reviewed",
       "statusTitle": "Status",
       "statusDescription": "Hanza leads the fulfilment; a change is passed on to the channel if the channel supports it.",
@@ -199,7 +200,7 @@
         "product": "Product",
         "reservation": "Reservation"
       },
-      "unlinked": "Unlinked",
+      "unmatched": "Unmatched",
       "shortage": "Shortage",
       "buyerTitle": "Buyer",
       "contact": "Contact details",
@@ -228,14 +229,15 @@
     "columns": {
       "name": "Name",
       "connector": "Connector",
-      "health": "Connection status",
+      "health": "Connection health",
       "lastSync": "Last sync"
     },
     "neverSynced": "not run yet",
     "running": "running",
     "detail": {
+      "title": "Connection",
       "connectorLine": "Connector: {connector}",
-      "connectorLineChanged": "Connector: {connector} · status changed {date}",
+      "connectorLineChanged": "Connector: {connector} · health changed {date}",
       "syncTitle": "Synchronisation",
       "syncDescription": "Hanza synchronises the connection in the background. The request goes to the queue and the results appear here shortly: refresh the page.",
       "syncNow": "Synchronise now",
@@ -276,7 +278,7 @@
       "cancelled": "Cancelled"
     },
     "attentionReason": {
-      "unmatched_line": "Unlinked line",
+      "unmatched_line": "Unmatched line",
       "shortage": "Shortage",
       "cancelled_while_processing": "Cancelled while processing",
       "channel_fact_conflict": "The channel reported a change after completion"
@@ -351,7 +353,7 @@
       "order_attention_raised": "Order needs attention",
       "order_attention_resolved": "Marked as reviewed",
       "connection_created": "Connection created",
-      "connection_health_changed": "Connection status changed"
+      "connection_health_changed": "Connection health changed"
     },
     "lines": "{count, plural, one {# line} other {# lines}}"
   },
