@@ -6,29 +6,37 @@ A small, stable TypeScript core (canonical data model + background sync engine) 
 
 ## Status
 
-Early scaffold. Working today:
+Early stage (stage 1 of the roadmap). Working today:
 
 - Email/password sign-up and login (Better Auth); an organization is the tenant, created during onboarding.
 - Multi-tenant data model: every tenant-owned table carries `organizationId`.
-- The queue pipeline end to end: panel → `JobQueue` (BullMQ + Redis) → separate worker → PostgreSQL. The dashboard has a test job that writes to the event log.
-- `GET /api/health` (database + queue).
-- A draft Connector SDK (`defineConnector`, `orders.pull`, `stock.push`, draft `Order` / `StockLevel` schemas) and a dependency-boundary check for connectors.
+- The domain core: Products, Offers, Stock with Reservations (Hanza owns Stock), Orders with their own status, Connections with encrypted credentials, and an event log.
+- The sync engine in the worker: pulls Offers and Orders from a Channel, pushes Available stock and Order status back, retries and tracks Connection health.
+- The panel (Polish UI): Products (Stock, Available, linking Offers to Products), Orders (status changes, Needs attention, linking Unmatched lines) and Connections (add, sync now, sync results).
+- The final-for-now Connector SDK with a conformance test kit and an in-memory **fake connector** ("Kanał testowy") that exercises the whole path without a real Channel.
+- `GET /api/health` (database + queue) and a dependency-boundary check for connectors.
 
-Not there yet: **no connectors** (Allegro first, then WooCommerce), no products/orders/stock tables, no sync engine, no REST API or MCP server, no panel E2E tests.
+Not there yet: **no real connectors** (Allegro first, then WooCommerce), no REST API or MCP server, no panel E2E tests.
 
 ## Quick start
 
 Requirements: Node.js 22+ (CI uses 24), pnpm (version pinned by `packageManager` in `package.json`; use Corepack: `corepack enable`), Docker.
 
 ```sh
-cp .env.example .env          # then set BETTER_AUTH_SECRET (e.g. openssl rand -base64 32)
+cp .env.example .env          # then set BETTER_AUTH_SECRET and HANZA_ENCRYPTION_KEY (each: openssl rand -base64 32)
 pnpm install
 pnpm infra:up                 # Postgres on :5442, Redis on :6389
 pnpm db:deploy                # apply migrations (use pnpm db:migrate while changing the schema)
 pnpm dev                      # web + worker
 ```
 
-Open http://localhost:3000, register, create your company, and press "Wyślij zadanie testowe" on the dashboard: the job goes through the queue and worker and shows up in the event list. Stop the infrastructure with `pnpm infra:down`.
+Open http://localhost:3000, register and create your company. Then try the whole flow with the fake connector:
+
+1. **Połączenia** > "Dodaj połączenie" > "Kanał testowy": any API key works (the key `expired` simulates a Connection that must sign in again). The worker pulls 5 Offers and 4 Orders within seconds; refresh the Connection page to see the results.
+2. **Produkty** > "Oferty bez produktu": select the Offers and "Utwórz produkty z zaznaczonych", then set Stock on a Product.
+3. **Zamówienia**: four Orders need attention (a Shortage until Stock is set; Unmatched lines to link, one of them on an Order the buyer cancelled). Link a line, then change an Order to "Wysłane": Stock goes down and the new Available is pushed to the Channel.
+
+The dashboard still has a test job that goes through the queue and worker. Stop the infrastructure with `pnpm infra:down`.
 
 Other commands:
 
@@ -44,13 +52,14 @@ pnpm build
 
 ```
 apps/
-  web/                 Next.js panel + API (Better Auth routes, /api/health)
+  web/                 Next.js panel + API (Products, Orders, Connections, Better Auth routes, /api/health)
   worker/              BullMQ worker process
 packages/
-  core/                context, env, logger, JobQueue, job registry
+  core/                context, domain services, sync engine, JobQueue, job registry
   db/                  Prisma schema (split per module), migrations, client
-  connector-sdk/       Connector SDK + canonical model (draft)
-  connectors/<id>/     one package per connector (none yet)
+  connector-sdk/       Connector SDK + canonical model + conformance kit
+  connector-registry/  the connectors this build knows (apps pass them to the core)
+  connectors/<id>/     one package per connector (only `fake` so far)
 scripts/               check-boundaries.mjs
 .ai/                   specs and agent skills
 docs/                  architecture plan (Polish)
