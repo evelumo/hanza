@@ -14,7 +14,8 @@ export async function setLocaleAction(formData: FormData): Promise<void> {
     sameSite: 'lax',
     path: '/',
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    // Self-hosted installs may run over plain HTTP, where a Secure cookie would be dropped.
+    secure: process.env.BETTER_AUTH_URL?.startsWith('https://') ?? false,
   })
   revalidatePath('/', 'layout')
 }
