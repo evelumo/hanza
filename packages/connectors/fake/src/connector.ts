@@ -15,10 +15,10 @@ import {
 import { z } from 'zod'
 
 export const fakeConfigSchema = z.object({
-  failMode: z.enum(['none', 'rate_limited', 'transient', 'permanent']).default('none').describe('Symulacja błędów'),
+  failMode: z.enum(['none', 'rate_limited', 'transient', 'permanent']).default('none').describe('Failure simulation'),
 })
 
-export const fakeCredentialsSchema = z.object({ apiKey: z.string().min(1).describe('Klucz API') })
+export const fakeCredentialsSchema = z.object({ apiKey: z.string().min(1).describe('API key') })
 
 export type FakeContext = CapabilityContext<z.output<typeof fakeConfigSchema>, z.output<typeof fakeCredentialsSchema>>
 
@@ -58,7 +58,7 @@ export type FakeConnector = ConnectorDefinition<typeof fakeConfigSchema, typeof 
 export function createFakeConnector(state: FakeState): FakeConnector {
   return defineConnector({
     id: 'fake',
-    name: 'Kanał testowy',
+    name: 'Test channel',
     kind: 'marketplace',
     auth: { type: 'apiKey' },
     configSchema: fakeConfigSchema,

@@ -39,7 +39,7 @@ describe.skipIf(!databaseUrl)('addConnection and requestSync', () => {
     const ctx = context()
     const org = await createTestOrganization(ctx.db)
     const error = await domainError(
-      addConnection(ctx, org, { connectorId: 'requests-shop', name: 'Sklep', config: { shopUrl: 'not a url' }, credentials: {} }, user),
+      addConnection(ctx, org, { connectorId: 'requests-shop', name: 'Shop', config: { shopUrl: 'not a url' }, credentials: {} }, user),
     )
     expect(error.code).toBe('invalid_config')
     const issues = error.details?.issues as Array<{ path: string; message: string }>
@@ -61,7 +61,7 @@ describe.skipIf(!databaseUrl)('addConnection and requestSync', () => {
     const { connectionId } = await addConnection(
       ctx,
       org,
-      { connectorId: 'requests-shop', name: 'Sklep', config: { shopUrl: 'https://shop.example.com', extra: 1 }, credentials: { apiKey: 'k' } },
+      { connectorId: 'requests-shop', name: 'Shop', config: { shopUrl: 'https://shop.example.com', extra: 1 }, credentials: { apiKey: 'k' } },
       user,
     )
     expect(await openConnection(ctx, org, connectionId)).toMatchObject({
@@ -94,7 +94,7 @@ describe.skipIf(!databaseUrl)('addConnection and requestSync', () => {
     const { connectionId } = await addConnection(
       ctx,
       org,
-      { connectorId: 'requests-shop', name: 'Sklep', config: { shopUrl: 'https://shop.example.com' }, credentials: { apiKey: 'k' } },
+      { connectorId: 'requests-shop', name: 'Shop', config: { shopUrl: 'https://shop.example.com' }, credentials: { apiKey: 'k' } },
       user,
     )
     expect(await ctx.db.connection.count({ where: { id: connectionId, organizationId: org } })).toBe(1)
@@ -110,7 +110,7 @@ describe.skipIf(!databaseUrl)('addConnection and requestSync', () => {
     const { connectionId } = await addConnection(
       ctx,
       org,
-      { connectorId: 'requests-shop', name: 'Sklep', config: { shopUrl: 'https://shop.example.com' }, credentials: { apiKey: 'k' } },
+      { connectorId: 'requests-shop', name: 'Shop', config: { shopUrl: 'https://shop.example.com' }, credentials: { apiKey: 'k' } },
       user,
     )
     expect((await domainError(requestSync(ctx, other, connectionId))).code).toBe('not_found')

@@ -45,7 +45,7 @@ describe.skipIf(!databaseUrl)('offers.pull', () => {
     const { connectionId } = await createConnection(
       ctx,
       organizationId,
-      { connectorId: 'offers-pull-channel', name: 'Kanał', config: {}, credentials: {} },
+      { connectorId: 'offers-pull-channel', name: 'Channel', config: {}, credentials: {} },
       user,
     )
     const runPull = (info: JobRunInfo = run(), trigger: 'schedule' | 'manual' = 'schedule') =>

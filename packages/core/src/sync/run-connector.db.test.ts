@@ -178,7 +178,7 @@ describe.skipIf(!databaseUrl)('runConnectorCall (through orders.pull)', () => {
     expect(sync).toMatchObject({ cursor: '3', lastErrorKind: 'permanent', lastSucceededAt: null })
     expect(sync?.lastError).toContain('Order "poison-1": lines.1.externalId')
     expect(sync?.lastError).not.toContain('good-1')
-    expect(sync?.lastError).not.toMatch(/Jan Testowy|jan\.testowy|Przykładowa/)
+    expect(sync?.lastError).not.toMatch(/John Test|john\.test|Example Street/)
     expect(await ctx.db.order.count({ where: { organizationId } })).toBe(0)
 
     // Nothing was skipped: once the connector is fixed, the same page imports both Orders.

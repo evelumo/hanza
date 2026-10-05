@@ -59,7 +59,7 @@ describe.skipIf(!databaseUrl)('orders.updateStatus', () => {
     const { connectionId } = await createConnection(
       ctx,
       organizationId,
-      { connectorId: 'status-channel', name: 'Kanał', config: {}, credentials: {} },
+      { connectorId: 'status-channel', name: 'Channel', config: {}, credentials: {} },
       user,
     )
     const { orderId } = await importOrder(ctx, organizationId, connectionId, buildOrder({ externalId: 'status-order-1' }))

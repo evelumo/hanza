@@ -12,8 +12,8 @@ Early stage (stage 1 of the roadmap). Working today:
 - Multi-tenant data model: every tenant-owned table carries `organizationId`.
 - The domain core: Products, Offers, Stock with Reservations (Hanza owns Stock), Orders with their own status, Connections with encrypted credentials, and an event log.
 - The sync engine in the worker: pulls Offers and Orders from a Channel, pushes Available stock and Order status back, retries and tracks Connection health.
-- The panel (Polish UI): Products (Stock, Available, linking Offers to Products), Orders (status changes, Needs attention, linking Unmatched lines) and Connections (add, sync now, sync results).
-- The final-for-now Connector SDK with a conformance test kit and an in-memory **fake connector** ("Kanał testowy") that exercises the whole path without a real Channel.
+- The panel (English by default, Polish as a second language; switch it in the header): Products (Stock, Available, linking Offers to Products), Orders (status changes, Needs attention, linking Unmatched lines) and Connections (add, sync now, sync results).
+- The final-for-now Connector SDK with a conformance test kit and an in-memory **fake connector** ("Test channel") that exercises the whole path without a real Channel.
 - `GET /api/health` (database + queue) and a dependency-boundary check for connectors.
 
 Not there yet: **no real connectors** (Allegro first, then WooCommerce), no REST API or MCP server, no panel E2E tests.
@@ -32,9 +32,9 @@ pnpm dev                      # web + worker
 
 Open http://localhost:3000, register and create your company. Then try the whole flow with the fake connector:
 
-1. **Połączenia** > "Dodaj połączenie" > "Kanał testowy": any API key works (the key `expired` simulates a Connection that must sign in again). The worker pulls 5 Offers and 4 Orders within seconds; refresh the Connection page to see the results.
-2. **Produkty** > "Oferty bez produktu": select the Offers and "Utwórz produkty z zaznaczonych", then set Stock on a Product.
-3. **Zamówienia**: four Orders need attention (a Shortage until Stock is set; Unmatched lines to link, one of them on an Order the buyer cancelled). Link a line, then change an Order to "Wysłane": Stock goes down and the new Available is pushed to the Channel.
+1. **Connections** > "Add connection" > "Test channel": any API key works (the key `expired` simulates a Connection that must sign in again). The worker pulls 5 Offers and 4 Orders within seconds; refresh the Connection page to see the results.
+2. **Products** > "Offers without a product": select the Offers and "Create products from selected", then set Stock on a Product.
+3. **Orders**: four Orders need attention (a Shortage until Stock is set; Unmatched lines to link, one of them on an Order the buyer cancelled). Link a line, then change an Order to "Shipped": Stock goes down and the new Available is pushed to the Channel.
 
 The dashboard still has a test job that goes through the queue and worker. Stop the infrastructure with `pnpm infra:down`.
 

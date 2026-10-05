@@ -89,7 +89,7 @@ describe.skipIf(!databaseUrl)('offers', () => {
 
     const unlinkedOnly = await listOffers(ctx, org, { linked: false, skip: 0, take: 10 })
     expect(unlinkedOnly.items.map((row) => row.externalId)).toEqual(['x'])
-    expect(unlinkedOnly.items[0]).toMatchObject({ connectionName: 'Kanał testowy', productSku: null, linkedBy: 'manual' })
+    expect(unlinkedOnly.items[0]).toMatchObject({ connectionName: 'Test channel', productSku: null, linkedBy: 'manual' })
     expect((await listOffers(ctx, org, { linked: true, skip: 0, take: 10 })).total).toBe(0)
   })
 

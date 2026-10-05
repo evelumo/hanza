@@ -22,7 +22,7 @@ describe('parseOrdersPage', () => {
     const order = { ...buildOrder({ externalId: 'ext-9' }), total: { amount: 1.5, currency: 'PLN' } }
     const error = failure(() => parseOrdersPage({ items: [buildOrder(), order], nextCursor: '1', hasMore: false }, null))
     expect(error.message).toContain('Order "ext-9": total.amount')
-    expect(error.message).not.toMatch(/Jan|jan\.testowy|Warszawa/)
+    expect(error.message).not.toMatch(/John|john\.test|Warsaw/)
   })
 
   it('falls back to the position when the item has no external id', () => {

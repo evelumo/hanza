@@ -68,12 +68,12 @@ describe('offers.pull', () => {
 
   it('returns Offers added later and replaces an Offer with the same externalId', async () => {
     const channel = createFakeChannel()
-    channel.addOffer({ externalId: 'fake-offer-6', sku: 'FAKE-SKU-6', name: 'Nowa oferta', url: null })
-    channel.addOffer({ externalId: 'fake-offer-1', sku: 'FAKE-SKU-1', name: 'Kubek duży', url: null })
+    channel.addOffer({ externalId: 'fake-offer-6', sku: 'FAKE-SKU-6', name: 'New offer', url: null })
+    channel.addOffer({ externalId: 'fake-offer-1', sku: 'FAKE-SKU-1', name: 'Large mug', url: null })
     const pull = channel.connector.capabilities['offers.pull']!
     const last = await pull(context(), '4')
     expect(last.items.map((offer) => offer.externalId)).toEqual(['fake-offer-5', 'fake-offer-6'])
-    expect((await pull(context(), null)).items[0]?.name).toBe('Kubek duży')
+    expect((await pull(context(), null)).items[0]?.name).toBe('Large mug')
   })
 })
 
@@ -101,7 +101,7 @@ describe('orders.pull', () => {
         id: 'fake-order-2:cancelled',
         type: 'cancelled',
         occurredAt: '2026-10-02T10:00:00Z',
-        note: 'Anulowane przez kupującego',
+        note: 'Cancelled by the buyer',
       },
     ])
   })

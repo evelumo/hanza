@@ -45,7 +45,7 @@ describe.skipIf(!databaseUrl)('orders.pull', () => {
     const { connectionId } = await createConnection(
       ctx,
       organizationId,
-      { connectorId: 'orders-pull-channel', name: 'Kanał', config: {}, credentials: {} },
+      { connectorId: 'orders-pull-channel', name: 'Channel', config: {}, credentials: {} },
       user,
     )
     const runPull = () => ordersPullJob.handler(ctx, { organizationId, connectionId, trigger: 'schedule' }, run)
@@ -62,7 +62,7 @@ describe.skipIf(!databaseUrl)('orders.pull', () => {
     // The Product is committed after the import matched the line and without a rematch of its own,
     // as when both happen at the same moment.
     const warehouseId = await ensureDefaultWarehouse(ctx.db, organizationId)
-    const product = await ctx.db.product.create({ data: { organizationId, sku, name: 'Nowy' } })
+    const product = await ctx.db.product.create({ data: { organizationId, sku, name: 'New' } })
     await ctx.db.stock.create({ data: { organizationId, productId: product.id, warehouseId, units: 5 } })
 
     pull = async () => ({ items: [], nextCursor: null, hasMore: false })

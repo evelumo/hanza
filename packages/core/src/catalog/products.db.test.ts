@@ -17,7 +17,7 @@ describe.skipIf(!databaseUrl)('products', () => {
   it('creates a Product with its Stock row in the default Warehouse and a product.created Event', async () => {
     const ctx = context()
     const org = await createTestOrganization(ctx.db)
-    const { productId } = await createProduct(ctx, org, { sku: '  MUG-1 ', name: 'Kubek', stock: 7 }, user)
+    const { productId } = await createProduct(ctx, org, { sku: '  MUG-1 ', name: 'Mug', stock: 7 }, user)
 
     const product = await ctx.db.product.findFirstOrThrow({ where: { id: productId } })
     expect(product.sku).toBe('MUG-1')
@@ -44,9 +44,9 @@ describe.skipIf(!databaseUrl)('products', () => {
     const ctx = context()
     const org = await createTestOrganization(ctx.db)
     const connectionId = await createTestConnection(ctx, org)
-    await upsertOffers(ctx, org, connectionId, [{ externalId: 'o1', sku: 'TSHIRT', name: 'Koszulka', url: null }], new Date())
+    await upsertOffers(ctx, org, connectionId, [{ externalId: 'o1', sku: 'TSHIRT', name: 'T-shirt', url: null }], new Date())
 
-    const { productId } = await createProduct(ctx, org, { sku: 'TSHIRT', name: 'Koszulka', stock: 3 }, user)
+    const { productId } = await createProduct(ctx, org, { sku: 'TSHIRT', name: 'T-shirt', stock: 3 }, user)
 
     const offer = await ctx.db.offer.findFirstOrThrow({ where: { organizationId: org, externalId: 'o1' } })
     expect(offer).toMatchObject({ productId, linkedBy: 'sku', stockPushSeq: 1, stockPushedSeq: 0 })
@@ -63,16 +63,16 @@ describe.skipIf(!databaseUrl)('products', () => {
     const ctx = context()
     const org = await createTestOrganization(ctx.db)
     const connectionId = await createTestConnection(ctx, org)
-    await createProduct(ctx, org, { sku: 'TAKEN', name: 'Istniejący', stock: 0 }, user)
+    await createProduct(ctx, org, { sku: 'TAKEN', name: 'Existing', stock: 0 }, user)
     await upsertOffers(
       ctx,
       org,
       connectionId,
       [
-        { externalId: 'good', sku: 'NEW-1', name: 'Nowy produkt', url: null },
-        { externalId: 'twin', sku: 'NEW-1', name: 'Ten sam SKU', url: null },
-        { externalId: 'nosku', sku: null, name: 'Bez SKU', url: null },
-        { externalId: 'linked', sku: 'TAKEN', name: 'Już połączona', url: null },
+        { externalId: 'good', sku: 'NEW-1', name: 'New product', url: null },
+        { externalId: 'twin', sku: 'NEW-1', name: 'Same SKU', url: null },
+        { externalId: 'nosku', sku: null, name: 'No SKU', url: null },
+        { externalId: 'linked', sku: 'TAKEN', name: 'Already linked', url: null },
       ],
       new Date(),
     )
@@ -94,7 +94,7 @@ describe.skipIf(!databaseUrl)('products', () => {
       { offerId: 'missing', reason: 'not_found' },
     ])
     const product = await ctx.db.product.findFirstOrThrow({ where: { id: result.created[0] } })
-    expect(product).toMatchObject({ sku: 'NEW-1', name: 'Nowy produkt' })
+    expect(product).toMatchObject({ sku: 'NEW-1', name: 'New product' })
     // The chosen Offer and the never-linked twin both end up linked by SKU.
     const linked = await ctx.db.offer.findMany({ where: { organizationId: org, productId: product.id }, orderBy: { externalId: 'asc' } })
     expect(linked.map((offer) => [offer.externalId, offer.linkedBy, offer.stockPushSeq])).toEqual([
@@ -110,9 +110,9 @@ describe.skipIf(!databaseUrl)('products', () => {
     const ctx = context()
     const org = await createTestOrganization(ctx.db)
     const connectionId = await createTestConnection(ctx, org)
-    await upsertOffers(ctx, org, connectionId, [{ externalId: 'race', sku: 'RACE', name: 'Wyścig', url: null }], new Date())
+    await upsertOffers(ctx, org, connectionId, [{ externalId: 'race', sku: 'RACE', name: 'Race', url: null }], new Date())
     const offer = await ctx.db.offer.findFirstOrThrow({ where: { organizationId: org, externalId: 'race' } })
-    const { productId: other } = await createProduct(ctx, org, { sku: 'OTHER', name: 'Inny', stock: 0 }, user)
+    const { productId: other } = await createProduct(ctx, org, { sku: 'OTHER', name: 'Other', stock: 0 }, user)
 
     // Another session links the Offer by hand and holds the row until we let it commit.
     const holder = createDb(databaseUrl!)
@@ -144,19 +144,19 @@ describe.skipIf(!databaseUrl)('products', () => {
     const ctx = context()
     const org = await createTestOrganization(ctx.db)
     const sku = uniqueSku('LIST')
-    const { productId } = await createProduct(ctx, org, { sku, name: 'Stara nazwa', stock: 4 }, user)
-    await createProduct(ctx, org, { sku: 'OTHER', name: 'Inny', stock: 0 }, user)
-    await updateProduct(ctx, org, productId, { name: 'Nowa nazwa' }, user)
+    const { productId } = await createProduct(ctx, org, { sku, name: 'Old name', stock: 4 }, user)
+    await createProduct(ctx, org, { sku: 'OTHER', name: 'Other', stock: 0 }, user)
+    await updateProduct(ctx, org, productId, { name: 'New name' }, user)
 
     const updated = await ctx.db.eventLog.findFirstOrThrow({ where: { organizationId: org, type: 'product.updated' } })
-    expect(updated.payload).toEqual({ name: { from: 'Stara nazwa', to: 'Nowa nazwa' }, actor: user })
+    expect(updated.payload).toEqual({ name: { from: 'Old name', to: 'New name' }, actor: user })
     expect(await findProductBySku(ctx, org, ` ${sku} `)).toEqual({ id: productId })
     expect(await findProductBySku(ctx, org, sku.toLowerCase())).toBeNull()
 
-    const list = await listProducts(ctx, org, { search: 'nowa', skip: 0, take: 10 })
+    const list = await listProducts(ctx, org, { search: 'new name', skip: 0, take: 10 })
     expect(list).toEqual({
       total: 1,
-      items: [{ id: productId, sku, name: 'Nowa nazwa', stock: 4, reserved: 0, available: 4, linkedOffers: 0 }],
+      items: [{ id: productId, sku, name: 'New name', stock: 4, reserved: 0, available: 4, linkedOffers: 0 }],
     })
     expect((await listProducts(ctx, org, { skip: 0, take: 10 })).total).toBe(2)
 

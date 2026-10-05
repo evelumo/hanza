@@ -44,7 +44,7 @@ describe.skipIf(!databaseUrl)('stock.push', () => {
     const { connectionId } = await createConnection(
       ctx,
       organizationId,
-      { connectorId: 'push-channel', name: 'Kanał', config: {}, credentials: {} },
+      { connectorId: 'push-channel', name: 'Channel', config: {}, credentials: {} },
       user,
     )
     return { ctx, organizationId, connectionId }

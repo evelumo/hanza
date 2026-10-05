@@ -36,8 +36,8 @@ describe.skipIf(!databaseUrl)('post-commit enqueue failures', () => {
     const ctx = context()
     const org = await createTestOrganization(ctx.db)
     const connectionId = await createTestConnection(ctx, org)
-    await upsertOffers(ctx, org, connectionId, [{ externalId: 'offer-p', sku: 'P', name: 'Oferta', url: null }], new Date())
-    const { productId } = await createProduct(ctx, org, { sku: 'P', name: 'Produkt', stock: 5 }, user)
+    await upsertOffers(ctx, org, connectionId, [{ externalId: 'offer-p', sku: 'P', name: 'Offer', url: null }], new Date())
+    const { productId } = await createProduct(ctx, org, { sku: 'P', name: 'Product', stock: 5 }, user)
     const stockPushFailure = { message: 'post-commit step failed', job: 'stock.push', organizationId: org, connectionId, error: 'Redis unavailable' }
     return { ctx, org, connectionId, productId, stockPushFailure, ...withBrokenQueue(ctx) }
   }
@@ -61,10 +61,10 @@ describe.skipIf(!databaseUrl)('post-commit enqueue failures', () => {
 
   it('createProduct succeeds, links the Offer and rematches the line despite failed stock pushes', async () => {
     const { ctx, org, connectionId, broken, logged, stockPushFailure } = await setup()
-    await upsertOffers(ctx, org, connectionId, [{ externalId: 'offer-new', sku: 'NEW', name: 'Nowa', url: null }], new Date())
+    await upsertOffers(ctx, org, connectionId, [{ externalId: 'offer-new', sku: 'NEW', name: 'Newer', url: null }], new Date())
     const { orderId } = await importOrder(ctx, org, connectionId, buildOrder({ lines: [orderLine('l1', { sku: 'NEW' })] }))
 
-    const { productId } = await createProduct(broken, org, { sku: 'NEW', name: 'Nowy', stock: 1 }, user)
+    const { productId } = await createProduct(broken, org, { sku: 'NEW', name: 'New', stock: 1 }, user)
 
     expect(await ctx.db.offer.findFirstOrThrow({ where: { organizationId: org, externalId: 'offer-new' } })).toMatchObject({ productId })
     expect((await ctx.db.orderLine.findFirstOrThrow({ where: { orderId } })).productId).toBe(productId)
