@@ -182,6 +182,7 @@
     },
     "needsAttention": "Wymaga uwagi",
     "buyerErased": "Usunięte",
+    "buyerUnreadable": "Nie można odczytać",
     "detail": {
       "title": "Zamówienie",
       "summary": "Kanał: {channel} · {date} · {payment} · {total}",
@@ -206,6 +207,7 @@
       "shortage": "Brak na stanie",
       "buyerTitle": "Kupujący",
       "buyerErased": "Dane kupującego usunięto {date}.",
+      "buyerUnreadable": "Nie można odczytać danych kupującego tego zamówienia: nie dają się odszyfrować obecnym kluczem szyfrowania albo są uszkodzone.",
       "shippingCountry": "Kraj dostawy: {country}",
       "contact": "Dane kontaktowe",
       "phone": "tel. {phone}",
@@ -277,15 +279,20 @@
   "privacy": {
     "title": "Prywatność",
     "intro": "Dane kupujących w zamówieniach (imiona i nazwiska, dane kontaktowe, adresy) są przechowywane w postaci zaszyfrowanej. Tutaj decydujesz, jak długo są przechowywane, i obsługujesz prośbę o usunięcie danych jednej osoby.",
+    "adminsOnly": "Tylko właściciel lub administrator organizacji może zmienić okres przechowywania albo usunąć dane kupującego.",
     "retention": {
       "title": "Okres przechowywania danych kupujących",
       "description": "Dane kupującego są usuwane po tylu dniach od wysłania lub anulowania zamówienia. Pozycje, kwoty i kraj dostawy zostają. Otwarte zamówienia nigdy nie są zmieniane.",
       "label": "Dni od zamknięcia zamówienia",
-      "hint": "Od 1 do 3650 dni. Zostaw puste, aby przechowywać dane kupujących, dopóki ich nie usuniesz.",
+      "hint": "Od 1 do 3650 dni. Zostaw puste, aby przechowywać dane kupujących, dopóki ich nie usuniesz. Zamówienia zamknięte, zanim Hanza zaczęła zapisywać czas zamknięcia, liczą się od ostatniej zmiany.",
       "save": "Zapisz",
       "saved": "Zapisano. Sprawdzanie odbywa się co godzinę.",
       "currentDays": "Teraz: dane kupującego są usuwane {count, plural, one {# dzień} few {# dni} many {# dni} other {# dnia}} po zamknięciu zamówienia.",
-      "currentOff": "Teraz: dane kupujących są przechowywane, dopóki ich nie usuniesz."
+      "currentOff": "Teraz: dane kupujących są przechowywane, dopóki ich nie usuniesz.",
+      "confirmTitle": "Potwierdź nowy okres przechowywania",
+      "confirmCount": "{count, plural, =0 {Przy {days, number} dniach przy najbliższym sprawdzeniu nie zostaną usunięte dane kupującego z żadnego zamówienia.} one {Przy {days, number} dniach przy najbliższym sprawdzeniu, w ciągu godziny, zostaną usunięte dane kupującego z # zamówienia. Tego nie można cofnąć.} few {Przy {days, number} dniach przy najbliższym sprawdzeniu, w ciągu godziny, zostaną usunięte dane kupującego z # zamówień. Tego nie można cofnąć.} many {Przy {days, number} dniach przy najbliższym sprawdzeniu, w ciągu godziny, zostaną usunięte dane kupującego z # zamówień. Tego nie można cofnąć.} other {Przy {days, number} dniach przy najbliższym sprawdzeniu, w ciągu godziny, zostaną usunięte dane kupującego z # zamówienia. Tego nie można cofnąć.}}",
+      "confirm": "Zapisz i usuń przy najbliższym sprawdzeniu",
+      "confirmDialog": "Zapisać nowy okres przechowywania? Dane kupujących starsze niż ten okres zostaną usunięte w ciągu godziny i nie da się ich przywrócić."
     },
     "erasure": {
       "title": "Usuń dane kupującego",
@@ -407,7 +414,8 @@
       "unmatched_lines": "Najpierw połącz wszystkie pozycje z produktami.",
       "already_linked": "Ta pozycja jest już połączona.",
       "unknown_connector": "Nieznany konektor.",
-      "invalid_config": "Sprawdź poprawność pól."
+      "invalid_config": "Sprawdź poprawność pól.",
+      "forbidden": "Tylko właściciel lub administrator organizacji może to zrobić."
     },
     "unexpected": "Coś poszło nie tak. Spróbuj ponownie.",
     "invalidInput": "Sprawdź poprawność pól.",
@@ -437,7 +445,7 @@
     "offersTooMany": "Zaznacz najwyżej 200 ofert naraz.",
     "fieldRequired": "To pole jest wymagane.",
     "fieldInvalid": "Nieprawidłowa wartość.",
-    "emailInvalid": "Podaj poprawny adres e-mail.",
+    "emailInvalid": "Podaj adres e-mail (z @, najwyżej 320 znaków).",
     "retentionDaysInvalid": "Podaj liczbę całkowitą dni od 1 do 3650 albo zostaw pole puste."
   }
 }

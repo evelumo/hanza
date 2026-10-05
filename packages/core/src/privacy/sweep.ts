@@ -1,63 +1,80 @@
 import { Prisma } from '@hanza/db'
 import { systemActor } from '../actor'
 import type { Context } from '../context'
+import { describeFailure } from '../describe-failure'
 import { TX_OPTIONS } from '../transaction'
-import { eraseBuyerDataOfOrders } from './erase'
 import { readBuyerData, sealBuyerData, storedBuyerDataSelect } from './buyer-data'
-import { getPrivacySettings } from './settings'
+import { eraseBuyerDataOfOrders } from './erase'
+import { getPrivacySettings, retentionEligible } from './settings'
 
 export const SWEEP_BATCH_SIZE = 200
 export const SWEEP_MAX_BATCHES = 10
 
-const DAY_MS = 86_400_000
-
-/** Orders closed at or before this moment are past the retention period. */
-export function retentionCutoff(now: Date, retentionDays: number): Date {
-  return new Date(now.getTime() - retentionDays * DAY_MS)
+/** Closed Orders closed by code older than ADR 0011 (e.g. during a deploy) get `closedAt` from their last change. */
+export async function fillMissingClosedAt(ctx: Context, organizationId: string): Promise<number> {
+  return ctx.db.$executeRaw`
+    UPDATE "order" SET "closedAt" = "updatedAt"
+    WHERE "organizationId" = ${organizationId} AND "status" IN ('shipped', 'cancelled') AND "closedAt" IS NULL`
 }
 
 /**
  * Seals one batch of Orders still stored in the legacy plaintext shape (written before ADR 0011).
- * The update is conditional on the row still being legacy, so it is safe to re-run and beside imports and erasures.
+ * Each row is its own conditional update, so it is safe to re-run and beside imports and erasures.
+ * A row that fails the schema is marked and skipped from then on (its id is logged), so it never blocks
+ * the batches behind it; it keeps its plaintext until it is erased, which clears it like any other.
  */
-export async function sealLegacyBuyerData(ctx: Context, organizationId: string, limit = SWEEP_BATCH_SIZE): Promise<number> {
-  return ctx.db.$transaction(async (tx) => {
-    const rows = await tx.order.findMany({
-      where: { organizationId, buyerData: null, buyerDataErasedAt: null, buyerName: { not: null } },
-      orderBy: { id: 'asc' },
-      take: limit,
-      select: { id: true, ...storedBuyerDataSelect },
-    })
-    let sealed = 0
-    for (const row of rows) {
+export async function sealLegacyBuyerData(
+  ctx: Context,
+  organizationId: string,
+  limit = SWEEP_BATCH_SIZE,
+  now = new Date(),
+): Promise<{ sealed: number; failed: number; scanned: number }> {
+  const rows = await ctx.db.order.findMany({
+    where: { organizationId, buyerData: null, buyerDataErasedAt: null, buyerDataSealFailedAt: null, buyerName: { not: null } },
+    orderBy: { id: 'asc' },
+    take: limit,
+    select: { id: true, ...storedBuyerDataSelect },
+  })
+  const legacy = { buyerData: null, buyerDataErasedAt: null } satisfies Prisma.OrderWhereInput
+  let sealed = 0
+  let failed = 0
+  for (const row of rows) {
+    let columns: ReturnType<typeof sealBuyerData>
+    try {
       const data = readBuyerData(ctx.secrets, row)
       if (data === null) continue
-      const { count } = await tx.order.updateMany({
-        where: { id: row.id, organizationId, buyerData: null, buyerDataErasedAt: null },
-        data: {
-          ...sealBuyerData(ctx.secrets, row, data),
-          buyerName: null,
-          buyerEmail: null,
-          buyerPhone: null,
-          buyerLogin: null,
-          shippingAddress: Prisma.DbNull,
-          billingAddress: Prisma.DbNull,
-        },
-      })
-      sealed += count
+      columns = sealBuyerData(ctx.secrets, row, data)
+    } catch (error) {
+      failed++
+      ctx.log.error('legacy buyer data not sealed', { organizationId, orderId: row.id, error: describeFailure(error) })
+      await ctx.db.order.updateMany({ where: { id: row.id, organizationId, ...legacy }, data: { buyerDataSealFailedAt: now } })
+      continue
     }
-    return sealed
-  }, TX_OPTIONS)
+    const { count } = await ctx.db.order.updateMany({
+      where: { id: row.id, organizationId, ...legacy },
+      data: {
+        ...columns,
+        buyerName: null,
+        buyerEmail: null,
+        buyerPhone: null,
+        buyerLogin: null,
+        shippingAddress: Prisma.DbNull,
+        billingAddress: Prisma.DbNull,
+      },
+    })
+    sealed += count
+  }
+  return { sealed, failed, scanned: rows.length }
 }
 
-/** Erases the Buyer data of one batch of Orders closed longer ago than the organization's retention period. */
+/** Erases the Buyer data of one batch of Closed Orders past the organization's Retention period. */
 export async function applyBuyerDataRetention(ctx: Context, organizationId: string, now: Date, limit = SWEEP_BATCH_SIZE): Promise<number> {
   const { buyerDataRetentionDays: days } = await getPrivacySettings(ctx, organizationId)
   if (days === null) return 0
-  const eligible = { closedAt: { lte: retentionCutoff(now, days) } } satisfies Prisma.OrderWhereInput
+  const eligible = retentionEligible(now, days)
   return ctx.db.$transaction(async (tx) => {
     const rows = await tx.order.findMany({
-      where: { ...eligible, organizationId, buyerDataErasedAt: null },
+      where: { ...eligible, organizationId },
       orderBy: [{ closedAt: 'asc' }, { id: 'asc' }],
       take: limit,
       select: { id: true },
@@ -69,26 +86,32 @@ export async function applyBuyerDataRetention(ctx: Context, organizationId: stri
 }
 
 /**
- * One `privacy.sweep` run: seals legacy rows, then applies retention, a bounded number of batches each.
- * `more` = a batch came back full, so the caller should run it again.
+ * One `privacy.sweep` run: fills missing `closedAt`, seals legacy rows, then applies retention, a bounded
+ * number of batches each. Retention runs even while legacy rows remain. `more` = a batch came back full.
  */
-export async function sweepBuyerData(ctx: Context, organizationId: string, now: Date): Promise<{ sealed: number; erased: number; more: boolean }> {
+export async function sweepBuyerData(
+  ctx: Context,
+  organizationId: string,
+  now: Date,
+): Promise<{ sealed: number; sealFailed: number; erased: number; more: boolean }> {
+  await fillMissingClosedAt(ctx, organizationId)
   let sealed = 0
-  let erased = 0
-  let more = false
+  let sealFailed = 0
+  let sealMore = false
   for (let batch = 0; batch < SWEEP_MAX_BATCHES; batch++) {
-    const count = await sealLegacyBuyerData(ctx, organizationId)
-    sealed += count
-    more = count === SWEEP_BATCH_SIZE
-    if (!more) break
+    const result = await sealLegacyBuyerData(ctx, organizationId, SWEEP_BATCH_SIZE, now)
+    sealed += result.sealed
+    sealFailed += result.failed
+    sealMore = result.scanned === SWEEP_BATCH_SIZE
+    if (!sealMore) break
   }
-  if (!more) {
-    for (let batch = 0; batch < SWEEP_MAX_BATCHES; batch++) {
-      const count = await applyBuyerDataRetention(ctx, organizationId, now)
-      erased += count
-      more = count === SWEEP_BATCH_SIZE
-      if (!more) break
-    }
+  let erased = 0
+  let eraseMore = false
+  for (let batch = 0; batch < SWEEP_MAX_BATCHES; batch++) {
+    const count = await applyBuyerDataRetention(ctx, organizationId, now)
+    erased += count
+    eraseMore = count === SWEEP_BATCH_SIZE
+    if (!eraseMore) break
   }
-  return { sealed, erased, more }
+  return { sealed, sealFailed, erased, more: sealMore || eraseMore }
 }

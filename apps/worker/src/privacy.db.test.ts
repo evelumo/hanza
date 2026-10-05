@@ -1,11 +1,14 @@
+import { randomUUID } from 'node:crypto'
 import { createFakeChannel, type FakeChannel } from '@hanza/connector-fake'
 import {
   addConnection,
   changeOrderStatus,
   eraseBuyerData,
   getOrder,
+  coalesceKeys,
   jobs,
   listOrders,
+  ordersPullRef,
   previewBuyerErasure,
   privacyTickRef,
   setBuyerDataRetention,
@@ -15,7 +18,6 @@ import { createTestContext, createTestOrganization, type TestContext } from '@ha
 import { afterAll, beforeAll, describe, expect, inject, it } from 'vitest'
 
 const databaseUrl = inject('hanzaTestDatabaseUrl')
-const user: Actor = { type: 'user', userId: 'user-1' }
 const DAY = 86_400_000
 
 // Everything personal the fake Channel sends about its Buyers.
@@ -27,6 +29,15 @@ describe.skipIf(!databaseUrl)('Buyer data privacy end to end (real Postgres, in-
   let fake: FakeChannel
   let orgA: string
   let orgB: string
+  let owner: Actor
+
+  /** Retention and erasure are for owners and admins only. */
+  async function addOwner(org: string): Promise<Actor> {
+    const userId = randomUUID()
+    await ctx.db.user.create({ data: { id: userId, name: 'Owner', email: `${userId}@example.org` } })
+    await ctx.db.member.create({ data: { id: randomUUID(), organizationId: org, userId, role: 'owner', createdAt: new Date() } })
+    return { type: 'user', userId }
+  }
 
   beforeAll(async () => {
     fake = createFakeChannel()
@@ -53,6 +64,7 @@ describe.skipIf(!databaseUrl)('Buyer data privacy end to end (real Postgres, in-
     ctx = createTestContext({ databaseUrl: databaseUrl!, connectors: [fake.connector] })
     orgA = await createTestOrganization(ctx.db)
     orgB = await createTestOrganization(ctx.db)
+    owner = await addOwner(orgA)
   })
 
   afterAll(async () => {
@@ -91,7 +103,7 @@ describe.skipIf(!databaseUrl)('Buyer data privacy end to end (real Postgres, in-
 
   it('1. an Order imported through the engine has no plaintext Buyer data in its row; the panel reads it decrypted', async () => {
     for (const org of [orgA, orgB]) {
-      await addConnection(ctx, org, { connectorId: 'fake', name: 'Fake', config: { failMode: 'none' }, credentials: { apiKey: 'test' } }, user)
+      await addConnection(ctx, org, { connectorId: 'fake', name: 'Fake', config: { failMode: 'none' }, credentials: { apiKey: 'test' } }, owner)
     }
     await drain()
     for (const org of [orgA, orgB]) expect(await ctx.db.order.count({ where: { organizationId: org } })).toBe(5)
@@ -144,7 +156,7 @@ describe.skipIf(!databaseUrl)('Buyer data privacy end to end (real Postgres, in-
   })
 
   it('3. retention erases only eligible Orders of the organization that set it, once', async () => {
-    await setBuyerDataRetention(ctx, orgA, 30, user)
+    await setBuyerDataRetention(ctx, orgA, 30, owner)
     // fake-order-2 was cancelled 40 days ago in both organizations; only orgA keeps Buyer data for 30 days.
     for (const org of [orgA, orgB]) {
       await ctx.db.order.update({ where: { id: await orderId(org, 'fake-order-2') }, data: { closedAt: new Date(Date.now() - 40 * DAY) } })
@@ -171,14 +183,14 @@ describe.skipIf(!databaseUrl)('Buyer data privacy end to end (real Postgres, in-
 
   it('4. an erasure request erases exactly the matching person’s closed Orders in its organization', async () => {
     for (const externalId of ['fake-order-3', 'fake-order-4', 'fake-order-maria']) {
-      await changeOrderStatus(ctx, orgA, await orderId(orgA, externalId), 'cancelled', user)
+      await changeOrderStatus(ctx, orgA, await orderId(orgA, externalId), 'cancelled', owner)
     }
-    await changeOrderStatus(ctx, orgB, await orderId(orgB, 'fake-order-3'), 'cancelled', user)
+    await changeOrderStatus(ctx, orgB, await orderId(orgB, 'fake-order-3'), 'cancelled', owner)
     await drain()
 
     // fake-order-2 is erased already, fake-order-1 is still open.
-    expect(await previewBuyerErasure(ctx, orgA, 'John.Test@example.com')).toEqual({ closed: 2, open: 1 })
-    expect(await eraseBuyerData(ctx, orgA, 'John.Test@example.com', user)).toEqual({ erased: 2, keptOpen: 1 })
+    expect(await previewBuyerErasure(ctx, orgA, 'John.Test@example.com', owner)).toEqual({ closed: 2, open: 1 })
+    expect(await eraseBuyerData(ctx, orgA, 'John.Test@example.com', owner)).toEqual({ erased: 2, keptOpen: 1 })
 
     for (const externalId of ['fake-order-3', 'fake-order-4']) {
       expect(await buyerOf(orgA, externalId)).toBeNull()
@@ -192,8 +204,32 @@ describe.skipIf(!databaseUrl)('Buyer data privacy end to end (real Postgres, in-
 
     const events = await ctx.db.eventLog.findMany({ where: { organizationId: orgA, type: { in: ['order.buyer_data_erased', 'privacy.erasure_requested'] } } })
     expect(events.filter((event) => (event.payload as { cause?: string }).cause === 'erasure_request')).toHaveLength(2)
-    expect(events.find((event) => event.type === 'privacy.erasure_requested')?.payload).toEqual({ erased: 2, keptOpen: 1, actor: user })
+    expect(events.find((event) => event.type === 'privacy.erasure_requested')?.payload).toEqual({ erased: 2, keptOpen: 1, actor: owner })
     expect(JSON.stringify(events)).not.toMatch(/john|example\.com/i)
     expect(await erasedEvents(orgB)).toHaveLength(0)
+  })
+
+  it('5. pulling an erased Order again with a new Channel fact keeps its Buyer data erased and stores no note', async () => {
+    fake.addFact('fake-order-3', {
+      id: 'fake-order-3:late-note',
+      type: 'cancelled',
+      occurredAt: '2026-10-04T10:00:00Z',
+      note: 'John Test (john.test@example.com) asked to be called back',
+    })
+    for (const org of [orgA, orgB]) {
+      const { id: connectionId } = await ctx.db.connection.findFirstOrThrow({ where: { organizationId: org }, select: { id: true } })
+      await ctx.queue.enqueue(ordersPullRef, { organizationId: org, connectionId, trigger: 'schedule' }, { coalesceKey: coalesceKeys.ordersPull(connectionId) })
+    }
+    await drain()
+
+    const erased = await ctx.db.order.findFirstOrThrow({ where: { id: await orderId(orgA, 'fake-order-3') }, include: { facts: true } })
+    expect(erased.facts.find((row) => row.externalId === 'fake-order-3:late-note')?.note).toBeNull()
+    expect(erased.facts.every((row) => row.note === null)).toBe(true)
+    expect(erased).toMatchObject({ buyerData: null, buyerEmailIndex: null, buyerName: null })
+    for (const personal of JOHN) expect(await rawRow(orgA, 'fake-order-3')).not.toContain(personal)
+    expect(await buyerOf(orgA, 'fake-order-3')).toBeNull()
+    // In orgB, where nothing was erased, the note is kept.
+    const kept = await ctx.db.order.findFirstOrThrow({ where: { id: await orderId(orgB, 'fake-order-3') }, include: { facts: true } })
+    expect(kept.facts.find((row) => row.externalId === 'fake-order-3:late-note')?.note).toContain('asked to be called back')
   })
 })

@@ -2,7 +2,7 @@ import type { Address, Buyer, Money, OrderStatus } from '@hanza/connector-sdk'
 import type { AttentionReason, ChannelFactType, PaymentMethod } from '@hanza/db'
 import type { Context } from '../context'
 import { listEvents, type EventRow } from '../events'
-import { readBuyerData, storedBuyerDataSelect, type BuyerData, type StoredBuyerData } from '../privacy/buyer-data'
+import { storedBuyerDataSelect, viewBuyerData, type BuyerDataView, type StoredBuyerData } from '../privacy/buyer-data'
 import { allowedTransitions } from './status-rules'
 
 export interface OrderRow {
@@ -11,8 +11,10 @@ export interface OrderRow {
   connectionId: string
   connectionName: string
   placedAt: Date
-  /** Null once the Buyer data was erased. */
+  /** Null unless `buyerDataState` is `present`. */
   buyerName: string | null
+  /** `unreadable`: the stored value does not open or parse (wrong key, damaged value); the Order id is logged. */
+  buyerDataState: BuyerDataView['state']
   buyerDataErasedAt: Date | null
   total: Money
   status: OrderStatus
@@ -21,7 +23,7 @@ export interface OrderRow {
 
 export interface OrderDetail extends OrderRow {
   payment: PaymentMethod
-  /** `buyer` and `shippingAddress` are null once the Buyer data was erased. */
+  /** `buyer` and `shippingAddress` are null unless `buyerDataState` is `present`. */
   buyer: Buyer | null
   shippingAddress: Address | null
   billingAddress: Address | null
@@ -70,7 +72,7 @@ function toRow(
     attentionReasons: AttentionReason[]
     connection: { name: string }
   },
-  buyerData: BuyerData | null,
+  view: BuyerDataView,
 ): OrderRow {
   return {
     id: order.id,
@@ -78,7 +80,8 @@ function toRow(
     connectionId: order.connectionId,
     connectionName: order.connection.name,
     placedAt: order.placedAt,
-    buyerName: buyerData?.buyer.name ?? null,
+    buyerName: view.state === 'present' ? view.data.buyer.name : null,
+    buyerDataState: view.state,
     buyerDataErasedAt: order.buyerDataErasedAt,
     total: { amount: order.totalAmount.toFixed(), currency: order.currency },
     status: order.status,
@@ -100,7 +103,15 @@ export async function listOrders(
     ctx.db.order.count({ where }),
     ctx.db.order.findMany({ where, orderBy: [{ placedAt: 'desc' }, { id: 'desc' }], skip: query.skip, take: query.take, select: rowSelect }),
   ])
-  return { total, items: orders.map((order) => toRow(order, readBuyerData(ctx.secrets, order))) }
+  return { total, items: orders.map((order) => toRow(order, view(ctx, order))) }
+}
+
+function view(ctx: Context, order: StoredBuyerData & { id: string }): BuyerDataView {
+  const result = viewBuyerData(ctx.secrets, order)
+  if (result.state === 'unreadable') {
+    ctx.log.error('buyer data unreadable', { organizationId: order.organizationId, orderId: order.id })
+  }
+  return result
 }
 
 export async function getOrder(ctx: Context, organizationId: string, orderId: string): Promise<OrderDetail | null> {
@@ -137,13 +148,14 @@ export async function getOrder(ctx: Context, organizationId: string, orderId: st
   if (!order) return null
 
   const events = await listEvents(ctx, organizationId, { type: 'order', id: order.id }, 50)
-  const buyerData = readBuyerData(ctx.secrets, order)
+  const buyerData = view(ctx, order)
+  const present = buyerData.state === 'present' ? buyerData.data : null
   return {
     ...toRow(order, buyerData),
     payment: order.payment,
-    buyer: buyerData?.buyer ?? null,
-    shippingAddress: buyerData?.shippingAddress ?? null,
-    billingAddress: buyerData?.billingAddress ?? null,
+    buyer: present?.buyer ?? null,
+    shippingAddress: present?.shippingAddress ?? null,
+    billingAddress: present?.billingAddress ?? null,
     shippingCountryCode: order.shippingCountryCode,
     lines: order.lines.map((line) => ({
       id: line.id,

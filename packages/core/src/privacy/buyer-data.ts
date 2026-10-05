@@ -24,13 +24,14 @@ function aad(key: OrderKey): string {
   return JSON.stringify(['buyer-data', key.organizationId, key.connectionId, key.externalId])
 }
 
-/** Erasure requests match an email exactly, ignoring case and surrounding spaces. */
+/** Erasure requests match an email exactly, ignoring Unicode composition, case and surrounding spaces. */
 export function normalizeEmail(email: string): string {
-  return email.trim().toLowerCase()
+  return email.normalize('NFC').trim().toLowerCase()
 }
 
-export function buyerEmailIndex(secrets: SecretBox, email: string): string {
-  return secrets.digest(normalizeEmail(email), EMAIL_INDEX_PURPOSE)
+/** The organization is part of the input, so one Buyer cannot be linked across organizations by reading the database. */
+export function buyerEmailIndex(secrets: SecretBox, organizationId: string, email: string): string {
+  return secrets.digest(JSON.stringify([organizationId, normalizeEmail(email)]), EMAIL_INDEX_PURPOSE)
 }
 
 /** The Order columns that store `data`: the sealed snapshot, the email index and the country kept after erasure. */
@@ -42,7 +43,7 @@ export function sealBuyerData(
   const parsed = buyerDataSchema.parse(data)
   return {
     buyerData: secrets.seal(JSON.stringify(parsed), aad(key)),
-    buyerEmailIndex: parsed.buyer.email === null ? null : buyerEmailIndex(secrets, parsed.buyer.email),
+    buyerEmailIndex: parsed.buyer.email === null ? null : buyerEmailIndex(secrets, key.organizationId, parsed.buyer.email),
     shippingCountryCode: parsed.shippingAddress.countryCode,
   }
 }
@@ -75,7 +76,7 @@ export const storedBuyerDataSelect = {
   billingAddress: true,
 } as const
 
-/** Null once the Buyer data was erased. */
+/** Throws when the stored value does not open or does not parse; null once the Buyer data was erased. */
 export function readBuyerData(secrets: SecretBox, row: StoredBuyerData): BuyerData | null {
   if (row.buyerData !== null) return openBuyerData(secrets, row, row.buyerData)
   if (row.buyerName === null || row.shippingAddress === null) return null
@@ -84,4 +85,20 @@ export function readBuyerData(secrets: SecretBox, row: StoredBuyerData): BuyerDa
     shippingAddress: row.shippingAddress,
     billingAddress: row.billingAddress,
   })
+}
+
+/** What the panel can show of an Order's Buyer data. */
+export type BuyerDataView = { state: 'present'; data: BuyerData } | { state: 'erased' } | { state: 'unreadable' }
+
+/**
+ * Never throws: one value that does not open (wrong key, tampered or truncated) or a legacy row that
+ * fails the schema must not take down a whole Order list. The caller logs the Order id.
+ */
+export function viewBuyerData(secrets: SecretBox, row: StoredBuyerData): BuyerDataView {
+  try {
+    const data = readBuyerData(secrets, row)
+    return data === null ? { state: 'erased' } : { state: 'present', data }
+  } catch {
+    return { state: 'unreadable' }
+  }
 }

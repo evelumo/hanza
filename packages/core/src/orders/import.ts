@@ -146,7 +146,10 @@ async function applyNewFacts(tx: Tx, organizationId: string, orderId: string, fa
   )
   if (fresh.length === 0) return 0
 
-  const order = await tx.order.findFirst({ where: { id: orderId, organizationId }, select: { status: true, attentionReasons: true } })
+  const order = await tx.order.findFirst({
+    where: { id: orderId, organizationId },
+    select: { status: true, attentionReasons: true, buyerDataErasedAt: true },
+  })
   if (!order) throw new DomainError('not_found')
   let { status, attentionReasons: reasons } = order
   const statusBefore = status
@@ -154,7 +157,15 @@ async function applyNewFacts(tx: Tx, organizationId: string, orderId: string, fa
 
   for (const fact of fresh) {
     await tx.orderChannelFact.create({
-      data: { organizationId, orderId, externalId: fact.id, type: fact.type, occurredAt: new Date(fact.occurredAt), note: fact.note },
+      // A note may quote the Buyer; once the Order's Buyer data is erased, it must not come back (ADR 0011).
+      data: {
+        organizationId,
+        orderId,
+        externalId: fact.id,
+        type: fact.type,
+        occurredAt: new Date(fact.occurredAt),
+        note: order.buyerDataErasedAt === null ? fact.note : null,
+      },
     })
     await appendEvent(tx, {
       organizationId,

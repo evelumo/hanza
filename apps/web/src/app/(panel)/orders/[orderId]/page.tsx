@@ -156,7 +156,13 @@ export default async function OrderPage({ params }: { params: Promise<{ orderId:
       <Section title={t('orders.detail.buyerTitle')}>
         {order.buyer === null ? (
           <div className="space-y-1 px-5 py-4 text-sm">
-            <p>{order.buyerDataErasedAt ? t('orders.detail.buyerErased', { date: format.dateTime(order.buyerDataErasedAt) }) : null}</p>
+            {order.buyerDataState === 'unreadable' ? (
+              <p role="alert" className="text-red-800">
+                {t('orders.detail.buyerUnreadable')}
+              </p>
+            ) : (
+              <p>{order.buyerDataErasedAt ? t('orders.detail.buyerErased', { date: format.dateTime(order.buyerDataErasedAt) }) : null}</p>
+            )}
             {order.shippingCountryCode ? (
               <p className="text-muted">{t('orders.detail.shippingCountry', { country: order.shippingCountryCode })}</p>
             ) : null}

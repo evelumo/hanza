@@ -35,9 +35,9 @@ Clearing the Buyer data of an Order while the Order itself, its lines, amounts, 
 _Avoid_: Anonymisation, deletion, purge
 
 **Retention period**:
-How many days after an Order closed its Buyer data is kept before Hanza erases it. One value per organization, off by default.
+How many days after an Order closed its Buyer data is kept before Hanza erases it. One value per organization, off by default; only owners and admins change it, after seeing how many Orders the next check would erase.
 _Avoid_: TTL, expiry, data lifetime
 
 **Erasure request**:
-A person asking for their Buyer data to be erased now. Matched by exact email within the organization; matching Orders that are not closed yet are kept and reported.
+A person asking for their Buyer data to be erased now. Handled by an owner or admin; matched by exact email within the organization; matching Orders that are not closed yet are kept and reported.
 _Avoid_: Deletion request, GDPR request, right to be forgotten

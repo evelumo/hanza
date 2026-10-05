@@ -1,8 +1,8 @@
 import { randomBytes } from 'node:crypto'
 import { describe, expect, it } from 'vitest'
 import { createSecretBox } from '../secrets'
-import { buyerEmailIndex, normalizeEmail, openBuyerData, readBuyerData, sealBuyerData, type BuyerData } from './buyer-data'
-import { retentionCutoff } from './sweep'
+import { buyerEmailIndex, normalizeEmail, openBuyerData, readBuyerData, sealBuyerData, viewBuyerData, type BuyerData } from './buyer-data'
+import { retentionCutoff } from './settings'
 
 const box = () => createSecretBox(randomBytes(32).toString('base64'))
 const key = { organizationId: 'org-1', connectionId: 'conn-1', externalId: 'order-1' }
@@ -44,8 +44,13 @@ describe('sealBuyerData', () => {
 
   it('indexes the email ignoring case and spaces, and has no index without an email', () => {
     const secrets = box()
-    expect(sealBuyerData(secrets, key, data).buyerEmailIndex).toBe(buyerEmailIndex(secrets, '  jan.kowalski@example.COM '))
+    expect(sealBuyerData(secrets, key, data).buyerEmailIndex).toBe(buyerEmailIndex(secrets, 'org-1', '  jan.kowalski@example.COM '))
     expect(sealBuyerData(secrets, key, { ...data, buyer: { ...data.buyer, email: null } }).buyerEmailIndex).toBeNull()
+  })
+
+  it('indexes the same email differently in another organization, so Buyers cannot be linked across tenants', () => {
+    const secrets = box()
+    expect(buyerEmailIndex(secrets, 'org-1', 'jan@example.com')).not.toBe(buyerEmailIndex(secrets, 'org-2', 'jan@example.com'))
   })
 
   it('refuses data that breaks the canonical schema', () => {
@@ -72,6 +77,22 @@ describe('readBuyerData', () => {
     expect(readBuyerData(secrets, legacy)).toEqual(data)
   })
 
+  it('views a value that does not open or a legacy row that fails the schema as unreadable, without throwing', () => {
+    const secrets = box()
+    const sealed = sealBuyerData(secrets, key, data).buyerData
+    const [version, iv, tag, ciphertext] = sealed.split(':') as [string, string, string, string]
+    const bytes = Buffer.from(ciphertext, 'base64')
+    bytes[0] = (bytes[0] ?? 0) ^ 1
+    const flipped = [version, iv, tag, bytes.toString('base64')].join(':')
+    const sealedRow = { ...legacy, buyerName: null, buyerEmail: null, buyerPhone: null, buyerLogin: null, shippingAddress: null }
+    expect(viewBuyerData(secrets, { ...sealedRow, buyerData: flipped })).toEqual({ state: 'unreadable' })
+    expect(viewBuyerData(secrets, { ...sealedRow, buyerData: 'not-a-sealed-value' })).toEqual({ state: 'unreadable' })
+    expect(viewBuyerData(box(), { ...sealedRow, buyerData: sealed })).toEqual({ state: 'unreadable' })
+    expect(viewBuyerData(secrets, { ...legacy, shippingAddress: { city: 'Warszawa' } })).toEqual({ state: 'unreadable' })
+    expect(viewBuyerData(secrets, { ...sealedRow, buyerData: sealed })).toEqual({ state: 'present', data })
+    expect(viewBuyerData(secrets, sealedRow)).toEqual({ state: 'erased' })
+  })
+
   it('returns null once erased', () => {
     const erased = { ...legacy, buyerName: null, buyerEmail: null, buyerPhone: null, buyerLogin: null, shippingAddress: null }
     expect(readBuyerData(box(), erased)).toBeNull()
@@ -81,6 +102,13 @@ describe('readBuyerData', () => {
 describe('normalizeEmail', () => {
   it('trims and lowercases', () => {
     expect(normalizeEmail('  John@Example.COM\n')).toBe('john@example.com')
+  })
+
+  it('composes Unicode, so the same address typed two ways matches', () => {
+    const decomposed = 'Jose\u0301@example.com'
+    expect(normalizeEmail(decomposed)).toBe(normalizeEmail('JOS\u00c9@example.com'))
+    const secrets = box()
+    expect(buyerEmailIndex(secrets, 'org-1', decomposed)).toBe(buyerEmailIndex(secrets, 'org-1', 'jos\u00e9@example.com'))
   })
 })
 

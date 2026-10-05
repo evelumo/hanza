@@ -1,6 +1,7 @@
 -- AlterTable
 ALTER TABLE "order" ADD COLUMN     "buyerData" TEXT,
 ADD COLUMN     "buyerDataErasedAt" TIMESTAMP(3),
+ADD COLUMN     "buyerDataSealFailedAt" TIMESTAMP(3),
 ADD COLUMN     "buyerEmailIndex" TEXT,
 ADD COLUMN     "closedAt" TIMESTAMP(3),
 ADD COLUMN     "shippingCountryCode" CHAR(2),

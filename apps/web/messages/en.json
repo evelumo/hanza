@@ -182,6 +182,7 @@
     },
     "needsAttention": "Needs attention",
     "buyerErased": "Erased",
+    "buyerUnreadable": "Cannot be read",
     "detail": {
       "title": "Order",
       "summary": "Channel: {channel} · {date} · {payment} · {total}",
@@ -206,6 +207,7 @@
       "shortage": "Shortage",
       "buyerTitle": "Buyer",
       "buyerErased": "Buyer data was erased on {date}.",
+      "buyerUnreadable": "The buyer data of this order cannot be read: it does not decrypt with the current encryption key, or it is damaged.",
       "shippingCountry": "Shipping country: {country}",
       "contact": "Contact details",
       "phone": "Phone: {phone}",
@@ -277,15 +279,20 @@
   "privacy": {
     "title": "Privacy",
     "intro": "Buyer data on orders (names, contact details, addresses) is stored encrypted. Here you decide how long it is kept and handle a request to erase one person's data.",
+    "adminsOnly": "Only an owner or admin of the organization can change the retention period or erase a buyer's data.",
     "retention": {
       "title": "Buyer data retention",
       "description": "Buyer data is erased this many days after an order was shipped or cancelled. Order lines, amounts and the shipping country are kept. Open orders are never affected.",
       "label": "Days after the order closed",
-      "hint": "From 1 to 3650 days. Leave empty to keep buyer data until you erase it.",
+      "hint": "From 1 to 3650 days. Leave empty to keep buyer data until you erase it. Orders that were already closed before Hanza recorded closing times count from their last change.",
       "save": "Save",
       "saved": "Saved. The check runs every hour.",
       "currentDays": "Now: buyer data is erased {count, plural, one {# day} other {# days}} after an order closed.",
-      "currentOff": "Now: buyer data is kept until you erase it."
+      "currentOff": "Now: buyer data is kept until you erase it.",
+      "confirmTitle": "Confirm the new retention period",
+      "confirmCount": "{count, plural, =0 {With {days, number} days, no order would have its buyer data erased at the next check.} one {With {days, number} days, # order will have its buyer data erased at the next check, within an hour. This cannot be undone.} other {With {days, number} days, # orders will have their buyer data erased at the next check, within an hour. This cannot be undone.}}",
+      "confirm": "Save and erase at the next check",
+      "confirmDialog": "Save the new retention period? Buyer data past it is erased within an hour and cannot be restored."
     },
     "erasure": {
       "title": "Erase a buyer's data",
@@ -407,7 +414,8 @@
       "unmatched_lines": "Link all the lines to products first.",
       "already_linked": "This line is already linked.",
       "unknown_connector": "Unknown connector.",
-      "invalid_config": "Check the fields."
+      "invalid_config": "Check the fields.",
+      "forbidden": "Only an owner or admin of the organization can do this."
     },
     "unexpected": "Something went wrong. Please try again.",
     "invalidInput": "Check the fields.",
@@ -437,7 +445,7 @@
     "offersTooMany": "Select at most 200 offers at a time.",
     "fieldRequired": "This field is required.",
     "fieldInvalid": "Invalid value.",
-    "emailInvalid": "Enter a valid email address.",
+    "emailInvalid": "Enter an email address (with @, at most 320 characters).",
     "retentionDaysInvalid": "Enter a whole number of days from 1 to 3650, or leave the field empty."
   }
 }
