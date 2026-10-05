@@ -16,7 +16,7 @@ Early stage (stage 1 of the roadmap). Working today:
 - The final-for-now Connector SDK with a conformance test kit and an in-memory **fake connector** ("Test channel") that exercises the whole path without a real Channel.
 - `GET /api/health` (database + queue) and a dependency-boundary check for connectors.
 
-Not there yet: **no real connectors** (Allegro first, then WooCommerce), no REST API or MCP server, no panel E2E tests.
+Not there yet: **no real connectors** (Allegro first, then WooCommerce), no REST API or MCP server; the panel end-to-end tests (`pnpm test:e2e`, Playwright) run locally only, not in CI yet.
 
 ## Quick start
 
@@ -46,6 +46,7 @@ pnpm check:boundaries   # connector dependency rules
 pnpm typecheck
 pnpm test
 pnpm build
+pnpm test:e2e           # panel flows in a browser (once: pnpm --filter @hanza/e2e exec playwright install chromium)
 ```
 
 ## Repo layout
@@ -54,6 +55,7 @@ pnpm build
 apps/
   web/                 Next.js panel + API (Products, Orders, Connections, Better Auth routes, /api/health)
   worker/              BullMQ worker process
+  e2e/                 panel end-to-end flows (Playwright) and the `pnpm test:e2e` runner
 packages/
   core/                context, domain services, sync engine, JobQueue, job registry
   db/                  Prisma schema (split per module), migrations, client
@@ -65,7 +67,7 @@ scripts/               check-boundaries.mjs
 docs/                  architecture plan (Polish), ADRs, agent docs
 ```
 
-Stack: Next.js, Prisma + PostgreSQL, pnpm workspaces + Turborepo, BullMQ + Redis, Better Auth, zod, Vitest. No DI container; dependencies are composed in `createContext()`. Temporal is deliberately postponed.
+Stack: Next.js, Prisma + PostgreSQL, pnpm workspaces + Turborepo, BullMQ + Redis, Better Auth, zod, Vitest, Playwright. No DI container; dependencies are composed in `createContext()`. Temporal is deliberately postponed.
 
 ## Roadmap
 

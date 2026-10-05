@@ -9,6 +9,7 @@ import { getT } from '@/i18n/server'
 import { getFormatters } from '@/lib/formatters'
 import { requireTenant } from '@/lib/session'
 import { notFound } from 'next/navigation'
+import { useId } from 'react'
 import { unlinkOfferAction } from './actions'
 import { NameForm } from './name-form'
 import { StockForm } from './stock-form'
@@ -20,9 +21,11 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 function Figure({ label, value, negative, note }: { label: string; value: string; negative?: boolean; note?: string }) {
+  const labelId = useId()
+  // A named group ties the number to its label for assistive technology (and tests).
   return (
-    <div className="rounded-lg border border-line bg-white px-5 py-4">
-      <p className="text-sm text-muted">{label}</p>
+    <div role="group" aria-labelledby={labelId} className="rounded-lg border border-line bg-white px-5 py-4">
+      <p id={labelId} className="text-sm text-muted">{label}</p>
       <p className={`mt-1 text-2xl font-semibold tabular-nums ${negative ? 'text-red-700' : ''}`}>{value}</p>
       {negative && note ? <p className="text-xs font-medium text-red-700">{note}</p> : null}
     </div>
