@@ -12,6 +12,7 @@ import {
   ordersUpdateStatusRef,
   PermanentJobError,
   requestSync,
+  syncTickJob,
   syncTickRef,
   type Actor,
   type Context,
@@ -251,10 +252,15 @@ describe.skipIf(!databaseUrl)('sync engine end to end (real Postgres, in-memory 
     await tick()
     expect(statusUpdates('fake-order-3')).toEqual(['processing', 'new'])
 
-    // The immediate request and the sweep both fire before the push runs: one push.
+    // The immediate request and the sweep both fire before the push runs: they coalesce into one push.
     await changeOrderStatus(ctx, org, third.id, 'processing', user)
     await tenMinutesPass()
-    await tick()
+    const before = ctx.queue.enqueued.length
+    await syncTickJob.handler(ctx, {}, { attempt: 1, maxAttempts: 5, retriedLater: 0 })
+    expect((await order('fake-order-3')).statusPushDueAt!.getTime()).toBeGreaterThan(Date.now())
+    expect(ctx.queue.enqueued.slice(before).filter((job) => job.name === 'orders.updateStatus')).toEqual([])
+    expect(ctx.queue.waiting.filter((job) => job.name === 'orders.updateStatus')).toHaveLength(1)
+    await drain()
     expect(statusUpdates('fake-order-3')).toEqual(['processing', 'new', 'processing'])
     expect((await order('fake-order-3')).statusPushDueAt).toBeNull()
   })

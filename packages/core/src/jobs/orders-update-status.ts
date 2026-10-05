@@ -1,7 +1,7 @@
 import { classifyConnectorError } from '@hanza/connector-sdk'
 import { finishSyncRun } from '../connections/sync-state'
 import { defineJob } from '../jobs'
-import { abandonStatusPush, markStatusPushed } from '../orders/status-push'
+import { abandonStatusPush, isStatusPushPending, markStatusPushed } from '../orders/status-push'
 import { withSyncRun } from '../sync/begin-run'
 import { runConnectorCall } from '../sync/run-connector'
 import { ordersUpdateStatusRef } from './refs'
@@ -22,7 +22,7 @@ export const ordersUpdateStatusJob = defineJob({
       ctx.log.info('status push skipped: no such Order', { organizationId, orderId })
       return
     }
-    if (order.statusPushDueAt === null) return
+    if (!isStatusPushPending(order)) return
     const { connectionId, statusPushSeq: seq } = order
     const input = { organizationId, connectionId, stream: 'order_status_push', capability: 'orders.updateStatus', run } as const
     await withSyncRun(ctx, input, async ({ connector, context, scope, channelRequests }) => {

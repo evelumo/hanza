@@ -144,6 +144,31 @@ describe.skipIf(!databaseUrl)('sync.tick', () => {
       expect(await statusPushes([late, fresh, untouched])).toEqual([])
     })
 
+    it('a failing Connection gets one push per tick, so a Channel that is down is probed, not flooded', async () => {
+      const ctx = context()
+      const org = await createTestOrganization(ctx.db)
+      const id = await connection(org, 'tick-status-channel')
+      const orders = [await pendingOrder(org, id), await pendingOrder(org, id), await pendingOrder(org, id), await pendingOrder(org, id)]
+      for (const orderId of orders) await overdue(orderId)
+      await ctx.db.connection.update({ where: { id }, data: { health: 'failing' } })
+
+      expect(await statusPushes(orders)).toHaveLength(1)
+      expect(await statusPushes(orders)).toHaveLength(1)
+      await ctx.db.connection.update({ where: { id }, data: { health: 'ok' } })
+      expect(await statusPushes(orders)).toHaveLength(2)
+    })
+
+    it('a status change on a connector without orders.updateStatus counts the change but leaves nothing to push', async () => {
+      const ctx = context()
+      const org = await createTestOrganization(ctx.db)
+      const id = await connection(org, 'tick-channel')
+      const { orderId } = await importOrder(ctx, org, id, buildOrder())
+      const before = ctx.queue.enqueued.length
+      await changeOrderStatus(ctx, org, orderId, 'processing', user)
+      expect(await ctx.db.order.findFirstOrThrow({ where: { id: orderId } })).toMatchObject({ statusPushSeq: 1, statusPushDueAt: null })
+      expect(ctx.queue.enqueued.slice(before).filter((job) => job.name === 'orders.updateStatus')).toEqual([])
+    })
+
     it('skips Connections waiting for sign-in and connectors without orders.updateStatus', async () => {
       const ctx = context()
       const org = await createTestOrganization(ctx.db)

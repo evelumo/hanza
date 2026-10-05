@@ -148,13 +148,36 @@ describe.skipIf(!databaseUrl)('orders.updateStatus', () => {
     expect(raised.at(-1)?.payload).toEqual({ reasons: ['status_push_failed'] })
     await resolveAttention(ctx, organizationId, orderId, user)
     expect((await order()).attentionReasons).toEqual(['unmatched_line'])
+  })
 
-    // A later change is a new push.
+  it('a later status the Channel takes is pushed and clears the earlier refusal from Needs attention', async () => {
+    const { ctx, organizationId, orderId, push, order } = await setup()
+    failWith = new PermanentError('Status not allowed')
+    await expect(push()).rejects.toBeInstanceOf(PermanentJobError)
+    expect((await order()).attentionReasons).toEqual(['unmatched_line', 'status_push_failed'])
+
     failWith = null
     await changeOrderStatus(ctx, organizationId, orderId, 'cancelled', user)
     await push()
     expect(updates).toEqual([{ orderExternalId: 'status-order-1', status: 'cancelled' }])
-    expect((await order()).statusPushDueAt).toBeNull()
+    expect(await order()).toMatchObject({ statusPushDueAt: null, attentionReasons: ['unmatched_line'] })
+  })
+
+  it('a job enqueued before pending pushes were tracked (seq 0, nothing marked) still pushes the status', async () => {
+    const ctx = context()
+    const organizationId = await createTestOrganization(ctx.db)
+    const { connectionId } = await createConnection(
+      ctx,
+      organizationId,
+      { connectorId: 'status-channel', name: 'Channel', config: {}, credentials: {} },
+      user,
+    )
+    const { orderId } = await importOrder(ctx, organizationId, connectionId, buildOrder({ externalId: 'legacy-order' }))
+    await ctx.db.order.updateMany({ where: { id: orderId, organizationId }, data: { status: 'processing' } })
+    expect(await ctx.db.order.findFirstOrThrow({ where: { id: orderId } })).toMatchObject({ statusPushSeq: 0, statusPushDueAt: null })
+
+    await ordersUpdateStatusJob.handler(ctx, { organizationId, orderId }, run)
+    expect(updates).toEqual([{ orderExternalId: 'legacy-order', status: 'processing' }])
   })
 
   it('a refusal of a status that has changed since leaves the newer push pending', async () => {

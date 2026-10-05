@@ -2,7 +2,7 @@ import { isChannel } from '@hanza/connector-sdk'
 import { listConnectionsForTick } from '../connections/connections'
 import type { Context } from '../context'
 import { defineJob } from '../jobs'
-import { claimDueStatusPushes } from '../orders/status-push'
+import { claimDueStatusPushes, STATUS_PUSH_SWEEP_LIMIT, STATUS_PUSH_SWEEP_LIMIT_FAILING } from '../orders/status-push'
 import { dueStreams, type ScheduledStream } from '../sync/schedule'
 import { coalesceKeys, offersPullRef, ordersPullRef, ordersUpdateStatusRef, stockPushRef, syncTickRef } from './refs'
 
@@ -44,7 +44,8 @@ export const syncTickJob = defineJob({
         enqueued++
       }
       if (!connector.capabilities['orders.updateStatus']) continue
-      for (const orderId of await claimDueStatusPushes(ctx, connection.organizationId, connection.id)) {
+      const limit = connection.health === 'failing' ? STATUS_PUSH_SWEEP_LIMIT_FAILING : STATUS_PUSH_SWEEP_LIMIT
+      for (const orderId of await claimDueStatusPushes(ctx, connection.organizationId, connection.id, limit)) {
         await ctx.queue.enqueue(
           ordersUpdateStatusRef,
           { organizationId: connection.organizationId, orderId },
