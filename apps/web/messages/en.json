@@ -353,8 +353,7 @@
       "connection_created": "Connection created",
       "connection_health_changed": "Connection status changed"
     },
-    "lines": "{count, plural, one {# line} other {# lines}}",
-    "linesDetail": "Lines: {lines}"
+    "lines": "{count, plural, one {# line} other {# lines}}"
   },
   "errors": {
     "domain": {

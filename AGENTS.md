@@ -19,7 +19,7 @@ Items marked **planned** do not exist yet. Do not assume them.
 
 | Path | What it is |
 | --- | --- |
-| `apps/web` | `@hanza/web` — Next.js App Router: panel (Products, Orders, Connections, dashboard), Better Auth routes, `GET /api/health`. UI strings are Polish. |
+| `apps/web` | `@hanza/web` — Next.js App Router: panel (Products, Orders, Connections, dashboard), Better Auth routes, `GET /api/health`. The panel speaks English (default) and Polish: the locale comes from the `hanza_locale` cookie, then `Accept-Language`, set with the switcher; copy lives in `apps/web/messages/{en,pl}.json` (`next-intl`, no locale in the URL). |
 | `apps/worker` | `@hanza/worker` — the worker process (run with `tsx`, no build step): `startWorker` with the jobs from the core registry and the connectors from `@hanza/connector-registry`; schedules `sync.tick`. Holds the end-to-end engine test (`src/engine.db.test.ts`). |
 | `packages/core` | `@hanza/core` — `createContext()`, env validation, logger, `JobQueue` + BullMQ implementation (`startWorker`), `defineJob`, job registry, domain services, sync engine (`src/sync`, `src/jobs`). Test helpers at `@hanza/core/testing`. |
 | `packages/db` | `@hanza/db` — Prisma schema (split per module), migrations, client factory `createDb()`. |
@@ -54,7 +54,7 @@ Config: copy `.env.example` to `.env` at the repo root (read by web, worker and 
 | --- | --- |
 | Adding a DB table | New `packages/db/prisma/schema/<module>.prisma` (or extend the module's file); tenant-owned tables get `organizationId` + relation to `Organization` + an index starting with it (see `EventLog` in `core.prisma`). Then `pnpm db:migrate`, commit the migration. Add the back-relation to `Organization` in `auth.prisma`. |
 | Adding a background job | `packages/core/src/jobs/<name>.ts` using `defineJob` (see `system-ping.ts`): dotted name, zod payload including `organizationId`. Register it in `packages/core/src/registry.ts`, export from `index.ts`. Enqueue with `ctx.queue.enqueue(job, payload)`. Add a Vitest test for non-trivial logic. |
-| Adding a panel page / API route / server action | `apps/web/src/app/...`. Page groups: `(auth)` public, `(panel)` behind login. Call `requireTenant()` (`apps/web/src/lib/session.ts`) first and scope every query by the returned `organizationId`. Get dependencies from `getContext()` (`lib/context.ts`). Validate input with zod. See `(panel)/dashboard/` for page + server action + queue, `(panel)/products/` for list/detail pages with `useActionState` forms (`components/action-form.tsx`), and `lib/domain-errors.ts` for the Polish messages of `DomainError` codes. Server actions return `{ error }` instead of throwing for expected failures. |
+| Adding a panel page / API route / server action | `apps/web/src/app/...`. Page groups: `(auth)` public, `(panel)` behind login. Call `requireTenant()` (`apps/web/src/lib/session.ts`) first and scope every query by the returned `organizationId`. Get dependencies from `getContext()` (`lib/context.ts`). Validate input with zod. See `(panel)/dashboard/` for page + server action + queue, `(panel)/products/` for list/detail pages with `useActionState` forms (`components/action-form.tsx`), and `lib/domain-errors.ts` for the messages of `DomainError` codes. Server actions return `{ error }` instead of throwing for expected failures, in the request's locale. **Adding a string:** add the key to `apps/web/messages/en.json` (source of truth, keys are type-checked) and the same key to `pl.json`, then use the translator: `await getT()` in server components and actions (`@/i18n/server`), `useT()` in client components and sync ones (`@/i18n/use-t`); use ICU plurals for counts and `lib/formatters.ts` / `lib/format.ts` for dates, numbers and money. Zod schemas carry message keys (`messageKey('validation.…')`), never text. Never hard-code UI text. |
 | Adding a connector | `.ai/skills/add-connector/SKILL.md`, `packages/connectors/README.md`, `packages/connector-sdk/src`. Make it available to the apps with a dependency and one line in `packages/connector-registry/src/index.ts`. Need an SDK or core change to finish? Stop and write a spec. |
 | Changing auth | `apps/web/src/lib/auth.ts` (Better Auth config), `auth-client.ts`, `session.ts`, `packages/db/prisma/schema/auth.prisma`. Ask first. After changing Better Auth plugins, regenerate the reference schema with the Better Auth CLI and write a migration. |
 | Changing the canonical model | `packages/connector-sdk/src/model/*`. Spec first, ask first. Then update every mapper/connector and the DB schema that stores it. |
@@ -101,6 +101,7 @@ A non-trivial change (new module, DB model, SDK/canonical-model change, new capa
 - Edit `packages/db/src/generated` (git-ignored; produced by `pnpm db:generate`).
 - Hand-edit an applied migration; add a new one.
 - Run sync or other long work inside the Next.js process.
+- Hard-code user-facing strings in components or actions; add them to the message catalogues.
 - Commit `.env` or secrets; log tokens or personal data.
 - Use floats for money.
 
@@ -118,7 +119,7 @@ CI (`.github/workflows/ci.yml`) runs all of them with dummy env values; no datab
 
 ## Code style
 
-TypeScript strict, ESM. No semicolons, single quotes, trailing commas in multi-line literals, 2-space indent, `import type` for types (`verbatimModuleSyntax`). Small focused files; one concept per file. Comments only explain *why* (a constraint, a gotcha), not what. Names: files `kebab-case.ts`, job names `domain.action`, connector ids lowercase slugs. Code, identifiers and docs are in English; the panel UI copy is currently Polish.
+TypeScript strict, ESM. No semicolons, single quotes, trailing commas in multi-line literals, 2-space indent, `import type` for types (`verbatimModuleSyntax`). Small focused files; one concept per file. Comments only explain *why* (a constraint, a gotcha), not what. Names: files `kebab-case.ts`, job names `domain.action`, connector ids lowercase slugs. Code, identifiers and docs are in English; the panel's copy is translated through the message catalogues (English default, Polish second).
 
 ## Agent skills
 

@@ -29,8 +29,9 @@ describe('describeEvent', () => {
     expect(describeEvent('stock.reserved', { units: 1 }, pl).detail).toBe('1 sztuka')
     expect(describeEvent('stock.reserved', { units: 3 }, pl).detail).toBe('3 sztuki')
     expect(describeEvent('stock.consumed', { units: 5 }, pl).detail).toBe('5 sztuk')
-    expect(describeEvent('order.imported', { lineCount: 2 }, t).detail).toBe('Lines: 2 lines')
-    expect(describeEvent('order.imported', { lineCount: 1 }, t).detail).toBe('Lines: 1 line')
+    expect(describeEvent('order.imported', { lineCount: 2 }, t).detail).toBe('2 lines')
+    expect(describeEvent('order.imported', { lineCount: 1 }, t).detail).toBe('1 line')
+    expect(describeEvent('order.imported', { lineCount: 5 }, pl).detail).toBe('5 pozycji')
   })
 
   it('shows a value this build does not know as it is', () => {

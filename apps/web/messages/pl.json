@@ -353,8 +353,7 @@
       "connection_created": "Utworzono połączenie",
       "connection_health_changed": "Zmienił się stan połączenia"
     },
-    "lines": "{count, plural, one {# pozycja} few {# pozycje} many {# pozycji} other {# pozycji}}",
-    "linesDetail": "Pozycje: {lines}"
+    "lines": "{count, plural, one {# pozycja} few {# pozycje} many {# pozycji} other {# pozycji}}"
   },
   "errors": {
     "domain": {

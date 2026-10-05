@@ -38,7 +38,7 @@ function detail(t: Translator, type: string, payload: Payload): string | null {
     }
     case 'order.imported': {
       const lines = count(payload.lineCount)
-      return lines ? t('events.linesDetail', { lines: t('events.lines', { count: lines }) }) : null
+      return lines ? t('events.lines', { count: lines }) : null
     }
     case 'connection.health_changed':
       return arrow(healthLabel(t, text(payload.from)), healthLabel(t, text(payload.to)))

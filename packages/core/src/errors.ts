@@ -9,7 +9,7 @@ export type DomainErrorCode =
   | 'unknown_connector'
   | 'invalid_config'
 
-/** Thrown by services for expected failures; the panel maps `code` to Polish copy. */
+/** Thrown by services for expected failures; the panel maps `code` to translated copy. */
 export class DomainError extends Error {
   override readonly name = 'DomainError'
 
