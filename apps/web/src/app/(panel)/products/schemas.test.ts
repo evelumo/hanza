@@ -22,15 +22,20 @@ describe('createProductSchema', () => {
 
 describe('stock input', () => {
   it.each(['', ' ', '-1', '1.5', '1e3', 'abc', '1000001', '99999999'])('rejects %j', (stock) => {
-    expect(setStockSchema.safeParse({ productId: 'p', stock }).success).toBe(false)
+    expect(setStockSchema.safeParse({ productId: 'p', warehouseId: 'w', stock }).success).toBe(false)
   })
 
   it.each([['0', 0], ['1000000', 1_000_000], [' 7 ', 7]] as const)('accepts %j', (stock, expected) => {
-    expect(setStockSchema.parse({ productId: 'p', stock }).stock).toBe(expected)
+    expect(setStockSchema.parse({ productId: 'p', warehouseId: 'w', stock }).stock).toBe(expected)
   })
 
   it('needs a product id', () => {
-    expect(setStockSchema.safeParse({ productId: '', stock: '1' }).success).toBe(false)
+    expect(setStockSchema.safeParse({ productId: '', warehouseId: 'w', stock: '1' }).success).toBe(false)
+  })
+
+  it('needs a warehouse id', () => {
+    expect(setStockSchema.safeParse({ productId: 'p', stock: '1' }).success).toBe(false)
+    expect(setStockSchema.safeParse({ productId: 'p', warehouseId: '', stock: '1' }).success).toBe(false)
   })
 })
 

@@ -109,14 +109,34 @@ export async function getConnection(
   ctx: Context,
   organizationId: string,
   connectionId: string,
-): Promise<(ConnectionRow & { config: Record<string, unknown>; stockRules: ChannelStockRules }) | null> {
+): Promise<
+  | (ConnectionRow & {
+      config: Record<string, unknown>
+      stockRules: ChannelStockRules
+      /** `all`: every active Warehouse counts; otherwise only `warehouseIds` (ADR 0013). */
+      warehouses: { all: boolean; warehouseIds: string[] }
+    })
+  | null
+> {
   const row = await ctx.db.connection.findFirst({
     where: { id: connectionId, organizationId },
-    select: { ...rowSelect, config: true, safetyBuffer: true, channelLimit: true },
+    select: {
+      ...rowSelect,
+      config: true,
+      safetyBuffer: true,
+      channelLimit: true,
+      allWarehouses: true,
+      warehouses: { where: { organizationId }, orderBy: { warehouseId: 'asc' }, select: { warehouseId: true } },
+    },
   })
   if (!row) return null
-  const { config, safetyBuffer, channelLimit, ...rest } = row
-  return { ...toRow(rest), config: config as Record<string, unknown>, stockRules: { safetyBuffer, channelLimit } }
+  const { config, safetyBuffer, channelLimit, allWarehouses, warehouses, ...rest } = row
+  return {
+    ...toRow(rest),
+    config: config as Record<string, unknown>,
+    stockRules: { safetyBuffer, channelLimit },
+    warehouses: { all: allWarehouses, warehouseIds: allWarehouses ? [] : warehouses.map((choice) => choice.warehouseId) },
+  }
 }
 
 /** Decrypts the credentials. Worker only: never hand the result to the panel. */

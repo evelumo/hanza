@@ -1,4 +1,4 @@
-import { getOrder } from '@hanza/core'
+import { getOrder, listWarehouses } from '@hanza/core'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
@@ -15,6 +15,7 @@ import { requireTenant } from '@/lib/session'
 import { changeOrderStatusAction, resolveAttentionAction } from './actions'
 import { AddressBlock } from './address-block'
 import { LinkLineForm } from './link-line-form'
+import { MoveReservationForm } from './move-reservation-form'
 
 export const dynamic = 'force-dynamic'
 
@@ -26,8 +27,13 @@ export default async function OrderPage({ params }: { params: Promise<{ orderId:
   const { organizationId } = await requireTenant()
   const [t, format] = await Promise.all([getT(), getFormatters()])
   const { orderId } = await params
-  const order = await getOrder(getContext(), organizationId, orderId)
+  const ctx = getContext()
+  const order = await getOrder(ctx, organizationId, orderId)
   if (!order) notFound()
+  const orderOpen = order.status === 'new' || order.status === 'processing'
+  const activeWarehouses = orderOpen
+    ? (await listWarehouses(ctx, organizationId)).filter((warehouse) => warehouse.active).map(({ id, name }) => ({ id, name }))
+    : []
 
   const unmatchedLines = order.lines.filter((line) => !line.productId).length
   const manualReasons = order.attentionReasons.filter((reason) => reason !== 'unmatched_line')
@@ -119,6 +125,7 @@ export default async function OrderPage({ params }: { params: Promise<{ orderId:
                 <th scope="col" className={`${thClass} text-right`}>{t('orders.detail.lineColumns.price')}</th>
                 <th scope="col" className={thClass}>{t('orders.detail.lineColumns.product')}</th>
                 <th scope="col" className={thClass}>{t('orders.detail.lineColumns.reservation')}</th>
+                <th scope="col" className={thClass}>{t('orders.detail.lineColumns.warehouse')}</th>
               </tr>
             </thead>
             <tbody>
@@ -145,6 +152,21 @@ export default async function OrderPage({ params }: { params: Promise<{ orderId:
                       {line.reservationStatus ? reservationLabel(t, line.reservationStatus) : <span className="text-muted">{t('common.none')}</span>}
                       {line.shortage ? <AttentionBadge label={t('orders.detail.shortage')} /> : null}
                     </span>
+                  </td>
+                  <td className={tdClass}>
+                    {line.reservationWarehouse ? (
+                      <div className="space-y-2">
+                        <span>{line.reservationWarehouse.name}</span>
+                        {orderOpen && line.reservationStatus === 'open' && activeWarehouses.length > 1 ? (
+                          <MoveReservationForm
+                            lineId={line.id}
+                            targets={activeWarehouses.filter((warehouse) => warehouse.id !== line.reservationWarehouse?.id)}
+                          />
+                        ) : null}
+                      </div>
+                    ) : (
+                      <span className="text-muted">{t('common.none')}</span>
+                    )}
                   </td>
                 </tr>
               ))}

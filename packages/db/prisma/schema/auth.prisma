@@ -91,6 +91,7 @@ model Organization {
   orderChannelFacts OrderChannelFact[]
   connections       Connection[]
   syncStates        SyncState[]
+  channelWarehouses ConnectionWarehouse[]
 
   @@map("organization")
 }

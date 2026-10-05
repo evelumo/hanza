@@ -1,5 +1,6 @@
-export { ensureDefaultWarehouse } from './warehouse'
-export { getAvailability, type Availability } from './availability'
+export { ensureDefaultWarehouse, channelWarehouseIds } from './warehouse'
+export { getAvailability, getWarehouseAvailability, type Availability } from './availability'
+export { chooseWarehouse } from './placement'
 export { setStock } from './set-stock'
 export { requestStockPush } from './push'
 export {

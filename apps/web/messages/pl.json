@@ -16,7 +16,8 @@
     "dashboard": "Pulpit",
     "products": "Produkty",
     "orders": "Zamówienia",
-    "connections": "Połączenia"
+    "connections": "Połączenia",
+    "warehouses": "Magazyny"
   },
   "pagination": {
     "label": "Paginacja",
@@ -96,7 +97,7 @@
       "name": "Nazwa",
       "saveName": "Zapisz nazwę",
       "stockTitle": "Stan",
-      "stockDescription": "Hanza jest źródłem prawdy o stanie. Kanały dostają Dostępne (Stan minus Rezerwacje) pomniejszone o bufor bezpieczeństwa i najwyżej tyle, ile wynosi limit kanału ustawiony dla każdego połączenia.",
+      "stockDescription": "Hanza jest źródłem prawdy o stanie. Ustawiasz go dla każdego magazynu. Każdy kanał dostaje Dostępne z magazynów, które liczy, pomniejszone o bufor bezpieczeństwa i najwyżej tyle, ile wynosi jego limit kanału.",
       "stockSaved": "Zapisano. Nowy stan zostanie wysłany do kanałów.",
       "saveStock": "Zapisz stan",
       "offersTitle": "Oferty",
@@ -118,7 +119,16 @@
       "reservationsTitle": "Otwarte rezerwacje",
       "reservationsDescription": "Towar obiecany zamówieniom, które jeszcze nie zostały wysłane.",
       "reservationsEmpty": "Brak otwartych rezerwacji.",
-      "reservationOrder": "Zamówienie {id}"
+      "reservationOrder": "Zamówienie {id}",
+      "warehouseColumns": {
+        "warehouse": "Magazyn",
+        "stock": "Stan",
+        "reserved": "Zarezerwowane",
+        "available": "Dostępne"
+      },
+      "manageWarehouses": "Zarządzaj magazynami",
+      "reservationWarehouse": "w: {warehouse}",
+      "stockIn": "Stan w: {warehouse}"
     },
     "new": {
       "title": "Dodaj produkt",
@@ -198,7 +208,8 @@
         "quantity": "Ilość",
         "price": "Cena",
         "product": "Produkt",
-        "reservation": "Rezerwacja"
+        "reservation": "Rezerwacja",
+        "warehouse": "Magazyn"
       },
       "unmatched": "Niepołączona",
       "shortage": "Brak na stanie",
@@ -220,6 +231,12 @@
       "skuPlaceholder": "SKU produktu",
       "submit": "Połącz",
       "submitting": "Łączenie…"
+    },
+    "moveReservation": {
+      "label": "Przenieś rezerwację do",
+      "submit": "Przenieś",
+      "submitting": "Przenoszenie…",
+      "hint": "Tylko do magazynu, który ma dość Dostępnego na całą pozycję."
     }
   },
   "connections": {
@@ -271,12 +288,22 @@
     },
     "stockRules": {
       "title": "Stan wysyłany do tego kanału",
-      "description": "Kanał dostaje Dostępne (Stan minus Rezerwacje) pomniejszone o bufor bezpieczeństwa i nigdy więcej niż limit kanału. Zamówienia nadal rezerwują z całego Dostępnego.",
+      "description": "Kanał dostaje Dostępne z magazynów, które liczy (poniżej), pomniejszone o bufor bezpieczeństwa i nigdy więcej niż limit kanału. Zamówienia rezerwują z Dostępnego, a nie z tej liczby.",
       "safetyBuffer": "Bufor bezpieczeństwa",
       "safetyBufferHint": "Sztuki, których ten kanał nie widzi, na przykład ostatnie sztuki zostawione dla Twojego sklepu.",
       "channelLimit": "Limit kanału",
       "channelLimitHint": "Najwięcej sztuk, jakie zobaczy ten kanał. Zostaw puste, aby nie ograniczać.",
       "save": "Zapisz ustawienia stanu",
+      "saved": "Zapisano. Nowe liczby zostaną wysłane do tego kanału."
+    },
+    "warehouses": {
+      "title": "Magazyny liczone dla tego kanału",
+      "description": "Kanał dostaje Dostępne tylko z tych magazynów, a jego zamówienia rezerwują w nich: w pierwszym według priorytetu, który pokrywa całą pozycję. Pozycja, której żaden z nich nie pokrywa, jest brakiem, nawet jeśli inny magazyn ma towar.",
+      "all": "Wszystkie aktywne magazyny",
+      "allHint": "Także magazyny dodane później.",
+      "only": "Tylko wybrane magazyny",
+      "legend": "Magazyny",
+      "save": "Zapisz magazyny",
       "saved": "Zapisano. Nowe liczby zostaną wysłane do tego kanału."
     }
   },
@@ -364,10 +391,20 @@
       "order_attention_resolved": "Oznaczono jako sprawdzone",
       "connection_created": "Utworzono połączenie",
       "connection_health_changed": "Zmienił się stan połączenia",
-      "connection_stock_rules_changed": "Zmieniono ustawienia stanu"
+      "connection_stock_rules_changed": "Zmieniono ustawienia stanu",
+      "order_reservation_moved": "Przeniesiono rezerwację do innego magazynu",
+      "connection_warehouses_changed": "Zmieniono magazyny kanału",
+      "warehouse_created": "Dodano magazyn",
+      "warehouse_updated": "Zmieniono magazyn",
+      "warehouse_deactivated": "Dezaktywowano magazyn",
+      "warehouse_activated": "Aktywowano magazyn",
+      "warehouse_deleted": "Usunięto magazyn"
     },
     "lines": "{count, plural, one {# pozycja} few {# pozycje} many {# pozycji} other {# pozycji}}",
-    "stockRules": "bufor bezpieczeństwa {buffer}, limit kanału {limit}"
+    "stockRules": "bufor bezpieczeństwa {buffer}, limit kanału {limit}",
+    "allWarehouses": "wszystkie magazyny",
+    "someWarehouses": "{count, plural, one {# wybrany magazyn} few {# wybrane magazyny} many {# wybranych magazynów} other {# wybranego magazynu}}",
+    "priority": "priorytet {change}"
   },
   "errors": {
     "domain": {
@@ -378,7 +415,14 @@
       "already_linked": "Ta pozycja jest już połączona.",
       "unknown_connector": "Nieznany konektor.",
       "invalid_config": "Sprawdź poprawność pól.",
-      "not_a_channel": "To połączenie nie jest kanałem sprzedaży, więc nie ma ustawień stanu."
+      "not_a_channel": "To połączenie nie jest kanałem sprzedaży, więc nie ma ustawień stanu.",
+      "warehouse_inactive": "Ten magazyn jest nieaktywny.",
+      "warehouse_is_default": "Magazynu domyślnego nie można dezaktywować ani usunąć.",
+      "warehouse_not_empty": "W magazynie nadal jest stan lub otwarte rezerwacje.",
+      "warehouse_in_use": "Magazyn jest nadal używany: wybrał go kanał albo ma rezerwacje w historii. Najpierw zmień magazyny kanału albo dezaktywuj magazyn zamiast go usuwać.",
+      "no_warehouse_selected": "Wybierz co najmniej jeden magazyn.",
+      "reservation_not_open": "Przenieść można tylko otwartą rezerwację nowego lub realizowanego zamówienia.",
+      "not_enough_stock": "Ten magazyn nie ma dość Dostępnego na całą pozycję."
     },
     "unexpected": "Coś poszło nie tak. Spróbuj ponownie.",
     "invalidInput": "Sprawdź poprawność pól.",
@@ -407,6 +451,50 @@
     "offersRequired": "Zaznacz co najmniej jedną ofertę.",
     "offersTooMany": "Zaznacz najwyżej 200 ofert naraz.",
     "fieldRequired": "To pole jest wymagane.",
-    "fieldInvalid": "Nieprawidłowa wartość."
+    "fieldInvalid": "Nieprawidłowa wartość.",
+    "warehouseNameTooLong": "Nazwa może mieć najwyżej 100 znaków.",
+    "warehousesRequired": "Wybierz co najmniej jeden magazyn."
+  },
+  "warehouses": {
+    "title": "Magazyny",
+    "description": "Miejsca, w których trzymasz towar. Każda pozycja nowego zamówienia jest rezerwowana w pierwszym magazynie według priorytetu, który pokrywa ją w całości. Na stronie połączenia możesz ograniczyć kanał do wybranych magazynów.",
+    "listTitle": "Twoje magazyny",
+    "columns": {
+      "name": "Nazwa",
+      "priority": "Priorytet",
+      "stock": "Stan",
+      "reserved": "Zarezerwowane",
+      "channels": "Wybrany przez kanały"
+    },
+    "default": "Domyślny",
+    "inactive": "Nieaktywny",
+    "newTitle": "Dodaj magazyn",
+    "newDescription": "Nowy magazyn jest pusty i aktywny. Kanały, które liczą wszystkie magazyny, od razu go uwzględniają.",
+    "name": "Nazwa",
+    "priority": "Priorytet",
+    "priorityHint": "Niższe liczby są używane najpierw. Zostaw puste, aby dodać go na końcu.",
+    "priorityHintEdit": "Niższe liczby są używane najpierw przy rezerwowaniu zamówienia.",
+    "create": "Dodaj magazyn",
+    "created": "Dodano magazyn.",
+    "detail": {
+      "title": "Magazyn",
+      "summary": "Stan: {stock} · Zarezerwowane: {reserved}",
+      "dataTitle": "Dane magazynu",
+      "save": "Zapisz",
+      "saved": "Zapisano.",
+      "statusTitle": "Użycie",
+      "statusActive": "Aktywny: może mieć stan i przyjmować rezerwacje.",
+      "statusInactive": "Nieaktywny: nic w nim nie ma i nie liczy się dla żadnego kanału.",
+      "activate": "Aktywuj",
+      "deactivate": "Dezaktywuj",
+      "deactivateHint": "Dezaktywować można tylko pusty magazyn: bez stanu, bez otwartych rezerwacji i niewybrany przez żaden kanał.",
+      "delete": "Usuń magazyn",
+      "deleteConfirm": "Usunąć ten magazyn? Tego nie można cofnąć.",
+      "deleteHint": "Magazyn, który kiedykolwiek miał rezerwację, można tylko dezaktywować.",
+      "defaultNote": "To magazyn domyślny: tu trafia początkowy stan nowych produktów. Jest zawsze aktywny i nie można go usunąć.",
+      "channelsLine": "Wybrany przez: {channels}",
+      "historyTitle": "Historia",
+      "historyEmpty": "Brak zdarzeń."
+    }
   }
 }

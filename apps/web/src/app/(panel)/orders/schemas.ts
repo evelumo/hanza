@@ -9,6 +9,7 @@ const formStatusSchema = z.enum(orderStatusSchema.options, { error: messageKey('
 export const changeOrderStatusSchema = z.object({ orderId: idSchema, status: formStatusSchema })
 export const linkOrderLineSchema = z.object({ orderLineId: idSchema, sku: skuSchema })
 export const resolveAttentionSchema = z.object({ orderId: idSchema })
+export const moveReservationSchema = z.object({ orderLineId: idSchema, warehouseId: idSchema })
 
 export const orderListFiltersSchema = z.object({
   status: orderStatusSchema.optional().catch(undefined),

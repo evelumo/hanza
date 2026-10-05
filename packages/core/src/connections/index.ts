@@ -9,3 +9,4 @@ export {
 } from './connections'
 export { startSyncRun, saveSyncCursor, finishSyncRun, failSyncRun } from './sync-state'
 export { updateChannelStockRules } from './stock-rules'
+export { updateChannelWarehouses, type ChannelWarehouseChoice } from './channel-warehouses'

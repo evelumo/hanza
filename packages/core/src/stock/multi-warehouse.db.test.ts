@@ -1,0 +1,224 @@
+import { describe, expect, it } from 'vitest'
+import { upsertOffers } from '../catalog/offers'
+import { createProduct, getProduct } from '../catalog/products'
+import { getConnection } from '../connections/connections'
+import { updateChannelStockRules } from '../connections/stock-rules'
+import { updateChannelWarehouses } from '../connections/channel-warehouses'
+import { DomainError } from '../errors'
+import { changeOrderStatus } from '../orders/change-status'
+import { importOrder } from '../orders/import'
+import { linkOrderLine } from '../orders/link-line'
+import { moveReservation } from '../orders/move-reservation'
+import { getOrder } from '../orders/queries'
+import { createTestOrganization } from '../testing/context'
+import { databaseUrl, useTestContext } from '../testing/db-test'
+import { buildOrder, createTestConnection, orderLine, testChannel, testCourier, uniqueSku, user } from '../testing/fixtures'
+import { createConnection } from '../connections/connections'
+import { createWarehouse, listWarehouses, updateWarehouse } from '../warehouses/warehouses'
+import { getAvailability, getWarehouseAvailability } from './availability'
+import { getChannelAvailability } from './channel-available'
+import { setStock } from './set-stock'
+
+const code = (error: unknown) => (error instanceof DomainError ? error.code : error)
+
+// Two Warehouses (main = the default, priority 0; north, priority 1) and two Channels:
+// "all" counts both, "north" counts only the north Warehouse.
+describe.skipIf(!databaseUrl)('multiple Warehouses', () => {
+  const context = useTestContext({ connectors: [testChannel, testCourier] })
+
+  async function setup(stock: { main: number; north: number }) {
+    const ctx = context()
+    const org = await createTestOrganization(ctx.db)
+    const all = await createTestConnection(ctx, org, 'All')
+    const northOnly = await createTestConnection(ctx, org, 'North only')
+    const sku = uniqueSku()
+    const { productId } = await createProduct(ctx, org, { sku, name: 'Mug', stock: stock.main }, user)
+    const main = (await listWarehouses(ctx, org))[0]!.id
+    const { warehouseId: north } = await createWarehouse(ctx, org, { name: 'North' }, user)
+    await setStock(ctx, org, productId, stock.north, user, north)
+    await updateChannelWarehouses(ctx, org, northOnly, { all: false, warehouseIds: [north] }, user)
+    for (const connectionId of [all, northOnly]) {
+      await upsertOffers(ctx, org, connectionId, [{ externalId: 'offer', sku, name: 'Mug', url: null }], new Date())
+    }
+    ctx.queue.waiting.length = 0
+    const order = (connectionId: string, quantity: number) =>
+      importOrder(ctx, org, connectionId, buildOrder({ lines: [orderLine('l1', { sku, quantity })] }))
+    const reservationOf = async (orderId: string) => {
+      const line = await ctx.db.orderLine.findFirstOrThrow({ where: { orderId }, include: { reservation: true } })
+      return { lineId: line.id, shortage: line.shortage, warehouseId: line.reservation?.warehouseId, status: line.reservation?.status }
+    }
+    const perWarehouse = async () => {
+      const map = await getWarehouseAvailability(ctx.db, org, productId, [main, north])
+      return { main: map.get(main)!.available, north: map.get(north)!.available }
+    }
+    const told = async () => ({
+      all: (await getChannelAvailability(ctx.db, org, all, [productId])).get(productId),
+      northOnly: (await getChannelAvailability(ctx.db, org, northOnly, [productId])).get(productId),
+    })
+    return { ctx, org, all, northOnly, sku, productId, main, north, order, reservationOf, perWarehouse, told }
+  }
+
+  it('sets Stock per Warehouse; the Product shows each, and the organization total is their sum', async () => {
+    const { ctx, org, productId, main, north } = await setup({ main: 4, north: 6 })
+    const product = await getProduct(ctx, org, productId)
+    expect(product?.warehouses.map((warehouse) => [warehouse.id, warehouse.isDefault, warehouse.stock, warehouse.available])).toEqual([
+      [main, true, 4, 4],
+      [north, false, 6, 6],
+    ])
+    expect(product).toMatchObject({ stock: 10, reserved: 0, available: 10 })
+    const event = await ctx.db.eventLog.findFirstOrThrow({ where: { organizationId: org, type: 'stock.set' } })
+    expect(event.payload).toMatchObject({ warehouseId: north, from: 0, to: 6 })
+  })
+
+  it('tells each Channel the Available of its own Warehouses, with its buffer and limit on top', async () => {
+    const { ctx, org, northOnly, told } = await setup({ main: 4, north: 6 })
+    expect(await told()).toEqual({ all: 10, northOnly: 6 })
+    await updateChannelStockRules(ctx, org, northOnly, { safetyBuffer: 1, channelLimit: 4 }, user)
+    expect(await told()).toEqual({ all: 10, northOnly: 4 })
+    await updateChannelStockRules(ctx, org, northOnly, { safetyBuffer: 3, channelLimit: null }, user)
+    expect(await told()).toEqual({ all: 10, northOnly: 3 })
+  })
+
+  it('reserves in the first Warehouse, by priority, that covers the whole line', async () => {
+    const { all, main, north, order, reservationOf, perWarehouse, told } = await setup({ main: 2, north: 5 })
+
+    // Main (priority 0) covers 2.
+    const first = await order(all, 2)
+    expect(await reservationOf(first.orderId)).toMatchObject({ warehouseId: main, shortage: false, status: 'open' })
+    // Main has 0 left; north covers 3.
+    const second = await order(all, 3)
+    expect(await reservationOf(second.orderId)).toMatchObject({ warehouseId: north, shortage: false })
+    expect(await perWarehouse()).toEqual({ main: 0, north: 2 })
+    expect(await told()).toEqual({ all: 2, northOnly: 2 })
+  })
+
+  it('a lower priority number moves a Warehouse ahead', async () => {
+    const { ctx, org, all, main, north, order, reservationOf } = await setup({ main: 5, north: 5 })
+    await updateWarehouse(ctx, org, main, { name: 'Main warehouse', priority: 9 }, user)
+    const { orderId } = await order(all, 1)
+    expect(await reservationOf(orderId)).toMatchObject({ warehouseId: north, shortage: false })
+  })
+
+  it('judges an Order only against its Channel\'s Warehouses: a Shortage even though another Warehouse could cover it', async () => {
+    const { ctx, northOnly, north, order, reservationOf, perWarehouse, told } = await setup({ main: 10, north: 1 })
+    const { orderId } = await order(northOnly, 3)
+    expect(await reservationOf(orderId)).toMatchObject({ warehouseId: north, shortage: true })
+    expect((await ctx.db.order.findFirstOrThrow({ where: { id: orderId } })).attentionReasons).toEqual(['shortage'])
+    expect(await perWarehouse()).toEqual({ main: 10, north: -2 })
+    // The negative Warehouse is owed units: the "all" Channel is told 10 − 2, never more.
+    expect(await told()).toEqual({ all: 8, northOnly: 0 })
+  })
+
+  it('never splits a line: 3 + 3 does not cover 5, so it is a Shortage in the first Warehouse', async () => {
+    const { all, main, order, reservationOf, perWarehouse, told } = await setup({ main: 3, north: 3 })
+    const { orderId } = await order(all, 5)
+    expect(await reservationOf(orderId)).toMatchObject({ warehouseId: main, shortage: true })
+    expect(await perWarehouse()).toEqual({ main: -2, north: 3 })
+    expect(await told()).toEqual({ all: 1, northOnly: 3 })
+  })
+
+  it('ships and cancels from the Reservation\'s own Warehouse', async () => {
+    const { ctx, org, all, main, north, productId, order, perWarehouse } = await setup({ main: 1, north: 5 })
+    const toNorth = await order(all, 2)
+    const toMain = await order(all, 1)
+    expect(await perWarehouse()).toEqual({ main: 0, north: 3 })
+
+    await changeOrderStatus(ctx, org, toNorth.orderId, 'shipped', user)
+    const stock = async () =>
+      Object.fromEntries(
+        (await ctx.db.stock.findMany({ where: { organizationId: org, productId } })).map((row) => [row.warehouseId === main ? 'main' : row.warehouseId === north ? 'north' : row.warehouseId, row.units]),
+      )
+    expect(await stock()).toEqual({ main: 1, north: 3 })
+    await changeOrderStatus(ctx, org, toMain.orderId, 'cancelled', user)
+    expect(await stock()).toEqual({ main: 1, north: 3 })
+    expect(await perWarehouse()).toEqual({ main: 1, north: 3 })
+    const consumed = await ctx.db.eventLog.findFirstOrThrow({ where: { organizationId: org, type: 'stock.consumed' } })
+    expect(consumed.payload).toMatchObject({ warehouseId: north, units: 2 })
+    const released = await ctx.db.eventLog.findFirstOrThrow({ where: { organizationId: org, type: 'stock.released' } })
+    expect(released.payload).toMatchObject({ warehouseId: main, units: 1 })
+  })
+
+  it('linking an Unmatched line places it by the same rule for its Order\'s Channel', async () => {
+    const { ctx, org, northOnly, north, productId, reservationOf } = await setup({ main: 10, north: 0 })
+    const { orderId } = await importOrder(ctx, org, northOnly, buildOrder({ lines: [orderLine('l1', { sku: 'NOPE', quantity: 1 })] }))
+    const line = await ctx.db.orderLine.findFirstOrThrow({ where: { orderId } })
+    await linkOrderLine(ctx, org, line.id, productId, user)
+    expect(await reservationOf(orderId)).toMatchObject({ warehouseId: north, shortage: true })
+  })
+
+  it('moves a Reservation to a Warehouse that covers it: clears the Shortage, records it, and pushes every Channel', async () => {
+    const { ctx, org, northOnly, all, main, north, order, reservationOf, perWarehouse, told } = await setup({ main: 10, north: 1 })
+    const { orderId } = await order(northOnly, 3)
+    const { lineId } = await reservationOf(orderId)
+    ctx.queue.waiting.length = 0
+
+    await moveReservation(ctx, org, lineId, main, user)
+
+    expect(await reservationOf(orderId)).toMatchObject({ warehouseId: main, shortage: false, status: 'open' })
+    expect(await perWarehouse()).toEqual({ main: 7, north: 1 })
+    expect(await told()).toEqual({ all: 8, northOnly: 1 })
+    expect((await ctx.db.order.findFirstOrThrow({ where: { id: orderId } })).attentionReasons).toEqual([])
+    const moved = await ctx.db.eventLog.findFirstOrThrow({ where: { organizationId: org, type: 'order.reservation_moved' } })
+    expect(moved).toMatchObject({ subjectType: 'order', subjectId: orderId })
+    expect(moved.payload).toMatchObject({ orderLineId: lineId, fromWarehouseId: north, toWarehouseId: main, units: 3, actor: user })
+    expect(await ctx.db.eventLog.count({ where: { organizationId: org, type: 'order.attention_resolved' } })).toBe(1)
+    expect(ctx.queue.waiting.map((job) => (job.payload as { connectionId: string }).connectionId).sort()).toEqual([all, northOnly].sort())
+    const detail = await getOrder(ctx, org, orderId)
+    expect(detail?.lines[0]?.reservationWarehouse).toEqual({ id: main, name: 'Main warehouse' })
+  })
+
+  it('refuses a move the target cannot cover, of a closed Reservation, or to an unknown Warehouse; the same Warehouse is a no-op', async () => {
+    const { ctx, org, all, main, north, order, reservationOf } = await setup({ main: 2, north: 1 })
+    const { orderId } = await order(all, 2)
+    const { lineId } = await reservationOf(orderId)
+    await expect(moveReservation(ctx, org, lineId, north, user).catch(code)).resolves.toBe('not_enough_stock')
+    await expect(moveReservation(ctx, org, lineId, 'no-such-warehouse', user).catch(code)).resolves.toBe('not_found')
+    await moveReservation(ctx, org, lineId, main, user)
+    expect(await ctx.db.eventLog.count({ where: { organizationId: org, type: 'order.reservation_moved' } })).toBe(0)
+
+    await changeOrderStatus(ctx, org, orderId, 'shipped', user)
+    await setStock(ctx, org, (await ctx.db.orderLine.findFirstOrThrow({ where: { id: lineId } })).productId!, 9, user, north)
+    await expect(moveReservation(ctx, org, lineId, north, user).catch(code)).resolves.toBe('reservation_not_open')
+  })
+
+  it('a Channel\'s Warehouse choice: stored, validated, bumps only its Offers, and needs a Channel', async () => {
+    const { ctx, org, all, northOnly, main, north, told } = await setup({ main: 4, north: 6 })
+    expect((await getConnection(ctx, org, all))?.warehouses).toEqual({ all: true, warehouseIds: [] })
+    expect((await getConnection(ctx, org, northOnly))?.warehouses).toEqual({ all: false, warehouseIds: [north] })
+    const seq = async (connectionId: string) => (await ctx.db.offer.findFirstOrThrow({ where: { connectionId } })).stockPushSeq
+    const before = { all: await seq(all), northOnly: await seq(northOnly) }
+
+    await updateChannelWarehouses(ctx, org, northOnly, { all: false, warehouseIds: [main, north, main] }, user)
+    expect((await getConnection(ctx, org, northOnly))?.warehouses).toEqual({ all: false, warehouseIds: [main, north].sort() })
+    expect(await told()).toEqual({ all: 10, northOnly: 10 })
+    expect(await seq(northOnly)).toBe(before.northOnly + 1)
+    expect(await seq(all)).toBe(before.all)
+    expect(ctx.queue.waiting.map((job) => job.payload)).toEqual([{ organizationId: org, connectionId: northOnly }])
+
+    // Unchanged: no Event, no bump.
+    await updateChannelWarehouses(ctx, org, northOnly, { all: false, warehouseIds: [north, main] }, user)
+    expect(await seq(northOnly)).toBe(before.northOnly + 1)
+    expect(await ctx.db.eventLog.count({ where: { organizationId: org, type: 'connection.warehouses_changed' } })).toBe(2)
+
+    await expect(updateChannelWarehouses(ctx, org, northOnly, { all: false, warehouseIds: [] }, user).catch(code)).resolves.toBe(
+      'no_warehouse_selected',
+    )
+    const { connectionId: courier } = await createConnection(
+      ctx,
+      org,
+      { connectorId: 'test-courier', name: 'Courier', config: {}, credentials: {} },
+      user,
+    )
+    await expect(updateChannelWarehouses(ctx, org, courier, { all: true }, user).catch(code)).resolves.toBe('not_a_channel')
+  })
+
+  it('a Warehouse added later counts at once for a Channel that counts all, and for no Channel that chose', async () => {
+    const { ctx, org, all, productId, order, told } = await setup({ main: 1, north: 2 })
+    // Earlier transactions locked the Warehouses that existed then; a new transaction sees the new one.
+    await order(all, 1)
+    const { warehouseId: south } = await createWarehouse(ctx, org, { name: 'South' }, user)
+    await setStock(ctx, org, productId, 7, user, south)
+    expect(await told()).toEqual({ all: 9, northOnly: 2 })
+    expect((await getAvailability(ctx.db, org, [productId])).get(productId)?.available).toBe(9)
+  })
+})

@@ -36,6 +36,28 @@ describe('describeEvent', () => {
     expect(describeEvent('connection.stock_rules_changed', { from: 1 }, t, number).detail).toBeNull()
   })
 
+  it('describes Warehouse events and a change of a Channel\'s Warehouses', () => {
+    const pl = translatorFor('pl')
+    expect(describeEvent('order.reservation_moved', { units: 2, fromWarehouseId: 'a', toWarehouseId: 'b' }, t, number)).toEqual({
+      title: 'Reservation moved to another warehouse',
+      detail: '2 units',
+    })
+    expect(describeEvent('connection.warehouses_changed', { to: { all: true, warehouseIds: [] } }, t, number).detail).toBe('all warehouses')
+    expect(describeEvent('connection.warehouses_changed', { to: { all: false, warehouseIds: ['a', 'b'] } }, t, number).detail).toBe(
+      '2 chosen warehouses',
+    )
+    expect(describeEvent('connection.warehouses_changed', { to: { all: false, warehouseIds: ['a', 'b', 'c'] } }, pl, numberPl).detail).toBe(
+      '3 wybrane magazyny',
+    )
+    expect(describeEvent('connection.warehouses_changed', { to: 'oops' }, t, number).detail).toBeNull()
+    expect(describeEvent('warehouse.created', { name: 'North', priority: 1 }, t, number)).toEqual({ title: 'Warehouse added', detail: 'North' })
+    const renamed = { from: { name: 'North', priority: 1 }, to: { name: 'South', priority: 1 } }
+    expect(describeEvent('warehouse.updated', renamed, t, number).detail).toBe('North → South')
+    const reordered = { from: { name: 'North', priority: 1 }, to: { name: 'North', priority: 1500 } }
+    expect(describeEvent('warehouse.updated', reordered, t, number).detail).toBe('priority 1 → 1,500')
+    expect(describeEvent('warehouse.deactivated', {}, pl, numberPl)).toEqual({ title: 'Dezaktywowano magazyn', detail: null })
+  })
+
   it('pluralises counts the way each language does', () => {
     expect(describeEvent('stock.reserved', { units: 1 }, t, number).detail).toBe('1 unit')
     expect(describeEvent('stock.reserved', { units: 5 }, t, number).detail).toBe('5 units')

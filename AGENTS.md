@@ -19,7 +19,7 @@ Items marked **planned** do not exist yet. Do not assume them.
 
 | Path | What it is |
 | --- | --- |
-| `apps/web` | `@hanza/web` — Next.js App Router: panel (Products, Orders, Connections, dashboard), Better Auth routes, `GET /api/health`. The panel speaks English (default) and Polish: the locale comes from the `hanza_locale` cookie, then `Accept-Language`, set with the switcher; copy lives in `apps/web/messages/{en,pl}.json` (`next-intl`, no locale in the URL). |
+| `apps/web` | `@hanza/web` — Next.js App Router: panel (Products, Orders, Warehouses, Connections, dashboard), Better Auth routes, `GET /api/health`. The panel speaks English (default) and Polish: the locale comes from the `hanza_locale` cookie, then `Accept-Language`, set with the switcher; copy lives in `apps/web/messages/{en,pl}.json` (`next-intl`, no locale in the URL). |
 | `apps/worker` | `@hanza/worker` — the worker process (run with `tsx`, no build step): `startWorker` with the jobs from the core registry and the connectors from `@hanza/connector-registry`; schedules `sync.tick`. Holds the end-to-end engine test (`src/engine.db.test.ts`). |
 | `packages/core` | `@hanza/core` — `createContext()`, env validation, logger, `JobQueue` + BullMQ implementation (`startWorker`), `defineJob`, job registry, domain services, sync engine (`src/sync`, `src/jobs`). Test helpers at `@hanza/core/testing`. |
 | `packages/db` | `@hanza/db` — Prisma schema (split per module), migrations, client factory `createDb()`. |

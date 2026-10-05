@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { ActionForm } from '@/components/action-form'
 import { ActionButton } from '@/components/form'
 import { EmptyState, Section, linkClass, rowClass, tableClass, tdClass, thClass } from '@/components/section'
+import { TagBadge } from '@/components/status-badge'
 import { getContext } from '@/lib/context'
 import { getT } from '@/i18n/server'
 import { getFormatters } from '@/lib/formatters'
@@ -63,9 +64,45 @@ export default async function ProductPage({ params }: { params: Promise<{ produc
         </div>
       </Section>
 
-      <Section title={t('products.detail.stockTitle')} description={t('products.detail.stockDescription')}>
-        <div className="px-5 py-4">
-          <StockForm productId={product.id} stock={product.stock} />
+      <Section
+        title={t('products.detail.stockTitle')}
+        description={t('products.detail.stockDescription')}
+        actions={
+          <Link href="/warehouses" className={linkClass}>
+            {t('products.detail.manageWarehouses')}
+          </Link>
+        }
+      >
+        <div className="overflow-x-auto">
+          <table className={tableClass}>
+            <thead>
+              <tr>
+                <th scope="col" className={thClass}>{t('products.detail.warehouseColumns.warehouse')}</th>
+                <th scope="col" className={thClass}>{t('products.detail.warehouseColumns.stock')}</th>
+                <th scope="col" className={`${thClass} text-right`}>{t('products.detail.warehouseColumns.reserved')}</th>
+                <th scope="col" className={`${thClass} text-right`}>{t('products.detail.warehouseColumns.available')}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {product.warehouses.map((warehouse) => (
+                <tr key={warehouse.id} className={rowClass}>
+                  <th scope="row" className={`${tdClass} font-medium`}>
+                    <span className="flex flex-wrap items-center gap-1.5">
+                      {warehouse.name}
+                      {warehouse.isDefault ? <TagBadge label={t('warehouses.default')} /> : null}
+                    </span>
+                  </th>
+                  <td className={tdClass}>
+                    <StockForm productId={product.id} warehouseId={warehouse.id} warehouseName={warehouse.name} stock={warehouse.stock} />
+                  </td>
+                  <td className={`${tdClass} text-right tabular-nums`}>{format.number(warehouse.reserved)}</td>
+                  <td className={`${tdClass} text-right tabular-nums ${warehouse.available < 0 ? 'font-medium text-red-700' : ''}`}>
+                    {format.number(warehouse.available)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </Section>
 
@@ -132,7 +169,10 @@ export default async function ProductPage({ params }: { params: Promise<{ produc
                   {t('products.detail.reservationOrder', { id: reservation.orderExternalId })}
                 </Link>
                 <span>
-                  {t('common.units', { count: reservation.units })} <span className="text-muted">· {format.dateTime(reservation.createdAt)}</span>
+                  {t('common.units', { count: reservation.units })}{' '}
+                  <span className="text-muted">
+                    {t('products.detail.reservationWarehouse', { warehouse: reservation.warehouseName })} · {format.dateTime(reservation.createdAt)}
+                  </span>
                 </span>
               </li>
             ))}

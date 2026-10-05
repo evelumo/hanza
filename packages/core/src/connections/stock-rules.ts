@@ -4,7 +4,7 @@ import type { Context } from '../context'
 import { DomainError } from '../errors'
 import { appendEvent } from '../events'
 import { channelStockRulesSchema, type ChannelStockRules } from '../stock/channel-available'
-import { requestStockPushAfterCommit } from '../stock/push'
+import { markConnectionOffersForStockPush, requestStockPushAfterCommit } from '../stock/push'
 import { TX_OPTIONS } from '../transaction'
 
 /**
@@ -39,13 +39,7 @@ export async function updateChannelStockRules(
     if (from.safetyBuffer === to.safetyBuffer && from.channelLimit === to.channelLimit) return false
 
     await tx.connection.updateMany({ where: { id: connectionId, organizationId }, data: to })
-    await tx.$executeRaw`
-      UPDATE "offer" SET "stockPushSeq" = "stockPushSeq" + 1, "updatedAt" = now()
-      WHERE "id" IN (
-        SELECT "id" FROM "offer"
-        WHERE "organizationId" = ${organizationId} AND "connectionId" = ${connectionId} AND "productId" IS NOT NULL
-        ORDER BY "id"
-        FOR UPDATE)`
+    await markConnectionOffersForStockPush(tx, organizationId, connectionId)
     await appendEvent(tx, {
       organizationId,
       type: 'connection.stock_rules_changed',

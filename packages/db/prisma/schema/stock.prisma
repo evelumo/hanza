@@ -3,14 +3,19 @@
 model Warehouse {
   id             String   @id @default(uuid(7))
   organizationId String
-  /// "default" for the Warehouse every organization gets automatically.
+  /// "default" for the Warehouse every organization gets automatically (the default Warehouse); the Warehouse's own id for any other.
   code           String
   name           String
+  /// An inactive Warehouse holds no Stock and no open Reservations and counts for no Channel (ADR 0013).
+  active         Boolean  @default(true)
+  /// Lower is used first when a Reservation is placed; ties by id. CHECK >= 0 (ADR 0013).
+  priority       Int      @default(0)
   createdAt      DateTime @default(now())
 
-  organization Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  stock        Stock[]
-  reservations Reservation[]
+  organization      Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  stock             Stock[]
+  reservations      Reservation[]
+  channelWarehouses ConnectionWarehouse[]
 
   @@unique([organizationId, code])
   @@map("warehouse")

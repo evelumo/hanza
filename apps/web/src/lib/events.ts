@@ -28,9 +28,28 @@ function detail(t: Translator, number: NumberFormat, type: string, payload: Payl
       return arrow(formatted(payload.from, number), formatted(payload.to, number))
     case 'stock.reserved':
     case 'stock.released':
-    case 'stock.consumed': {
+    case 'stock.consumed':
+    case 'order.reservation_moved': {
       const units = count(payload.units)
       return units ? t('common.units', { count: units }) : null
+    }
+    case 'connection.warehouses_changed': {
+      const to = nested(payload, 'to')
+      const all = nested(to, 'all')
+      const ids = nested(to, 'warehouseIds')
+      if (all === true) return t('events.allWarehouses')
+      return all === false && Array.isArray(ids) ? t('events.someWarehouses', { count: ids.length }) : null
+    }
+    case 'warehouse.created':
+    case 'warehouse.deleted':
+      return text(payload.name)
+    case 'warehouse.updated': {
+      const side = (key: 'from' | 'to', field: string) => nested(nested(payload, key), field)
+      const from = text(side('from', 'name'))
+      const to = text(side('to', 'name'))
+      if (from !== null && to !== null && from !== to) return arrow(from, to)
+      const priority = arrow(formatted(side('from', 'priority'), number), formatted(side('to', 'priority'), number))
+      return priority ? t('events.priority', { change: priority }) : null
     }
     case 'product.updated':
       return arrow(text(nested(payload.name, 'from')), text(nested(payload.name, 'to')))

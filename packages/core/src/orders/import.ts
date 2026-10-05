@@ -92,7 +92,7 @@ async function insertOrder(tx: Tx, organizationId: string, connectionId: string,
     const { shortage } = await reserveLine(
       tx,
       organizationId,
-      { orderId: created.id, orderLineId: line.id, productId: line.productId, units: line.quantity },
+      { orderId: created.id, orderLineId: line.id, connectionId, productId: line.productId, units: line.quantity },
       'open',
     )
     touched.add(line.productId)

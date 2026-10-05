@@ -9,6 +9,13 @@ export type DomainErrorCode =
   | 'unknown_connector'
   | 'invalid_config'
   | 'not_a_channel'
+  | 'warehouse_inactive'
+  | 'warehouse_is_default'
+  | 'warehouse_not_empty'
+  | 'warehouse_in_use'
+  | 'no_warehouse_selected'
+  | 'reservation_not_open'
+  | 'not_enough_stock'
 
 /** Thrown by services for expected failures; the panel maps `code` to translated copy. */
 export class DomainError extends Error {

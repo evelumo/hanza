@@ -1,6 +1,7 @@
 import type { Db, Tx } from '@hanza/db'
 import { z } from 'zod'
 import { getAvailability } from './availability'
+import { channelWarehouseIds } from './warehouse'
 
 const units = z.number().int().min(0).max(1_000_000)
 
@@ -29,9 +30,10 @@ export function channelAvailable(available: number, rules: ChannelStockRules): n
 }
 
 /**
- * Channel Available of these Products for one Connection; Products not found count as Available 0.
- * Read the Offers' push sequence before calling this: a rule or stock change after that read bumps
- * the sequence and keeps the Offer pending (ADR 0010). Multiple Warehouses (#4) extend this function.
+ * Channel Available of these Products for one Connection: `channelAvailable` of the Available of the
+ * Channel's Warehouses only (ADR 0013); Products not found, or a Channel left with no Warehouse,
+ * count as Available 0. Read the Offers' push sequence before calling this: a rule, Warehouse choice
+ * or stock change after that read bumps the sequence and keeps the Offer pending (ADR 0010).
  */
 export async function getChannelAvailability(
   db: Db | Tx,
@@ -46,7 +48,8 @@ export async function getChannelAvailability(
   })
   const result = new Map<string, number>()
   if (!connection) return result
-  const availability = await getAvailability(client, organizationId, productIds)
+  const warehouseIds = await channelWarehouseIds(client, organizationId, connectionId)
+  const availability = await getAvailability(client, organizationId, productIds, warehouseIds)
   for (const productId of new Set(productIds)) {
     result.set(productId, channelAvailable(availability.get(productId)?.available ?? 0, connection))
   }
