@@ -66,7 +66,7 @@ function parsePage<T>(schema: z.ZodType<PullResult<T>>, raw: unknown, cursor: st
 
 /**
  * Validates a page of connector output like any external data. Every failure is a `PermanentError`
- * (a broken contract, spec decision 21), so call these inside `runConnectorCall`.
+ * (a broken contract: output that fails the canonical schema), so call these inside `runConnectorCall`.
  */
 export function parseOffersPage(raw: unknown, cursor: string | null): PullResult<Offer> {
   return parsePage(offersPage, raw, cursor, 'Offer')

@@ -1,4 +1,4 @@
-// Dependency boundaries (spec stage 1, section 6). pnpm's strict node_modules
+// Dependency boundaries (ADR 0007). pnpm's strict node_modules
 // turns a missing dependency into a failed import, so checking manifests is enough:
 // 1. A connector depends only on the Connector SDK (plus zod): it cannot import the
 //    database, the core or another connector. Its dev, peer and optional dependencies
@@ -54,7 +54,7 @@ for (const manifest of packages) {
   const forbidden = inner[manifest.name]
   if (!forbidden) continue
   for (const { kind, name } of deps(manifest, ALL_KINDS)) {
-    if (forbidden.includes(name) || isConnector(name)) errors.push(`${manifest.name}: ${kind} "${name}" is not allowed (section 6, rule 2)`)
+    if (forbidden.includes(name) || isConnector(name)) errors.push(`${manifest.name}: ${kind} "${name}" is not allowed (see ADR 0007)`)
   }
 }
 

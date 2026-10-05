@@ -57,7 +57,7 @@ async function setHealth(
   const from = rows[0]?.health
   if (from === undefined) throw new DomainError('not_found')
   if (from === to) return
-  // Only signing in again (a successful run) clears auth_expired; a later failure must not hide it (§7).
+  // Only signing in again (a successful run) clears auth_expired; a later failure must not hide it.
   if (from === 'auth_expired' && to === 'failing') return
   await tx.connection.updateMany({ where: { id: connectionId, organizationId }, data: { health: to, healthChangedAt: new Date() } })
   await appendEvent(tx, {

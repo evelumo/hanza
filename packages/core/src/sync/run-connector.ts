@@ -35,8 +35,10 @@ export function isRecordedFailure(error: unknown): boolean {
 }
 
 /**
- * Runs one connector call and turns its failure into the job outcome, Connection health and
- * `sync_state` of spec §5.4. A success is left to the caller, which finishes the run once.
+ * Runs one connector call and turns its failure into the job outcome, Connection health and `sync_state`
+ * by error kind: auth_expired stops retrying and marks the Connection; rate_limited retries later without
+ * using an attempt; transient retries with backoff and marks the Connection failing on the last attempt;
+ * permanent stops retrying and marks it failing. A success is left to the caller, which finishes the run once.
  */
 export async function runConnectorCall<T>(ctx: Context, scope: RunScope, call: () => Promise<T>): Promise<T> {
   try {

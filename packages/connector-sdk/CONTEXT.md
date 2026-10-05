@@ -45,7 +45,7 @@ Where an Order is in fulfilment, from Hanza's point of view. One fixed list shar
 _Avoid_: State, stage, phase
 
 **Channel fact**:
-Something the Channel reports about an Order after it was placed, such as "cancelled by buyer". Always recorded as reported, and it moves the Order status accordingly.
+Something the Channel reports about an Order after it was placed, such as "cancelled by buyer". Always recorded as reported. It moves the Order status accordingly, except that an Order that is already shipped or cancelled stays as it is and is marked Needs attention instead (ADR 0003).
 _Avoid_: External status, remote status
 
 **Needs attention**:

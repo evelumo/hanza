@@ -24,7 +24,7 @@ export interface OfferRow {
 }
 
 /**
- * Stores one pulled page of Offers and applies automatic linking (§2): a
+ * Stores one pulled page of Offers and applies automatic linking: a
  * never-linked Offer is linked by SKU; one linked by SKU follows its SKU
  * (relinked or unlinked); a manually linked or unlinked Offer is left alone.
  *

@@ -40,7 +40,7 @@ Not every package needs a `CONTEXT.md`; a context exists only once it has vocabu
 
 ## Relationship to specs
 
-ADRs record decisions; specs in `.ai/specs/` (see `AGENTS.md`, "Spec-first") describe planned changes. A non-trivial change still starts with a spec.
+ADRs record decisions that outlive the work that produced them. Specs are GitHub issues (see `AGENTS.md`, "Specs, decisions and vocabulary", and `issue-tracker.md`): they describe a change before it is built and are closed once it ships, after which the code and the ADRs are the source of truth. A non-trivial change starts with a spec; only a decision that is hard to reverse, surprising without context and a real trade-off becomes an ADR.
 
 ## Use the glossary's vocabulary
 

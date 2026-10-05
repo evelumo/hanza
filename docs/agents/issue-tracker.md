@@ -10,6 +10,7 @@ Issues and specs for this repo live as GitHub issues. Use the `gh` CLI for all o
 - **Comment on an issue**: `gh issue comment <number> --body "..."`
 - **Apply / remove labels**: `gh issue edit <number> --add-label "..."` / `--remove-label "..."`
 - **Close**: `gh issue close <number> --comment "..."`
+- **Write a spec**: a spec is an issue titled `Spec: <topic>`, with the sections listed in `AGENTS.md` ("Specs, decisions and vocabulary"). Review happens in its comments. A body or comment is limited to 65,536 characters, so a long spec goes in the body plus follow-up comments split at section boundaries, each starting with a "Part N of M" line. When the change ships, comment with the PRs that implemented it and close the issue as completed; issue #18 (the stage 1 spec) is the example.
 
 Infer the repo from `git remote -v`; `gh` does this automatically when run inside a clone.
 

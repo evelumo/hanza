@@ -61,8 +61,8 @@ packages/
   connector-registry/  the connectors this build knows (apps pass them to the core)
   connectors/<id>/     one package per connector (only `fake` so far)
 scripts/               check-boundaries.mjs
-.ai/                   specs and agent skills
-docs/                  architecture plan (Polish)
+.ai/                   agent skills
+docs/                  architecture plan (Polish), ADRs, agent docs
 ```
 
 Stack: Next.js, Prisma + PostgreSQL, pnpm workspaces + Turborepo, BullMQ + Redis, Better Auth, zod, Vitest. No DI container; dependencies are composed in `createContext()`. Temporal is deliberately postponed.
@@ -71,8 +71,8 @@ Stack: Next.js, Prisma + PostgreSQL, pnpm workspaces + Turborepo, BullMQ + Redis
 
 Summarised from [`docs/plan-architektury.html`](docs/plan-architektury.html) (Polish):
 
-0. **Repo foundation**: monorepo, CI, Docker Compose, `AGENTS.md`, spec template, boundary lint. *(mostly done)*
-1. **Core**: canonical model (Product, Variant, Offer, Order, StockLevel, Shipment, Invoice, Connection), `external_ref` mapping, event log + outbox, sync jobs (cursors, retry, rate limits, dead-letter), final Connector SDK and conformance tests.
+0. **Repo foundation**: monorepo, CI, Docker Compose, `AGENTS.md`, ADRs and glossaries, boundary lint. *(mostly done)*
+1. **Core**: canonical model (Product, Variant, Offer, Order, StockLevel, Shipment, Invoice, Connection), per-table external ids (ADR 0005), event log + outbox, sync jobs (cursors, retry, rate limits, dead-letter), final Connector SDK and conformance tests.
 2. **First vertical slice**: Allegro (orders in, stock out) together with WooCommerce, to validate the SDK against two channels.
 3. **AI-native check**: a third connector written by an agent using the `add-connector` skill and a generator, without touching the core.
 4. **Shipping and invoices**: courier labels, shipment statuses, invoicing as new capabilities.
@@ -81,7 +81,7 @@ Summarised from [`docs/plan-architektury.html`](docs/plan-architektury.html) (Po
 
 ## Contributing
 
-Read [`AGENTS.md`](AGENTS.md): repo map, task router, architecture rules, and the Always / Ask first / Never lists. It is written for humans and AI agents alike. Non-trivial changes start with a spec in [`.ai/specs/`](.ai/specs/README.md). To add a connector, follow [`.ai/skills/add-connector/SKILL.md`](.ai/skills/add-connector/SKILL.md).
+Read [`AGENTS.md`](AGENTS.md): repo map, task router, architecture rules, and the Always / Ask first / Never lists. It is written for humans and AI agents alike. Non-trivial changes start with a spec written as a GitHub issue; decisions that are hard to reverse are recorded in [`docs/adr/`](docs/adr/). To add a connector, follow [`.ai/skills/add-connector/SKILL.md`](.ai/skills/add-connector/SKILL.md).
 
 ## License
 

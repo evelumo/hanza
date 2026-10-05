@@ -9,7 +9,7 @@ import { linkLineInTx } from './link-line'
 
 const MAX_LINES = 500
 
-/** Matches Unmatched lines of new/processing Orders again (§2) and links them as the system. */
+/** Matches Unmatched lines of new/processing Orders again and links them as the system. */
 export async function rematchUnmatchedLines(ctx: Context, organizationId: string): Promise<{ linked: number }> {
   // Only lines that match now count against the limit: otherwise 500 lines that
   // never match would hide every newer line from rematch for good. The match

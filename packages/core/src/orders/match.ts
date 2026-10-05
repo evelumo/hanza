@@ -2,7 +2,7 @@ import type { Tx } from '@hanza/db'
 import { normalizeSku } from '../catalog/sku'
 
 /**
- * Line matching (§2): the linked Offer first, then the exact SKU, else an
+ * Line matching: the linked Offer first, then the exact SKU, else an
  * Unmatched line (null). Returns one Product id or null per line, in order.
  */
 export async function matchLines(
