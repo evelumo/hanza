@@ -59,8 +59,41 @@ describe('moneySchema', () => {
 })
 
 describe('currencyMinorUnits', () => {
-  it.each([['PLN', 2], ['EUR', 2], ['JPY', 0], ['KWD', 3], ['XYZ', 2]] as const)('%s has %i', (currency, units) => {
+  it.each([
+    ['PLN', 2],
+    ['EUR', 2],
+    ['HUF', 2],
+    ['IDR', 2],
+    ['JPY', 0],
+    ['KRW', 0],
+    ['VND', 0],
+    ['CLP', 0],
+    ['ISK', 0],
+    ['UGX', 0],
+    ['KWD', 3],
+    ['BHD', 3],
+    ['OMR', 3],
+    ['JOD', 3],
+    ['TND', 3],
+    ['IQD', 3],
+    ['CLF', 4],
+    ['XYZ', 2],
+    ['jpy', 2],
+  ] as const)('%s has %i', (currency, units) => {
     expect(currencyMinorUnits(currency)).toBe(units)
+  })
+
+  it('does not depend on Intl', () => {
+    const original = Intl.NumberFormat
+    Intl.NumberFormat = (() => {
+      throw new Error('Intl must not be used')
+    }) as unknown as typeof Intl.NumberFormat
+    try {
+      expect(currencyMinorUnits('HUF')).toBe(2)
+      expect(currencyMinorUnits('JPY')).toBe(0)
+    } finally {
+      Intl.NumberFormat = original
+    }
   })
 })
 

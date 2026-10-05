@@ -14,6 +14,9 @@ describe('parsePriceInput', () => {
     ['1234', 'JPY', '1234'],
     ['1.234', 'KWD', '1.234'],
     ['1,234', 'KWD', '1.234'],
+    ['1,234', 'JPY', '1234'],
+    ['1.234', 'JPY', '1234'],
+    ['999.000', 'KRW', '999000'],
     [' 49,9 ', 'PLN', '49.9'],
   ])('reads %j in %s as %s', (raw, currency, amount) => {
     expect(parsePriceInput(raw, currency)).toEqual({ amount })
@@ -23,7 +26,7 @@ describe('parsePriceInput', () => {
     ['1,234', 'PLN'],
     ['1.234', 'PLN'],
     ['1.234', 'EUR'],
-    ['1,500', 'JPY'],
+    ['999,000', 'PLN'],
   ])('refuses %j in %s as ambiguous', (raw, currency) => {
     expect(parsePriceInput(raw, currency)).toEqual({ error: 'validation.priceAmbiguous' })
   })
@@ -32,6 +35,11 @@ describe('parsePriceInput', () => {
     ['45.5', 'JPY'],
     ['1.2345', 'PLN'],
     ['1,2345', 'KWD'],
+    ['0,001', 'PLN'],
+    ['0.001', 'EUR'],
+    ['1234,567', 'PLN'],
+    ['0,001', 'JPY'],
+    ['1,23', 'JPY'],
   ])('refuses %j in %s for its decimal places', (raw, currency) => {
     expect(parsePriceInput(raw, currency)).toEqual({ error: 'validation.priceTooManyDecimals' })
   })

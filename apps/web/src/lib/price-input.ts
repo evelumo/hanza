@@ -18,8 +18,9 @@ function ungroup(value: string, group: string): string | null {
 /**
  * Reads a price typed by a person in the currency it is for, as a decimal string (never a float). Spaces may group
  * thousands; with both "," and "." the last one is the decimal separator. One separator followed by exactly three
- * digits ("1,234" or "1.234") is refused as ambiguous unless the currency has three or more decimal places, and no
- * more decimal places than the currency has are accepted (45.5 JPY is refused, not rounded).
+ * digits after 1-3 digits that do not start with 0 ("1,234", "1.234") could be either: it is thousands grouping in a
+ * currency without decimals (1234 JPY), a decimal point in one with three or more (1.234 KWD), and refused as
+ * ambiguous otherwise. No more decimal places than the currency has are accepted (45.5 JPY is refused, not rounded).
  */
 export function parsePriceInput(raw: string, currency: string): { amount: string } | { error: MessageKey } {
   const value = raw.trim().replace(/[\s  ]/g, '')
@@ -46,7 +47,14 @@ export function parsePriceInput(raw: string, currency: string): { amount: string
     } else {
       integer = parts[0]!
       fraction = parts[1]!
-      if (fraction.length === 3 && minorUnits <= 2) return { error: AMBIGUOUS }
+      // "0,001" or "1234,567" cannot be thousands grouping, so they are decimals (and usually too many of them).
+      const couldBeGrouping = fraction.length === 3 && /^[1-9]\d{0,2}$/.test(integer)
+      if (couldBeGrouping && minorUnits === 0) {
+        integer += fraction
+        fraction = ''
+      } else if (couldBeGrouping && minorUnits <= 2) {
+        return { error: AMBIGUOUS }
+      }
     }
   }
 

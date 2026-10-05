@@ -39,7 +39,7 @@ A **Channel** (`marketplace` or `shop`) must implement `offers.pull`, `orders.pu
 
 | Capability | Contract |
 | --- | --- |
-| `offers.pull(ctx, cursor)` | Every Offer on the Channel, paged. The engine always starts from `null`. Returns `{ items: Offer[], nextCursor, hasMore }`. Set `price` (the Offer's current price on the Channel) whenever the API gives it: Hanza only records it, and uses its currency to decide whether it may push a price (ADR 0011). |
+| `offers.pull(ctx, cursor)` | Every Offer on the Channel, paged. The engine always starts from `null`. Returns `{ items: Offer[], nextCursor, hasMore }`. Set `price` (the Offer's current price on the Channel) whenever the API gives it: Hanza only records it, and uses its currency to decide whether it may push a price (ADR 0011). It must be valid `Money`: a decimal string with at most 4 decimal places and an upper-case ISO 4217 currency. A schema violation fails the whole page, as for any field, so report `price: null` rather than a value that does not fit. |
 | `orders.pull(ctx, cursor)` | Incremental feed of Orders **ready to fulfil** (paid, or cash on delivery): new ones, and ones that got new Channel facts. The same cursor must give the same page. |
 | `stock.push(ctx, levels)` | Set absolute availability for up to 100 Offers (`{ offerExternalId, sku, available }`). Must be repeatable. |
 | `price.push(ctx, prices)` | Optional. Set the price of up to 100 Offers (`{ offerExternalId, sku, price: { amount, currency } }`). The currency is always the one your `offers.pull` reported for that Offer; Hanza never converts and never pushes to an Offer without a reported price. Must be repeatable. Implement it only if the Channel lets you set prices. |

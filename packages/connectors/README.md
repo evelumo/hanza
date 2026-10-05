@@ -15,7 +15,11 @@ A Channel must implement `offers.pull`, `orders.pull` and `stock.push`;
 `price.push` and `orders.updateStatus` are optional. Hanza owns prices
 (ADR 0011): `offers.pull` reports each Offer's current `price` so Hanza knows
 the Channel's currency, and `price.push` sets the price Hanza sends, always in
-that currency.
+that currency. Report that price as the canonical `Money`: a decimal string
+with at most 4 decimal places and an upper-case ISO 4217 currency (`PLN`, not
+`pln` or `zł`). Like any other field, a value that breaks the SDK schema fails
+the whole `offers.pull` page, not just that Offer; if the Channel's price does
+not fit, report `price: null`.
 
 ## Connectors
 
