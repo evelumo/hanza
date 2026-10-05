@@ -263,3 +263,113 @@ describe.skipIf(!databaseUrl)('sync engine end to end (real Postgres, in-memory 
     expect(await health(flaky)).toBe('failing')
   })
 })
+
+const address = {
+  name: 'John Test',
+  company: null,
+  street: '1 Example Street',
+  postalCode: '00-001',
+  city: 'Warsaw',
+  countryCode: 'PL',
+  phone: null,
+  taxId: null,
+}
+const buyer = { name: 'John Test', email: 'john.test@example.com', phone: null, login: 'john_test' }
+
+describe.skipIf(!databaseUrl)('a cancelled Order leaves Needs attention (real Postgres, in-memory queue, fake Channel)', () => {
+  let ctx: TestContext
+  let fake: FakeChannel
+  let org: string
+  let connectionId: string
+
+  beforeAll(async () => {
+    fake = createFakeChannel()
+    ctx = createTestContext({ databaseUrl: databaseUrl!, connectors: [fake.connector] })
+    org = await createTestOrganization(ctx.db)
+  })
+
+  afterAll(async () => {
+    await ctx?.db.$disconnect()
+  })
+
+  const order = (externalId: string) =>
+    ctx.db.order.findFirstOrThrow({ where: { organizationId: org, connectionId, externalId }, include: { lines: true } })
+
+  const needsAttention = async () =>
+    (
+      await ctx.db.order.findMany({
+        where: { organizationId: org, attentionReasons: { isEmpty: false } },
+        select: { externalId: true },
+        orderBy: { externalId: 'asc' },
+      })
+    ).map((row) => row.externalId)
+
+  async function pullOrders() {
+    await ctx.queue.enqueue(
+      ordersPullRef,
+      { organizationId: org, connectionId, trigger: 'schedule' },
+      { coalesceKey: coalesceKeys.ordersPull(connectionId) },
+    )
+    const result = await ctx.queue.drain(ctx, jobs)
+    expect(result.failed).toEqual([])
+  }
+
+  it('fake-order-2 with Unmatched lines: imported open, then cancelled by the Channel, it is no longer Needs attention', async () => {
+    // No Product exists, so the lines of every Order are Unmatched (the smoke-test situation of issue #16).
+    // The seed already carries the cancellation of fake-order-2; replace the Order with the same one without it.
+    fake.addOrder({
+      externalId: 'fake-order-2',
+      placedAt: '2026-10-01T10:00:00Z',
+      payment: 'cash_on_delivery',
+      total: { amount: '84.00', currency: 'PLN' },
+      buyer,
+      shippingAddress: address,
+      billingAddress: null,
+      lines: [
+        { externalId: 'l1', offerExternalId: 'fake-offer-2', sku: 'FAKE-SKU-2', name: 'Cotton T-shirt M', quantity: 1, unitPrice: { amount: '59.00', currency: 'PLN' } },
+        { externalId: 'l2', offerExternalId: 'fake-offer-3', sku: 'FAKE-SKU-3', name: 'Poster A3', quantity: 1, unitPrice: { amount: '25.00', currency: 'PLN' } },
+      ],
+      facts: [],
+    })
+    connectionId = (
+      await addConnection(ctx, org, { connectorId: 'fake', name: 'Test channel', config: { failMode: 'none' }, credentials: { apiKey: 'test' } }, user)
+    ).connectionId
+    expect((await ctx.queue.drain(ctx, jobs)).failed).toEqual([])
+
+    const open = await order('fake-order-2')
+    expect(open.status).toBe('new')
+    expect(open.attentionReasons).toEqual(['unmatched_line'])
+    expect(open.lines.every((line) => line.productId === null)).toBe(true)
+    expect(await needsAttention()).toEqual(['fake-order-1', 'fake-order-2', 'fake-order-3', 'fake-order-4'])
+
+    fake.addFact('fake-order-2', { id: 'fake-order-2:cancelled', type: 'cancelled', occurredAt: '2026-10-02T10:00:00Z', note: 'Cancelled by the buyer' })
+    await pullOrders()
+
+    const cancelled = await order('fake-order-2')
+    expect(cancelled.status).toBe('cancelled')
+    expect(cancelled.attentionReasons).toEqual([])
+    // The lines are still Unmatched: only the Order-level mark is gone.
+    expect(cancelled.lines.every((line) => line.productId === null)).toBe(true)
+    expect(await needsAttention()).toEqual(['fake-order-1', 'fake-order-3', 'fake-order-4'])
+    // A Channel fact is never pushed back to the Channel.
+    expect(fake.statusUpdates).toEqual([])
+  })
+
+  it('an Order that arrives already cancelled with an Unmatched line is not Needs attention either', async () => {
+    fake.addOrder({
+      externalId: 'fake-order-5',
+      placedAt: '2026-10-03T10:00:00Z',
+      payment: 'prepaid',
+      total: { amount: '10.00', currency: 'PLN' },
+      buyer,
+      shippingAddress: address,
+      billingAddress: null,
+      lines: [{ externalId: 'l1', offerExternalId: null, sku: 'UNKNOWN-SKU', name: 'Unknown', quantity: 1, unitPrice: { amount: '10.00', currency: 'PLN' } }],
+      facts: [{ id: 'fake-order-5:cancelled', type: 'cancelled', occurredAt: '2026-10-03T11:00:00Z', note: null }],
+    })
+    await pullOrders()
+
+    expect(await order('fake-order-5')).toMatchObject({ status: 'cancelled', attentionReasons: [] })
+    expect(await needsAttention()).toEqual(['fake-order-1', 'fake-order-3', 'fake-order-4'])
+  })
+})

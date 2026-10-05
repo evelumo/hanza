@@ -34,7 +34,7 @@ Open http://localhost:3000, register and create your company. Then try the whole
 
 1. **Connections** > "Add connection" > "Test channel": any API key works (the key `expired` simulates a Connection that must sign in again). The worker pulls 5 Offers and 4 Orders within seconds; refresh the Connection page to see the results.
 2. **Products** > "Offers without a product": select the Offers and "Create products from selected", then set Stock on a Product.
-3. **Orders**: four Orders need attention (a Shortage until Stock is set; Unmatched lines to link, one of them on an Order the buyer cancelled). Link a line, then change an Order to "Shipped": Stock goes down and the new Available is pushed to the Channel.
+3. **Orders**: three Orders need attention (a Shortage until Stock is set; Unmatched lines to link). The fourth Order was cancelled by the buyer, so it needs nothing even though its lines are Unmatched. Link a line, then change an Order to "Shipped": Stock goes down and the new Available is pushed to the Channel.
 
 The dashboard still has a test job that goes through the queue and worker. Stop the infrastructure with `pnpm infra:down`.
 
