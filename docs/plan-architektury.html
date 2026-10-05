@@ -159,7 +159,7 @@
   </div>
   <div class="card b-green">
     <h3>Kontekst w repo, nie w głowie</h3>
-    <p><code>AGENTS.md</code> z <b>task routerem</b> („dodajesz kuriera → czytaj X”), specyfikacje w <code>.ai/specs/</code>, gotowe skille w <code>.ai/skills/</code>.</p>
+    <p><code>AGENTS.md</code> z <b>task routerem</b> („dodajesz kuriera → czytaj X”), specyfikacje jako issue na GitHubie, decyzje w <code>docs/adr/</code>, gotowe skille w <code>.ai/skills/</code>.</p>
   </div>
   <div class="card b-green">
     <h3>Typy jako barierki</h3>
@@ -221,7 +221,7 @@
       <li><b>Ze stacku</b>: Next.js, zod, Redis</li>
       <li><b>Układ modułu</b>: <code>src/modules/&lt;modul&gt;/</code> z auto-discovery (<code>schema.prisma</code>, <code>api/</code>, <code>pages/</code>, <code>acl.ts</code>, <code>events.ts</code>, <code>ai-tools.ts</code>, <code>setup.ts</code>)</li>
       <li><b><code>AGENTS.md</code> z task routerem</b> — główny i per paczka</li>
-      <li><b>Spec-first</b>: <code>.ai/specs/RRRR-MM-DD-tytul.md</code> przed większą zmianą</li>
+      <li><b>Spec-first</b>: specyfikacja jako issue na GitHubie przed większą zmianą, decyzje w ADR-ach</li>
       <li><b><code>.ai/skills/</code></b> i listy <b>Always / Ask first / Never</b></li>
       <li><b>Zatwierdzanie mutacji</b> wykonywanych przez AI</li>
       <li>Integracje <b>zawsze w osobnej paczce</b>, nigdy w rdzeniu</li>
