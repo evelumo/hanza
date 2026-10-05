@@ -26,8 +26,8 @@ describe.skipIf(!databaseUrl)('Stock and Reservations under concurrency', () => 
     const ctx = context()
     const org = await createTestOrganization(ctx.db)
     const connectionId = await createTestConnection(ctx, org)
-    const { productId } = await createProduct(ctx, org, { sku: 'HOT', name: 'Ostatnia sztuka', stock }, user)
-    await upsertOffers(ctx, org, connectionId, [{ externalId: 'hot-offer', sku: 'HOT', name: 'Oferta', url: null }], new Date())
+    const { productId } = await createProduct(ctx, org, { sku: 'HOT', name: 'Last item', stock }, user)
+    await upsertOffers(ctx, org, connectionId, [{ externalId: 'hot-offer', sku: 'HOT', name: 'Offer', url: null }], new Date())
     const order = () => buildOrder({ lines: [orderLine('l1', { sku: 'HOT', quantity: 1 })] })
     return { ctx, org, connectionId, productId, order }
   }

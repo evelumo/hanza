@@ -8,7 +8,7 @@ import type { TestContext } from './context'
 
 export const user: Actor = { type: 'user', userId: 'user-1' }
 
-export async function createTestConnection(ctx: TestContext, organizationId: string, name = 'Kanał testowy'): Promise<string> {
+export async function createTestConnection(ctx: TestContext, organizationId: string, name = 'Test channel'): Promise<string> {
   const { connectionId } = await createConnection(
     ctx,
     organizationId,
@@ -23,7 +23,7 @@ export function orderLine(externalId: string, overrides: Partial<OrderLine> = {}
     externalId,
     offerExternalId: null,
     sku: null,
-    name: `Pozycja ${externalId}`,
+    name: `Line ${externalId}`,
     quantity: 1,
     unitPrice: { amount: '10.00', currency: 'PLN' },
     ...overrides,
@@ -40,13 +40,13 @@ export function buildOrder(overrides: Partial<Order> = {}): Order {
     placedAt: '2026-10-01T09:00:00Z',
     payment: 'prepaid',
     total: { amount: '10.00', currency: 'PLN' },
-    buyer: { name: 'Jan Testowy', email: 'jan.testowy@example.com', phone: null, login: 'jan_testowy' },
+    buyer: { name: 'John Test', email: 'john.test@example.com', phone: null, login: 'john_test' },
     shippingAddress: {
-      name: 'Jan Testowy',
+      name: 'John Test',
       company: null,
-      street: 'ul. Przykładowa 1',
+      street: '1 Example Street',
       postalCode: '00-001',
-      city: 'Warszawa',
+      city: 'Warsaw',
       countryCode: 'PL',
       phone: null,
       taxId: null,

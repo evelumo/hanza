@@ -1,6 +1,8 @@
 import { z } from 'zod'
 import { getContext } from './context'
 import { errorMessage } from './domain-errors'
+import { isMessageKey } from '@/i18n/keys'
+import type { Translator } from '@/i18n/types'
 
 /** What every server action returns to `useActionState`. */
 export interface ActionState {
@@ -12,25 +14,27 @@ export interface ActionState {
   values?: Record<string, string>
 }
 
-/** Polish message for the user; unexpected errors are logged (without the user's input) and never shown. */
-export function failure(error: unknown, extra?: Pick<ActionState, 'fieldErrors' | 'values'>): ActionState {
-  const { message, expected } = errorMessage(error)
+/** Message for the user in the request's language; unexpected errors are logged (without the user's input) and never shown. */
+export function failure(error: unknown, t: Translator, extra?: Pick<ActionState, 'fieldErrors' | 'values'>): ActionState {
+  const { message, expected } = errorMessage(error, t)
   if (!expected) {
     getContext().log.error('panel action failed', { error: error instanceof Error ? `${error.name}: ${error.message}` : 'unknown' })
   }
   return { error: message, ...extra }
 }
 
-export const INVALID_INPUT_MESSAGE = 'Sprawdź poprawność pól.'
+/** Schemas carry catalogue keys as messages; anything else (zod's own default text) becomes the generic message. */
+export function translateIssue(message: string, t: Translator): string {
+  return isMessageKey(message) ? t(message) : t('errors.invalidInput')
+}
 
-/** Per-field messages come from the schema, so each schema carries its own Polish copy. */
-export function invalidInput(error: z.ZodError, values?: Record<string, string>): ActionState {
+export function invalidInput(error: z.ZodError, t: Translator, values?: Record<string, string>): ActionState {
   const fieldErrors: Record<string, string> = {}
   for (const issue of error.issues) {
     const key = String(issue.path[0] ?? '')
-    if (key && !(key in fieldErrors)) fieldErrors[key] = issue.message
+    if (key && !(key in fieldErrors)) fieldErrors[key] = translateIssue(issue.message, t)
   }
-  return { error: INVALID_INPUT_MESSAGE, fieldErrors, ...(values ? { values } : {}) }
+  return { error: t('errors.invalidInput'), fieldErrors, ...(values ? { values } : {}) }
 }
 
 export function formText(formData: FormData): Record<string, string> {

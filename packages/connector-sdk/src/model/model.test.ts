@@ -5,11 +5,11 @@ import { orderSchema } from './order'
 import { stockLevelSchema } from './stock'
 
 const address = {
-  name: 'Jan Testowy',
+  name: 'John Test',
   company: null,
-  street: 'ul. Przykładowa 1',
+  street: '1 Example Street',
   postalCode: '00-001',
-  city: 'Warszawa',
+  city: 'Warsaw',
   countryCode: 'PL',
   phone: null,
   taxId: null,
@@ -20,7 +20,7 @@ const order = {
   placedAt: '2026-10-01T09:00:00Z',
   payment: 'prepaid',
   total: { amount: '79.98', currency: 'PLN' },
-  buyer: { name: 'Jan Testowy', email: null, phone: null, login: null },
+  buyer: { name: 'John Test', email: null, phone: null, login: null },
   shippingAddress: address,
   billingAddress: null,
   lines: [
@@ -28,7 +28,7 @@ const order = {
       externalId: 'l1',
       offerExternalId: 'offer-1',
       sku: 'SKU-1',
-      name: 'Kubek',
+      name: 'Mug',
       quantity: 2,
       unitPrice: { amount: '39.99', currency: 'PLN' },
     },
@@ -86,7 +86,7 @@ describe('orderSchema', () => {
 
 describe('offerSchema and stockLevelSchema', () => {
   it('accepts an Offer without SKU or url', () => {
-    expect(offerSchema.safeParse({ externalId: 'a', sku: null, name: 'Naklejki', url: null }).success).toBe(true)
+    expect(offerSchema.safeParse({ externalId: 'a', sku: null, name: 'Stickers', url: null }).success).toBe(true)
   })
 
   it('rejects an Offer with a malformed url', () => {

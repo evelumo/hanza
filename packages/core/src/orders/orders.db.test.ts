@@ -19,7 +19,7 @@ describe.skipIf(!databaseUrl)('orders', () => {
     const ctx = context()
     const org = await createTestOrganization(ctx.db)
     const connectionId = await createTestConnection(ctx, org)
-    const { productId } = await createProduct(ctx, org, { sku: 'P', name: 'Produkt', stock }, user)
+    const { productId } = await createProduct(ctx, org, { sku: 'P', name: 'Product', stock }, user)
     const available = async (id = productId) => (await getAvailability(ctx.db, org, [id])).get(id)!
     const reservation = async (orderId: string) =>
       (await ctx.db.reservation.findFirst({ where: { orderLine: { orderId } } }))?.status ?? null
@@ -143,7 +143,7 @@ describe.skipIf(!databaseUrl)('orders', () => {
       const open = await unmatchedOrder(env, 1)
       const shipped = await unmatchedOrder(env, 1, [fact('s', 'shipped')])
 
-      const { productId } = await createProduct(env.ctx, env.org, { sku: 'NOPE', name: 'Teraz jest', stock: 5 }, user)
+      const { productId } = await createProduct(env.ctx, env.org, { sku: 'NOPE', name: 'Now exists', stock: 5 }, user)
 
       expect((await env.ctx.db.orderLine.findFirstOrThrow({ where: { id: open.lineId } })).productId).toBe(productId)
       expect(await env.reservation(open.orderId)).toBe('open')
@@ -162,7 +162,7 @@ describe.skipIf(!databaseUrl)('orders', () => {
       await importOrder(ctx, org, connectionId, buildOrder({ lines: never }))
       const { orderId } = await importOrder(ctx, org, connectionId, buildOrder({ lines: [orderLine('l1', { sku: 'LATER' })] }))
 
-      const { productId } = await createProduct(ctx, org, { sku: 'LATER', name: 'Później', stock: 1 }, user)
+      const { productId } = await createProduct(ctx, org, { sku: 'LATER', name: 'Later', stock: 1 }, user)
 
       expect((await ctx.db.orderLine.findFirstOrThrow({ where: { orderId } })).productId).toBe(productId)
       expect(await ctx.db.orderLine.count({ where: { organizationId: org, productId: null } })).toBe(500)
@@ -178,8 +178,8 @@ describe.skipIf(!databaseUrl)('orders', () => {
         buildOrder({ lines: [orderLine('l1', { offerExternalId: 'offer-z', sku: 'ZED' })] }),
       )
       // Written directly, so that both rules can match when rematch runs.
-      await ctx.db.product.create({ data: { organizationId: org, sku: 'ZED', name: 'Po SKU' } })
-      const byOffer = await ctx.db.product.create({ data: { organizationId: org, sku: 'OTHER', name: 'Po ofercie' } })
+      await ctx.db.product.create({ data: { organizationId: org, sku: 'ZED', name: 'By SKU' } })
+      const byOffer = await ctx.db.product.create({ data: { organizationId: org, sku: 'OTHER', name: 'By offer' } })
       await ctx.db.offer.updateMany({ where: { organizationId: org, externalId: 'offer-z' }, data: { productId: byOffer.id, linkedBy: 'manual' } })
 
       expect(await rematchUnmatchedLines(ctx, org)).toEqual({ linked: 1 })
@@ -211,7 +211,7 @@ describe.skipIf(!databaseUrl)('orders', () => {
     const all = await listOrders(ctx, org, { skip: 0, take: 10 })
     expect(all.total).toBe(2)
     expect(all.items.map((row) => row.id)).toEqual([ok.orderId, attention.orderId])
-    expect(all.items[0]).toMatchObject({ connectionName: 'Kanał testowy', buyerName: 'Jan Testowy', total: { amount: '84', currency: 'PLN' } })
+    expect(all.items[0]).toMatchObject({ connectionName: 'Test channel', buyerName: 'John Test', total: { amount: '84', currency: 'PLN' } })
     expect((await listOrders(ctx, org, { needsAttention: true, skip: 0, take: 10 })).items.map((row) => row.id)).toEqual([attention.orderId])
     expect((await listOrders(ctx, org, { needsAttention: false, skip: 0, take: 10 })).items.map((row) => row.id)).toEqual([ok.orderId])
     expect((await listOrders(ctx, org, { status: 'cancelled', skip: 0, take: 10 })).total).toBe(0)
@@ -220,10 +220,10 @@ describe.skipIf(!databaseUrl)('orders', () => {
     expect(detail).toMatchObject({
       status: 'new',
       payment: 'prepaid',
-      buyer: { name: 'Jan Testowy', email: 'jan.testowy@example.com', phone: null, login: 'jan_testowy' },
-      shippingAddress: { city: 'Warszawa', countryCode: 'PL' },
+      buyer: { name: 'John Test', email: 'john.test@example.com', phone: null, login: 'john_test' },
+      shippingAddress: { city: 'Warsaw', countryCode: 'PL' },
       billingAddress: null,
-      lines: [{ externalId: 'l1', productId, productSku: 'P', productName: 'Produkt', reservationStatus: 'open', unitPrice: { amount: '10', currency: 'PLN' } }],
+      lines: [{ externalId: 'l1', productId, productSku: 'P', productName: 'Product', reservationStatus: 'open', unitPrice: { amount: '10', currency: 'PLN' } }],
       facts: [],
       allowedTransitions: ['processing', 'shipped', 'cancelled'],
     })

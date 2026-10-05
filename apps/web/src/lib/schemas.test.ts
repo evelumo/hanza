@@ -1,7 +1,12 @@
 import { describe, expect, it } from 'vitest'
+import { z } from 'zod'
 import { changeOrderStatusSchema, linkOrderLineSchema } from '@/app/(panel)/orders/schemas'
 import { addConnectionSchema } from '@/app/(panel)/connections/schemas'
 import { createProductSchema, createProductsFromOffersSchema, linkOfferSchema, setStockSchema } from '@/app/(panel)/products/schemas'
+import { catalogues } from '@/i18n/catalogues'
+import { translatorFor } from '@/i18n/testing'
+import { isMessageKey } from '@/i18n/keys'
+import { invalidInput } from './action-state'
 import { idSchema, skuSchema, unitsSchema } from './schemas'
 
 describe('idSchema', () => {
@@ -29,13 +34,34 @@ describe('validation messages', () => {
     createProductsFromOffersSchema,
   }
 
-  // Field messages end up in the action state, and so possibly on screen; zod's own defaults are English.
-  // (Whole-input issues have no field and are dropped by `invalidInput`.)
-  it.each(Object.entries(schemas))('%s never reports a zod default message', (_name, schema) => {
+  // Field messages end up in the action state, and so possibly on screen, so each must be a catalogue key
+  // that `invalidInput` can translate; zod's own defaults are English text.
+  it.each(Object.entries(schemas))('%s only reports catalogue keys', (_name, schema) => {
     for (const input of garbage) {
       const result = schema.safeParse(input)
       if (result.success) continue
-      for (const issue of result.error.issues) expect(issue.message).not.toMatch(/Invalid|Too (big|small)|expected|Required/i)
+      for (const issue of result.error.issues) expect(isMessageKey(issue.message), `${issue.path.join('.')}: ${issue.message}`).toBe(true)
     }
+  })
+
+  it('translates the field messages for the locale of the request', () => {
+    const result = createProductSchema.safeParse({ sku: ' ', name: '', stock: 'x' })
+    if (result.success) throw new Error('expected a failure')
+    expect(invalidInput(result.error, translatorFor('en')).fieldErrors).toEqual({
+      sku: 'Enter a SKU.',
+      name: 'Enter a name.',
+      stock: 'Enter a whole number from 0 to 1,000,000.',
+    })
+    expect(invalidInput(result.error, translatorFor('pl'))).toMatchObject({
+      error: catalogues.pl.errors.invalidInput,
+      fieldErrors: { sku: catalogues.pl.validation.skuRequired, name: catalogues.pl.validation.nameRequired },
+    })
+    expect(catalogues.pl.validation.skuRequired).not.toBe(catalogues.en.validation.skuRequired)
+  })
+
+  it('shows a generic message for an issue that is not a catalogue key', () => {
+    const result = z.object({ x: z.string() }).safeParse({ x: 1 })
+    if (result.success) throw new Error('expected a failure')
+    expect(invalidInput(result.error, translatorFor('en')).fieldErrors).toEqual({ x: 'Check the fields.' })
   })
 })

@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import type { Translator } from '@/i18n/types'
 
 export type ConnectorFieldScope = 'config' | 'credentials'
 
@@ -106,17 +107,15 @@ export function publicValues(submitted: Record<string, string>, configFields: Co
   return Object.fromEntries(Object.entries(submitted).filter(([key]) => allowed.has(key)))
 }
 
-export const REQUIRED_FIELD_MESSAGE = 'To pole jest wymagane.'
-export const INVALID_FIELD_MESSAGE = 'Nieprawidłowa wartość.'
-
 /**
- * Maps the `invalid_config` issues of `addConnection` to Polish messages per form field. Connector
- * messages are English and not meant for users, so only "missing" and "invalid" are told apart.
+ * Maps the `invalid_config` issues of `addConnection` to a message per form field. Connector messages
+ * are English and not meant for users, so only "missing" and "invalid" are told apart, in the request's language.
  */
 export function fieldErrorsFromIssues(
   fields: ConnectorField[],
   issues: Array<{ path: string; message: string }>,
   submitted: FormData,
+  t: Translator,
 ): { fieldErrors: Record<string, string>; unmatched: boolean } {
   const byName = new Map(fields.map((field) => [field.name, field]))
   const fieldErrors: Record<string, string> = {}
@@ -129,7 +128,7 @@ export function fieldErrorsFromIssues(
     }
     const raw = submitted.get(field.name)
     const empty = field.control !== 'checkbox' && (typeof raw !== 'string' || raw.trim() === '')
-    fieldErrors[field.name] ??= empty ? REQUIRED_FIELD_MESSAGE : INVALID_FIELD_MESSAGE
+    fieldErrors[field.name] ??= empty ? t('validation.fieldRequired') : t('validation.fieldInvalid')
   }
   return { fieldErrors, unmatched }
 }

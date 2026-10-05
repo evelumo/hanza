@@ -2,6 +2,7 @@
 
 import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode, SelectHTMLAttributes } from 'react'
 import { useFormStatus } from 'react-dom'
+import { useT } from '@/i18n/use-t'
 import { buttonClass, type ButtonVariant } from './button-class'
 
 const control =
@@ -55,9 +56,10 @@ export function ActionButton({
   ...button
 }: { variant?: ButtonVariant; pendingLabel?: string } & ButtonHTMLAttributes<HTMLButtonElement>) {
   const { pending } = useFormStatus()
+  const t = useT()
   return (
     <button type="submit" {...button} disabled={pending || button.disabled} className={buttonClass(variant)}>
-      {pending ? (pendingLabel ?? 'Zapisywanie…') : children}
+      {pending ? (pendingLabel ?? t('common.saving')) : children}
     </button>
   )
 }

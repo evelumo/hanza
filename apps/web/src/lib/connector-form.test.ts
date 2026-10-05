@@ -1,13 +1,15 @@
 import { z } from 'zod'
 import { describe, expect, it } from 'vitest'
+import { catalogues } from '@/i18n/catalogues'
+import { translatorFor } from '@/i18n/testing'
 import { describeFields, fieldErrorsFromIssues, issuesOf, publicValues, readFields } from './connector-form'
 
 const config = z.object({
   region: z.enum(['pl', 'de']).default('pl').describe('Region'),
-  shopUrl: z.string().describe('Adres sklepu'),
+  shopUrl: z.string().describe('Shop URL'),
   limit: z.number().int().optional(),
   ratio: z.number(),
-  sandbox: z.boolean().default(false).describe('Tryb testowy'),
+  sandbox: z.boolean().default(false).describe('Sandbox mode'),
   note: z.string().nullable().optional(),
 })
 
@@ -17,7 +19,7 @@ describe('describeFields', () => {
 
   it('maps types to controls and prefixes the names with the scope', () => {
     expect(byName['config.region']).toMatchObject({ control: 'select', options: ['pl', 'de'], defaultValue: 'pl', label: 'Region', required: false })
-    expect(byName['config.shopUrl']).toMatchObject({ control: 'text', required: true, label: 'Adres sklepu' })
+    expect(byName['config.shopUrl']).toMatchObject({ control: 'text', required: true, label: 'Shop URL' })
     expect(byName['config.limit']).toMatchObject({ control: 'number', integer: true, required: false, label: 'limit' })
     expect(byName['config.ratio']).toMatchObject({ control: 'number', integer: false, required: true })
     expect(byName['config.sandbox']).toMatchObject({ control: 'checkbox', defaultValue: false })
@@ -25,8 +27,8 @@ describe('describeFields', () => {
   })
 
   it('renders every string of the credentials as a password input', () => {
-    const credentials = describeFields('credentials', z.object({ apiKey: z.string().min(1).describe('Klucz API'), region: z.enum(['a', 'b']) }))
-    expect(credentials.find((field) => field.name === 'credentials.apiKey')).toMatchObject({ control: 'password', label: 'Klucz API', required: true })
+    const credentials = describeFields('credentials', z.object({ apiKey: z.string().min(1).describe('API key'), region: z.enum(['a', 'b']) }))
+    expect(credentials.find((field) => field.name === 'credentials.apiKey')).toMatchObject({ control: 'password', label: 'API key', required: true })
     expect(credentials.find((field) => field.name === 'credentials.region')?.control).toBe('select')
   })
 
@@ -67,7 +69,7 @@ describe('readFields', () => {
 describe('fieldErrorsFromIssues', () => {
   const fields = describeFields('config', config)
 
-  it('tells a missing field from an invalid one, in Polish', () => {
+  it('tells a missing field from an invalid one, in the language of the request', () => {
     const form = new FormData()
     form.set('config.ratio', 'abc')
     const { fieldErrors, unmatched } = fieldErrorsFromIssues(
@@ -77,13 +79,17 @@ describe('fieldErrorsFromIssues', () => {
         { path: 'config.ratio', message: 'Invalid input: expected number, received string' },
       ],
       form,
+      translatorFor('en'),
     )
-    expect(fieldErrors).toEqual({ 'config.shopUrl': 'To pole jest wymagane.', 'config.ratio': 'Nieprawidłowa wartość.' })
+    expect(fieldErrors).toEqual({ 'config.shopUrl': 'This field is required.', 'config.ratio': 'Invalid value.' })
     expect(unmatched).toBe(false)
+    expect(fieldErrorsFromIssues(fields, [{ path: 'config.shopUrl', message: 'x' }], new FormData(), translatorFor('pl')).fieldErrors).toEqual({
+      'config.shopUrl': catalogues.pl.validation.fieldRequired,
+    })
   })
 
   it('flags issues that match no field', () => {
-    expect(fieldErrorsFromIssues(fields, [{ path: 'config.unknown', message: 'x' }], new FormData()).unmatched).toBe(true)
+    expect(fieldErrorsFromIssues(fields, [{ path: 'config.unknown', message: 'x' }], new FormData(), translatorFor('en')).unmatched).toBe(true)
   })
 })
 
@@ -100,7 +106,7 @@ describe('publicValues', () => {
   const credentialsFields = describeFields('credentials', z.object({ apiKey: z.string(), token: z.string().optional() }))
   const submitted = {
     connectorId: 'fake',
-    name: 'Sklep',
+    name: 'Shop',
     'config.shopUrl': 'https://shop.example',
     'config.sandbox': 'on',
     'credentials.apiKey': 'sk-secret',
@@ -113,7 +119,7 @@ describe('publicValues', () => {
   it('echoes the base fields and the declared config fields only', () => {
     expect(publicValues(submitted, configFields)).toEqual({
       connectorId: 'fake',
-      name: 'Sklep',
+      name: 'Shop',
       'config.shopUrl': 'https://shop.example',
       'config.sandbox': 'on',
     })
@@ -129,6 +135,6 @@ describe('publicValues', () => {
   })
 
   it('echoes only the base fields before the connector is known', () => {
-    expect(publicValues(submitted)).toEqual({ connectorId: 'fake', name: 'Sklep' })
+    expect(publicValues(submitted)).toEqual({ connectorId: 'fake', name: 'Shop' })
   })
 })

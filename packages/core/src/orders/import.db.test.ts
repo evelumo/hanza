@@ -15,7 +15,7 @@ describe.skipIf(!databaseUrl)('importOrder', () => {
     const ctx = context()
     const org = await createTestOrganization(ctx.db)
     const connectionId = await createTestConnection(ctx, org)
-    const { productId } = await createProduct(ctx, org, { sku: 'P', name: 'Produkt', stock }, user)
+    const { productId } = await createProduct(ctx, org, { sku: 'P', name: 'Product', stock }, user)
     const available = async () => (await getAvailability(ctx.db, org, [productId])).get(productId)!
     const counts = async () => ({
       orders: await ctx.db.order.count({ where: { organizationId: org } }),
@@ -29,7 +29,7 @@ describe.skipIf(!databaseUrl)('importOrder', () => {
 
   it('creates the Order, its lines, Reservations and Events', async () => {
     const { ctx, org, connectionId, productId, available } = await setup()
-    await upsertOffers(ctx, org, connectionId, [{ externalId: 'offer-p', sku: 'P', name: 'Oferta', url: null }], new Date())
+    await upsertOffers(ctx, org, connectionId, [{ externalId: 'offer-p', sku: 'P', name: 'Offer', url: null }], new Date())
     ctx.queue.waiting.length = 0
     const order = buildOrder({
       total: { amount: '79.98', currency: 'PLN' },
@@ -40,7 +40,7 @@ describe.skipIf(!databaseUrl)('importOrder', () => {
 
     expect(result).toMatchObject({ created: true, factsApplied: 0 })
     const stored = await ctx.db.order.findFirstOrThrow({ where: { id: result.orderId }, include: { lines: { include: { reservation: true } } } })
-    expect(stored).toMatchObject({ status: 'new', attentionReasons: [], currency: 'PLN', buyerName: 'Jan Testowy', billingAddress: null })
+    expect(stored).toMatchObject({ status: 'new', attentionReasons: [], currency: 'PLN', buyerName: 'John Test', billingAddress: null })
     expect(stored.totalAmount.toFixed()).toBe('79.98')
     expect(stored.lines).toHaveLength(1)
     expect(stored.lines[0]).toMatchObject({ productId, shortage: false, reservation: { units: 2, status: 'open', productId } })
@@ -55,7 +55,7 @@ describe.skipIf(!databaseUrl)('importOrder', () => {
       unmatchedLines: 0,
       shortageLines: 0,
     })
-    expect(JSON.stringify(events.map((event) => event.payload))).not.toContain('Jan Testowy')
+    expect(JSON.stringify(events.map((event) => event.payload))).not.toContain('John Test')
     // The linked Offer is marked and a push is requested.
     expect(await ctx.db.offer.findFirstOrThrow({ where: { organizationId: org } })).toMatchObject({ stockPushSeq: 2 })
     expect(ctx.queue.waiting.map((job) => job.name)).toEqual(['stock.push'])
@@ -110,7 +110,7 @@ describe.skipIf(!databaseUrl)('importOrder', () => {
 
   it('matches by the linked Offer before the SKU', async () => {
     const { ctx, org, connectionId } = await setup()
-    const other = (await createProduct(ctx, org, { sku: 'OTHER', name: 'Inny', stock: 0 }, user)).productId
+    const other = (await createProduct(ctx, org, { sku: 'OTHER', name: 'Other', stock: 0 }, user)).productId
     await upsertOffers(ctx, org, connectionId, [{ externalId: 'offer-o', sku: 'OTHER', name: 'O', url: null }], new Date())
     const { orderId } = await importOrder(ctx, org, connectionId, buildOrder({ lines: [orderLine('l1', { offerExternalId: 'offer-o', sku: 'P' })] }))
     expect((await ctx.db.orderLine.findFirstOrThrow({ where: { orderId } })).productId).toBe(other)

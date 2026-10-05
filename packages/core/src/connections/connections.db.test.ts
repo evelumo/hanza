@@ -16,7 +16,7 @@ describe.skipIf(!databaseUrl)('connections', () => {
     const { connectionId } = await createConnection(
       ctx,
       org,
-      { connectorId: 'fake', name: 'Mój kanał', config: { failMode: 'none' }, credentials: { apiKey: 'super-secret-key' } },
+      { connectorId: 'fake', name: 'My channel', config: { failMode: 'none' }, credentials: { apiKey: 'super-secret-key' } },
       user,
     )
 
@@ -27,7 +27,7 @@ describe.skipIf(!databaseUrl)('connections', () => {
       id: connectionId,
       organizationId: org,
       connectorId: 'fake',
-      name: 'Mój kanał',
+      name: 'My channel',
       config: { failMode: 'none' },
       credentials: { apiKey: 'super-secret-key' },
       health: 'unknown',
@@ -38,7 +38,7 @@ describe.skipIf(!databaseUrl)('connections', () => {
     expect(JSON.stringify(listed)).not.toContain('v1:')
     expect(listed[0]).not.toHaveProperty('credentials')
     const detail = await getConnection(ctx, org, connectionId)
-    expect(detail).toMatchObject({ name: 'Mój kanał', config: { failMode: 'none' }, health: 'unknown', syncStates: [] })
+    expect(detail).toMatchObject({ name: 'My channel', config: { failMode: 'none' }, health: 'unknown', syncStates: [] })
     expect(detail).not.toHaveProperty('credentials')
 
     const created = await ctx.db.eventLog.findFirstOrThrow({ where: { organizationId: org, type: 'connection.created' } })

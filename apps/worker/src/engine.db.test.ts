@@ -81,7 +81,7 @@ describe.skipIf(!databaseUrl)('sync engine end to end (real Postgres, in-memory 
       products[sku] = (await createProduct(ctx, org, { sku, name: sku, stock }, user)).productId
     }
     connectionId = (
-      await addConnection(ctx, org, { connectorId: 'fake', name: 'Kanał testowy', config: { failMode: 'none' }, credentials: { apiKey: 'test' } }, user)
+      await addConnection(ctx, org, { connectorId: 'fake', name: 'Test channel', config: { failMode: 'none' }, credentials: { apiKey: 'test' } }, user)
     ).connectionId
     const { ran } = await drain()
     expect(ran).toBeGreaterThanOrEqual(3)
@@ -133,7 +133,7 @@ describe.skipIf(!databaseUrl)('sync engine end to end (real Postgres, in-memory 
   })
 
   it('4. linking an Offer by hand links the waiting Order line and pushes the new Product', async () => {
-    products.STICKERS = (await createProduct(ctx, org, { sku: 'STICKERS', name: 'Naklejki', stock: 10 }, user)).productId
+    products.STICKERS = (await createProduct(ctx, org, { sku: 'STICKERS', name: 'Stickers', stock: 10 }, user)).productId
     const offer4 = await ctx.db.offer.findFirstOrThrow({ where: { organizationId: org, connectionId, externalId: 'fake-offer-4' } })
     await linkOffer(ctx, org, offer4.id, products.STICKERS, user)
     await drain()
@@ -192,7 +192,7 @@ describe.skipIf(!databaseUrl)('sync engine end to end (real Postgres, in-memory 
     const { connectionId: expired } = await addConnection(
       ctx,
       org,
-      { connectorId: 'fake', name: 'Wygasły klucz', config: { failMode: 'none' }, credentials: { apiKey: 'expired' } },
+      { connectorId: 'fake', name: 'Expired key', config: { failMode: 'none' }, credentials: { apiKey: 'expired' } },
       user,
     )
     const result = await ctx.queue.drain(ctx, jobs)
@@ -223,7 +223,7 @@ describe.skipIf(!databaseUrl)('sync engine end to end (real Postgres, in-memory 
     const { connectionId: limited } = await addConnection(
       ctx,
       org,
-      { connectorId: 'fake', name: 'Limit zapytań', config: { failMode: 'rate_limited' }, credentials: { apiKey: 'test' } },
+      { connectorId: 'fake', name: 'Rate limit', config: { failMode: 'rate_limited' }, credentials: { apiKey: 'test' } },
       user,
     )
     const result = await ctx.queue.drain(ctx, jobs, { maxJobs: 6 })
@@ -238,7 +238,7 @@ describe.skipIf(!databaseUrl)('sync engine end to end (real Postgres, in-memory 
     const { connectionId: throttled } = await addConnection(
       ctx,
       org,
-      { connectorId: 'fake', name: 'Stały limit', config: { failMode: 'rate_limited' }, credentials: { apiKey: 'test' } },
+      { connectorId: 'fake', name: 'Permanent limit', config: { failMode: 'rate_limited' }, credentials: { apiKey: 'test' } },
       user,
     )
     const result = await ctx.queue.drain(ctx, jobs)
@@ -254,7 +254,7 @@ describe.skipIf(!databaseUrl)('sync engine end to end (real Postgres, in-memory 
     const { connectionId: flaky } = await addConnection(
       ctx,
       org,
-      { connectorId: 'fake', name: 'Niestabilny', config: { failMode: 'transient' }, credentials: { apiKey: 'test' } },
+      { connectorId: 'fake', name: 'Flaky', config: { failMode: 'transient' }, credentials: { apiKey: 'test' } },
       user,
     )
     const result = await ctx.queue.drain(ctx, jobs)

@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { LanguageSwitcher } from '@/components/language-switcher'
 import { NavLinks } from '@/components/nav-links'
 import { SignOutButton } from '@/components/sign-out-button'
 import { getContext } from '@/lib/context'
@@ -20,6 +21,7 @@ export default async function PanelLayout({ children }: { children: ReactNode })
             <NavLinks />
           </div>
           <div className="flex items-center gap-4 text-sm">
+            <LanguageSwitcher />
             <span className="text-muted">{user.email}</span>
             <SignOutButton />
           </div>

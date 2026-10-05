@@ -3,7 +3,7 @@ import { addConnectionSchema, requestSyncSchema } from './schemas'
 
 describe('addConnectionSchema', () => {
   it('trims the name and limits it to 100 characters', () => {
-    expect(addConnectionSchema.parse({ connectorId: 'fake', name: '  Kanał testowy ' }).name).toBe('Kanał testowy')
+    expect(addConnectionSchema.parse({ connectorId: 'fake', name: '  Test channel ' }).name).toBe('Test channel')
     expect(addConnectionSchema.safeParse({ connectorId: 'fake', name: '   ' }).success).toBe(false)
     expect(addConnectionSchema.safeParse({ connectorId: 'fake', name: 'x'.repeat(101) }).success).toBe(false)
     expect(addConnectionSchema.safeParse({ connectorId: 'fake', name: 'x'.repeat(100) }).success).toBe(true)

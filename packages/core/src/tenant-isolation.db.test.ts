@@ -47,7 +47,7 @@ describe.skipIf(!databaseUrl)('tenant isolation: another organization\'s ids', (
     const connA = await createTestConnection(ctx, a)
     const connB = await createTestConnection(ctx, b)
     const productA = (await createProduct(ctx, a, { sku: 'SHARED', name: 'A', stock: 5 }, user)).productId
-    await upsertOffers(ctx, a, connA, [{ externalId: 'oa', sku: 'SHARED', name: 'Oferta A', url: null }], new Date())
+    await upsertOffers(ctx, a, connA, [{ externalId: 'oa', sku: 'SHARED', name: 'Offer A', url: null }], new Date())
     const offerA = (await ctx.db.offer.findFirstOrThrow({ where: { organizationId: a } })).id
     const orderA = (await importOrder(ctx, a, connA, buildOrder({ lines: [orderLine('l1', { sku: 'SHARED' }), orderLine('l2', { sku: 'LATER' })] }))).orderId
     const lineA = (await ctx.db.orderLine.findFirstOrThrow({ where: { orderId: orderA, externalId: 'l2' } })).id

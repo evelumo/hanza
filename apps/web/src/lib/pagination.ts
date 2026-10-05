@@ -26,7 +26,7 @@ export function clampPage(page: number, total: number): number {
   return Math.min(page, pageCount(total))
 }
 
-/** Previous page, or null on the first one; never past the end, so "Poprzednia" from `?page=999` lands on the last page. */
+/** Previous page, or null on the first one; never past the end, so "Previous" from `?page=999` lands on the last page. */
 export function previousPage(page: number, total: number): number | null {
   return page > 1 ? Math.min(page - 1, pageCount(total)) : null
 }

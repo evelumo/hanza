@@ -53,7 +53,7 @@ describe('pages past the end', () => {
   it('redirects to the last page only when the page is out of range', () => {
     expect(outOfRangeRedirect(1, 0, '/products')).toBeNull()
     expect(outOfRangeRedirect(3, threePages, '/products')).toBeNull()
-    expect(outOfRangeRedirect(999, five, '/products', { q: 'kubek' })).toBe('/products?q=kubek')
+    expect(outOfRangeRedirect(999, five, '/products', { q: 'mug' })).toBe('/products?q=mug')
     expect(outOfRangeRedirect(999, threePages, '/orders', { status: 'new' })).toBe('/orders?status=new&page=3')
     expect(outOfRangeRedirect(7, 0, '/products/offers')).toBe('/products/offers')
   })

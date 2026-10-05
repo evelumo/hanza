@@ -62,7 +62,7 @@ describe.skipIf(!databaseUrl)('failures outside connector calls are recorded in 
     const { connectionId } = await createConnection(
       ctx,
       organizationId,
-      { connectorId: 'guard-channel', name: 'Kanał', config: {}, credentials: { apiKey: 'k' } },
+      { connectorId: 'guard-channel', name: 'Channel', config: {}, credentials: { apiKey: 'k' } },
       user,
     )
     const runPull = (run: JobRunInfo) => ordersPullJob.handler(ctx, { organizationId, connectionId, trigger: 'schedule' }, run)
@@ -85,7 +85,7 @@ describe.skipIf(!databaseUrl)('failures outside connector calls are recorded in 
     expect(first.health).toBe('unknown')
     expect(first.sync).toMatchObject({ cursor: '3', lastErrorKind: 'transient', lastSucceededAt: null })
     expect(first.sync?.lastError).toContain('order rejected by the test trigger')
-    expect(first.sync?.lastError).not.toMatch(/Jan Testowy|jan\.testowy|Przykładowa/)
+    expect(first.sync?.lastError).not.toMatch(/John Test|john\.test|Example Street/)
 
     await expect(runPull(attempt(5))).rejects.toThrow()
     expect(await state()).toMatchObject({ health: 'failing', sync: { cursor: '3', lastErrorKind: 'transient' } })

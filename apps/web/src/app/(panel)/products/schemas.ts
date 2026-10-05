@@ -1,7 +1,11 @@
 import { z } from 'zod'
+import { messageKey } from '@/i18n/keys'
 import { idSchema, skuSchema, unitsSchema } from '@/lib/schemas'
 
-export const productNameSchema = z.string({ error: 'Podaj nazwę.' }).trim().min(1, 'Podaj nazwę.').max(200, 'Nazwa może mieć najwyżej 200 znaków.')
+const NAME_REQUIRED = messageKey('validation.nameRequired')
+const OFFERS_REQUIRED = messageKey('validation.offersRequired')
+
+export const productNameSchema = z.string({ error: NAME_REQUIRED }).trim().min(1, NAME_REQUIRED).max(200, messageKey('validation.productNameTooLong'))
 
 export const createProductSchema = z.object({ sku: skuSchema, name: productNameSchema, stock: unitsSchema })
 export const updateProductSchema = z.object({ productId: idSchema, name: productNameSchema })
@@ -9,5 +13,5 @@ export const setStockSchema = z.object({ productId: idSchema, stock: unitsSchema
 export const unlinkOfferSchema = z.object({ offerId: idSchema })
 export const linkOfferSchema = z.object({ offerId: idSchema, sku: skuSchema })
 export const createProductsFromOffersSchema = z.object({
-  offerIds: z.array(idSchema, { error: 'Zaznacz co najmniej jedną ofertę.' }).min(1, 'Zaznacz co najmniej jedną ofertę.').max(200, 'Zaznacz najwyżej 200 ofert naraz.'),
+  offerIds: z.array(idSchema, { error: OFFERS_REQUIRED }).min(1, OFFERS_REQUIRED).max(200, messageKey('validation.offersTooMany')),
 })

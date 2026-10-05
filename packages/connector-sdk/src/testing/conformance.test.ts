@@ -7,9 +7,9 @@ import type { Order } from '../model/order'
 import { assertConformance, type ConformanceFixtures } from './index'
 
 const offers: Offer[] = [
-  { externalId: 'o1', sku: 'SKU-1', name: 'Kubek', url: null },
-  { externalId: 'o2', sku: null, name: 'Plakat', url: null },
-  { externalId: 'o3', sku: 'SKU-3', name: 'Torba', url: null },
+  { externalId: 'o1', sku: 'SKU-1', name: 'Mug', url: null },
+  { externalId: 'o2', sku: null, name: 'Poster', url: null },
+  { externalId: 'o3', sku: 'SKU-3', name: 'Tote bag', url: null },
 ]
 
 const order = (externalId: string): Order => ({
@@ -17,13 +17,13 @@ const order = (externalId: string): Order => ({
   placedAt: '2026-10-01T09:00:00Z',
   payment: 'prepaid',
   total: { amount: '10.00', currency: 'PLN' },
-  buyer: { name: 'Jan', email: null, phone: null, login: null },
+  buyer: { name: 'John', email: null, phone: null, login: null },
   shippingAddress: {
-    name: 'Jan',
+    name: 'John',
     company: null,
-    street: 'ul. Testowa 1',
+    street: '1 Test Street',
     postalCode: '00-001',
-    city: 'Warszawa',
+    city: 'Warsaw',
     countryCode: 'PL',
     phone: null,
     taxId: null,
@@ -34,7 +34,7 @@ const order = (externalId: string): Order => ({
       externalId: 'l1',
       offerExternalId: 'o1',
       sku: 'SKU-1',
-      name: 'Kubek',
+      name: 'Mug',
       quantity: 1,
       unitPrice: { amount: '10.00', currency: 'PLN' },
     },

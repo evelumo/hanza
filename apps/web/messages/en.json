@@ -1,0 +1,399 @@
+{
+  "meta": {
+    "description": "Open-source hub for e-commerce integrations"
+  },
+  "common": {
+    "saving": "Saving…",
+    "saved": "Saved.",
+    "none": "none",
+    "units": "{count, plural, one {# unit} other {# units}}"
+  },
+  "language": {
+    "label": "Language"
+  },
+  "nav": {
+    "label": "Main navigation",
+    "dashboard": "Dashboard",
+    "products": "Products",
+    "orders": "Orders",
+    "connections": "Connections"
+  },
+  "pagination": {
+    "label": "Pagination",
+    "summary": "Total: {total, number} · Page {page, number} of {pages, number}",
+    "previous": "Previous",
+    "next": "Next"
+  },
+  "auth": {
+    "signOut": "Sign out",
+    "login": {
+      "title": "Sign in",
+      "email": "Email",
+      "password": "Password",
+      "submit": "Sign in",
+      "submitting": "Signing in…",
+      "invalid": "Invalid email or password.",
+      "noAccount": "Don't have an account?",
+      "registerLink": "Register"
+    },
+    "register": {
+      "title": "Create an account",
+      "name": "Full name",
+      "submit": "Create account",
+      "submitting": "Creating account…",
+      "failed": "Could not create the account.",
+      "haveAccount": "Already have an account?",
+      "loginLink": "Sign in"
+    },
+    "onboarding": {
+      "title": "Add your company",
+      "description": "All orders, products and connections will belong to this company.",
+      "name": "Company name",
+      "submit": "Continue",
+      "failed": "Could not create the company."
+    },
+    "errors": {
+      "userExists": "An account with this email already exists.",
+      "invalidEmail": "Enter a valid email address.",
+      "passwordTooShort": "The password is too short.",
+      "passwordTooLong": "The password is too long."
+    }
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "intro": "You will find products, orders and connections in the menu above.",
+    "eventsTitle": "Recent events",
+    "eventsDescription": "The test job goes through the queue and the worker, and its result shows up here.",
+    "eventsEmpty": "No events yet. Send a test job to check that the worker is running.",
+    "sendPing": "Send test job",
+    "sendingPing": "Sending…"
+  },
+  "products": {
+    "title": "Products",
+    "add": "Add product",
+    "unlinkedOffers": "Offers without a product",
+    "searchLabel": "Search by SKU or name",
+    "searchPlaceholder": "Search by SKU or name",
+    "search": "Search",
+    "clear": "Clear",
+    "emptySearch": "No product matches your search.",
+    "empty": "There are no products yet. Add the first one, or create them from offers pulled from a channel.",
+    "columns": {
+      "sku": "SKU",
+      "name": "Name",
+      "stock": "Stock",
+      "reserved": "Reserved",
+      "available": "Available",
+      "offers": "Offers"
+    },
+    "shortageHint": "(shortage)",
+    "detail": {
+      "title": "Product",
+      "skuLine": "SKU: {sku}",
+      "shortage": "Shortage: more was sold than is in stock.",
+      "dataTitle": "Product details",
+      "dataDescription": "The SKU is fixed and cannot be changed.",
+      "name": "Name",
+      "saveName": "Save name",
+      "stockTitle": "Stock",
+      "stockDescription": "Hanza is the source of truth for stock. Channels only receive Available (Stock minus Reservations).",
+      "stockSaved": "Saved. The new stock will be sent to the channels.",
+      "saveStock": "Save stock",
+      "offersTitle": "Offers",
+      "offersDescription": "This product's offers in channels.",
+      "offersEmpty": "This product has no linked offers yet. An offer is linked automatically by SKU, or manually in the list of offers without a product.",
+      "offerColumns": {
+        "connection": "Connection",
+        "offer": "Offer",
+        "link": "Link",
+        "lastPushed": "Last pushed",
+        "actions": "Actions"
+      },
+      "linkedManually": "Manual",
+      "linkedBySku": "By SKU",
+      "notPushed": "not pushed yet",
+      "unlink": "Unlink",
+      "unlinking": "Unlinking…",
+      "unlinkConfirm": "Unlink the offer from this product? The channel will no longer receive its stock.",
+      "reservationsTitle": "Open reservations",
+      "reservationsDescription": "Goods promised to orders that have not been shipped yet.",
+      "reservationsEmpty": "No open reservations.",
+      "reservationOrder": "Order {id}"
+    },
+    "new": {
+      "title": "Add product",
+      "sku": "SKU",
+      "skuHint": "Unique within the company; it cannot be changed later.",
+      "name": "Name",
+      "initialStock": "Initial stock",
+      "submit": "Add product",
+      "submitting": "Adding…"
+    }
+  },
+  "offers": {
+    "title": "Offers without a product",
+    "description": "Offers pulled from channels whose SKU does not match any product.",
+    "createTitle": "Create products from offers",
+    "createDescription": "Select the offers that have a SKU in the table. A product gets the offer's SKU and name and a stock of 0.",
+    "create": "Create products from selected",
+    "creating": "Creating…",
+    "created": "{count, plural, one {Created # product.} other {Created # products.}}",
+    "skipped": "Skipped: {count, number}",
+    "skipReasons": {
+      "not_found": "offer not found",
+      "no_sku": "the offer has no SKU",
+      "sku_taken": "a product with this SKU already exists",
+      "already_linked": "the offer is already linked"
+    },
+    "empty": "Every offer has a product. New offers will appear after a connection syncs.",
+    "columns": {
+      "connection": "Connection",
+      "offer": "Offer",
+      "sku": "SKU",
+      "seen": "Seen",
+      "link": "Link manually"
+    },
+    "selectOffer": "Select offer {name}",
+    "selectAll": "Select all offers with a SKU",
+    "linkSkuLabel": "SKU of the product to link the offer to",
+    "skuPlaceholder": "Product SKU",
+    "link": "Link to product",
+    "linking": "Linking…"
+  },
+  "orders": {
+    "title": "Orders",
+    "filters": {
+      "status": "Status",
+      "all": "All",
+      "attentionOnly": "Only those needing attention",
+      "apply": "Filter",
+      "clear": "Clear"
+    },
+    "emptyFiltered": "No order matches the filters.",
+    "empty": "There are no orders yet. They will appear after a connection syncs with a channel.",
+    "columns": {
+      "number": "Number",
+      "channel": "Channel",
+      "date": "Date",
+      "buyer": "Buyer",
+      "total": "Total",
+      "status": "Status"
+    },
+    "needsAttention": "Needs attention",
+    "detail": {
+      "title": "Order",
+      "summary": "Channel: {channel} · {date} · {payment} · {total}",
+      "attentionHint": "Link the unmatched lines to products below and Needs attention clears on its own.",
+      "markReviewed": "Mark as reviewed",
+      "statusTitle": "Status",
+      "statusDescription": "Hanza leads the fulfilment; a change is passed on to the channel if the channel supports it.",
+      "finalStatus": "The order has a final status ({status}) and cannot be changed.",
+      "changeTo": "Change to: {status}",
+      "confirmShipped": "Mark the order as shipped? The reserved goods will be taken off stock.",
+      "confirmCancelled": "Cancel the order? The reservations will be released and this cannot be undone.",
+      "linesTitle": "Lines",
+      "lineColumns": {
+        "sku": "SKU",
+        "name": "Name",
+        "quantity": "Quantity",
+        "price": "Price",
+        "product": "Product",
+        "reservation": "Reservation"
+      },
+      "unmatched": "Unmatched",
+      "shortage": "Shortage",
+      "buyerTitle": "Buyer",
+      "contact": "Contact details",
+      "phone": "Phone: {phone}",
+      "channelLogin": "Channel login: {login}",
+      "shippingAddress": "Shipping address",
+      "billingAddress": "Billing address",
+      "taxId": "Tax ID: {taxId}",
+      "addressMissing": "Not provided.",
+      "factsTitle": "Changes reported by the channel",
+      "factsEmpty": "The channel has not reported any changes.",
+      "historyTitle": "History",
+      "historyEmpty": "No events."
+    },
+    "linkLine": {
+      "skuLabel": "SKU of the product to link the line to",
+      "skuPlaceholder": "Product SKU",
+      "submit": "Link",
+      "submitting": "Linking…"
+    }
+  },
+  "connections": {
+    "title": "Connections",
+    "add": "Add connection",
+    "empty": "There are no connections yet. Add a connection to a channel to pull offers and orders.",
+    "columns": {
+      "name": "Name",
+      "connector": "Connector",
+      "health": "Connection health",
+      "lastSync": "Last sync"
+    },
+    "neverSynced": "not run yet",
+    "running": "running",
+    "detail": {
+      "title": "Connection",
+      "connectorLine": "Connector: {connector}",
+      "connectorLineChanged": "Connector: {connector} · health changed {date}",
+      "syncTitle": "Synchronisation",
+      "syncDescription": "Hanza synchronises the connection in the background. The request goes to the queue and the results appear here shortly: refresh the page.",
+      "syncNow": "Synchronise now",
+      "syncing": "Requesting…",
+      "syncRequested": "Synchronisation requested. Refresh the page in a moment.",
+      "syncEmpty": "No synchronisation has run yet.",
+      "syncColumns": {
+        "data": "Data",
+        "started": "Started",
+        "finished": "Finished",
+        "lastSuccess": "Last success",
+        "result": "Result",
+        "error": "Error"
+      },
+      "eventsTitle": "Recent events",
+      "eventsEmpty": "No events."
+    },
+    "new": {
+      "title": "Add connection",
+      "description": "Choose the connector Hanza will use to reach the channel.",
+      "backToChoice": "Choose a connector",
+      "titleFor": "Add connection: {connector}",
+      "name": "Name",
+      "nameHint": "The connection will appear in the panel under this name.",
+      "settings": "Settings",
+      "credentials": "Credentials",
+      "credentialsNote": "We store them encrypted and never show them again.",
+      "optionalField": "{label} (optional)",
+      "submit": "Add connection",
+      "submitting": "Adding…"
+    }
+  },
+  "labels": {
+    "orderStatus": {
+      "new": "New",
+      "processing": "Processing",
+      "shipped": "Shipped",
+      "cancelled": "Cancelled"
+    },
+    "attentionReason": {
+      "unmatched_line": "Unmatched line",
+      "shortage": "Shortage",
+      "cancelled_while_processing": "Cancelled while processing",
+      "channel_fact_conflict": "The channel reported a change after completion"
+    },
+    "health": {
+      "unknown": "Not checked",
+      "ok": "Working",
+      "failing": "Failing",
+      "auth_expired": "Sign-in required again"
+    },
+    "syncStream": {
+      "offers_pull": "Offers",
+      "orders_pull": "Orders",
+      "stock_push": "Stock levels",
+      "order_status_push": "Order statuses"
+    },
+    "payment": {
+      "prepaid": "Prepaid",
+      "cash_on_delivery": "Cash on delivery"
+    },
+    "channelFact": {
+      "cancelled": "Cancelled in the channel",
+      "shipped": "Shipped in the channel"
+    },
+    "reservation": {
+      "open": "Open",
+      "released": "Released",
+      "consumed": "Consumed"
+    },
+    "syncError": {
+      "auth_expired": "Sign-in required again",
+      "rate_limited": "Channel rate limit",
+      "transient": "Temporary error",
+      "permanent": "Permanent error"
+    },
+    "connectorKind": {
+      "marketplace": "Marketplace",
+      "shop": "Shop",
+      "courier": "Courier",
+      "invoicing": "Invoicing"
+    }
+  },
+  "sync": {
+    "result": {
+      "seen": "seen",
+      "created": "new",
+      "updated": "updated",
+      "linked": "linked",
+      "pulled": "pulled",
+      "imported": "imported",
+      "factsApplied": "channel changes",
+      "pages": "pages",
+      "pushed": "pushed",
+      "truncated": "stopped at the page limit"
+    }
+  },
+  "events": {
+    "title": {
+      "system_ping": "Test job",
+      "product_created": "Product created",
+      "product_updated": "Product name changed",
+      "stock_set": "Stock set",
+      "stock_reserved": "Goods reserved",
+      "stock_released": "Reservation released",
+      "stock_consumed": "Goods taken off stock",
+      "offer_linked": "Offer linked to a product",
+      "offer_unlinked": "Offer unlinked from a product",
+      "order_imported": "Order imported",
+      "order_channel_fact_recorded": "The channel reported a change",
+      "order_status_changed": "Status changed",
+      "order_line_linked": "Line linked to a product",
+      "order_attention_raised": "Order needs attention",
+      "order_attention_resolved": "Marked as reviewed",
+      "connection_created": "Connection created",
+      "connection_health_changed": "Connection health changed"
+    },
+    "lines": "{count, plural, one {# line} other {# lines}}"
+  },
+  "errors": {
+    "domain": {
+      "not_found": "Not found.",
+      "sku_taken": "A product with this SKU already exists.",
+      "invalid_transition": "This status change is not allowed.",
+      "unmatched_lines": "Link all the lines to products first.",
+      "already_linked": "This line is already linked.",
+      "unknown_connector": "Unknown connector.",
+      "invalid_config": "Check the fields."
+    },
+    "unexpected": "Something went wrong. Please try again.",
+    "invalidInput": "Check the fields.",
+    "unknownSku": "There is no product with this SKU.",
+    "page": {
+      "title": "Something went wrong",
+      "description": "This page could not be displayed. Try again in a moment.",
+      "retry": "Try again"
+    },
+    "notFound": {
+      "title": "Not found",
+      "descriptionRoot": "This page does not exist.",
+      "descriptionPanel": "This page does not exist, or you do not have access to it.",
+      "back": "Back to the dashboard"
+    }
+  },
+  "validation": {
+    "idInvalid": "Invalid identifier.",
+    "skuRequired": "Enter a SKU.",
+    "skuTooLong": "The SKU can have at most 64 characters.",
+    "unitsInvalid": "Enter a whole number from 0 to 1,000,000.",
+    "nameRequired": "Enter a name.",
+    "productNameTooLong": "The name can have at most 200 characters.",
+    "connectionNameTooLong": "The name can have at most 100 characters.",
+    "statusInvalid": "Choose a valid status.",
+    "offersRequired": "Select at least one offer.",
+    "offersTooMany": "Select at most 200 offers at a time.",
+    "fieldRequired": "This field is required.",
+    "fieldInvalid": "Invalid value."
+  }
+}

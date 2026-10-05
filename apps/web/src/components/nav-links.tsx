@@ -2,18 +2,21 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useT } from '@/i18n/use-t'
+import type { MessageKey } from '@/i18n/types'
 
-const links = [
-  { href: '/dashboard', label: 'Pulpit' },
-  { href: '/products', label: 'Produkty' },
-  { href: '/orders', label: 'Zamówienia' },
-  { href: '/connections', label: 'Połączenia' },
+const links: Array<{ href: string; label: MessageKey }> = [
+  { href: '/dashboard', label: 'nav.dashboard' },
+  { href: '/products', label: 'nav.products' },
+  { href: '/orders', label: 'nav.orders' },
+  { href: '/connections', label: 'nav.connections' },
 ]
 
 export function NavLinks() {
   const pathname = usePathname()
+  const t = useT()
   return (
-    <nav aria-label="Główna nawigacja" className="flex flex-wrap gap-1 text-sm">
+    <nav aria-label={t('nav.label')} className="flex flex-wrap gap-1 text-sm">
       {links.map((link) => {
         const active = pathname === link.href || pathname.startsWith(`${link.href}/`)
         return (
@@ -25,7 +28,7 @@ export function NavLinks() {
               active ? 'bg-accent text-white' : 'text-ink hover:bg-canvas'
             }`}
           >
-            {link.label}
+            {t(link.label)}
           </Link>
         )
       })}

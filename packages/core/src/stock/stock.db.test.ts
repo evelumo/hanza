@@ -57,7 +57,7 @@ describe.skipIf(!databaseUrl)('stock', () => {
 
     expect((await getAvailability(ctx.db, org, [productId])).get(productId)).toEqual({ stock: 9, reserved: 2, available: 7 })
 
-    const second = await ctx.db.warehouse.create({ data: { organizationId: org, code: 'second', name: 'Drugi' } })
+    const second = await ctx.db.warehouse.create({ data: { organizationId: org, code: 'second', name: 'Second' } })
     await ctx.db.stock.create({ data: { organizationId: org, productId, warehouseId: second.id, units: 4 } })
     const availability = await getAvailability(ctx.db, org, [productId, 'missing'])
     expect(availability.get(productId)).toEqual({ stock: 13, reserved: 2, available: 11 })
