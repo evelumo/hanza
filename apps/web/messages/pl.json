@@ -1,0 +1,398 @@
+{
+  "meta": {
+    "description": "Open source’owy hub integracji e-commerce"
+  },
+  "common": {
+    "saving": "Zapisywanie…",
+    "saved": "Zapisano.",
+    "none": "brak",
+    "units": "{count, plural, one {# sztuka} few {# sztuki} many {# sztuk} other {# sztuki}}"
+  },
+  "language": {
+    "label": "Język"
+  },
+  "nav": {
+    "label": "Główna nawigacja",
+    "dashboard": "Pulpit",
+    "products": "Produkty",
+    "orders": "Zamówienia",
+    "connections": "Połączenia"
+  },
+  "pagination": {
+    "label": "Paginacja",
+    "summary": "Razem: {total, number} · Strona {page, number} z {pages, number}",
+    "previous": "Poprzednia",
+    "next": "Następna"
+  },
+  "auth": {
+    "signOut": "Wyloguj",
+    "login": {
+      "title": "Zaloguj się",
+      "email": "E-mail",
+      "password": "Hasło",
+      "submit": "Zaloguj się",
+      "submitting": "Logowanie…",
+      "invalid": "Nieprawidłowy e-mail lub hasło.",
+      "noAccount": "Nie masz konta?",
+      "registerLink": "Zarejestruj się"
+    },
+    "register": {
+      "title": "Utwórz konto",
+      "name": "Imię i nazwisko",
+      "submit": "Utwórz konto",
+      "submitting": "Tworzenie konta…",
+      "failed": "Nie udało się utworzyć konta.",
+      "haveAccount": "Masz już konto?",
+      "loginLink": "Zaloguj się"
+    },
+    "onboarding": {
+      "title": "Dodaj swoją firmę",
+      "description": "Wszystkie zamówienia, produkty i połączenia będą należeć do tej firmy.",
+      "name": "Nazwa firmy",
+      "submit": "Dalej",
+      "failed": "Nie udało się utworzyć firmy."
+    },
+    "errors": {
+      "userExists": "Konto z tym adresem e-mail już istnieje.",
+      "invalidEmail": "Podaj poprawny adres e-mail.",
+      "passwordTooShort": "Hasło jest za krótkie.",
+      "passwordTooLong": "Hasło jest za długie."
+    }
+  },
+  "dashboard": {
+    "title": "Pulpit",
+    "intro": "Produkty, zamówienia i połączenia znajdziesz w menu powyżej.",
+    "eventsTitle": "Ostatnie zdarzenia",
+    "eventsDescription": "Zadanie testowe przechodzi przez kolejkę i worker, a wynik trafia tutaj.",
+    "eventsEmpty": "Brak zdarzeń. Wyślij zadanie testowe, żeby sprawdzić, czy worker działa.",
+    "sendPing": "Wyślij zadanie testowe",
+    "sendingPing": "Wysyłanie…"
+  },
+  "products": {
+    "title": "Produkty",
+    "add": "Dodaj produkt",
+    "unlinkedOffers": "Oferty bez produktu",
+    "searchLabel": "Szukaj po SKU lub nazwie",
+    "searchPlaceholder": "Szukaj po SKU lub nazwie",
+    "search": "Szukaj",
+    "clear": "Wyczyść",
+    "emptySearch": "Żaden produkt nie pasuje do wyszukiwania.",
+    "empty": "Nie ma jeszcze produktów. Dodaj pierwszy albo utwórz je z ofert pobranych z kanału.",
+    "columns": {
+      "sku": "SKU",
+      "name": "Nazwa",
+      "stock": "Stan",
+      "reserved": "Zarezerwowane",
+      "available": "Dostępne",
+      "offers": "Oferty"
+    },
+    "shortageHint": "(brak towaru)",
+    "detail": {
+      "skuLine": "SKU: {sku}",
+      "shortage": "Brak towaru: sprzedano więcej, niż jest na stanie.",
+      "dataTitle": "Dane produktu",
+      "dataDescription": "SKU jest stałe i nie można go zmienić.",
+      "name": "Nazwa",
+      "saveName": "Zapisz nazwę",
+      "stockTitle": "Stan",
+      "stockDescription": "Hanza jest źródłem prawdy o stanie. Kanały dostają tylko Dostępne (Stan minus Rezerwacje).",
+      "stockSaved": "Zapisano. Nowy stan zostanie wysłany do kanałów.",
+      "saveStock": "Zapisz stan",
+      "offersTitle": "Oferty",
+      "offersDescription": "Oferty tego produktu w kanałach.",
+      "offersEmpty": "Ten produkt nie ma jeszcze połączonych ofert. Oferta łączy się automatycznie po SKU albo ręcznie na liście ofert bez produktu.",
+      "offerColumns": {
+        "connection": "Połączenie",
+        "offer": "Oferta",
+        "link": "Powiązanie",
+        "lastPushed": "Ostatnio wysłano",
+        "actions": "Akcje"
+      },
+      "linkedManually": "Ręcznie",
+      "linkedBySku": "Po SKU",
+      "notPushed": "jeszcze nie wysłano",
+      "unlink": "Rozłącz",
+      "unlinking": "Rozłączanie…",
+      "unlinkConfirm": "Rozłączyć ofertę z tym produktem? Kanał nie dostanie już jego stanu.",
+      "reservationsTitle": "Otwarte rezerwacje",
+      "reservationsDescription": "Towar obiecany zamówieniom, które jeszcze nie zostały wysłane.",
+      "reservationsEmpty": "Brak otwartych rezerwacji.",
+      "reservationOrder": "Zamówienie {id}"
+    },
+    "new": {
+      "title": "Dodaj produkt",
+      "sku": "SKU",
+      "skuHint": "Unikalny w firmie; później nie można go zmienić.",
+      "name": "Nazwa",
+      "initialStock": "Stan początkowy",
+      "submit": "Dodaj produkt",
+      "submitting": "Dodawanie…"
+    }
+  },
+  "offers": {
+    "title": "Oferty bez produktu",
+    "description": "Oferty pobrane z kanałów, których SKU nie pasuje do żadnego produktu.",
+    "createTitle": "Utwórz produkty z ofert",
+    "createDescription": "Zaznacz oferty z SKU w tabeli. Produkt dostanie SKU i nazwę oferty oraz stan 0.",
+    "create": "Utwórz produkty z zaznaczonych",
+    "creating": "Tworzenie…",
+    "created": "{count, plural, one {Utworzono # produkt.} few {Utworzono # produkty.} many {Utworzono # produktów.} other {Utworzono # produktu.}}",
+    "skipped": "Pominięte: {count, number}",
+    "skipReasons": {
+      "not_found": "nie znaleziono oferty",
+      "no_sku": "oferta nie ma SKU",
+      "sku_taken": "produkt z tym SKU już istnieje",
+      "already_linked": "oferta jest już połączona"
+    },
+    "empty": "Wszystkie oferty mają produkty. Nowe oferty pojawią się po synchronizacji połączenia.",
+    "columns": {
+      "connection": "Połączenie",
+      "offer": "Oferta",
+      "sku": "SKU",
+      "seen": "Widziana",
+      "link": "Połącz ręcznie"
+    },
+    "selectOffer": "Zaznacz ofertę {name}",
+    "selectAll": "Zaznacz wszystkie oferty z SKU",
+    "linkSkuLabel": "SKU produktu, z którym połączyć ofertę",
+    "skuPlaceholder": "SKU produktu",
+    "link": "Połącz z produktem",
+    "linking": "Łączenie…"
+  },
+  "orders": {
+    "title": "Zamówienia",
+    "filters": {
+      "status": "Status",
+      "all": "Wszystkie",
+      "attentionOnly": "Tylko wymagające uwagi",
+      "apply": "Filtruj",
+      "clear": "Wyczyść"
+    },
+    "emptyFiltered": "Żadne zamówienie nie pasuje do filtrów.",
+    "empty": "Nie ma jeszcze zamówień. Pojawią się po synchronizacji połączenia z kanałem.",
+    "columns": {
+      "number": "Numer",
+      "channel": "Kanał",
+      "date": "Data",
+      "buyer": "Kupujący",
+      "total": "Kwota",
+      "status": "Status"
+    },
+    "needsAttention": "Wymaga uwagi",
+    "detail": {
+      "title": "Zamówienie",
+      "summary": "Kanał: {channel} · {date} · {payment} · {total}",
+      "attentionHint": "Połącz niepołączone pozycje z produktami poniżej, a to oznaczenie zniknie samo.",
+      "markReviewed": "Oznacz jako sprawdzone",
+      "statusTitle": "Status",
+      "statusDescription": "Postęp realizacji prowadzi Hanza; zmiana jest przekazywana do kanału, jeśli kanał to obsługuje.",
+      "finalStatus": "Zamówienie ma status końcowy ({status}), nie można go zmienić.",
+      "changeTo": "Zmień na: {status}",
+      "confirmShipped": "Oznaczyć zamówienie jako wysłane? Zarezerwowany towar zostanie zdjęty ze stanu.",
+      "confirmCancelled": "Anulować zamówienie? Rezerwacje zostaną zwolnione, a tej zmiany nie można cofnąć.",
+      "linesTitle": "Pozycje",
+      "lineColumns": {
+        "sku": "SKU",
+        "name": "Nazwa",
+        "quantity": "Ilość",
+        "price": "Cena",
+        "product": "Produkt",
+        "reservation": "Rezerwacja"
+      },
+      "unlinked": "Niepołączona",
+      "shortage": "Brak na stanie",
+      "buyerTitle": "Kupujący",
+      "contact": "Dane kontaktowe",
+      "phone": "tel. {phone}",
+      "channelLogin": "Login w kanale: {login}",
+      "shippingAddress": "Adres dostawy",
+      "billingAddress": "Adres do faktury",
+      "taxId": "NIP: {taxId}",
+      "addressMissing": "Nie podano.",
+      "factsTitle": "Zmiany zgłoszone przez kanał",
+      "factsEmpty": "Kanał nie zgłosił żadnych zmian.",
+      "historyTitle": "Historia",
+      "historyEmpty": "Brak zdarzeń."
+    },
+    "linkLine": {
+      "skuLabel": "SKU produktu, z którym połączyć pozycję",
+      "skuPlaceholder": "SKU produktu",
+      "submit": "Połącz",
+      "submitting": "Łączenie…"
+    }
+  },
+  "connections": {
+    "title": "Połączenia",
+    "add": "Dodaj połączenie",
+    "empty": "Nie ma jeszcze połączeń. Dodaj połączenie z kanałem, żeby pobierać oferty i zamówienia.",
+    "columns": {
+      "name": "Nazwa",
+      "connector": "Konektor",
+      "health": "Stan połączenia",
+      "lastSync": "Ostatnia synchronizacja"
+    },
+    "neverSynced": "jeszcze nie uruchomiono",
+    "running": "w toku",
+    "detail": {
+      "connectorLine": "Konektor: {connector}",
+      "connectorLineChanged": "Konektor: {connector} · stan zmieniony {date}",
+      "syncTitle": "Synchronizacja",
+      "syncDescription": "Hanza synchronizuje połączenie w tle. Zlecenie trafia do kolejki, a wyniki pojawią się tu po chwili: odśwież stronę.",
+      "syncNow": "Synchronizuj teraz",
+      "syncing": "Zlecanie…",
+      "syncRequested": "Synchronizacja zlecona. Odśwież stronę za chwilę.",
+      "syncEmpty": "Synchronizacja jeszcze się nie odbyła.",
+      "syncColumns": {
+        "data": "Dane",
+        "started": "Rozpoczęto",
+        "finished": "Zakończono",
+        "lastSuccess": "Ostatni sukces",
+        "result": "Wynik",
+        "error": "Błąd"
+      },
+      "eventsTitle": "Ostatnie zdarzenia",
+      "eventsEmpty": "Brak zdarzeń."
+    },
+    "new": {
+      "title": "Dodaj połączenie",
+      "description": "Wybierz konektor, przez który Hanza połączy się z kanałem.",
+      "backToChoice": "Wybór konektora",
+      "titleFor": "Dodaj połączenie: {connector}",
+      "name": "Nazwa",
+      "nameHint": "Pod tą nazwą połączenie pojawi się w panelu.",
+      "settings": "Ustawienia",
+      "credentials": "Dane dostępowe",
+      "credentialsNote": "Przechowujemy je zaszyfrowane i nie pokazujemy ich ponownie.",
+      "optionalField": "{label} (opcjonalnie)",
+      "submit": "Dodaj połączenie",
+      "submitting": "Dodawanie…"
+    }
+  },
+  "labels": {
+    "orderStatus": {
+      "new": "Nowe",
+      "processing": "W realizacji",
+      "shipped": "Wysłane",
+      "cancelled": "Anulowane"
+    },
+    "attentionReason": {
+      "unmatched_line": "Niepołączona pozycja",
+      "shortage": "Brak na stanie",
+      "cancelled_while_processing": "Anulowane w trakcie realizacji",
+      "channel_fact_conflict": "Kanał zgłosił zmianę po zakończeniu"
+    },
+    "health": {
+      "unknown": "Nie sprawdzono",
+      "ok": "Działa",
+      "failing": "Błąd",
+      "auth_expired": "Wymaga ponownego logowania"
+    },
+    "syncStream": {
+      "offers_pull": "Oferty",
+      "orders_pull": "Zamówienia",
+      "stock_push": "Stany magazynowe",
+      "order_status_push": "Statusy zamówień"
+    },
+    "payment": {
+      "prepaid": "Opłacone",
+      "cash_on_delivery": "Za pobraniem"
+    },
+    "channelFact": {
+      "cancelled": "Anulowane w kanale",
+      "shipped": "Wysłane w kanale"
+    },
+    "reservation": {
+      "open": "Otwarta",
+      "released": "Zwolniona",
+      "consumed": "Zużyta"
+    },
+    "syncError": {
+      "auth_expired": "Wymagane ponowne logowanie",
+      "rate_limited": "Limit zapytań kanału",
+      "transient": "Błąd tymczasowy",
+      "permanent": "Błąd trwały"
+    },
+    "connectorKind": {
+      "marketplace": "Marketplace",
+      "shop": "Sklep",
+      "courier": "Kurier",
+      "invoicing": "Fakturowanie"
+    }
+  },
+  "sync": {
+    "result": {
+      "seen": "widziane",
+      "created": "nowe",
+      "updated": "zaktualizowane",
+      "linked": "połączone",
+      "pulled": "pobrane",
+      "imported": "zaimportowane",
+      "factsApplied": "zmiany z kanału",
+      "pages": "strony",
+      "pushed": "wysłane",
+      "truncated": "przerwane na limicie stron"
+    }
+  },
+  "events": {
+    "title": {
+      "system_ping": "Zadanie testowe",
+      "product_created": "Utworzono produkt",
+      "product_updated": "Zmieniono nazwę produktu",
+      "stock_set": "Ustawiono stan",
+      "stock_reserved": "Zarezerwowano towar",
+      "stock_released": "Zwolniono rezerwację",
+      "stock_consumed": "Pobrano towar ze stanu",
+      "offer_linked": "Połączono ofertę z produktem",
+      "offer_unlinked": "Rozłączono ofertę z produktem",
+      "order_imported": "Zaimportowano zamówienie",
+      "order_channel_fact_recorded": "Kanał zgłosił zmianę",
+      "order_status_changed": "Zmieniono status",
+      "order_line_linked": "Połączono pozycję z produktem",
+      "order_attention_raised": "Zamówienie wymaga uwagi",
+      "order_attention_resolved": "Oznaczono jako sprawdzone",
+      "connection_created": "Utworzono połączenie",
+      "connection_health_changed": "Zmienił się stan połączenia"
+    },
+    "lines": "{count, plural, one {# pozycja} few {# pozycje} many {# pozycji} other {# pozycji}}",
+    "linesDetail": "Pozycje: {lines}"
+  },
+  "errors": {
+    "domain": {
+      "not_found": "Nie znaleziono.",
+      "sku_taken": "Produkt z tym SKU już istnieje.",
+      "invalid_transition": "Tej zmiany statusu nie można wykonać.",
+      "unmatched_lines": "Najpierw połącz wszystkie pozycje z produktami.",
+      "already_linked": "Ta pozycja jest już połączona.",
+      "unknown_connector": "Nieznany konektor.",
+      "invalid_config": "Sprawdź poprawność pól."
+    },
+    "unexpected": "Coś poszło nie tak. Spróbuj ponownie.",
+    "invalidInput": "Sprawdź poprawność pól.",
+    "unknownSku": "Nie ma produktu o tym SKU.",
+    "page": {
+      "title": "Coś poszło nie tak",
+      "description": "Nie udało się wyświetlić tej strony. Spróbuj ponownie za chwilę.",
+      "retry": "Spróbuj ponownie"
+    },
+    "notFound": {
+      "title": "Nie znaleziono",
+      "descriptionRoot": "Taka strona nie istnieje.",
+      "descriptionPanel": "Taka strona nie istnieje albo nie masz do niej dostępu.",
+      "back": "Wróć do pulpitu"
+    }
+  },
+  "validation": {
+    "idInvalid": "Nieprawidłowy identyfikator.",
+    "skuRequired": "Podaj SKU.",
+    "skuTooLong": "SKU może mieć najwyżej 64 znaki.",
+    "unitsInvalid": "Podaj liczbę całkowitą od 0 do 1 000 000.",
+    "nameRequired": "Podaj nazwę.",
+    "productNameTooLong": "Nazwa może mieć najwyżej 200 znaków.",
+    "connectionNameTooLong": "Nazwa może mieć najwyżej 100 znaków.",
+    "statusInvalid": "Wybierz poprawny status.",
+    "offersRequired": "Zaznacz co najmniej jedną ofertę.",
+    "offersTooMany": "Zaznacz najwyżej 200 ofert naraz.",
+    "fieldRequired": "To pole jest wymagane.",
+    "fieldInvalid": "Nieprawidłowa wartość."
+  }
+}

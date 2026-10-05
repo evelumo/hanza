@@ -1,6 +1,7 @@
 import { existsSync } from 'node:fs'
 import { join } from 'node:path'
 import type { NextConfig } from 'next'
+import createNextIntlPlugin from 'next-intl/plugin'
 
 // One .env at the repo root is shared by web, worker and Prisma.
 const rootEnv = join(process.cwd(), '..', '..', '.env')
@@ -11,4 +12,7 @@ const nextConfig: NextConfig = {
   transpilePackages: ['@hanza/core', '@hanza/db', '@hanza/connector-sdk', '@hanza/connector-registry', '@hanza/connector-fake'],
 }
 
-export default nextConfig
+// Finds src/i18n/request.ts, which resolves the locale of each request.
+const withNextIntl = createNextIntlPlugin()
+
+export default withNextIntl(nextConfig)
