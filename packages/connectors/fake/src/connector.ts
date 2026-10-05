@@ -55,9 +55,9 @@ function failIfRequested(ctx: FakeContext): void {
 
 export type FakeConnector = ConnectorDefinition<typeof fakeConfigSchema, typeof fakeCredentialsSchema>
 
-export function createFakeConnector(state: FakeState): FakeConnector {
+export function createFakeConnector(state: FakeState, id = 'fake'): FakeConnector {
   return defineConnector({
-    id: 'fake',
+    id,
     name: 'Test channel',
     kind: 'marketplace',
     auth: { type: 'apiKey' },

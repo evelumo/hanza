@@ -46,6 +46,15 @@ describe('fake connector', () => {
     expect(listCapabilities(fakeConnector)).toEqual(['offers.pull', 'orders.pull', 'stock.push', 'orders.updateStatus'])
   })
 
+  it('can run under another id, with its own state', async () => {
+    const shop = createFakeChannel({ id: 'fake-shop' })
+    const other = createFakeChannel()
+    expect(shop.connector.id).toBe('fake-shop')
+    await shop.connector.capabilities['stock.push']!(context(), [{ offerExternalId: 'fake-offer-1', sku: 'FAKE-SKU-1', available: 2 }])
+    expect(shop.stockPushes).toHaveLength(1)
+    expect(other.stockPushes).toEqual([])
+  })
+
   it('has a seed that satisfies the canonical schemas', () => {
     seedOffers.forEach((offer) => expect(offerSchema.parse(offer)).toEqual(offer))
     seedOrders.forEach((order) => expect(orderSchema.parse(order)).toEqual(order))

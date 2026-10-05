@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { messageKey } from '@/i18n/keys'
-import { idSchema } from '@/lib/schemas'
+import { idSchema, unitsSchema } from '@/lib/schemas'
 
 const NAME_REQUIRED = messageKey('validation.nameRequired')
 
@@ -10,3 +10,14 @@ export const addConnectionSchema = z.object({
 })
 
 export const requestSyncSchema = z.object({ connectionId: idSchema })
+
+/** An empty Channel limit means no limit. */
+export const stockRulesSchema = z.object({
+  connectionId: idSchema,
+  safetyBuffer: unitsSchema,
+  channelLimit: z
+    .string()
+    .optional()
+    .transform((value) => value?.trim() || null)
+    .pipe(unitsSchema.nullable()),
+})

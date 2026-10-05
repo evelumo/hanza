@@ -14,6 +14,10 @@ function nested(value: unknown, key: 'from' | 'to'): unknown {
   return typeof value === 'object' && value !== null ? (value as Payload)[key] : undefined
 }
 
+function field(value: unknown, key: string): unknown {
+  return typeof value === 'object' && value !== null ? (value as Payload)[key] : undefined
+}
+
 type NumberFormat = (value: number) => string
 
 const formatted = (value: unknown, number: NumberFormat): string | null => {
@@ -49,6 +53,13 @@ function detail(t: Translator, number: NumberFormat, type: string, payload: Payl
     }
     case 'connection.health_changed':
       return arrow(healthLabel(t, text(payload.from)), healthLabel(t, text(payload.to)))
+    case 'connection.stock_rules_changed': {
+      const rule = (side: 'from' | 'to', key: string) => field(nested(payload, side), key)
+      const limit = (value: unknown) => (value === null ? t('common.none') : formatted(value, number))
+      const buffer = arrow(formatted(rule('from', 'safetyBuffer'), number), formatted(rule('to', 'safetyBuffer'), number))
+      const cap = arrow(limit(rule('from', 'channelLimit')), limit(rule('to', 'channelLimit')))
+      return buffer && cap ? t('events.stockRules', { buffer, limit: cap }) : null
+    }
     default:
       return null
   }

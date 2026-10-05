@@ -1,7 +1,7 @@
 import { listOffersAwaitingStockPush, markOffersPushed } from '../catalog/offers'
 import { finishSyncRun } from '../connections/sync-state'
 import { defineJob } from '../jobs'
-import { getAvailability } from '../stock/availability'
+import { getChannelAvailability } from '../stock/channel-available'
 import { withSyncRun } from '../sync/begin-run'
 import { runConnectorCall } from '../sync/run-connector'
 import { coalesceKeys, stockPushRef } from './refs'
@@ -9,7 +9,11 @@ import { coalesceKeys, stockPushRef } from './refs'
 const BATCH_SIZE = 100
 const MAX_BATCHES = 10
 
-/** Sends max(0, Available) for every linked Offer of the Connection whose push sequence moved since its last push. */
+/**
+ * Sends Channel Available (ADR 0011) for every linked Offer of the Connection whose push sequence
+ * moved since its last push. The Offers are read before the rules and Available, so a change after
+ * that read leaves its bump ahead of the sequence marked here.
+ */
 export const stockPushJob = defineJob({
   ...stockPushRef,
   async handler(ctx, payload, run) {
@@ -24,13 +28,13 @@ export const stockPushJob = defineJob({
           lastBatchFull = false
           break
         }
-        const availability = await getAvailability(ctx.db, organizationId, offers.map((offer) => offer.productId))
+        const channelAvailability = await getChannelAvailability(ctx.db, organizationId, connectionId, offers.map((offer) => offer.productId))
         const levels = offers.map((offer) => ({
           offerId: offer.offerId,
           seq: offer.seq,
           offerExternalId: offer.externalId,
           sku: offer.sku,
-          available: Math.max(0, availability.get(offer.productId)?.available ?? 0),
+          available: channelAvailability.get(offer.productId) ?? 0,
         }))
         await runConnectorCall(ctx, scope, () =>
           connector.capabilities['stock.push']!(

@@ -96,7 +96,7 @@
       "name": "Nazwa",
       "saveName": "Zapisz nazwę",
       "stockTitle": "Stan",
-      "stockDescription": "Hanza jest źródłem prawdy o stanie. Kanały dostają tylko Dostępne (Stan minus Rezerwacje).",
+      "stockDescription": "Hanza jest źródłem prawdy o stanie. Kanały dostają Dostępne (Stan minus Rezerwacje) pomniejszone o bufor bezpieczeństwa i limit ustawione dla każdego połączenia.",
       "stockSaved": "Zapisano. Nowy stan zostanie wysłany do kanałów.",
       "saveStock": "Zapisz stan",
       "offersTitle": "Oferty",
@@ -268,6 +268,16 @@
       "optionalField": "{label} (opcjonalnie)",
       "submit": "Dodaj połączenie",
       "submitting": "Dodawanie…"
+    },
+    "stockRules": {
+      "title": "Stan wysyłany do tego kanału",
+      "description": "Kanał dostaje Dostępne (Stan minus Rezerwacje) pomniejszone o bufor bezpieczeństwa i nigdy więcej niż limit kanału. Zamówienia nadal rezerwują z całego Dostępnego.",
+      "safetyBuffer": "Bufor bezpieczeństwa",
+      "safetyBufferHint": "Sztuki, których ten kanał nie widzi, na przykład ostatnie sztuki zostawione dla Twojego sklepu.",
+      "channelLimit": "Limit kanału",
+      "channelLimitHint": "Najwięcej sztuk, jakie zobaczy ten kanał. Zostaw puste, aby nie ograniczać.",
+      "save": "Zapisz ustawienia stanu",
+      "saved": "Zapisano. Nowe liczby zostaną wysłane do tego kanału."
     }
   },
   "labels": {
@@ -353,9 +363,11 @@
       "order_attention_raised": "Zamówienie wymaga uwagi",
       "order_attention_resolved": "Oznaczono jako sprawdzone",
       "connection_created": "Utworzono połączenie",
-      "connection_health_changed": "Zmienił się stan połączenia"
+      "connection_health_changed": "Zmienił się stan połączenia",
+      "connection_stock_rules_changed": "Zmieniono ustawienia stanu"
     },
-    "lines": "{count, plural, one {# pozycja} few {# pozycje} many {# pozycji} other {# pozycji}}"
+    "lines": "{count, plural, one {# pozycja} few {# pozycje} many {# pozycji} other {# pozycji}}",
+    "stockRules": "bufor bezpieczeństwa {buffer}, limit kanału {limit}"
   },
   "errors": {
     "domain": {

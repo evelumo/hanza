@@ -4,6 +4,7 @@ import { z } from 'zod'
 import { createProduct } from '../catalog/products'
 import { upsertOffers } from '../catalog/offers'
 import { createConnection } from '../connections/connections'
+import { updateChannelStockRules } from '../connections/stock-rules'
 import { failSyncRun } from '../connections/sync-state'
 import { importOrder } from '../orders/import'
 import { createTestOrganization } from '../testing/context'
@@ -88,6 +89,47 @@ describe.skipIf(!databaseUrl)('stock.push', () => {
     pushes.length = 0
     await stockPushJob.handler(ctx, { organizationId, connectionId }, run)
     expect(pushes).toEqual([])
+  })
+
+  it('pushes Channel Available: the Safety buffer and Channel limit of this Connection, and again after they change', async () => {
+    const { ctx, organizationId, connectionId } = await setup()
+    const plenty = uniqueSku()
+    const few = uniqueSku()
+    await createProduct(ctx, organizationId, { sku: plenty, name: 'A', stock: 20 }, user)
+    await createProduct(ctx, organizationId, { sku: few, name: 'B', stock: 2 }, user)
+    await upsertOffers(
+      ctx,
+      organizationId,
+      connectionId,
+      [
+        { externalId: 'offer-plenty', sku: plenty, name: 'A', url: null },
+        { externalId: 'offer-few', sku: few, name: 'B', url: null },
+      ],
+      new Date(),
+    )
+    await updateChannelStockRules(ctx, organizationId, connectionId, { safetyBuffer: 3, channelLimit: 10 }, user)
+
+    pushes.length = 0
+    await stockPushJob.handler(ctx, { organizationId, connectionId }, run)
+    const sorted = (levels: StockLevel[] | undefined) => [...(levels ?? [])].sort((a, b) => a.offerExternalId.localeCompare(b.offerExternalId))
+    // 20 − 3 = 17, capped at 10; 2 − 3 is below zero, so 0.
+    expect(sorted(pushes[0])).toEqual([
+      { offerExternalId: 'offer-few', sku: few, available: 0 },
+      { offerExternalId: 'offer-plenty', sku: plenty, available: 10 },
+    ])
+    const offers = await ctx.db.offer.findMany({ where: { organizationId, connectionId }, orderBy: { externalId: 'asc' } })
+    expect(offers.map((offer) => [offer.externalId, offer.lastPushedAvailable])).toEqual([
+      ['offer-few', 0],
+      ['offer-plenty', 10],
+    ])
+
+    await updateChannelStockRules(ctx, organizationId, connectionId, { safetyBuffer: 0, channelLimit: null }, user)
+    pushes.length = 0
+    await stockPushJob.handler(ctx, { organizationId, connectionId }, run)
+    expect(sorted(pushes[0])).toEqual([
+      { offerExternalId: 'offer-few', sku: few, available: 2 },
+      { offerExternalId: 'offer-plenty', sku: plenty, available: 20 },
+    ])
   })
 
   it('with nothing to push it calls nothing and records only that it finished', async () => {
