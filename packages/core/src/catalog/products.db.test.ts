@@ -103,7 +103,7 @@ describe.skipIf(!databaseUrl)('products', () => {
     ])
     expect((await getAvailability(ctx.db, org, [product.id])).get(product.id)).toEqual({ stock: 0, reserved: 0, available: 0 })
     const created = await ctx.db.eventLog.findMany({ where: { organizationId: org, type: 'product.created', subjectId: product.id } })
-    expect(created[0]?.payload).toEqual({ sku: 'NEW-1', origin: 'offer', basePrice: null, actor: user })
+    expect(created[0]?.payload).toEqual({ sku: 'NEW-1', origin: 'offer', actor: user })
   })
 
   it('reads the Offers only once they are locked: an Offer linked concurrently is skipped, no Product created', async () => {

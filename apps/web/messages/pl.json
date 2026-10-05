@@ -139,7 +139,7 @@
     "title": "Oferty bez produktu",
     "description": "Oferty pobrane z kanałów, których SKU nie pasuje do żadnego produktu.",
     "createTitle": "Utwórz produkty z ofert",
-    "createDescription": "Zaznacz oferty z SKU w tabeli. Produkt dostanie SKU i nazwę oferty, stan 0 oraz, jeśli kanał ją podał, cenę oferty jako cenę bazową.",
+    "createDescription": "Zaznacz oferty z SKU w tabeli. Produkt dostanie SKU i nazwę oferty oraz stan 0. Nie dostanie ceny: ustaw ją na produkcie i dopiero wtedy trafi do kanałów.",
     "create": "Utwórz produkty z zaznaczonych",
     "creating": "Tworzenie…",
     "created": "{count, plural, one {Utworzono # produkt.} few {Utworzono # produkty.} many {Utworzono # produktów.} other {Utworzono # produktu.}}",
@@ -188,7 +188,8 @@
       "currencyPlaceholder": "PLN",
       "save": "Zapisz cenę",
       "clear": "Usuń cenę",
-      "saved": "Zapisano. Kanały wkrótce dostaną nową cenę."
+      "saved": "Zapisano. Kanały wkrótce dostaną nową cenę.",
+      "useChannelPrice": "Użyj ceny z kanału ({price})"
     },
     "status": {
       "not_linked": "Nie wysłano: oferta nie jest połączona z produktem.",
@@ -409,7 +410,8 @@
       "unmatched_lines": "Najpierw połącz wszystkie pozycje z produktami.",
       "already_linked": "Ta pozycja jest już połączona.",
       "unknown_connector": "Nieznany konektor.",
-      "invalid_config": "Sprawdź poprawność pól."
+      "invalid_config": "Sprawdź poprawność pól.",
+      "invalid_price": "Ta cena nie pasuje do swojej waluty: sprawdź miejsca po przecinku."
     },
     "unexpected": "Coś poszło nie tak. Spróbuj ponownie.",
     "invalidInput": "Sprawdź poprawność pól.",
@@ -439,7 +441,9 @@
     "offersTooMany": "Zaznacz najwyżej 200 ofert naraz.",
     "fieldRequired": "To pole jest wymagane.",
     "fieldInvalid": "Nieprawidłowa wartość.",
-    "priceInvalid": "Podaj cenę większą od 0, np. 49,99, z najwyżej 4 miejscami po przecinku.",
+    "priceInvalid": "Podaj cenę większą od 0, np. 49,99.",
+    "priceAmbiguous": "Niejednoznaczne: trzy cyfry po separatorze. Wpisz 1234, jeśli chodzi o tysiące, albo podaj mniej miejsc po przecinku.",
+    "priceTooManyDecimals": "Za dużo miejsc po przecinku dla tej waluty (PLN ma 2, JPY żadnego).",
     "currencyInvalid": "Podaj trzyliterowy kod waluty, np. PLN."
   }
 }

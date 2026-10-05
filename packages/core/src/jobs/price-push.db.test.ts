@@ -2,7 +2,7 @@ import { defineConnector, TransientError, type OfferPrice } from '@hanza/connect
 import { describe, expect, it } from 'vitest'
 import { z } from 'zod'
 import { upsertOffers } from '../catalog/offers'
-import { createProduct } from '../catalog/products'
+import { createProduct, createProductsFromOffers, getProduct } from '../catalog/products'
 import { createConnection } from '../connections/connections'
 import { setBasePrice, setOfferPrice } from '../prices/set-price'
 import { listOffersAwaitingPricePush, markOffersPriceHandled } from '../prices/push'
@@ -142,6 +142,44 @@ describe.skipIf(!databaseUrl)('price.push', () => {
     await markOffersPriceHandled(ctx, organizationId, listed.map((item) => ({ offerId: item.offerId, seq: item.seq, pushed: item.effective })))
     const row = await offer('pln')
     expect(row.pricePushSeq).toBeGreaterThan(row.pricePushedSeq)
+  })
+
+  it('creating a Product from one Channel\'s Offer pushes no price to any Channel until a person sets one', async () => {
+    const ctx = context()
+    const organizationId = await createTestOrganization(ctx.db)
+    const connection = async (name: string) =>
+      (await createConnection(ctx, organizationId, { connectorId: 'price-push-channel', name, config: {}, credentials: {} }, user)).connectionId
+    const marketplace = await connection('Marketplace')
+    const shop = await connection('Shop')
+    const sku = uniqueSku()
+    await upsertOffers(ctx, organizationId, marketplace, [{ externalId: 'm-1', sku, name: 'Mug', url: null, price: pln('39.99') }], new Date())
+    await upsertOffers(ctx, organizationId, shop, [{ externalId: 's-1', sku, name: 'Mug', url: null, price: pln('25.00') }], new Date())
+    const marketplaceOffer = await ctx.db.offer.findFirstOrThrow({ where: { organizationId, connectionId: marketplace } })
+    const pushBoth = async () => {
+      for (const connectionId of [marketplace, shop]) await pricePushJob.handler(ctx, { organizationId, connectionId }, run)
+    }
+
+    const { created } = await createProductsFromOffers(ctx, organizationId, [marketplaceOffer.id], user)
+    const productId = created[0]!
+    // The shop's Offer was linked by SKU too, so both are marked for a push...
+    expect(await ctx.db.offer.count({ where: { organizationId, productId } })).toBe(2)
+    pushes.length = 0
+    await pushBoth()
+    // ...but neither Channel receives the marketplace's price.
+    expect(pushes).toEqual([])
+    const product = await getProduct(ctx, organizationId, productId)
+    expect(product?.basePrice).toBeNull()
+    expect(product?.offers.map((offer) => [offer.externalId, offer.channelPrice, offer.priceStatus])).toEqual([
+      ['m-1', pln('39.99'), 'no_price'],
+      ['s-1', pln('25'), 'no_price'],
+    ])
+
+    await setBasePrice(ctx, organizationId, productId, pln('29.90'), user)
+    await pushBoth()
+    expect(pushes.flat().map((price) => [price.offerExternalId, price.price])).toEqual([
+      ['m-1', pln('29.9')],
+      ['s-1', pln('29.9')],
+    ])
   })
 
   it('does nothing for a connector without price.push or for a payload naming another organization', async () => {

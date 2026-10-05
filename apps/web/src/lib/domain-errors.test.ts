@@ -4,7 +4,7 @@ import { catalogues } from '@/i18n/catalogues'
 import { translatorFor } from '@/i18n/testing'
 import { domainErrorMessage, errorMessage } from './domain-errors'
 
-const codes: DomainErrorCode[] = ['not_found', 'sku_taken', 'invalid_transition', 'unmatched_lines', 'already_linked', 'unknown_connector', 'invalid_config']
+const codes: DomainErrorCode[] = ['not_found', 'sku_taken', 'invalid_transition', 'unmatched_lines', 'already_linked', 'unknown_connector', 'invalid_config', 'invalid_price']
 const t = translatorFor('en')
 
 describe('errorMessage', () => {

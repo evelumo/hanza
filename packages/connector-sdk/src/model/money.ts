@@ -9,3 +9,15 @@ export const moneySchema = z.object({
 })
 
 export type Money = z.infer<typeof moneySchema>
+
+/**
+ * Decimal places a currency uses (its ISO 4217 minor units, e.g. 2 for PLN, 0 for JPY, 3 for KWD), as the runtime's
+ * Intl data knows them; 2 for a code Intl does not know.
+ */
+export function currencyMinorUnits(currency: string): number {
+  try {
+    return new Intl.NumberFormat('en', { style: 'currency', currency }).resolvedOptions().maximumFractionDigits ?? 2
+  } catch {
+    return 2
+  }
+}

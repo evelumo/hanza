@@ -2,7 +2,7 @@ import { defineConnector, type Offer } from '@hanza/connector-sdk'
 import { describe, expect, it } from 'vitest'
 import { z } from 'zod'
 import { getOffer, linkOffer, upsertOffers } from '../catalog/offers'
-import { createProduct, createProductsFromOffers, getProduct } from '../catalog/products'
+import { createProduct, getProduct } from '../catalog/products'
 import { createConnection } from '../connections/connections'
 import { DomainError } from '../errors'
 import { createTestOrganization } from '../testing/context'
@@ -100,11 +100,12 @@ describe.skipIf(!databaseUrl)('prices', () => {
     ])
   })
 
-  it('rejects a zero, negative or malformed price before touching the database', async () => {
+  it('rejects a zero, negative or malformed price, or one with more decimals than its currency, before touching the database', async () => {
     const { ctx, org, productId } = await setup()
-    for (const price of [pln('0'), pln('-1'), pln('1.23456'), { amount: '1', currency: 'zł' }]) {
-      await expect(setBasePrice(ctx, org, productId, price, user)).rejects.toBeInstanceOf(RangeError)
+    for (const price of [pln('0'), pln('-1'), pln('1.23456'), pln('1.005'), { amount: '45.5', currency: 'JPY' }, { amount: '1', currency: 'zł' }]) {
+      expect((await domainError(setBasePrice(ctx, org, productId, price, user))).code).toBe('invalid_price')
     }
+    expect((await domainError(setOfferPrice(ctx, org, 'any-offer', { amount: '45.5', currency: 'JPY' }, user))).code).toBe('invalid_price')
     expect(await events(ctx, org, 'product.price_changed')).toEqual([])
   })
 
@@ -153,29 +154,6 @@ describe.skipIf(!databaseUrl)('prices', () => {
     const unlinked = await offer('unlinked')
     await linkOffer(ctx, org, unlinked.id, productId, user)
     expect((await offer('unlinked')).pricePushSeq).toBe(unlinked.pricePushSeq + 1)
-    expect(ctx.queue.waiting.map((job) => job.name)).toContain('price.push')
-  })
-
-  it('creating a Product from an Offer seeds its base price from the Channel price', async () => {
-    const { ctx, org, connectionId } = await setup()
-    const sku = uniqueSku('SEED')
-    await upsertOffers(
-      ctx,
-      org,
-      connectionId,
-      [
-        { externalId: 'seed', sku, name: 'Seed', url: null, price: pln('12.30') },
-        { externalId: 'free', sku: `${sku}-FREE`, name: 'Free', url: null, price: pln('0') },
-      ],
-      new Date(),
-    )
-    const ids = await ctx.db.offer.findMany({ where: { organizationId: org, externalId: { in: ['seed', 'free'] } }, orderBy: { externalId: 'desc' } })
-    const { created } = await createProductsFromOffers(ctx, org, ids.map((offer) => offer.id), user)
-    const products = await Promise.all(created.map((id) => getProduct(ctx, org, id)))
-    expect(products.map((product) => [product?.sku, product?.basePrice])).toEqual([
-      [sku, pln('12.3')],
-      [`${sku}-FREE`, null],
-    ])
     expect(ctx.queue.waiting.map((job) => job.name)).toContain('price.push')
   })
 

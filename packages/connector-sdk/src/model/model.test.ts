@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { offerSchema } from './offer'
-import { moneySchema } from './money'
+import { currencyMinorUnits, moneySchema } from './money'
 import { orderSchema } from './order'
 import { offerPriceSchema } from './price'
 import { stockLevelSchema } from './stock'
@@ -55,6 +55,12 @@ describe('moneySchema', () => {
 
   it.each(['pln', 'PL', 'PLNN', ''])('rejects the currency "%s"', (currency) => {
     expect(moneySchema.safeParse({ amount: '1.00', currency }).success).toBe(false)
+  })
+})
+
+describe('currencyMinorUnits', () => {
+  it.each([['PLN', 2], ['EUR', 2], ['JPY', 0], ['KWD', 3], ['XYZ', 2]] as const)('%s has %i', (currency, units) => {
+    expect(currencyMinorUnits(currency)).toBe(units)
   })
 })
 

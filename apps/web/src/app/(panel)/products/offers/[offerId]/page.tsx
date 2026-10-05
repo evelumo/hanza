@@ -100,6 +100,7 @@ export default async function OfferPage({ params }: { params: Promise<{ offerId:
               id={offer.id}
               price={offer.priceOverride}
               defaultCurrency={offer.channelPrice?.currency ?? offer.product.basePrice?.currency ?? null}
+              suggestion={offer.channelPrice ? { price: offer.channelPrice, label: format.money(offer.channelPrice) } : null}
             />
           </div>
         ) : (

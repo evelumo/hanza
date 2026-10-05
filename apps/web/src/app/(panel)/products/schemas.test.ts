@@ -60,11 +60,29 @@ describe('price forms', () => {
       amount: '49.90',
       currency: 'PLN',
     })
-    expect(setOfferPriceSchema.parse({ offerId: 'o', intent: 'set', amount: '0.0001', currency: 'EUR' })).toMatchObject({ amount: '0.0001' })
+    expect(setOfferPriceSchema.parse({ offerId: 'o', intent: 'set', amount: '1.234', currency: 'kwd' })).toMatchObject({ amount: '1.234', currency: 'KWD' })
   })
 
-  it.each(['', '0', '0,00', '-1', '1.23456', '1e3', 'abc', '1.000.000', '1000000000000000'])('reject the amount %j', (amount) => {
-    expect(setBasePriceSchema.safeParse({ productId: 'p', intent: 'set', amount, currency: 'PLN' }).success).toBe(false)
+  it.each([
+    ['', 'validation.priceInvalid'],
+    ['0', 'validation.priceInvalid'],
+    ['-1', 'validation.priceInvalid'],
+    ['1e3', 'validation.priceInvalid'],
+    ['1000000000000000', 'validation.priceInvalid'],
+    ['1,234', 'validation.priceAmbiguous'],
+    ['1.234', 'validation.priceAmbiguous'],
+    ['1.23456', 'validation.priceTooManyDecimals'],
+  ])('reject the amount %j in PLN on the amount field', (amount, message) => {
+    const result = setBasePriceSchema.safeParse({ productId: 'p', intent: 'set', amount, currency: 'PLN' })
+    expect(result.error?.issues.map((issue) => [issue.path.join('.'), issue.message])).toEqual([['amount', message]])
+  })
+
+  it('read the amount for its currency', () => {
+    const parse = (amount: string, currency: string) => setOfferPriceSchema.safeParse({ offerId: 'o', intent: 'set', amount, currency })
+    expect(parse('45.5', 'JPY').success).toBe(false)
+    expect(parse('45', 'JPY').data).toMatchObject({ amount: '45', currency: 'JPY' })
+    expect(parse('1 234,50', 'PLN').data).toMatchObject({ amount: '1234.50' })
+    expect(parse('1,234.50', 'PLN').data).toMatchObject({ amount: '1234.50' })
   })
 
   it.each(['', 'PL', 'PLNN', 'zł', '123'])('reject the currency %j', (currency) => {

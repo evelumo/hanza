@@ -1,5 +1,6 @@
-import { moneySchema, type Money } from '@hanza/connector-sdk'
+import { currencyMinorUnits, moneySchema, type Money } from '@hanza/connector-sdk'
 import { Prisma } from '@hanza/db'
+import { DomainError } from '../errors'
 
 /** Why an Offer's price is not sent to its Channel. */
 export type PriceSkipReason = 'no_price' | 'currency_unknown' | 'currency_mismatch'
@@ -8,14 +9,19 @@ export type PriceSkipReason = 'no_price' | 'currency_unknown' | 'currency_mismat
 export type PriceStatus = 'not_linked' | 'unsupported' | PriceSkipReason | 'pending' | 'pushed'
 
 /**
- * A price as Hanza stores it: a valid Money with an amount above zero, the amount in its shortest form
- * ("10.50" → "10.5") so equal prices compare equal. Throws RangeError otherwise.
+ * A price as Hanza stores it: a valid Money with an amount above zero and no more decimal places than the currency
+ * has (45.5 JPY is refused, never rounded), the amount in its shortest form ("10.50" → "10.5") so equal prices
+ * compare equal. Throws `DomainError('invalid_price')` otherwise.
  */
 export function parsePrice(input: Money): Money {
   const parsed = moneySchema.safeParse(input)
-  if (!parsed.success) throw new RangeError('A price needs a decimal amount (at most 15 + 4 digits) and an ISO currency')
+  if (!parsed.success) throw new DomainError('invalid_price', 'A price needs a decimal amount (at most 15 + 4 digits) and an ISO currency')
   const amount = new Prisma.Decimal(parsed.data.amount)
-  if (amount.lte(0)) throw new RangeError('A price must be greater than 0')
+  if (amount.lte(0)) throw new DomainError('invalid_price', 'A price must be greater than 0')
+  const minorUnits = currencyMinorUnits(parsed.data.currency)
+  if (amount.decimalPlaces() > minorUnits) {
+    throw new DomainError('invalid_price', `${parsed.data.currency} prices have at most ${minorUnits} decimal places`)
+  }
   return { amount: amount.toFixed(), currency: parsed.data.currency }
 }
 

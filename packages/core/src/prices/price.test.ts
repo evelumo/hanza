@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { DomainError } from '../errors'
 import { decidePricePush, effectivePrice, moneyFromColumns, parsePrice, priceStatus, sameMoney } from './price'
 
 const pln = (amount: string) => ({ amount, currency: 'PLN' })
@@ -8,18 +9,37 @@ describe('parsePrice', () => {
   it.each([
     ['10.50', '10.5'],
     ['0010', '10'],
-    ['0.0001', '0.0001'],
-    ['999999999999999.9999', '999999999999999.9999'],
+    ['0.01', '0.01'],
+    ['999999999999999.99', '999999999999999.99'],
   ])('keeps %s as %s', (amount, expected) => {
     expect(parsePrice(pln(amount))).toEqual(pln(expected))
   })
 
+  const invalid = (input: { amount: string; currency: string }) => {
+    let error: unknown
+    try {
+      parsePrice(input)
+    } catch (caught) {
+      error = caught
+    }
+    expect(error).toBeInstanceOf(DomainError)
+    expect((error as DomainError).code).toBe('invalid_price')
+  }
+
   it.each(['0', '0.0000', '-1', '1.00001', '1,5', '', '1e3'])('rejects the amount %j', (amount) => {
-    expect(() => parsePrice(pln(amount))).toThrow(RangeError)
+    invalid(pln(amount))
   })
 
   it('rejects a currency that is not three uppercase letters', () => {
-    expect(() => parsePrice({ amount: '1', currency: 'pln' })).toThrow(RangeError)
+    invalid({ amount: '1', currency: 'pln' })
+  })
+
+  it('refuses more decimal places than the currency has, instead of rounding', () => {
+    invalid(pln('1.005'))
+    invalid({ amount: '45.5', currency: 'JPY' })
+    expect(parsePrice({ amount: '45.0', currency: 'JPY' })).toEqual({ amount: '45', currency: 'JPY' })
+    expect(parsePrice({ amount: '1.234', currency: 'KWD' })).toEqual({ amount: '1.234', currency: 'KWD' })
+    invalid({ amount: '1.2345', currency: 'KWD' })
   })
 })
 

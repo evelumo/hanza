@@ -14,7 +14,7 @@ import { catalogues } from '@/i18n/catalogues'
 import { translatorFor } from '@/i18n/testing'
 import { isMessageKey } from '@/i18n/keys'
 import { invalidInput } from './action-state'
-import { currencyCodeSchema, idSchema, priceAmountSchema, skuSchema, unitsSchema } from './schemas'
+import { currencyCodeSchema, idSchema, skuSchema, unitsSchema } from './schemas'
 
 describe('idSchema', () => {
   it('accepts ids up to 64 characters and rejects empty, longer and non-string values', () => {
@@ -32,6 +32,8 @@ describe('validation messages', () => {
     { orderId: 'a'.repeat(99) },
     { orderId: 1, productId: 1, offerId: 1, offerIds: 'x', status: 'zzz', sku: 1, stock: 1, name: 1, orderLineId: 1, connectorId: 1 },
     { intent: 'set', productId: 'p', offerId: 'o', amount: '0', currency: 'zł' },
+    { intent: 'set', productId: 'p', offerId: 'o', amount: '1,234', currency: 'PLN' },
+    { intent: 'set', productId: 'p', offerId: 'o', amount: '45.5', currency: 'JPY' },
     { intent: 'set', amount: 1, currency: 1 },
     { intent: 'zzz' },
   ]
@@ -46,7 +48,6 @@ describe('validation messages', () => {
     setStockSchema,
     linkOfferSchema,
     createProductsFromOffersSchema,
-    priceAmountSchema,
     currencyCodeSchema,
     setBasePriceSchema,
     setOfferPriceSchema,

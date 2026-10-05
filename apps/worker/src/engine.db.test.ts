@@ -208,9 +208,13 @@ describe.skipIf(!databaseUrl)('sync engine end to end (real Postgres, in-memory 
 
     const before = ctx.queue.enqueued.length
     await ctx.queue.enqueue(syncTickRef, {})
-    await ctx.queue.drain(ctx, jobs)
+    expect(await ctx.queue.drain(ctx, jobs, { maxJobs: 1 })).toEqual({ ran: 1, failed: [] })
     const fromTick = ctx.queue.enqueued.slice(before + 1)
     expect(fromTick.filter((job) => (job.payload as { connectionId: string }).connectionId === expired)).toEqual([])
+    // The tick reads every Connection in the shared test database: run only this organization's jobs.
+    const own = ctx.queue.waiting.filter((job) => (job.payload as { organizationId?: string }).organizationId === org)
+    ctx.queue.waiting.splice(0, ctx.queue.waiting.length, ...own)
+    await ctx.queue.drain(ctx, jobs)
 
     // "Synchronise now" still runs it; with the key still expired, nothing turns it back to ok.
     await requestSync(ctx, org, expired)

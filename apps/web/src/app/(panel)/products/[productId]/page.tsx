@@ -37,6 +37,9 @@ export default async function ProductPage({ params }: { params: Promise<{ produc
   const { productId } = await params
   const product = await getProduct(getContext(), organizationId, productId)
   if (!product) notFound()
+  // Offered as a suggestion only when every Channel reports the same price, so no Channel's price is picked over another's.
+  const channelPrices = [...new Map(product.offers.flatMap((offer) => (offer.channelPrice ? [[`${offer.channelPrice.amount} ${offer.channelPrice.currency}`, offer.channelPrice] as const] : []))).values()]
+  const channelPrice = channelPrices.length === 1 ? channelPrices[0]! : null
 
   return (
     <div className="space-y-6">
@@ -79,6 +82,7 @@ export default async function ProductPage({ params }: { params: Promise<{ produc
             id={product.id}
             price={product.basePrice}
             defaultCurrency={product.offers.find((offer) => offer.channelPrice)?.channelPrice?.currency ?? null}
+            suggestion={channelPrice ? { price: channelPrice, label: format.money(channelPrice) } : null}
           />
         </div>
       </Section>

@@ -5,7 +5,7 @@ import { DomainError, isUniqueViolation } from '../errors'
 import { appendEvent } from '../events'
 import { rematchAfterCommit } from '../orders/rematch'
 import { describeOfferPrice, offerPriceColumns, type OfferPriceView } from '../prices/offer-price'
-import { moneyFromColumns, parsePrice } from '../prices/price'
+import { moneyFromColumns } from '../prices/price'
 import { requestPricePushAfterCommit } from '../prices/push'
 import { getAvailability } from '../stock/availability'
 import { requestStockPushAfterCommit } from '../stock/push'
@@ -213,8 +213,9 @@ export async function getProduct(ctx: Context, organizationId: string, productId
 }
 
 /**
- * One Product per Offer (its SKU and name, Stock 0, and the Offer's Channel price as base price: the one-time
- * seeding of ADR 0011), the Offer linked by SKU. One transaction for all.
+ * One Product per Offer (its SKU and name, Stock 0, no base price), the Offer linked by SKU. One transaction for all.
+ * The Channel price is never copied into the base price: auto-linking would push one Channel's price to every other
+ * Channel selling the SKU without anyone having set it (ADR 0011).
  */
 export async function createProductsFromOffers(
   ctx: Context,
@@ -238,7 +239,7 @@ export async function createProductsFromOffers(
       FOR UPDATE`
     const offers = await tx.offer.findMany({
       where: { organizationId, id: { in: requested } },
-      select: { id: true, sku: true, name: true, productId: true, channelPriceAmount: true, channelPriceCurrency: true },
+      select: { id: true, sku: true, name: true, productId: true },
     })
     const skus = [...new Set(offers.map((offer) => offer.sku).filter((sku): sku is string => sku !== null))]
     const existing = await tx.product.findMany({ where: { organizationId, sku: { in: skus } }, select: { sku: true } })
@@ -246,7 +247,7 @@ export async function createProductsFromOffers(
 
     const byId = new Map(offers.map((offer) => [offer.id, offer]))
     const skipped: Array<{ offerId: string; reason: CreateProductsSkipReason }> = []
-    const toCreate: Array<{ offerId: string; sku: string; name: string; basePrice: Money | null }> = []
+    const toCreate: Array<{ offerId: string; sku: string; name: string }> = []
     for (const offerId of requested) {
       const offer = byId.get(offerId)
       const sku = offer?.sku ?? null
@@ -256,19 +257,13 @@ export async function createProductsFromOffers(
       else if (taken.has(sku)) skipped.push({ offerId, reason: 'sku_taken' })
       else {
         taken.add(sku)
-        toCreate.push({ offerId, sku, name: offer.name, basePrice: seedPrice(moneyFromColumns(offer.channelPriceAmount, offer.channelPriceCurrency)) })
+        toCreate.push({ offerId, sku, name: offer.name })
       }
     }
 
     // skipDuplicates covers a Product created concurrently since the check above.
     const products = await tx.product.createManyAndReturn({
-      data: toCreate.map((item) => ({
-        organizationId,
-        sku: item.sku,
-        name: item.name,
-        basePriceAmount: item.basePrice?.amount ?? null,
-        basePriceCurrency: item.basePrice?.currency ?? null,
-      })),
+      data: toCreate.map((item) => ({ organizationId, sku: item.sku, name: item.name })),
       skipDuplicates: true,
       select: { id: true, sku: true },
     })
@@ -288,7 +283,7 @@ export async function createProductsFromOffers(
         organizationId,
         type: 'product.created',
         subject: { type: 'product', id: productId },
-        payload: { sku: item.sku, origin: 'offer', basePrice: item.basePrice, actor },
+        payload: { sku: item.sku, origin: 'offer', actor },
       })
       const linked = await tx.offer.updateManyAndReturn({
         where: { id: item.offerId, organizationId, productId: null },
@@ -314,14 +309,4 @@ export async function createProductsFromOffers(
   await requestPricePushAfterCommit(ctx, organizationId, result.connectionIds)
   if (result.created.length > 0) await rematchAfterCommit(ctx, organizationId, { productIds: result.created.join(',') })
   return { created: result.created, skipped: result.skipped }
-}
-
-/** A Channel price is a usable base price only if Hanza would accept it as one (a zero price is not). */
-function seedPrice(channelPrice: Money | null): Money | null {
-  if (channelPrice === null) return null
-  try {
-    return parsePrice(channelPrice)
-  } catch {
-    return null
-  }
 }

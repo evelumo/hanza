@@ -139,7 +139,7 @@
     "title": "Offers without a product",
     "description": "Offers pulled from channels whose SKU does not match any product.",
     "createTitle": "Create products from offers",
-    "createDescription": "Select the offers that have a SKU in the table. A product gets the offer's SKU and name, a stock of 0 and, if the channel reported one, the offer's price as its base price.",
+    "createDescription": "Select the offers that have a SKU in the table. A product gets the offer's SKU and name and a stock of 0. It gets no price: set one on the product, and only then is it sent to the channels.",
     "create": "Create products from selected",
     "creating": "Creating…",
     "created": "{count, plural, one {Created # product.} other {Created # products.}}",
@@ -188,7 +188,8 @@
       "currencyPlaceholder": "PLN",
       "save": "Save price",
       "clear": "Remove price",
-      "saved": "Saved. The channels will receive the new price shortly."
+      "saved": "Saved. The channels will receive the new price shortly.",
+      "useChannelPrice": "Use the channel price ({price})"
     },
     "status": {
       "not_linked": "Not sent: the offer is not linked to a product.",
@@ -409,7 +410,8 @@
       "unmatched_lines": "Link all the lines to products first.",
       "already_linked": "This line is already linked.",
       "unknown_connector": "Unknown connector.",
-      "invalid_config": "Check the fields."
+      "invalid_config": "Check the fields.",
+      "invalid_price": "This price does not fit its currency: check the decimal places."
     },
     "unexpected": "Something went wrong. Please try again.",
     "invalidInput": "Check the fields.",
@@ -439,7 +441,9 @@
     "offersTooMany": "Select at most 200 offers at a time.",
     "fieldRequired": "This field is required.",
     "fieldInvalid": "Invalid value.",
-    "priceInvalid": "Enter a price above 0, e.g. 49.99, with at most 4 decimal places.",
+    "priceInvalid": "Enter a price above 0, e.g. 49.99.",
+    "priceAmbiguous": "Ambiguous: three digits after the separator. Write 1234 for a thousands amount, or use fewer decimal places.",
+    "priceTooManyDecimals": "Too many decimal places for this currency (PLN has 2, JPY none).",
     "currencyInvalid": "Enter a three-letter currency code, e.g. PLN."
   }
 }
