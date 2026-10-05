@@ -27,7 +27,8 @@ Items marked **planned** do not exist yet. Do not assume them.
 | `packages/connectors/<id>` | One package per connector, `@hanza/connector-<id>`. Only `fake` (`@hanza/connector-fake`, an in-memory Channel for tests) so far. |
 | `packages/connector-registry` | `@hanza/connector-registry` — the list of connectors this build knows; the only package that depends on connectors. The apps pass it to `createContext({ connectors })`. |
 | `scripts/check-boundaries.mjs` | Enforces the dependency boundaries below. |
-| `.ai/specs`, `.ai/skills` | Specs (spec-first workflow) and agent skills. |
+| `.ai/skills` | Agent skills. |
+| `docs/adr`, `CONTEXT-MAP.md`, `*/CONTEXT.md` | Decisions (ADRs), and the glossaries of the domain vocabulary. Specs are GitHub issues, not files. |
 | `docs/plan-architektury.html` | Architecture plan and roadmap (Polish). |
 
 ## Commands
@@ -55,10 +56,10 @@ Config: copy `.env.example` to `.env` at the repo root (read by web, worker and 
 | Adding a DB table | New `packages/db/prisma/schema/<module>.prisma` (or extend the module's file); tenant-owned tables get `organizationId` + relation to `Organization` + an index starting with it (see `EventLog` in `core.prisma`). Then `pnpm db:migrate`, commit the migration. Add the back-relation to `Organization` in `auth.prisma`. |
 | Adding a background job | `packages/core/src/jobs/<name>.ts` using `defineJob` (see `system-ping.ts`): dotted name, zod payload including `organizationId`. Register it in `packages/core/src/registry.ts`, export from `index.ts`. Enqueue with `ctx.queue.enqueue(job, payload)`. Add a Vitest test for non-trivial logic. |
 | Adding a panel page / API route / server action | `apps/web/src/app/...`. Page groups: `(auth)` public, `(panel)` behind login. Call `requireTenant()` (`apps/web/src/lib/session.ts`) first and scope every query by the returned `organizationId`. Get dependencies from `getContext()` (`lib/context.ts`). Validate input with zod. See `(panel)/dashboard/` for page + server action + queue, `(panel)/products/` for list/detail pages with `useActionState` forms (`components/action-form.tsx`), and `lib/domain-errors.ts` for the messages of `DomainError` codes. Server actions return `{ error }` instead of throwing for expected failures, in the request's locale. **Adding a string:** add the key to `apps/web/messages/en.json` (source of truth, keys are type-checked) and the same key to `pl.json`, then use the translator: `await getT()` in server components and actions (`@/i18n/server`), `useT()` in client components and sync ones (`@/i18n/use-t`); use ICU plurals for counts and `lib/formatters.ts` / `lib/format.ts` for dates, numbers and money. Zod schemas carry message keys (`messageKey('validation.…')`), never text. Never hard-code UI text. |
-| Adding a connector | `.ai/skills/add-connector/SKILL.md`, `packages/connectors/README.md`, `packages/connector-sdk/src`. Make it available to the apps with a dependency and one line in `packages/connector-registry/src/index.ts`. Need an SDK or core change to finish? Stop and write a spec. |
+| Adding a connector | `.ai/skills/add-connector/SKILL.md`, `packages/connectors/README.md`, `packages/connector-sdk/src`. Make it available to the apps with a dependency and one line in `packages/connector-registry/src/index.ts`. Need an SDK or core change to finish? Stop and write a spec (a GitHub issue). |
 | Changing auth | `apps/web/src/lib/auth.ts` (Better Auth config), `auth-client.ts`, `session.ts`, `packages/db/prisma/schema/auth.prisma`. Ask first. After changing Better Auth plugins, regenerate the reference schema with the Better Auth CLI and write a migration. |
-| Changing the canonical model | `packages/connector-sdk/src/model/*`. Spec first, ask first. Then update every mapper/connector and the DB schema that stores it. |
-| Changing the Connector SDK contract | `packages/connector-sdk/src/connector.ts`. Spec first, ask first. |
+| Changing the canonical model | `packages/connector-sdk/src/model/*`. Spec (a GitHub issue) first, ask first. Then update every mapper/connector and the DB schema that stores it. |
+| Changing the Connector SDK contract | `packages/connector-sdk/src/connector.ts`. Spec (a GitHub issue) first, ask first. |
 | Adding an env variable | Add to the zod schema in `packages/core/src/env.ts`, `.env.example`, the dummy env in `.github/workflows/ci.yml`, and `globalEnv` (or the task's `env`) in `turbo.json` — Turborepo's strict env mode hides undeclared variables from tasks. |
 | Changing the queue | `packages/core/src/queue.ts`. Keep the `JobQueue` interface engine-neutral. |
 
@@ -75,9 +76,13 @@ Config: copy `.env.example` to `.env` at the repo root (read by web, worker and 
 - **Prisma schema is split per module** in `packages/db/prisma/schema/*.prisma`; `base.prisma` holds the generator and datasource only.
 - **Better Auth owns** `user`, `session`, `account`, `verification`, `organization`, `member`, `invitation`. Do not repurpose them for domain data.
 
-## Spec-first
+## Specs, decisions and vocabulary
 
-A non-trivial change (new module, DB model, SDK/canonical-model change, new capability, anything touching auth, stock or sync semantics) starts with a spec in `.ai/specs/YYYY-MM-DD-title.md` from `.ai/specs/TEMPLATE.md`. Get it reviewed before implementing; keep its Changelog current. Small fixes and refactors with no contract change do not need one. See `.ai/specs/README.md`.
+Each kind of design record has one home.
+
+- **Specs are GitHub issues.** A non-trivial change (new module, DB model, SDK/canonical-model change, new capability or public API, anything touching auth, tenancy, stock or sync semantics, the job/queue contract or the shape of `createContext()`, a new production dependency) starts with a spec written as an issue in this repo, created with `gh` as described in `docs/agents/issue-tracker.md`. Give it: summary, problem and non-goals, proposed design (packages and files involved, failure modes, idempotency, alternatives dropped), data model and SDK/API changes (or "None"), tenant and security considerations, test plan, rollout, open questions. Get it reviewed on the issue before implementing, keep it current while you work, and reference it from the PRs. When it ships, comment with the PRs and close it; from then on the code and the ADRs are the source of truth. Bug fixes, refactors with no contract change, copy changes and adding a connector that fits the current SDK need no spec. If a task needs such a change and no spec exists, write the spec and stop for review; do not start on the code.
+- **Decisions go in `docs/adr/`.** Write an ADR (`docs/adr/NNNN-slug.md`: a title, then one to three sentences each on context, decision and why; optional Status, Considered options, Consequences) only for a decision that is hard to reverse, surprising without context, and a real trade-off. Read the ADRs that touch the area you change before editing it, and say so if your change contradicts one.
+- **Vocabulary goes in `CONTEXT.md`.** Domain terms are defined in the glossaries listed in `CONTEXT-MAP.md`; use them, and avoid the words they list under _Avoid_. See `docs/agents/domain.md`.
 
 ## Always / Ask first / Never
 
@@ -87,9 +92,11 @@ A non-trivial change (new module, DB model, SDK/canonical-model change, new capa
 - Run the validation gate below before declaring work done; report anything you could not run.
 - Write or update tests for logic you add (Vitest, deterministic, no real network or accounts).
 - Mark anything unfinished as a `TODO`/**planned**, and keep docs true to the code.
+- Read the ADRs and glossaries for the area before changing it; record a decision that meets the ADR bar in `docs/adr/`.
 
 **Ask first**
 - Adding a production dependency.
+- Starting a non-trivial change before its spec issue has been reviewed.
 - Changing the canonical model or the Connector SDK contract.
 - Changing Better Auth configuration or the auth tables.
 - Touching stock-reservation or inventory-sync logic (races sell goods that do not exist; this is not agent-only code).

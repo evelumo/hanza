@@ -13,4 +13,4 @@ A Channel that lives in memory. It exists to prove the whole path (pull Offers a
 
 ## Using it in tests
 
-Create an isolated instance with `createFakeChannel()`; use `fakeChannel` (the instance the registry exposes) only when the registered connector itself is needed. `reset()` restores the seed and clears recorded calls. The seed data is documented in `src/seed.ts` and in the stage 1 spec (`.ai/specs/2026-10-04-stage-1-core.md`, section 5.6).
+Create an isolated instance with `createFakeChannel()`; use `fakeChannel` (the instance the registry exposes) only when the registered connector itself is needed. `reset()` restores the seed and clears recorded calls. The seed data is documented in `src/seed.ts` (the code is the source of truth; the original design is GitHub issue #18).
