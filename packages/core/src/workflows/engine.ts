@@ -1,11 +1,12 @@
-import type { Db, Prisma, WorkflowRun, WorkflowRunStatus } from '@hanza/db'
+import { isDeepStrictEqual } from 'node:util'
+import type { Db, Prisma, WorkflowRun } from '@hanza/db'
 import type { z } from 'zod'
 import { isUniqueViolation } from '../errors'
 import type { Logger } from '../logger'
 import type { JobQueue } from '../queue'
 import type { AnyWorkflowDefinition } from './define'
 import { enqueueAdvance } from './runner'
-import { ACTIVE_STATUSES, enterStep } from './transitions'
+import { ACTIVE_STATUSES, enterStep, storableValue, toJson, WorkflowValueError, type WorkflowRunStatus } from './transitions'
 
 /** A run, by the id `start` returned or by the caller's `key`. */
 export type WorkflowTarget = { runId: string } | { key: string }
@@ -25,7 +26,9 @@ export interface WorkflowRunView {
   results: Record<string, unknown>
   /** Wake-up time while sleeping, timeout while waiting. */
   wakeAt: Date | null
+  /** Executions of the current step started so far. */
   attempts: number
+  /** Error name, code and one truncated line of the last error; never the full message. */
   lastError: string | null
   createdAt: Date
   updatedAt: Date
@@ -38,14 +41,24 @@ export interface WorkflowRunView {
  * `organizationId`.
  */
 export interface WorkflowEngine {
-  /** Starts a run. With a `key`, at most one run per organization, workflow and key: a repeat returns it with `created: false`. */
+  /**
+   * Starts a run. The input must read back the same from JSON and stay under 256 KB, otherwise this throws
+   * (`WorkflowValueError`, or the schema's `ZodError`). With a `key`, at most one run ever per organization,
+   * workflow and key: a repeat returns that run with `created: false`, even if it has finished, and its
+   * input is ignored.
+   */
   start<TWorkflow extends AnyWorkflowDefinition>(
     workflow: TWorkflow,
     organizationId: string,
     input: z.input<TWorkflow['input']>,
     options?: { key?: string },
   ): Promise<{ runId: string; created: boolean }>
-  /** Sends a signal; it is kept until a wait step for it consumes it. A finished or unknown run is not signalled. */
+  /**
+   * Sends a signal; it is kept until a wait step for it consumes it, so a signal sent twice is consumed by
+   * the next wait step of that name too. A finished or unknown run is not signalled. The payload must read
+   * back the same from JSON, its parsed value must be JSON (it becomes the step's result), and it must stay
+   * under 256 KB, otherwise this throws.
+   */
   signal<TWorkflow extends AnyWorkflowDefinition, TSignal extends SignalName<TWorkflow>>(
     workflow: TWorkflow,
     organizationId: string,
@@ -89,7 +102,7 @@ export function createWorkflowEngine(deps: { db: Db; queue: JobQueue; log: Logge
   return {
     async start(workflow, organizationId, input, options = {}) {
       if (workflow.steps.length === 0) throw new Error(`Workflow "${workflow.name}" has no steps`)
-      const parsed = workflow.input.parse(input) as unknown
+      const { json, parsed } = storableValue(workflow.input, input, `The input of workflow "${workflow.name}"`)
       const now = new Date()
       const entry = enterStep(workflow, -1, { input: parsed, results: {}, now })
       let runId: string
@@ -99,7 +112,7 @@ export function createWorkflowEngine(deps: { db: Db; queue: JobQueue; log: Logge
             organizationId,
             workflow: workflow.name,
             key: options.key ?? null,
-            input: parsed as Prisma.InputJsonValue,
+            input: json as Prisma.InputJsonValue,
             results: {},
             ...entry,
           },
@@ -122,13 +135,17 @@ export function createWorkflowEngine(deps: { db: Db; queue: JobQueue; log: Logge
     async signal(workflow, organizationId, target, signal, payload) {
       const schema = workflow.signals[signal] as z.ZodType | undefined
       if (!schema) throw new Error(`Workflow "${workflow.name}" has no signal "${signal}"`)
-      const parsed = schema.parse(payload) as Prisma.InputJsonValue
+      const what = `The payload of signal "${signal}"`
+      const { json, parsed } = storableValue(schema, payload, what)
+      if (!isDeepStrictEqual(toJson(parsed, what), parsed)) {
+        throw new WorkflowValueError(`${what} must parse to JSON: it becomes the result of the wait step`)
+      }
       const run = await db.workflowRun.findFirst({
         where: { organizationId, workflow: workflow.name, ...targetWhere(target), status: { in: [...ACTIVE_STATUSES] } },
         select: { id: true },
       })
       if (!run) return { delivered: false }
-      await db.workflowSignal.create({ data: { organizationId, runId: run.id, name: signal, payload: parsed } })
+      await db.workflowSignal.create({ data: { organizationId, runId: run.id, name: signal, payload: json as Prisma.InputJsonValue } })
       // Also when not waiting yet: the run may have just entered its wait step and checked before this insert.
       await enqueueAdvance(deps, { organizationId, runId: run.id }, { status: 'waiting', wakeAt: null }, new Date())
       return { delivered: true }
@@ -137,7 +154,7 @@ export function createWorkflowEngine(deps: { db: Db; queue: JobQueue; log: Logge
     async cancel(workflow, organizationId, target) {
       const cancelled = await db.workflowRun.updateMany({
         where: { organizationId, workflow: workflow.name, ...targetWhere(target), status: { in: [...ACTIVE_STATUSES] } },
-        data: { status: 'cancelled', wakeAt: null, finishedAt: new Date(), version: { increment: 1 } },
+        data: { status: 'cancelled', waitingFor: null, wakeAt: null, finishedAt: new Date(), version: { increment: 1 } },
       })
       return { cancelled: cancelled.count > 0 }
     },

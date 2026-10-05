@@ -17,5 +17,5 @@ export {
 } from './engine'
 export { createWorkflowJobs } from './jobs'
 export { workflowCoalesceKeys, workflowStepRef, workflowSweepRef } from './refs'
-export { STEP_LEASE_MS } from './transitions'
+export { MAX_JSON_BYTES, MAX_STEP_ATTEMPTS, STEP_LEASE_MS, WorkflowValueError, type WorkflowRunStatus } from './transitions'
 export { systemCheckWorkflow } from './system-check'

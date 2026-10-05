@@ -13,7 +13,7 @@ export function createWorkflowJobs(workflows: readonly AnyWorkflowDefinition[]):
 
   const step = defineJob({
     ...workflowStepRef,
-    handler: (ctx, payload, run) => advanceRun(ctx, byName, payload, run),
+    handler: (ctx, payload) => advanceRun(ctx, byName, payload),
   })
   const sweep = defineJob({
     ...workflowSweepRef,

@@ -11,7 +11,10 @@ export interface StepArgs<TInput, TResults> {
   input: TInput
   /** Results of the steps before this one, by step name. */
   results: TResults
-  /** 1-based; a throwing step is retried up to `maxAttempts`, then the run fails. */
+  /**
+   * 1-based count of executions of this step, including ones whose worker died; a throwing step is retried
+   * up to `maxAttempts`, then the run fails.
+   */
   attempt: number
   maxAttempts: number
 }
@@ -49,9 +52,10 @@ export interface WorkflowDefinition<
   readonly signals: TSignals
 
   /**
-   * Runs `run` as a job, at least once: it may run again after a crash or an expired lease, so its
-   * effects must be idempotent (deterministic ids, unique keys, read-then-write guards). Its result is
-   * committed exactly once.
+   * Runs `run` as a job, at least once: it runs again after a crash, and a step still running when its
+   * 10-minute lease expires is started again beside it. Its effects must therefore be idempotent
+   * (deterministic ids, unique keys, read-then-write guards). The first execution to finish commits the
+   * result; later ones are discarded. The result must be JSON, at most 256 KB.
    */
   step<TName extends string, TResult extends JsonValue | void>(
     name: TName,
@@ -66,7 +70,8 @@ export interface WorkflowDefinition<
 
   /**
    * Waits for `signal`; its payload becomes the step's result. A signal sent earlier is kept until a wait
-   * step consumes it. When `timeoutMs` passes first, the run fails.
+   * step consumes it, one signal per wait step: a signal sent twice is also consumed by a later wait step
+   * of the same name. When `timeoutMs` passes first, the run fails.
    */
   waitForSignal<TName extends string, TSignal extends string, TPayload extends z.ZodType>(
     name: TName,

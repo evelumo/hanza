@@ -10,8 +10,11 @@ CREATE TABLE "workflow_run" (
     "status" "workflow_run_status" NOT NULL,
     "input" JSONB NOT NULL,
     "currentStep" TEXT,
+    "completedSteps" TEXT[] DEFAULT ARRAY[]::TEXT[],
     "results" JSONB NOT NULL DEFAULT '{}',
+    "waitingFor" TEXT,
     "wakeAt" TIMESTAMP(3),
+    "sweptAt" TIMESTAMP(3),
     "attempts" INTEGER NOT NULL DEFAULT 0,
     "lastError" TEXT,
     "version" INTEGER NOT NULL DEFAULT 0,
@@ -45,6 +48,9 @@ CREATE INDEX "workflow_run_status_wakeAt_idx" ON "workflow_run"("status", "wakeA
 CREATE UNIQUE INDEX "workflow_run_organizationId_workflow_key_key" ON "workflow_run"("organizationId", "workflow", "key");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "workflow_run_organizationId_id_key" ON "workflow_run"("organizationId", "id");
+
+-- CreateIndex
 CREATE INDEX "workflow_signal_organizationId_runId_name_idx" ON "workflow_signal"("organizationId", "runId", "name");
 
 -- CreateIndex
@@ -57,4 +63,4 @@ ALTER TABLE "workflow_run" ADD CONSTRAINT "workflow_run_organizationId_fkey" FOR
 ALTER TABLE "workflow_signal" ADD CONSTRAINT "workflow_signal_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "workflow_signal" ADD CONSTRAINT "workflow_signal_runId_fkey" FOREIGN KEY ("runId") REFERENCES "workflow_run"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "workflow_signal" ADD CONSTRAINT "workflow_signal_organizationId_runId_fkey" FOREIGN KEY ("organizationId", "runId") REFERENCES "workflow_run"("organizationId", "id") ON DELETE CASCADE ON UPDATE CASCADE;
