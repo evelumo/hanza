@@ -97,7 +97,7 @@
       "name": "Name",
       "saveName": "Save name",
       "stockTitle": "Stock",
-      "stockDescription": "Hanza is the source of truth for stock. Set it per warehouse. Each channel receives the Available of the warehouses it counts, less its safety buffer, and at most its channel limit.",
+      "stockDescription": "Hanza is the source of truth for stock. Set it per warehouse. A line of an order is never split between warehouses, so each channel is told the most that one of its warehouses can cover (and never more than all of them together), less its safety buffer, and at most its channel limit.",
       "stockSaved": "Saved. The new stock will be sent to the channels.",
       "saveStock": "Save stock",
       "offersTitle": "Offers",
@@ -288,7 +288,7 @@
     },
     "stockRules": {
       "title": "Stock sent to this channel",
-      "description": "The channel is told the Available of the warehouses it counts (below), less the safety buffer, and never more than the channel limit. Orders reserve against Available, not against this number.",
+      "description": "The channel is told the most that one of the warehouses it counts (below) can cover, less the safety buffer, and never more than the channel limit. Orders reserve against Available, not against this number.",
       "safetyBuffer": "Safety buffer",
       "safetyBufferHint": "Units held back from this channel, for example to keep the last units for your shop.",
       "channelLimit": "Channel limit",
@@ -298,7 +298,7 @@
     },
     "warehouses": {
       "title": "Warehouses counted for this channel",
-      "description": "The channel is told the Available of these warehouses only, and its orders reserve in them: in the first one, by priority, that can cover the whole line. A line none of them can cover is a shortage, even if another warehouse has the goods.",
+      "description": "The channel is told what one of these warehouses can cover, since a line is never split: the largest Available among them, and never more than their total. Its orders reserve in them: in the first one, by priority, that can cover the whole line. A line none of them can cover is a shortage, even if another warehouse has the goods.",
       "all": "All active warehouses",
       "allHint": "Includes warehouses you add later.",
       "only": "Only the chosen warehouses",

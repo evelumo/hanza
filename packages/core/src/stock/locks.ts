@@ -20,6 +20,7 @@ const lockedInTx = new WeakMap<Tx, LockedWarehouse[]>()
  * never locked after a Stock row (that is what keeps a later call from waiting on a newer writer).
  */
 export async function lockStock(tx: Tx, organizationId: string, productIds: string[]): Promise<LockedWarehouse[]> {
+  assertTransaction(tx)
   const ids = [...new Set(productIds)].sort()
   if (ids.length === 0) return lockedInTx.get(tx) ?? []
 
@@ -52,11 +53,23 @@ export async function lockStock(tx: Tx, organizationId: string, productIds: stri
 }
 
 /**
+ * The database client type-checks as a transaction client, but outside a transaction every statement
+ * commits on its own: a row lock would be released at once, and the memo above would live on the
+ * shared client for good. Prisma's transaction client has no `$disconnect`; the full client does.
+ */
+export function assertTransaction(tx: Tx): void {
+  if (typeof (tx as { $disconnect?: unknown }).$disconnect === 'function') {
+    throw new Error('Stock and Order locks need a transaction client, not the database client')
+  }
+}
+
+/**
  * Locks the Order row; returns false when the organization has no such Order. Take it before any Stock lock.
  * NO KEY UPDATE is enough to serialise the Order's writers (it conflicts with itself) without blocking
  * inserts that only reference the Order.
  */
 export async function lockOrder(tx: Tx, organizationId: string, orderId: string): Promise<boolean> {
+  assertTransaction(tx)
   const rows = await tx.$queryRaw<Array<{ id: string }>>`
     SELECT "id" FROM "order" WHERE "id" = ${orderId} AND "organizationId" = ${organizationId} FOR NO KEY UPDATE`
   return rows.length > 0

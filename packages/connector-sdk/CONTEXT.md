@@ -31,11 +31,11 @@ Units of Stock promised to an Order that has not shipped yet, always in exactly 
 _Avoid_: Allocation, hold, booking
 
 **Available**:
-Stock minus open Reservations, per Warehouse; for a set of Warehouses, the sum over them. Each Channel is told its Channel Available, which is worked out from the Available of its Channel Warehouses. It can go below zero when the same last unit sells on two Channels at once.
+Stock minus open Reservations, per Warehouse (for a Product's total, the sum over all Warehouses). Each Channel is told its Channel Available, which is worked out from the Available of its Channel Warehouses. It can go below zero when the same last unit sells on two Channels at once.
 _Avoid_: Free stock, sellable quantity
 
 **Channel Available**:
-The number Hanza tells one Channel for a Product: the Available of its Channel Warehouses minus its Safety buffer, at most its Channel limit. Never below zero and never above that Available. Orders reserve against Available, not against this number (ADR 0011, ADR 0013).
+The number Hanza tells one Channel for a Product: what one of its Channel Warehouses can cover (the largest single Available among them, and never more than their total), minus its Safety buffer, at most its Channel limit. Never below zero. A line is never split, so any line up to this number fits in one Warehouse. Orders reserve against Available, not against this number (ADR 0011, ADR 0013).
 _Avoid_: Channel stock, advertised stock, allocation
 
 **Safety buffer**:
@@ -47,7 +47,7 @@ The most units Hanza tells one Channel for any Product, however large Available 
 _Avoid_: Cap, quota, share, allocation
 
 **Shortage**:
-An Order line that, when it was reserved, no single one of its Order's Channel Warehouses had enough Available for, even if another Warehouse had. Its Reservation then sits in the first of those Warehouses. A person decides what happens next (for example moving the Reservation); Hanza never cancels the Order on its own.
+An Order line that, when it was reserved, no single one of its Order's Channel Warehouses had enough Available for, even if another Warehouse had. Its Reservation then sits in the one of those Warehouses with the most Available, so the fewest units are owed. A person decides what happens next (for example moving the Reservation); Hanza never cancels the Order on its own.
 _Avoid_: Oversell, backorder
 
 ### Orders

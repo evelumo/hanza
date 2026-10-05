@@ -97,7 +97,7 @@
       "name": "Nazwa",
       "saveName": "Zapisz nazwę",
       "stockTitle": "Stan",
-      "stockDescription": "Hanza jest źródłem prawdy o stanie. Ustawiasz go dla każdego magazynu. Każdy kanał dostaje Dostępne z magazynów, które liczy, pomniejszone o bufor bezpieczeństwa i najwyżej tyle, ile wynosi jego limit kanału.",
+      "stockDescription": "Hanza jest źródłem prawdy o stanie. Ustawiasz go dla każdego magazynu. Pozycja zamówienia nigdy nie jest dzielona między magazyny, więc każdy kanał dostaje tyle, ile może pokryć jeden z jego magazynów (i nigdy więcej niż wszystkie razem), pomniejszone o bufor bezpieczeństwa i najwyżej tyle, ile wynosi jego limit kanału.",
       "stockSaved": "Zapisano. Nowy stan zostanie wysłany do kanałów.",
       "saveStock": "Zapisz stan",
       "offersTitle": "Oferty",
@@ -288,7 +288,7 @@
     },
     "stockRules": {
       "title": "Stan wysyłany do tego kanału",
-      "description": "Kanał dostaje Dostępne z magazynów, które liczy (poniżej), pomniejszone o bufor bezpieczeństwa i nigdy więcej niż limit kanału. Zamówienia rezerwują z Dostępnego, a nie z tej liczby.",
+      "description": "Kanał dostaje tyle, ile może pokryć jeden z magazynów, które liczy (poniżej), pomniejszone o bufor bezpieczeństwa i nigdy więcej niż limit kanału. Zamówienia rezerwują z Dostępnego, a nie z tej liczby.",
       "safetyBuffer": "Bufor bezpieczeństwa",
       "safetyBufferHint": "Sztuki, których ten kanał nie widzi, na przykład ostatnie sztuki zostawione dla Twojego sklepu.",
       "channelLimit": "Limit kanału",
@@ -298,7 +298,7 @@
     },
     "warehouses": {
       "title": "Magazyny liczone dla tego kanału",
-      "description": "Kanał dostaje Dostępne tylko z tych magazynów, a jego zamówienia rezerwują w nich: w pierwszym według priorytetu, który pokrywa całą pozycję. Pozycja, której żaden z nich nie pokrywa, jest brakiem, nawet jeśli inny magazyn ma towar.",
+      "description": "Kanał dostaje tyle, ile może pokryć jeden z tych magazynów, bo pozycja nigdy nie jest dzielona: największe Dostępne spośród nich i nigdy więcej niż ich suma. Jego zamówienia rezerwują w nich: w pierwszym według priorytetu, który pokrywa całą pozycję. Pozycja, której żaden z nich nie pokrywa, jest brakiem, nawet jeśli inny magazyn ma towar.",
       "all": "Wszystkie aktywne magazyny",
       "allHint": "Także magazyny dodane później.",
       "only": "Tylko wybrane magazyny",

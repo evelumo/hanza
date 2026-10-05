@@ -65,7 +65,8 @@ function newOrder(externalId: string, sku: Sku, quantity: number): Order {
 // Two Warehouses (main = the default, used first; north) and two fake Channels, each with its own
 // Connection and the fake's seed (fake-order-1 reserves 2 × FAKE-SKU-1; fake-order-2 with SKU-2 and
 // SKU-3 arrives cancelled). The marketplace counts both Warehouses and keeps a Safety buffer of 1
-// with a Channel limit of 9 (#28); the shop counts only north and has no rules.
+// with a Channel limit of 6 (#28); the shop counts only north and has no rules. A Channel is told what
+// one of its Warehouses can cover: min(sum, largest) of their Available (ADR 0013), then its rules.
 describe.skipIf(!databaseUrl)('multiple Warehouses end to end (real Postgres, in-memory queue, two fake Channels)', () => {
   let ctx: TestContext
   let marketplace: FakeChannel
@@ -123,7 +124,7 @@ describe.skipIf(!databaseUrl)('multiple Warehouses end to end (real Postgres, in
   }
 
   /**
-   * Every linked Offer is pushed; the marketplace is never told more than both Warehouses' Available,
+   * Every linked Offer is pushed; the marketplace is never told more than one of its Warehouses can cover,
    * the shop never more than north's, and nobody less than zero.
    */
   async function expectInvariants() {
@@ -133,7 +134,9 @@ describe.skipIf(!databaseUrl)('multiple Warehouses end to end (real Postgres, in
       const fromShop = told(shop)[sku]!
       expect(fromMarketplace).toBeGreaterThanOrEqual(0)
       expect(fromShop).toBeGreaterThanOrEqual(0)
-      expect(fromMarketplace).toBeLessThanOrEqual(Math.max(0, now[sku].main + now[sku].north))
+      const { main, north } = now[sku]
+      // Never above what one Warehouse can cover, nor above the sum (owed units count).
+      expect(fromMarketplace).toBeLessThanOrEqual(Math.max(0, Math.min(main + north, Math.max(main, north))))
       expect(fromShop).toBeLessThanOrEqual(Math.max(0, now[sku].north))
     }
     const offers = await ctx.db.offer.findMany({ where: { organizationId: org, productId: { not: null } } })
@@ -156,7 +159,7 @@ describe.skipIf(!databaseUrl)('multiple Warehouses end to end (real Postgres, in
     }
   }
 
-  it('1. each Channel is told the Available of its own Warehouses, with the buffer and limit on top', async () => {
+  it('1. each Channel is told what one of its own Warehouses can cover, with the buffer and limit on top', async () => {
     for (const [sku, stock] of [['FAKE-SKU-1', 10], ['FAKE-SKU-2', 0], ['FAKE-SKU-3', 3]] as const) {
       products[sku] = (await createProduct(ctx, org, { sku, name: sku, stock }, user)).productId
     }
@@ -170,7 +173,7 @@ describe.skipIf(!databaseUrl)('multiple Warehouses end to end (real Postgres, in
     connections.marketplace = (await add('fake', 'Marketplace')).connectionId
     connections.shop = (await add('fake-shop', 'Shop')).connectionId
     await updateChannelWarehouses(ctx, org, connections.shop, { all: false, warehouseIds: [warehouses.north] }, user)
-    await updateChannelStockRules(ctx, org, connections.marketplace, { safetyBuffer: 1, channelLimit: 9 }, user)
+    await updateChannelStockRules(ctx, org, connections.marketplace, { safetyBuffer: 1, channelLimit: 6 }, user)
     await drain()
 
     // fake-order-1 (2 × SKU-1): the marketplace's lands in main (first, enough), the shop's in north (its only one).
@@ -181,8 +184,8 @@ describe.skipIf(!databaseUrl)('multiple Warehouses end to end (real Postgres, in
       'FAKE-SKU-2': { main: 0, north: 3 },
       'FAKE-SKU-3': { main: 3, north: 0 },
     })
-    // Marketplace: min(8 + 2 − 1, 9), 3 − 1, 3 − 1. Shop: north only.
-    expect(told(marketplace)).toEqual({ 'FAKE-SKU-1': 9, 'FAKE-SKU-2': 2, 'FAKE-SKU-3': 2 })
+    // Marketplace: min(min(8 + 2, 8) − 1, 6), 3 − 1, 3 − 1. Shop: north only.
+    expect(told(marketplace)).toEqual({ 'FAKE-SKU-1': 6, 'FAKE-SKU-2': 2, 'FAKE-SKU-3': 2 })
     expect(told(shop)).toEqual({ 'FAKE-SKU-1': 2, 'FAKE-SKU-2': 3, 'FAKE-SKU-3': 0 })
     await expectInvariants()
   })
@@ -237,8 +240,8 @@ describe.skipIf(!databaseUrl)('multiple Warehouses end to end (real Postgres, in
     expect((await inWarehouses())['FAKE-SKU-2']).toEqual({ main: 2, north: 3 })
     expect(marketplace.stockPushes.length).toBeGreaterThan(pushes.marketplace)
     expect(shop.stockPushes.length).toBeGreaterThan(pushes.shop)
-    // The marketplace counts both Warehouses (5 − 3 − 1 either way); the shop now sees north's 3 again.
-    expect(told(marketplace)).toMatchObject({ 'FAKE-SKU-2': 4 })
+    // Main 2, north 3: the marketplace is told min(5, 3) − 1 (one line can get at most 3); the shop sees north's 3 again.
+    expect(told(marketplace)).toMatchObject({ 'FAKE-SKU-2': 2 })
     expect(told(shop)).toMatchObject({ 'FAKE-SKU-2': 3 })
 
     // Moving the shop's short SKU-3 line to main clears its Shortage.
@@ -259,8 +262,10 @@ describe.skipIf(!databaseUrl)('multiple Warehouses end to end (real Postgres, in
 
     expect(marketplace.stockPushes).toHaveLength(marketplacePushes)
     const now = await inWarehouses()
-    expect(told(shop)).toEqual(Object.fromEntries(SKUS.map((sku) => [sku, Math.max(0, now[sku].main + now[sku].north)])))
-    expect(told(shop)).toEqual({ 'FAKE-SKU-1': 10, 'FAKE-SKU-2': 5, 'FAKE-SKU-3': 1 })
+    // Without rules the shop is now told min(sum, largest) of main and north.
+    const coverable = (sku: Sku) => Math.max(0, Math.min(now[sku].main + now[sku].north, Math.max(now[sku].main, now[sku].north)))
+    expect(told(shop)).toEqual(Object.fromEntries(SKUS.map((sku) => [sku, coverable(sku)])))
+    expect(told(shop)).toEqual({ 'FAKE-SKU-1': 8, 'FAKE-SKU-2': 3, 'FAKE-SKU-3': 1 })
 
     await updateChannelWarehouses(ctx, org, connections.shop, { all: false, warehouseIds: [warehouses.north] }, user)
     await drain()
@@ -284,7 +289,7 @@ describe.skipIf(!databaseUrl)('multiple Warehouses end to end (real Postgres, in
     expect(after['FAKE-SKU-1']).toEqual(before['FAKE-SKU-1'])
     expect(await inWarehouses()).toMatchObject({ 'FAKE-SKU-1': { main: 8, north: 4 }, 'FAKE-SKU-2': { main: 2, north: 3 } })
     expect(told(shop)).toMatchObject({ 'FAKE-SKU-1': 4, 'FAKE-SKU-2': 3 })
-    expect(told(marketplace)).toMatchObject({ 'FAKE-SKU-1': 9, 'FAKE-SKU-2': 4 })
+    expect(told(marketplace)).toMatchObject({ 'FAKE-SKU-1': 6, 'FAKE-SKU-2': 2 })
     await expectInvariants()
   })
 

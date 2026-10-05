@@ -12,8 +12,8 @@ import { databaseUrl, useTestContext } from '../testing/db-test'
 import { buildOrder, createTestConnection, fact, orderLine, testChannel, user } from '../testing/fixtures'
 import { uniqueApplicationName, watchLockWaits } from '../testing/lock-waits'
 import { createWarehouse, listWarehouses, setWarehouseActive, updateWarehouse } from '../warehouses/warehouses'
-import { getAvailability } from './availability'
-import { channelAvailable } from './channel-available'
+import { getAvailability, getWarehouseAvailability } from './availability'
+import { channelAvailable, channelWarehousesAvailable } from './channel-available'
 import { setStock } from './set-stock'
 import { channelWarehouseIds } from './warehouse'
 
@@ -72,12 +72,12 @@ describe.skipIf(!databaseUrl)('multiple Warehouses under concurrency', () => {
     const org = await createTestOrganization(ctx.db)
     const skus = ['WMIX-1', 'WMIX-2', 'WMIX-3']
     const productIds: string[] = []
-    for (const sku of skus) productIds.push((await createProduct(ctx, org, { sku, name: sku, stock: 4 }, user)).productId)
+    for (const sku of skus) productIds.push((await createProduct(ctx, org, { sku, name: sku, stock: 40 }, user)).productId)
     const main = (await listWarehouses(ctx, org))[0]!.id
     const { warehouseId: north } = await createWarehouse(ctx, org, { name: 'North' }, user)
     // Last in priority and never stocked: deactivating it is always allowed, so it only adds lock traffic.
     const { warehouseId: spare } = await createWarehouse(ctx, org, { name: 'Spare', priority: 1000 }, user)
-    for (const productId of productIds) await setStock(ctx, org, productId, 4, user, north)
+    for (const productId of productIds) await setStock(ctx, org, productId, 40, user, north)
     const connections = [
       await createTestConnection(ctx, org, 'A'),
       await createTestConnection(ctx, org, 'B'),
@@ -93,17 +93,23 @@ describe.skipIf(!databaseUrl)('multiple Warehouses under concurrency', () => {
     const choices = [{ all: true } as const, { all: false, warehouseIds: [main] }, { all: false, warehouseIds: [north, main] }]
     const watcher = watchLockWaits(databaseUrl!, applicationName)
 
+    const outcome = { moved: 0, refused: 0 }
     for (let round = 0; round < 6; round++) {
+      // Stock is ample, so these moves succeed unless their Order is cancelled in the same round.
       const lines = await ctx.db.orderLine.findMany({
         where: { organizationId: org, reservation: { status: 'open' } },
         include: { reservation: true },
-        orderBy: { id: 'asc' },
-        take: 4,
+        orderBy: { id: 'desc' },
+        take: 6,
       })
       const moves = lines.map((line) =>
-        moveReservation(ctx, org, line.id, line.reservation!.warehouseId === main ? north : main, user).catch((error: unknown) => {
-          if (!expected(error)) throw error
-        }),
+        moveReservation(ctx, org, line.id, line.reservation!.warehouseId === main ? north : main, user).then(
+          () => void outcome.moved++,
+          (error: unknown) => {
+            if (!expected(error)) throw error
+            outcome.refused++
+          },
+        ),
       )
       await Promise.all([
         ...moves,
@@ -112,8 +118,8 @@ describe.skipIf(!databaseUrl)('multiple Warehouses under concurrency', () => {
         updateChannelStockRules(ctx, org, connections[round % 3]!, { safetyBuffer: round % 2, channelLimit: round % 3 ? null : 3 }, user),
         ...connections.map((connectionId) => importOrder(ctx, org, connectionId, buildOrder({ lines: reversedLines() }))),
         importOrder(ctx, org, connections[round % 3]!, buildOrder({ lines: reversedLines(), facts: [fact(`cancel-${round}`, 'cancelled')] })),
-        setStock(ctx, org, productIds[round % skus.length]!, 3 + round, user, round % 2 ? north : main),
-        setStock(ctx, org, productIds[(round + 1) % skus.length]!, 8 - round, user, round % 2 ? main : north),
+        setStock(ctx, org, productIds[round % skus.length]!, 30 + round, user, round % 2 ? north : main),
+        setStock(ctx, org, productIds[(round + 1) % skus.length]!, 38 - round, user, round % 2 ? main : north),
         updateWarehouse(ctx, org, north, { name: `North ${round}`, priority: round % 2 ? 0 : 5 }, user),
         setWarehouseActive(ctx, org, spare, round % 2 === 1, user),
         upsertOffers(ctx, org, connections[round % 3]!, offers(true), new Date()),
@@ -121,8 +127,11 @@ describe.skipIf(!databaseUrl)('multiple Warehouses under concurrency', () => {
     }
 
     expect(await watcher.stop()).toBeGreaterThan(0)
-    // Moves, deactivations and Channel choice changes really happened alongside the rest.
-    for (const type of ['order.reservation_moved', 'warehouse.deactivated', 'connection.warehouses_changed'] as const) {
+    // Moves (most of them succeeding), deactivations and Channel choice changes really ran alongside the rest.
+    expect(outcome.moved).toBeGreaterThan(outcome.refused)
+    expect(outcome.moved).toBeGreaterThanOrEqual(20)
+    expect(await ctx.db.eventLog.count({ where: { organizationId: org, type: 'order.reservation_moved' } })).toBe(outcome.moved)
+    for (const type of ['warehouse.deactivated', 'connection.warehouses_changed'] as const) {
       expect(await ctx.db.eventLog.count({ where: { organizationId: org, type } })).toBeGreaterThan(0)
     }
 
@@ -135,11 +144,12 @@ describe.skipIf(!databaseUrl)('multiple Warehouses under concurrency', () => {
     expect(linked).toHaveLength(connections.length * skus.length)
     for (const offer of linked) {
       const warehouseIds = await channelWarehouseIds(ctx.db, org, offer.connectionId)
-      const available = (await getAvailability(ctx.db, org, [offer.productId!], warehouseIds)).get(offer.productId!)!.available
+      const perWarehouse = [...(await getWarehouseAvailability(ctx.db, org, offer.productId!, warehouseIds)).values()].map((value) => value.available)
+      const base = channelWarehousesAvailable(perWarehouse)
       expect(offer.stockPushedSeq).toBe(offer.stockPushSeq)
-      expect(offer.lastPushedAvailable).toBe(channelAvailable(available, rules.find((rule) => rule.id === offer.connectionId)!))
+      expect(offer.lastPushedAvailable).toBe(channelAvailable(base, rules.find((rule) => rule.id === offer.connectionId)!))
       expect(offer.lastPushedAvailable).toBeGreaterThanOrEqual(0)
-      expect(offer.lastPushedAvailable).toBeLessThanOrEqual(Math.max(0, available))
+      expect(offer.lastPushedAvailable).toBeLessThanOrEqual(Math.max(0, ...perWarehouse))
     }
     // The spare Warehouse never got a Reservation or Stock, and every Reservation sits in one Warehouse.
     expect(await ctx.db.reservation.count({ where: { organizationId: org, warehouseId: spare } })).toBe(0)

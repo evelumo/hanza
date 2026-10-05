@@ -160,7 +160,7 @@ export async function setWarehouseActive(
 /** Deleting is refused as deactivating is, and also once any Reservation (even a closed one) was made in it. */
 export async function deleteWarehouse(ctx: Context, organizationId: string, warehouseId: string, actor: Actor): Promise<void> {
   await ctx.db.$transaction(async (tx) => {
-    const warehouse = await lockWarehouse(tx, organizationId, warehouseId)
+    const warehouse = await lockWarehouse(tx, organizationId, warehouseId, 'delete')
     await assertCanRetire(tx, organizationId, warehouse, { forDelete: true })
     // Cascades to its Stock rows, all of them 0 by the check above.
     await tx.warehouse.deleteMany({ where: { id: warehouseId, organizationId } })
@@ -182,15 +182,22 @@ interface LockedRow {
 }
 
 /**
- * The one Warehouse row FOR UPDATE, and no other lock afterwards (ADR 0013): every writer that could
- * put Stock, a Reservation or a Channel's choice into it holds it FOR SHARE first, so the checks
- * read after this lock are exact.
+ * The one Warehouse row, and no other lock afterwards (ADR 0013): every writer that could put Stock,
+ * a Reservation or a Channel's choice into it holds it FOR SHARE first, and both modes conflict with
+ * that, so the checks read after this lock are exact. An edit takes NO KEY UPDATE, which leaves
+ * foreign-key checks (KEY SHARE) alone; a delete needs FOR UPDATE.
  */
-async function lockWarehouse(tx: Tx, organizationId: string, warehouseId: string): Promise<LockedRow> {
-  const rows = await tx.$queryRaw<LockedRow[]>`
-    SELECT "id", "code", "name", "priority", "active" FROM "warehouse"
-    WHERE "id" = ${warehouseId} AND "organizationId" = ${organizationId}
-    FOR UPDATE`
+async function lockWarehouse(tx: Tx, organizationId: string, warehouseId: string, mode: 'edit' | 'delete' = 'edit'): Promise<LockedRow> {
+  const rows =
+    mode === 'delete'
+      ? await tx.$queryRaw<LockedRow[]>`
+          SELECT "id", "code", "name", "priority", "active" FROM "warehouse"
+          WHERE "id" = ${warehouseId} AND "organizationId" = ${organizationId}
+          FOR UPDATE`
+      : await tx.$queryRaw<LockedRow[]>`
+          SELECT "id", "code", "name", "priority", "active" FROM "warehouse"
+          WHERE "id" = ${warehouseId} AND "organizationId" = ${organizationId}
+          FOR NO KEY UPDATE`
   const row = rows[0]
   if (!row) throw new DomainError('not_found')
   return row

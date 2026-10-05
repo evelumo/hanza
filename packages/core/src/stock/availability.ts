@@ -48,6 +48,41 @@ export async function getAvailability(
   return result
 }
 
+/**
+ * Availability of each of these Products in each of these Warehouses (zeros where there is nothing),
+ * by Product, then Warehouse. One statement, so it always reads one snapshot.
+ */
+export async function getAvailabilityByWarehouse(
+  db: Db | Tx,
+  organizationId: string,
+  productIds: string[],
+  warehouseIds: string[],
+): Promise<Map<string, Map<string, Availability>>> {
+  const products = [...new Set(productIds)]
+  const warehouses = [...new Set(warehouseIds)]
+  const result = new Map<string, Map<string, Availability>>()
+  if (products.length === 0 || warehouses.length === 0) return result
+
+  const client: Tx = db
+  const rows = await client.$queryRaw<Array<{ productId: string; warehouseId: string; stock: bigint | number; reserved: bigint | number }>>`
+    SELECT p."id" AS "productId", w."id" AS "warehouseId",
+      COALESCE((SELECT SUM(s."units") FROM "stock" s
+        WHERE s."organizationId" = ${organizationId} AND s."productId" = p."id" AND s."warehouseId" = w."id"), 0) AS "stock",
+      COALESCE((SELECT SUM(r."units") FROM "reservation" r
+        WHERE r."organizationId" = ${organizationId} AND r."productId" = p."id" AND r."warehouseId" = w."id"
+          AND r."status" = 'open'), 0) AS "reserved"
+    FROM unnest(${products}::text[]) AS p("id") CROSS JOIN unnest(${warehouses}::text[]) AS w("id")`
+
+  for (const row of rows) {
+    const stock = Number(row.stock)
+    const reserved = Number(row.reserved)
+    let perWarehouse = result.get(row.productId)
+    if (!perWarehouse) result.set(row.productId, (perWarehouse = new Map()))
+    perWarehouse.set(row.warehouseId, { stock, reserved, available: stock - reserved })
+  }
+  return result
+}
+
 /** Availability of one Product in each of these Warehouses (zeros where it has none). One statement. */
 export async function getWarehouseAvailability(
   db: Db | Tx,
@@ -55,24 +90,5 @@ export async function getWarehouseAvailability(
   productId: string,
   warehouseIds: string[],
 ): Promise<Map<string, Availability>> {
-  const ids = [...new Set(warehouseIds)]
-  const result = new Map<string, Availability>()
-  if (ids.length === 0) return result
-
-  const client: Tx = db
-  const rows = await client.$queryRaw<Array<{ warehouseId: string; stock: bigint | number; reserved: bigint | number }>>`
-    SELECT ids."id" AS "warehouseId",
-      COALESCE((SELECT SUM(s."units") FROM "stock" s
-        WHERE s."organizationId" = ${organizationId} AND s."productId" = ${productId} AND s."warehouseId" = ids."id"), 0) AS "stock",
-      COALESCE((SELECT SUM(r."units") FROM "reservation" r
-        WHERE r."organizationId" = ${organizationId} AND r."productId" = ${productId} AND r."warehouseId" = ids."id"
-          AND r."status" = 'open'), 0) AS "reserved"
-    FROM unnest(${ids}::text[]) AS ids("id")`
-
-  for (const row of rows) {
-    const stock = Number(row.stock)
-    const reserved = Number(row.reserved)
-    result.set(row.warehouseId, { stock, reserved, available: stock - reserved })
-  }
-  return result
+  return (await getAvailabilityByWarehouse(db, organizationId, [productId], warehouseIds)).get(productId) ?? new Map()
 }
