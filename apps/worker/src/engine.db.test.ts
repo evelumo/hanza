@@ -9,10 +9,12 @@ import {
   linkOffer,
   MAX_RATE_LIMIT_RETRIES,
   ordersPullRef,
+  ordersUpdateStatusRef,
   PermanentJobError,
   requestSync,
   syncTickRef,
   type Actor,
+  type Context,
 } from '@hanza/core'
 import { createTestContext, createTestOrganization, type TestContext } from '@hanza/core/testing'
 import { afterAll, beforeAll, describe, expect, inject, it } from 'vitest'
@@ -65,6 +67,35 @@ describe.skipIf(!databaseUrl)('sync engine end to end (real Postgres, in-memory 
 
   async function syncState(id: string, stream: 'offers_pull' | 'orders_pull' | 'stock_push' | 'order_status_push') {
     return ctx.db.syncState.findFirst({ where: { organizationId: org, connectionId: id, stream } })
+  }
+
+  /** The queue is down right after commit: every enqueue throws. */
+  function queueDown(): Context {
+    return {
+      ...ctx,
+      queue: {
+        ...ctx.queue,
+        enqueue: async () => {
+          throw new Error('Redis unavailable')
+        },
+      },
+    }
+  }
+
+  /** Every pending status push of the organization becomes overdue, as if the sweep's retry interval had passed. */
+  async function tenMinutesPass() {
+    await ctx.db.$executeRaw`
+      UPDATE "order" SET "statusPushDueAt" = now() - interval '1 second'
+      WHERE "organizationId" = ${org} AND "statusPushDueAt" IS NOT NULL`
+  }
+
+  async function tick() {
+    await ctx.queue.enqueue(syncTickRef, {})
+    await drain()
+  }
+
+  function statusUpdates(orderExternalId: string) {
+    return fake.statusUpdates.filter((update) => update.orderExternalId === orderExternalId).map((update) => update.status)
   }
 
   async function pullOrders() {
@@ -186,6 +217,62 @@ describe.skipIf(!databaseUrl)('sync engine end to end (real Postgres, in-memory 
     expect(await counts()).toEqual(before)
     expect(fake.stockPushes).toHaveLength(pushesBefore)
     expect(await syncState(connectionId, 'orders_pull')).toMatchObject({ cursor: '6', lastResult: { pulled: 0, imported: 0 } })
+  })
+
+  it("8. a status push lost because the queue was down after commit is sent once by the tick's sweep", async () => {
+    const third = await order('fake-order-3')
+    await changeOrderStatus(queueDown(), org, third.id, 'processing', user)
+    expect((await order('fake-order-3')).status).toBe('processing')
+    expect(ctx.queue.waiting).toEqual([])
+
+    // Within the grace period the sweep leaves it to the immediate job.
+    await tick()
+    expect(statusUpdates('fake-order-3')).toEqual([])
+    expect((await order('fake-order-3')).statusPushDueAt).not.toBeNull()
+
+    await tenMinutesPass()
+    await tick()
+    expect(statusUpdates('fake-order-3')).toEqual(['processing'])
+    expect((await order('fake-order-3')).statusPushDueAt).toBeNull()
+
+    await tenMinutesPass()
+    await tick()
+    expect(statusUpdates('fake-order-3')).toEqual(['processing'])
+  })
+
+  it('9. a status already pushed is not sent again by the sweep or by a repeated request', async () => {
+    const third = await order('fake-order-3')
+    await changeOrderStatus(ctx, org, third.id, 'new', user)
+    await drain()
+    expect(statusUpdates('fake-order-3')).toEqual(['processing', 'new'])
+
+    await ctx.queue.enqueue(ordersUpdateStatusRef, { organizationId: org, orderId: third.id }, { coalesceKey: coalesceKeys.ordersUpdateStatus(third.id) })
+    await tenMinutesPass()
+    await tick()
+    expect(statusUpdates('fake-order-3')).toEqual(['processing', 'new'])
+
+    // The immediate request and the sweep both fire before the push runs: one push.
+    await changeOrderStatus(ctx, org, third.id, 'processing', user)
+    await tenMinutesPass()
+    await tick()
+    expect(statusUpdates('fake-order-3')).toEqual(['processing', 'new', 'processing'])
+    expect((await order('fake-order-3')).statusPushDueAt).toBeNull()
+  })
+
+  it('10. a status changed twice while the queue is down is pushed once, with the latest status', async () => {
+    const third = await order('fake-order-3')
+    await changeOrderStatus(queueDown(), org, third.id, 'new', user)
+    await changeOrderStatus(queueDown(), org, third.id, 'cancelled', user)
+    expect(ctx.queue.waiting).toEqual([])
+
+    await tenMinutesPass()
+    await tick()
+    expect(statusUpdates('fake-order-3')).toEqual(['processing', 'new', 'processing', 'cancelled'])
+    expect(await syncState(connectionId, 'order_status_push')).toMatchObject({ lastErrorKind: null })
+
+    await tenMinutesPass()
+    await tick()
+    expect(statusUpdates('fake-order-3')).toHaveLength(4)
   })
 
   it('auth_expired: the run fails without retry, the Connection waits for sign-in and the tick skips it', async () => {

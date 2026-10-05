@@ -281,7 +281,8 @@
       "unmatched_line": "Unmatched line",
       "shortage": "Shortage",
       "cancelled_while_processing": "Cancelled while processing",
-      "channel_fact_conflict": "The channel reported a change after completion"
+      "channel_fact_conflict": "The channel reported a change after completion",
+      "status_push_failed": "The channel refused the new status"
     },
     "health": {
       "unknown": "Not checked",

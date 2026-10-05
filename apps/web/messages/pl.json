@@ -281,7 +281,8 @@
       "unmatched_line": "Niepołączona pozycja",
       "shortage": "Brak na stanie",
       "cancelled_while_processing": "Anulowane w trakcie realizacji",
-      "channel_fact_conflict": "Kanał zgłosił zmianę po zakończeniu"
+      "channel_fact_conflict": "Kanał zgłosił zmianę po zakończeniu",
+      "status_push_failed": "Kanał odrzucił nowy status"
     },
     "health": {
       "unknown": "Nie sprawdzono",

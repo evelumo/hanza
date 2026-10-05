@@ -182,4 +182,22 @@ describe.skipIf(!databaseUrl)('importOrder', () => {
     await importOrder(ctx, org, connectionId, { ...order, facts: [fact('c', 'cancelled')] })
     expect((await ctx.db.order.findFirstOrThrow({ where: { id: orderId } })).attentionReasons).toEqual(['unmatched_line'])
   })
+
+  it('a fact that moves the status drops the status push still pending; one that does not keeps it', async () => {
+    const { ctx, org, connectionId } = await setup()
+    const pending = async (orderId: string) => (await ctx.db.order.findFirstOrThrow({ where: { id: orderId } })).statusPushDueAt !== null
+
+    const moved = buildOrder()
+    const { orderId: movedId } = await importOrder(ctx, org, connectionId, moved)
+    await changeOrderStatus(ctx, org, movedId, 'processing', user)
+    expect(await pending(movedId)).toBe(true)
+    await importOrder(ctx, org, connectionId, { ...moved, facts: [fact('c', 'cancelled')] })
+    expect(await pending(movedId)).toBe(false)
+
+    const kept = buildOrder()
+    const { orderId: keptId } = await importOrder(ctx, org, connectionId, kept)
+    await changeOrderStatus(ctx, org, keptId, 'cancelled', user)
+    await importOrder(ctx, org, connectionId, { ...kept, facts: [fact('s', 'shipped')] })
+    expect(await pending(keptId)).toBe(true)
+  })
 })
