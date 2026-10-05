@@ -12,7 +12,7 @@ import { createTestDatabase } from '@hanza/db/testing'
 import { chromium } from '@playwright/test'
 import { freePort, startService, waitUntil, type Service } from './processes'
 import { RUN_ENV } from './run-env'
-import { processStartTime } from './run-processes'
+import { processState } from './run-processes'
 import { RunRegistry, namesFor, newRunId, serverOf, type RunRecord } from './run-registry'
 import { StoppedError, Teardown } from './teardown'
 
@@ -73,8 +73,9 @@ async function main(): Promise<number> {
   const runId = newRunId()
   const { queuePrefix, database } = namesFor(runId)
   const [webPort, probePort] = [await freePort(), await freePort()]
-  const startedAt = processStartTime(process.pid)
-  if (!startedAt) throw new Error('Cannot read this process’s start time from `ps`')
+  const self = processState(process.pid)
+  if (self.kind !== 'running') throw new Error('Cannot read this process’s start time from `ps`')
+  const startedAt = self.startedAt
   const record: RunRecord = {
     runId,
     host: hostname(),
@@ -93,7 +94,8 @@ async function main(): Promise<number> {
     const service = startService(...args)
     teardown.add(`stop ${service.name}`, () => service.stop())
     services.push(service)
-    record.services.push({ name: service.name, pid: service.pid })
+    const state = service.pid ? processState(service.pid) : undefined
+    record.services.push({ name: service.name, pid: service.pid, startedAt: state?.kind === 'running' ? state.startedAt : undefined })
     await teardown.track(registry.save(record))
     return service
   }

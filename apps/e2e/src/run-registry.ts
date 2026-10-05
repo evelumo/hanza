@@ -2,7 +2,7 @@ import { randomBytes } from 'node:crypto'
 import { hostname } from 'node:os'
 import { dropTestDatabase } from '@hanza/db/testing'
 import { Redis } from 'ioredis'
-import { killRunProcesses, processStartTime } from './run-processes'
+import { killRunProcesses, processState, type ProcessState } from './run-processes'
 
 // Everything a run owns is named after its id, and recorded here before it is created, so a later
 // run can clean up after a runner that was killed (SIGKILL, a crash, a closed laptop lid).
@@ -21,9 +21,9 @@ export interface RunRecord {
   queuePrefix: string
   /** The throwaway database and the server (host:port) it lives on. */
   database: { name: string; server: string }
-  /** For people reading the record; recovery finds processes by the run id on their command line. */
   ports: number[]
-  services: Array<{ name: string; pid: number | undefined }>
+  /** PID and start time of each child: recovery kills those that still have both (next to the run id on command lines). */
+  services: Array<{ name: string; pid: number | undefined; startedAt?: string }>
 }
 
 export function newRunId(): string {
@@ -47,10 +47,16 @@ export function assertRedisAllowed(redisUrl: string, env: NodeJS.ProcessEnv = pr
   throw new Error(`REDIS_URL points to ${host}, not this machine; set ${ALLOW_REMOTE_REDIS}=1 to run the e2e suite against it anyway`)
 }
 
-/** A run is dead when it was started on this host and its runner (same PID, same start time) is gone. Other hosts' runs are never touched. */
-export function isDeadRun(record: RunRecord, here: { host: string; startTimeOf(pid: number): string | null }): boolean {
+/**
+ * A run is dead when it was started on this host and its runner is provably gone: no process with
+ * that PID, or one that started at another time (a reused PID). When `ps` cannot tell, the run
+ * counts as alive and is left for a later run. Other hosts' runs are never touched.
+ */
+export function isDeadRun(record: RunRecord, here: { host: string; stateOf(pid: number): ProcessState }): boolean {
   if (record.host !== here.host) return false
-  return here.startTimeOf(record.pid) !== record.startedAt
+  const runner = here.stateOf(record.pid)
+  if (runner.kind === 'gone') return true
+  return runner.kind === 'running' && runner.startedAt !== record.startedAt
 }
 
 export function parseRunRecord(raw: string): RunRecord | null {
@@ -110,7 +116,7 @@ export class RunRegistry {
 
   /** Processes, database, queue keys, then the record itself (kept if a step fails, so a later run retries). */
   async destroy(record: RunRecord, options: { killProcesses: boolean }): Promise<void> {
-    if (options.killProcesses) await killRunProcesses(record.runId)
+    if (options.killProcesses) await killRunProcesses(record.runId, record.services)
     await this.dropDatabase(record)
     await this.deleteQueueKeys(record)
     await this.redis.hdel(RUNS_KEY, record.runId)
@@ -118,7 +124,7 @@ export class RunRegistry {
 
   /** Cleans up after every dead run of this host; returns the ids it recovered. */
   async recoverDeadRuns(log: (message: string) => void): Promise<string[]> {
-    const here = { host: hostname(), startTimeOf: processStartTime }
+    const here = { host: hostname(), stateOf: processState }
     const recovered: string[] = []
     for (const [runId, raw] of Object.entries(await this.redis.hgetall(RUNS_KEY))) {
       const record = parseRunRecord(raw)

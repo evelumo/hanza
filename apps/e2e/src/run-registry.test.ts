@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import type { ProcessState } from './run-processes'
 import { ALLOW_REMOTE_REDIS, assertRedisAllowed, isDeadRun, namesFor, newRunId, parseRunRecord, serverOf, type RunRecord } from './run-registry'
 
 const record: RunRecord = {
@@ -24,22 +25,26 @@ describe('namesFor', () => {
 })
 
 describe('isDeadRun', () => {
-  const here = (startTime: string | null) => ({ host: 'laptop', startTimeOf: () => startTime })
+  const here = (state: ProcessState) => ({ host: 'laptop', stateOf: () => state })
 
-  it('is dead when its runner is gone', () => {
-    expect(isDeadRun(record, here(null))).toBe(true)
+  it('is dead when ps says there is no such process', () => {
+    expect(isDeadRun(record, here({ kind: 'gone' }))).toBe(true)
   })
 
   it('is dead when the PID now belongs to a later process', () => {
-    expect(isDeadRun(record, here('Mon Oct  5 13:00:00 2026'))).toBe(true)
+    expect(isDeadRun(record, here({ kind: 'running', startedAt: 'Mon Oct  5 13:00:00 2026' }))).toBe(true)
   })
 
   it('is alive while its runner runs', () => {
-    expect(isDeadRun(record, here(record.startedAt))).toBe(false)
+    expect(isDeadRun(record, here({ kind: 'running', startedAt: record.startedAt }))).toBe(false)
+  })
+
+  it('counts as alive when ps cannot tell, so a live run is never recovered by mistake', () => {
+    expect(isDeadRun(record, here({ kind: 'unknown' }))).toBe(false)
   })
 
   it('is never judged from another host', () => {
-    expect(isDeadRun({ ...record, host: 'ci-runner' }, here(null))).toBe(false)
+    expect(isDeadRun({ ...record, host: 'ci-runner' }, here({ kind: 'gone' }))).toBe(false)
   })
 })
 
