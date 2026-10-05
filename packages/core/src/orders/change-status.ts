@@ -13,7 +13,10 @@ import { removeReasons } from './reasons'
 import { allowedTransitions } from './status-rules'
 import { applyStockEffect } from './stock-effect'
 
-/** A person moves an Order (§2); the new status is then pushed to the Channel. */
+/**
+ * A person moves an Order along `allowedTransitions`; shipped is refused while an Unmatched line exists.
+ * Cancelling releases its Reservations, shipping consumes them, and the new status is then pushed to the Channel.
+ */
 export async function changeOrderStatus(ctx: Context, organizationId: string, orderId: string, to: OrderStatus, actor: Actor): Promise<void> {
   await ensureDefaultWarehouse(ctx.db, organizationId)
 

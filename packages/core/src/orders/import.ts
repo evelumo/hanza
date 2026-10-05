@@ -128,7 +128,7 @@ async function insertOrder(tx: Tx, organizationId: string, connectionId: string,
   return created.id
 }
 
-/** Records Channel facts not seen before, in (occurredAt, id) order, applying each per §2. Caller holds the Order lock. */
+/** Records Channel facts not seen before, in (occurredAt, id) order, applying each through `factTransition`. Caller holds the Order lock. */
 async function applyNewFacts(tx: Tx, organizationId: string, orderId: string, facts: ChannelFact[], touched: Set<string>): Promise<number> {
   if (facts.length === 0) return 0
   const recorded = await tx.orderChannelFact.findMany({ where: { organizationId, orderId }, select: { externalId: true } })

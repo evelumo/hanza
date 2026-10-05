@@ -19,7 +19,7 @@ describe.skipIf(!databaseUrl)('offers', () => {
     return { ctx, org, connectionId, a, b, offer }
   }
 
-  it('applies the automatic linking rules of §2', async () => {
+  it('links never-linked Offers by SKU, lets SKU-linked ones follow their SKU and leaves manual links alone', async () => {
     const { ctx, org, connectionId, a, b, offer } = await setup()
     const first = await upsertOffers(
       ctx,

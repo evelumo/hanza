@@ -8,7 +8,7 @@ const MANUAL: Record<OrderStatus, OrderStatus[]> = {
   cancelled: [],
 }
 
-/** Where a person may move an Order from `status` (§2). */
+/** Where a person may move an Order from `status`; shipped and cancelled are final. */
 export function allowedTransitions(status: OrderStatus): OrderStatus[] {
   return [...MANUAL[status]]
 }
@@ -32,7 +32,7 @@ const FACTS: Record<OrderStatus, Record<ChannelFactType, { to: OrderStatus | nul
   },
 }
 
-/** What a Channel fact does to an Order in `status` (§2); `to` null = status unchanged. */
+/** What a Channel fact does to an Order in `status` (ADR 0003); `to` null = status unchanged. */
 export function factTransition(status: OrderStatus, fact: ChannelFactType): { to: OrderStatus | null; reason: AttentionReason | null } {
   return { ...FACTS[status][fact] }
 }

@@ -10,7 +10,10 @@ import { ensureDefaultWarehouse } from '../stock/warehouse'
 import { TX_OPTIONS } from '../transaction'
 import { addReasons, removeReasons } from './reasons'
 
-/** Links an Unmatched line to a Product by hand and reserves for it per §2. */
+/**
+ * Links an Unmatched line to a Product by hand and reserves for it: an open Reservation on a new or
+ * processing Order, a consumed one (Stock decreases) on a shipped Order, none on a cancelled Order.
+ */
 export async function linkOrderLine(ctx: Context, organizationId: string, orderLineId: string, productId: string, actor: Actor): Promise<void> {
   await ensureDefaultWarehouse(ctx.db, organizationId)
   const result = await ctx.db.$transaction(

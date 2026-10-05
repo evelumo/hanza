@@ -4,7 +4,7 @@ import type { Tx } from '@hanza/db'
  * Locks the Stock rows of these Products (all Warehouses) for the rest of the
  * transaction, creating missing default-Warehouse rows first. Every writer of
  * Stock or Reservations takes these locks, always sorted by Product, and after
- * the Order row lock if an Order is involved (§4.4) — that fixed order is what
+ * the Order row lock if an Order is involved (ADR 0004) — that fixed order is what
  * keeps Hanza's own write paths from deadlocking.
  */
 export async function lockStock(tx: Tx, organizationId: string, productIds: string[]): Promise<void> {

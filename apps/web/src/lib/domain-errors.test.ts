@@ -20,7 +20,7 @@ describe('errorMessage', () => {
     }
   })
 
-  it('uses the texts of the spec', () => {
+  it('uses the agreed English texts', () => {
     expect(domainErrorMessage(t, 'sku_taken')).toBe('A product with this SKU already exists.')
     expect(domainErrorMessage(t, 'unmatched_lines')).toBe('Link all the lines to products first.')
     expect(domainErrorMessage(translatorFor('pl'), 'sku_taken')).toBe(catalogues.pl.errors.domain.sku_taken)

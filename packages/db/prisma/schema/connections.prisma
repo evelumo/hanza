@@ -35,7 +35,7 @@ model Connection {
   name            String
   /// Non-secret settings, validated against the connector's `configSchema`.
   config          Json
-  /// Sealed with HANZA_ENCRYPTION_KEY (§4.6). Never selected by panel queries.
+  /// Sealed with HANZA_ENCRYPTION_KEY, organization id as authenticated data (ADR 0006). Never selected by panel queries.
   credentials     String
   health          ConnectionHealth @default(unknown)
   healthChangedAt DateTime?

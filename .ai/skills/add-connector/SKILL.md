@@ -18,7 +18,7 @@ A connector is a package that translates one external system into the canonical 
 - External API JSON is parsed with zod and mapped by pure functions into the canonical `Offer` / `Order`. Money is a decimal string (`"129.99"`, at most 4 fraction digits) plus ISO currency, never a float.
 - Throw the SDK's error classes (below), never plain `Error`, and never put secrets, tokens, response bodies or Buyer data in an error message: the message is stored and shown in the panel.
 - Never log credentials or personal data.
-- **If you need to change the SDK or the core to finish, stop and write a spec** (`.ai/specs/TEMPLATE.md`). That includes the canonical model.
+- **If you need to change the SDK or the core to finish, stop and write a spec** as a GitHub issue (`AGENTS.md`, "Specs, decisions and vocabulary"). That includes the canonical model.
 - Tests are deterministic: recorded fixtures, no network, no real accounts or keys.
 
 ## The SDK in short (read `packages/connector-sdk/src` for the details)
@@ -65,7 +65,7 @@ Canonical schemas (all exported): `offerSchema`, `orderSchema` (with `buyerSchem
 
 ## Procedure
 
-1. **Check scope.** Read `AGENTS.md` and `packages/connectors/README.md`. Confirm the Channel's API can be expressed with the four capabilities and the canonical `Offer` / `Order` fields. If it needs something the model lacks (variants, tax breakdown, shipments, ...), stop and write a spec.
+1. **Check scope.** Read `AGENTS.md` and `packages/connectors/README.md`. Confirm the Channel's API can be expressed with the four capabilities and the canonical `Offer` / `Order` fields. If it needs something the model lacks (variants, tax breakdown, shipments, ...), stop and write a spec (a GitHub issue).
 2. **Pick the id.** Lowercase slug (`allegro`, `woocommerce`). Package `@hanza/connector-<id>`, directory `packages/connectors/<id>/`.
 3. **Create the package** (copy `packages/connectors/fake`): `package.json` with `"exports": { ".": "./src/index.ts" }`, `dependencies` of only `@hanza/connector-sdk` (`workspace:*`) and `zod`, `devDependencies` of `typescript` and `vitest` (same versions as the fake), and the same `tsconfig.json` (`DOM` lib gives the `fetch` types). Run `pnpm install` once to create the workspace link.
 4. **Lay out the sources** under `src/`:
