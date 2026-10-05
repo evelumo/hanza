@@ -38,8 +38,8 @@ function called(runId: string, step: string) {
 }
 
 /** Promises a test settles by hand, by run id: a step "hangs" until then, like a slow or dead worker. */
-const gates = new Map<string, Array<(value: string) => void>>()
-function hang(runId: string): Promise<string> {
+const gates = new Map<string, Array<(outcome: string | Error) => void>>()
+function hang(runId: string): Promise<string | Error> {
   return new Promise((resolve) => gates.set(runId, [...(gates.get(runId) ?? []), resolve]))
 }
 const waiting = (runId: string) => gates.get(runId)?.length ?? 0
@@ -84,11 +84,13 @@ const limited = defineWorkflow({ name: 'test.limited', input: z.object({}) }).st
   return { ok: true }
 })
 
-/** Every execution hangs until the test settles it; the result names which execution finished. */
+/** Every execution hangs until the test settles it with a name (its result) or an error (thrown). */
 const slow = defineWorkflow({ name: 'test.slow', input: z.object({}) })
   .step('work', async ({ runId }) => {
     called(runId, 'work')
-    return { by: await hang(runId) }
+    const outcome = await hang(runId)
+    if (outcome instanceof Error) throw outcome
+    return { by: outcome }
   })
   .step('next', async ({ runId }) => called(runId, 'next'))
 
@@ -329,6 +331,47 @@ describe.skipIf(!databaseUrl)('durable workflows end to end (real Postgres, in-m
     expect(await run(runId)).toMatchObject({ status: 'completed', results: { work: { by: 'first' }, next: null } })
     expect(calls.get(runId)).toEqual(['work', 'work', 'next'])
   })
+
+  for (const [kind, error] of [
+    ['an error', new Error('boom')],
+    ['RetryLaterError', new RetryLaterError(30_000, 'rate limited')],
+    ['PermanentJobError', new PermanentJobError('cannot ever work')],
+  ] as const) {
+    it(`ignores ${kind} from an execution whose lease was taken over: the newer execution keeps its claim and commits`, async () => {
+      const { runId } = await ctx.workflows.start(slow, org, {})
+      ctx.queue.waiting.length = 0
+      const first = stepInBackground(runId)
+      await vi.waitFor(() => expect(waiting(runId)).toBe(1))
+
+      travel(STEP_LEASE_MS)
+      expect(await sweepOnly([runId])).toEqual([runId])
+      const second = stepInBackground(runId)
+      await vi.waitFor(() => expect(waiting(runId)).toBe(2))
+      const claimed = await run(runId)
+      expect(claimed).toMatchObject({ status: 'running', attempts: 2, wakeAt: new Date(clock.getTime() + STEP_LEASE_MS) })
+
+      travel(60_000)
+      gates.get(runId)![0]!(error)
+      // The stale execution's error is logged and dropped: its job does not fail or retry.
+      await expect(first).resolves.toBeUndefined()
+      expect(await run(runId)).toMatchObject({
+        status: 'running',
+        attempts: 2,
+        wakeAt: claimed.wakeAt,
+        claimToken: claimed.claimToken,
+        lastError: null,
+      })
+      // Neither the queue's retry of the stale job nor the sweep starts a third execution.
+      await stepInBackground(runId)
+      expect(await sweepOnly([runId])).toEqual([])
+      expect(waiting(runId)).toBe(2)
+
+      gates.get(runId)![1]!('second')
+      await second
+      await drain()
+      expect(await run(runId)).toMatchObject({ status: 'completed', results: { work: { by: 'second' }, next: null } })
+    })
+  }
 
   it(`fails a run whose step never finishes or throws (a worker that dies in it) after ${MAX_STEP_ATTEMPTS} attempts`, async () => {
     const { runId } = await ctx.workflows.start(slow, org, {})

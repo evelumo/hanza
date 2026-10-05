@@ -6,9 +6,10 @@ The automations stage needs processes that span days and several systems (order 
 
 ## Contract
 
-- **Steps are at-least-once.** A step is claimed atomically with a 10-minute lease. The claim is counted on the run (`attempts`) but does not change `version`; only moving on (next step, failure, cancel) does. So:
+- **Steps are at-least-once.** A step is claimed atomically with a 10-minute lease (conditional on an expired lease and on the attempt count the job read). The claim is counted on the run (`attempts`) and stamps a fresh `claimToken`, but does not change `version`; only moving on (next step, failure, cancel) does. So:
   - a step still running when its lease expires is started again *beside* the first execution, and every 10 minutes after that while none finishes. There is no heartbeat yet (#69), so keep steps well under 10 minutes;
   - the first execution to finish commits its result; later ones are discarded, as is the result of a step that was running when the run was cancelled;
+  - an execution that throws changes the run (release the lease, retry later, fail) only while it still holds its `claimToken`; once its lease was taken over, its error is logged and dropped, so it cannot reset the newer execution's lease or attempts;
   - after 5 executions (claims) without one finishing (each worker died or hung), the next job fails the run. Exactly-once *effects* are the step's own job: deterministic ids, unique keys, read-then-write guards.
 - **Retries:** a step that throws releases its lease and the queue retries it with its backoff. Attempts are counted on the run, not taken from the queue, so a job lost with Redis does not reset them. The fifth attempt or a `PermanentJobError` fails the run. `RetryLaterError` delays the step without using an attempt. A wait whose timeout passes fails the run.
 - **Timers** fire through a delayed hint job, or at the latest on the first tick after their time.

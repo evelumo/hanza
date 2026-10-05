@@ -42,6 +42,9 @@ model WorkflowRun {
   sweptAt        DateTime?
   /// Executions of the current step started so far (claims), including ones whose worker died.
   attempts       Int               @default(0)
+  /// Set by each claim of a step; an execution changes the run after an error only while it still holds it,
+  /// so one whose lease expired and was claimed again cannot release or fail the newer execution's claim.
+  claimToken     String?
   /// Description of the last error of the current step or why the run failed: error name, code and a
   /// truncated line, never the full message.
   lastError      String?

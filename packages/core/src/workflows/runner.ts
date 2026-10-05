@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto'
 import { Prisma, type WorkflowRun } from '@hanza/db'
 import { afterCommit } from '../after-commit'
 import type { Context } from '../context'
@@ -72,6 +73,7 @@ async function advance(
       completedSteps: [...run.completedSteps, stepTag(step)],
       results: results as Prisma.InputJsonObject,
       attempts: 0,
+      claimToken: null,
       lastError: null,
       version: run.version + 1,
     },
@@ -79,14 +81,23 @@ async function advance(
   return updated.count === 1 ? entry : null
 }
 
-async function fail(ctx: Context, run: WorkflowRun, reason: string): Promise<void> {
+/** `holding` narrows the guard, e.g. to the execution that still holds the claim. */
+async function fail(ctx: Context, run: WorkflowRun, reason: string, holding: Prisma.WorkflowRunWhereInput = {}): Promise<boolean> {
   const failed = await ctx.db.workflowRun.updateMany({
-    where: unchanged(run),
-    data: { status: 'failed', lastError: reason, waitingFor: null, wakeAt: null, finishedAt: new Date(), version: run.version + 1 },
+    where: { ...holding, ...unchanged(run) },
+    data: {
+      status: 'failed',
+      lastError: reason,
+      waitingFor: null,
+      wakeAt: null,
+      claimToken: null,
+      finishedAt: new Date(),
+      version: run.version + 1,
+    },
   })
-  if (failed.count === 1) {
-    ctx.log.error('workflow failed', { workflow: run.workflow, runId: run.id, organizationId: run.organizationId, step: run.currentStep ?? '' })
-  }
+  if (failed.count === 0) return false
+  ctx.log.error('workflow failed', { workflow: run.workflow, runId: run.id, organizationId: run.organizationId, step: run.currentStep ?? '' })
+  return true
 }
 
 async function runStep(
@@ -102,15 +113,30 @@ async function runStep(
   if (run.wakeAt && run.wakeAt > claimedAt) return
   if (run.attempts >= MAX_STEP_ATTEMPTS) {
     // Every attempt so far was claimed and none finished or threw: its worker died or hung.
-    return fail(ctx, run, `Step "${step.name}" did not finish in ${MAX_STEP_ATTEMPTS} attempts`)
+    await fail(ctx, run, `Step "${step.name}" did not finish in ${MAX_STEP_ATTEMPTS} attempts`, {
+      attempts: { gte: MAX_STEP_ATTEMPTS },
+      wakeAt: { lte: claimedAt },
+    })
+    return
   }
-  // Atomic: of concurrent jobs, only the first passes the `wakeAt` condition.
+  // Atomic: of concurrent jobs only one passes the conditions, and the attempt count it read is still current.
+  const claimToken = randomUUID()
   const claim = await ctx.db.workflowRun.updateMany({
-    where: { ...unchanged(run), wakeAt: { lte: claimedAt } },
-    data: { wakeAt: new Date(claimedAt.getTime() + STEP_LEASE_MS), attempts: { increment: 1 } },
+    where: { ...unchanged(run), wakeAt: { lte: claimedAt }, attempts: run.attempts },
+    data: { wakeAt: new Date(claimedAt.getTime() + STEP_LEASE_MS), attempts: run.attempts + 1, claimToken },
   })
   if (claim.count === 0) return
   const attempt = run.attempts + 1
+  // An execution whose lease expired and was claimed again must not touch the newer execution's state:
+  // its error is only logged.
+  const holdingClaim = { ...unchanged(run), claimToken }
+  const lostClaim = (error: unknown) =>
+    ctx.log.info('workflow step error after its claim was taken over', {
+      workflow: run.workflow,
+      runId: run.id,
+      step: step.name,
+      error: describeFailure(error),
+    })
   const results = run.results as Results
 
   let result: unknown
@@ -126,20 +152,20 @@ async function runStep(
     })
   } catch (error) {
     const description = describeFailure(error)
-    if (error instanceof RetryLaterError) {
-      // Like the queue: retrying later uses no attempt.
-      await ctx.db.workflowRun.updateMany({
-        where: unchanged(run),
-        data: { wakeAt: new Date(new Date().getTime() + error.delayMs), attempts: { decrement: 1 }, lastError: description },
-      })
-      throw error
-    }
-    if (error instanceof PermanentJobError || attempt >= MAX_STEP_ATTEMPTS) {
-      await fail(ctx, run, description)
+    if (error instanceof PermanentJobError || (!(error instanceof RetryLaterError) && attempt >= MAX_STEP_ATTEMPTS)) {
+      if (!(await fail(ctx, run, description, { claimToken }))) return lostClaim(error)
       throw error instanceof PermanentJobError ? error : new PermanentJobError(description)
     }
-    // Releasing the lease lets the queue's retry claim the step; a sweep meanwhile is coalesced with that retry.
-    await ctx.db.workflowRun.updateMany({ where: unchanged(run), data: { wakeAt: new Date(), lastError: description } })
+    const released = await ctx.db.workflowRun.updateMany({
+      where: holdingClaim,
+      // RetryLaterError, like the queue, uses no attempt. Otherwise releasing the lease lets the queue's
+      // retry claim the step; a sweep meanwhile is coalesced with that retry.
+      data:
+        error instanceof RetryLaterError
+          ? { wakeAt: new Date(new Date().getTime() + error.delayMs), attempts: attempt - 1, claimToken: null, lastError: description }
+          : { wakeAt: new Date(), claimToken: null, lastError: description },
+    })
+    if (released.count === 0) return lostClaim(error)
     throw error
   }
 
@@ -179,7 +205,10 @@ async function receiveSignal(
     return
   }
   const payload = step.payload.safeParse(signal.payload)
-  if (!payload.success) return fail(ctx, run, `Signal "${step.signal}" no longer matches its schema`)
+  if (!payload.success) {
+    await fail(ctx, run, `Signal "${step.signal}" no longer matches its schema`)
+    return
+  }
 
   let entry: StepEntry | null
   try {
@@ -232,10 +261,14 @@ export async function advanceRun(
     return done !== undefined && stepTag(done) === tag
   })
   if (!prefixMatches || !step || step.name !== run.currentStep || STATUS_OF_STEP[step.kind] !== run.status) {
-    return fail(ctx, run, `Workflow "${run.workflow}" changed while the run was in step "${run.currentStep}": its steps no longer match the steps already done`)
+    await fail(ctx, run, `Workflow "${run.workflow}" changed while the run was in step "${run.currentStep}": its steps no longer match the steps already done`)
+    return
   }
   const input = definition.input.safeParse(run.input)
-  if (!input.success) return fail(ctx, run, `The input no longer matches workflow "${run.workflow}"`)
+  if (!input.success) {
+    await fail(ctx, run, `The input no longer matches workflow "${run.workflow}"`)
+    return
+  }
 
   switch (step.kind) {
     case 'run':

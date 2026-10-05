@@ -16,6 +16,7 @@ CREATE TABLE "workflow_run" (
     "wakeAt" TIMESTAMP(3),
     "sweptAt" TIMESTAMP(3),
     "attempts" INTEGER NOT NULL DEFAULT 0,
+    "claimToken" TEXT,
     "lastError" TEXT,
     "version" INTEGER NOT NULL DEFAULT 0,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
