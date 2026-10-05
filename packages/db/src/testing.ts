@@ -22,8 +22,29 @@ async function withClient<T>(url: string, fn: (client: pg.Client) => Promise<T>)
   }
 }
 
-/** A throwaway database with every migration applied, created on the server `adminUrl` points to. */
-export async function createTestDatabase(adminUrl: string): Promise<{ url: string; drop(): Promise<void> }> {
+async function migrationNames(): Promise<string[]> {
+  return (await readdir(MIGRATIONS_DIR, { withFileTypes: true }))
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => entry.name)
+    .sort()
+}
+
+/** Applies one migration to the database `url` points to, as `createTestDatabase` does. */
+export async function applyMigration(url: string, migration: string): Promise<void> {
+  if (!(await migrationNames()).includes(migration)) throw new Error(`Unknown migration ${migration}`)
+  await withClient(url, async (client) => {
+    await client.query(await readFile(join(MIGRATIONS_DIR, migration, 'migration.sql'), 'utf8'))
+  })
+}
+
+/**
+ * A throwaway database with every migration applied (or only those before `options.before`, to test a data
+ * migration against rows shaped like the previous schema), created on the server `adminUrl` points to.
+ */
+export async function createTestDatabase(
+  adminUrl: string,
+  options: { before?: string } = {},
+): Promise<{ url: string; drop(): Promise<void> }> {
   const name = `hanza_test_${process.pid}_${randomBytes(4).toString('hex')}`
   await withClient(adminUrl, (client) => client.query(`CREATE DATABASE "${name}"`))
   const url = withDatabase(adminUrl, name)
@@ -36,10 +57,9 @@ export async function createTestDatabase(adminUrl: string): Promise<{ url: strin
   }
 
   try {
-    const migrations = (await readdir(MIGRATIONS_DIR, { withFileTypes: true }))
-      .filter((entry) => entry.isDirectory())
-      .map((entry) => entry.name)
-      .sort()
+    const all = await migrationNames()
+    if (options.before && !all.includes(options.before)) throw new Error(`Unknown migration ${options.before}`)
+    const migrations = options.before ? all.filter((name) => name < options.before!) : all
     await withClient(url, async (client) => {
       for (const migration of migrations) {
         await client.query(await readFile(join(MIGRATIONS_DIR, migration, 'migration.sql'), 'utf8'))

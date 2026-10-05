@@ -1,19 +1,40 @@
-import type { ChannelFactType, OrderStatus } from '@hanza/connector-sdk'
+import type { ChannelFactType } from '@hanza/connector-sdk'
 import type { AttentionReason } from '@hanza/db'
+import type { OrderPhase } from './phases'
 
-const MANUAL: Record<OrderStatus, OrderStatus[]> = {
+const MANUAL: Record<OrderPhase, OrderPhase[]> = {
   new: ['processing', 'shipped', 'cancelled'],
   processing: ['new', 'shipped', 'cancelled'],
   shipped: [],
   cancelled: [],
 }
 
-/** Where a person may move an Order from `status`; shipped and cancelled are final. */
-export function allowedTransitions(status: OrderStatus): OrderStatus[] {
-  return [...MANUAL[status]]
+/** To which other phase a person may move an Order in `phase`; shipped and cancelled are final. */
+export function allowedTransitions(phase: OrderPhase): OrderPhase[] {
+  return [...MANUAL[phase]]
 }
 
-const FACTS: Record<OrderStatus, Record<ChannelFactType, { to: OrderStatus | null; reason: AttentionReason | null }>> = {
+/**
+ * Whether a person may move an Order from its status to `to` (ADR 0014): any other active status of the same phase,
+ * in every phase (it changes nothing the core relies on), or of a phase `allowedTransitions` reaches.
+ */
+export function canMoveToStatus(
+  current: { phase: OrderPhase; statusId: string },
+  to: { id: string; phase: OrderPhase; active: boolean },
+): boolean {
+  if (!to.active || to.id === current.statusId) return false
+  return to.phase === current.phase || MANUAL[current.phase].includes(to.phase)
+}
+
+/** The statuses a person may move the Order to, in the order given. */
+export function allowedStatuses<T extends { id: string; phase: OrderPhase; active: boolean }>(
+  current: { phase: OrderPhase; statusId: string },
+  statuses: T[],
+): T[] {
+  return statuses.filter((status) => canMoveToStatus(current, status))
+}
+
+const FACTS: Record<OrderPhase, Record<ChannelFactType, { to: OrderPhase | null; reason: AttentionReason | null }>> = {
   new: {
     cancelled: { to: 'cancelled', reason: null },
     shipped: { to: 'shipped', reason: null },
@@ -32,7 +53,7 @@ const FACTS: Record<OrderStatus, Record<ChannelFactType, { to: OrderStatus | nul
   },
 }
 
-/** What a Channel fact does to an Order in `status` (ADR 0003); `to` null = status unchanged. */
-export function factTransition(status: OrderStatus, fact: ChannelFactType): { to: OrderStatus | null; reason: AttentionReason | null } {
-  return { ...FACTS[status][fact] }
+/** What a Channel fact does to an Order in `phase` (ADR 0003); `to` null = phase (and status) unchanged. */
+export function factTransition(phase: OrderPhase, fact: ChannelFactType): { to: OrderPhase | null; reason: AttentionReason | null } {
+  return { ...FACTS[phase][fact] }
 }

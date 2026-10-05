@@ -81,7 +81,7 @@ describe.skipIf(!databaseUrl)('orders.updateStatus', () => {
     const order = () =>
       ctx.db.order.findFirstOrThrow({
         where: { id: orderId, organizationId },
-        select: { status: true, statusPushSeq: true, statusPushDueAt: true, attentionReasons: true },
+        select: { phase: true, statusPushSeq: true, statusPushDueAt: true, attentionReasons: true },
       })
     const push = () => ordersUpdateStatusJob.handler(ctx, { organizationId, orderId }, run)
     return { ctx, organizationId, connectionId, orderId, state, order, push }
@@ -173,7 +173,8 @@ describe.skipIf(!databaseUrl)('orders.updateStatus', () => {
       user,
     )
     const { orderId } = await importOrder(ctx, organizationId, connectionId, buildOrder({ externalId: 'legacy-order' }))
-    await ctx.db.order.updateMany({ where: { id: orderId, organizationId }, data: { status: 'processing' } })
+    const processing = await ctx.db.orderStatus.findFirstOrThrow({ where: { organizationId, phase: 'processing', isDefault: true } })
+    await ctx.db.order.updateMany({ where: { id: orderId, organizationId }, data: { phase: 'processing', statusId: processing.id } })
     expect(await ctx.db.order.findFirstOrThrow({ where: { id: orderId } })).toMatchObject({ statusPushSeq: 0, statusPushDueAt: null })
 
     await ordersUpdateStatusJob.handler(ctx, { organizationId, orderId }, run)
@@ -188,7 +189,7 @@ describe.skipIf(!databaseUrl)('orders.updateStatus', () => {
       await changeOrderStatus(ctx, organizationId, orderId, 'new', user)
     }
     await expect(push()).rejects.toBeInstanceOf(PermanentJobError)
-    expect(await order()).toMatchObject({ status: 'new', attentionReasons: ['unmatched_line'] })
+    expect(await order()).toMatchObject({ phase: 'new', attentionReasons: ['unmatched_line'] })
     expect((await order()).statusPushDueAt).not.toBeNull()
 
     failWith = null

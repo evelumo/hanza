@@ -87,6 +87,8 @@ model Organization {
   stock             Stock[]
   reservations      Reservation[]
   orders            Order[]
+  orderStatuses     OrderStatus[]
+  statusMappings    ChannelStatusMapping[]
   orderLines        OrderLine[]
   orderChannelFacts OrderChannelFact[]
   connections       Connection[]

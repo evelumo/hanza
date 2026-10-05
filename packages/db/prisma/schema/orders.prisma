@@ -1,12 +1,27 @@
 // Orders imported from Channels. Fulfilment progress is owned by Hanza.
 
-enum OrderStatus {
+/// The fixed Order phases the core reasons about (ADR 0003, ADR 0014). Connectors speak phases too.
+enum OrderPhase {
   new
   processing
   shipped
   cancelled
 
-  @@map("order_status")
+  @@map("order_phase")
+}
+
+/// The colours a person can give an Order status; the panel maps each one to its own classes.
+enum OrderStatusColor {
+  gray
+  blue
+  teal
+  green
+  amber
+  orange
+  red
+  violet
+
+  @@map("order_status_color")
 }
 
 enum PaymentMethod {
@@ -38,7 +53,10 @@ model Order {
   organizationId   String
   connectionId     String
   externalId       String
-  status           OrderStatus       @default(new)
+  /// What the core reasons about (Reservations, Stock, Channel facts, the status push).
+  phase            OrderPhase        @default(new)
+  /// The organization's Order status, always one of `phase` (composite foreign key).
+  statusId         String
   attentionReasons AttentionReason[] @default([])
   placedAt         DateTime
   payment          PaymentMethod
@@ -61,18 +79,22 @@ model Order {
 
   organization Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   connection   Connection         @relation(fields: [connectionId], references: [id], onDelete: Restrict)
+  /// Composite so an Order's status is of its own organization and of its own phase. NoAction (checked at the end of
+  /// the statement) lets deleting an organization cascade to both tables; a status in use is never deleted.
+  status       OrderStatus        @relation(fields: [organizationId, phase, statusId], references: [organizationId, phase, id], onDelete: NoAction, onUpdate: NoAction)
   lines        OrderLine[]
   facts        OrderChannelFact[]
 
   @@unique([connectionId, externalId])
   @@index([organizationId, placedAt(sort: Desc)])
-  @@index([organizationId, status])
+  @@index([organizationId, phase])
+  @@index([organizationId, statusId])
   @@index([connectionId, statusPushDueAt])
   @@map("order")
 }
 
 model OrderLine {
-  id              String   @id @default(uuid(7))
+  id              String  @id @default(uuid(7))
   organizationId  String
   orderId         String
   externalId      String
@@ -80,10 +102,10 @@ model OrderLine {
   sku             String?
   name            String
   quantity        Int
-  unitPriceAmount Decimal  @db.Decimal(19, 4)
+  unitPriceAmount Decimal @db.Decimal(19, 4)
   /// Null = Unmatched line.
   productId       String?
-  shortage        Boolean  @default(false)
+  shortage        Boolean @default(false)
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   order        Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
@@ -112,4 +134,57 @@ model OrderChannelFact {
   @@unique([orderId, externalId])
   @@index([organizationId, recordedAt(sort: Desc)])
   @@map("order_channel_fact")
+}
+
+/// An organization-defined Order status: a finer label within one Order phase (ADR 0014). Every organization has a
+/// default status per phase, created on first use; `organizationId`, `phase` and `id` never change after insert.
+model OrderStatus {
+  id             String            @id @default(uuid(7))
+  organizationId String
+  phase          OrderPhase
+  /// Null = the phase's own name, translated when shown (the default statuses, until a person renames them).
+  name           String?
+  /// Null = the phase's colour.
+  color          OrderStatusColor?
+  /// Display order within the phase; not unique on purpose (see the partial indexes below).
+  position       Int               @default(0)
+  /// An inactive status keeps its Orders but cannot be chosen any more.
+  active         Boolean           @default(true)
+  /// The status an Order gets when it enters this phase and no Status mapping says otherwise.
+  isDefault      Boolean           @default(false)
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  organization Organization           @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  orders       Order[]
+  mappings     ChannelStatusMapping[]
+
+  // The target of the composite foreign keys. Its columns never change, so being "key" columns costs nothing.
+  @@unique([organizationId, phase, id])
+  // Partial on purpose: Postgres treats the columns of a non-partial unique index as "key" columns, so a rename or a
+  // new default would lock the row FOR UPDATE and wait behind every Order import holding FOR KEY SHARE on it.
+  @@unique([organizationId, phase], where: raw("\"isDefault\""), map: "order_status_one_default_per_phase")
+  @@unique([organizationId, name], where: raw("\"active\" AND \"name\" IS NOT NULL"), map: "order_status_active_name_key")
+  @@map("order_status")
+}
+
+/// Status mapping: which Order status an Order of this Channel gets when the Channel reports a phase (an import is
+/// phase new, a Channel fact phase shipped or cancelled). Without a row, or with an inactive status, the phase default.
+model ChannelStatusMapping {
+  id             String     @id @default(uuid(7))
+  organizationId String
+  connectionId   String
+  /// new, shipped or cancelled (CHECK in the migration): the phases a Channel reports.
+  phase          OrderPhase
+  statusId       String
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  connection   Connection   @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+  status       OrderStatus  @relation(fields: [organizationId, phase, statusId], references: [organizationId, phase, id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([connectionId, phase])
+  @@index([organizationId, statusId])
+  @@map("channel_status_mapping")
 }

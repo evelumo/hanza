@@ -6,6 +6,7 @@ import { normalizeSku } from '../catalog/sku'
 import type { Context } from '../context'
 import { DomainError } from '../errors'
 import { appendEvent } from '../events'
+import { ensureDefaultOrderStatuses, resolveStatusForPhase } from '../order-statuses/defaults'
 import { lockStock } from '../stock/locks'
 import { markOffersForStockPush, requestStockPushAfterCommit } from '../stock/push'
 import { reserveLine } from '../stock/reservations'
@@ -28,6 +29,7 @@ export async function importOrder(
   order: Order,
 ): Promise<{ orderId: string; created: boolean; factsApplied: number }> {
   await ensureDefaultWarehouse(ctx.db, organizationId)
+  await ensureDefaultOrderStatuses(ctx.db, organizationId)
 
   const result = await ctx.db.$transaction(async (tx) => {
     const connection = await tx.connection.findFirst({ where: { id: connectionId, organizationId }, select: { id: true } })
@@ -39,7 +41,7 @@ export async function importOrder(
       FOR NO KEY UPDATE`
     const touched = new Set<string>()
     const orderId = existing[0]?.id ?? (await insertOrder(tx, organizationId, connectionId, order, touched))
-    const factsApplied = await applyNewFacts(tx, organizationId, orderId, order.facts, touched)
+    const factsApplied = await applyNewFacts(tx, organizationId, connectionId, orderId, order.facts, touched)
     const connectionIds = await markOffersForStockPush(tx, organizationId, [...touched])
     return { orderId, created: existing.length === 0, factsApplied, connectionIds }
   }, TX_OPTIONS)
@@ -50,11 +52,14 @@ export async function importOrder(
 
 async function insertOrder(tx: Tx, organizationId: string, connectionId: string, order: Order, touched: Set<string>): Promise<string> {
   const productIds = await matchLines(tx, organizationId, connectionId, order.lines)
+  const status = await resolveStatusForPhase(tx, organizationId, connectionId, 'new')
   const created = await tx.order.create({
     data: {
       organizationId,
       connectionId,
       externalId: order.externalId,
+      phase: 'new',
+      statusId: status.id,
       placedAt: new Date(order.placedAt),
       payment: order.payment,
       currency: order.total.currency,
@@ -128,8 +133,18 @@ async function insertOrder(tx: Tx, organizationId: string, connectionId: string,
   return created.id
 }
 
-/** Records Channel facts not seen before, in (occurredAt, id) order, applying each through `factTransition`. Caller holds the Order lock. */
-async function applyNewFacts(tx: Tx, organizationId: string, orderId: string, facts: ChannelFact[], touched: Set<string>): Promise<number> {
+/**
+ * Records Channel facts not seen before, in (occurredAt, id) order, applying each through `factTransition`. A fact that
+ * moves the phase puts the Order in the Connection's mapped status for that phase, else its default. Caller holds the Order lock.
+ */
+async function applyNewFacts(
+  tx: Tx,
+  organizationId: string,
+  connectionId: string,
+  orderId: string,
+  facts: ChannelFact[],
+  touched: Set<string>,
+): Promise<number> {
   if (facts.length === 0) return 0
   const recorded = await tx.orderChannelFact.findMany({ where: { organizationId, orderId }, select: { externalId: true } })
   const seen = new Set(recorded.map((fact) => fact.externalId))
@@ -138,10 +153,13 @@ async function applyNewFacts(tx: Tx, organizationId: string, orderId: string, fa
   )
   if (fresh.length === 0) return 0
 
-  const order = await tx.order.findFirst({ where: { id: orderId, organizationId }, select: { status: true, attentionReasons: true } })
+  const order = await tx.order.findFirst({
+    where: { id: orderId, organizationId },
+    select: { phase: true, attentionReasons: true, status: { select: { id: true, name: true } } },
+  })
   if (!order) throw new DomainError('not_found')
-  let { status, attentionReasons: reasons } = order
-  const before = status
+  let { phase, status, attentionReasons: reasons } = order
+  const before = phase
   const subject = { type: 'order', id: orderId } as const
 
   for (const fact of fresh) {
@@ -155,17 +173,19 @@ async function applyNewFacts(tx: Tx, organizationId: string, orderId: string, fa
       payload: { factId: fact.id, type: fact.type, occurredAt: fact.occurredAt },
     })
 
-    const transition = factTransition(status, fact.type)
+    const transition = factTransition(phase, fact.type)
     if (transition.to) {
       for (const productId of await applyStockEffect(tx, organizationId, orderId, transition.to)) touched.add(productId)
+      const next = await resolveStatusForPhase(tx, organizationId, connectionId, transition.to)
       await appendEvent(tx, {
         organizationId,
         type: 'order.status_changed',
         subject,
-        payload: { from: status, to: transition.to, cause: 'channel_fact', factId: fact.id, actor: systemActor },
+        payload: { from: phase, to: transition.to, fromStatus: status, toStatus: next, cause: 'channel_fact', factId: fact.id, actor: systemActor },
       })
-      status = transition.to
-      if (status === 'cancelled') reasons = removeReasons(reasons, ['shortage'])
+      phase = transition.to
+      status = next
+      if (phase === 'cancelled') reasons = removeReasons(reasons, ['shortage'])
     }
     if (transition.reason) {
       const next = addReasons(reasons, [transition.reason])
@@ -177,8 +197,11 @@ async function applyNewFacts(tx: Tx, organizationId: string, orderId: string, fa
   }
 
   // The Channel's own fact is newer than any status still waiting to be pushed, and is never pushed back (ADR 0003).
-  const statusPush = status !== before ? { statusPushDueAt: null } : {}
-  await tx.order.updateMany({ where: { id: orderId, organizationId }, data: { status, attentionReasons: reasons, ...statusPush } })
+  const statusPush = phase !== before ? { statusPushDueAt: null } : {}
+  await tx.order.updateMany({
+    where: { id: orderId, organizationId },
+    data: { phase, statusId: status.id, attentionReasons: reasons, ...statusPush },
+  })
   return fresh.length
 }
 

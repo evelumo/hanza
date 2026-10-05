@@ -40,7 +40,7 @@ describe.skipIf(!databaseUrl)('importOrder', () => {
 
     expect(result).toMatchObject({ created: true, factsApplied: 0 })
     const stored = await ctx.db.order.findFirstOrThrow({ where: { id: result.orderId }, include: { lines: { include: { reservation: true } } } })
-    expect(stored).toMatchObject({ status: 'new', attentionReasons: [], currency: 'PLN', buyerName: 'John Test', billingAddress: null })
+    expect(stored).toMatchObject({ phase: 'new', attentionReasons: [], currency: 'PLN', buyerName: 'John Test', billingAddress: null })
     expect(stored.totalAmount.toFixed()).toBe('79.98')
     expect(stored.lines).toHaveLength(1)
     expect(stored.lines[0]).toMatchObject({ productId, shortage: false, reservation: { units: 2, status: 'open', productId } })
@@ -133,13 +133,26 @@ describe.skipIf(!databaseUrl)('importOrder', () => {
 
     // early: processing + cancelled → cancelled (released), reason; late: cancelled + shipped → conflict.
     const stored = await ctx.db.order.findFirstOrThrow({ where: { id: orderId } })
-    expect(stored.status).toBe('cancelled')
+    expect(stored.phase).toBe('cancelled')
     expect(stored.attentionReasons).toEqual(['cancelled_while_processing', 'channel_fact_conflict'])
     expect(await available()).toEqual({ stock: 10, reserved: 0, available: 10 })
+    const defaults = await ctx.db.orderStatus.findMany({ where: { organizationId: org, isDefault: true }, select: { id: true, name: true, phase: true } })
+    const defaultOf = (phase: string) => {
+      const status = defaults.find((candidate) => candidate.phase === phase)
+      return { id: status?.id, name: null }
+    }
     const changed = await ctx.db.eventLog.findMany({ where: { subjectId: orderId, type: 'order.status_changed' }, orderBy: { id: 'asc' } })
     expect(changed.map((event) => event.payload)).toEqual([
-      { from: 'new', to: 'processing', cause: 'user', factId: null, actor: user },
-      { from: 'processing', to: 'cancelled', cause: 'channel_fact', factId: 'early', actor: { type: 'system' } },
+      { from: 'new', to: 'processing', fromStatus: defaultOf('new'), toStatus: defaultOf('processing'), cause: 'user', factId: null, actor: user },
+      {
+        from: 'processing',
+        to: 'cancelled',
+        fromStatus: defaultOf('processing'),
+        toStatus: defaultOf('cancelled'),
+        cause: 'channel_fact',
+        factId: 'early',
+        actor: { type: 'system' },
+      },
     ])
     // A fact-driven change is never pushed back to the Channel.
     expect(ctx.queue.enqueued.filter((job) => job.name === 'orders.updateStatus')).toHaveLength(1)
@@ -166,7 +179,7 @@ describe.skipIf(!databaseUrl)('importOrder', () => {
       await importOrder(ctx, org, connectionId, { ...order, facts: [fact('f', cell.fact)] })
 
       const stored = await ctx.db.order.findFirstOrThrow({ where: { id: orderId }, include: { lines: { include: { reservation: true } } } })
-      expect(stored.status).toBe(cell.status)
+      expect(stored.phase).toBe(cell.status)
       expect(stored.attentionReasons).toEqual(cell.reasons)
       expect(stored.lines[0]?.reservation?.status).toBe(cell.reservation)
       expect((await available()).stock).toBe(cell.stock)

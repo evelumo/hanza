@@ -28,5 +28,6 @@ export { appendEvent, listEvents, type EventRow, type EventSubject, type EventTy
 export * from './catalog/index'
 export * from './stock/index'
 export * from './orders/index'
+export * from './order-statuses/index'
 export * from './connections/index'
 export * from './sync/index'

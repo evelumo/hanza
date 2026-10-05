@@ -1,9 +1,19 @@
-import type { Address, Buyer, Money, OrderStatus } from '@hanza/connector-sdk'
+import type { Address, Buyer, Money } from '@hanza/connector-sdk'
 import { addressSchema } from '@hanza/connector-sdk'
-import type { AttentionReason, ChannelFactType, PaymentMethod } from '@hanza/db'
+import type { AttentionReason, ChannelFactType, OrderStatusColor, PaymentMethod } from '@hanza/db'
 import type { Context } from '../context'
 import { listEvents, type EventRow } from '../events'
-import { allowedTransitions } from './status-rules'
+import { ensureDefaultOrderStatuses } from '../order-statuses/defaults'
+import { ORDER_PHASES, type OrderPhase } from './phases'
+import { allowedStatuses } from './status-rules'
+
+/** An Order status as the panel shows it; a null name is the phase's own name. */
+export interface OrderStatusLabel {
+  id: string
+  name: string | null
+  color: OrderStatusColor | null
+  phase: OrderPhase
+}
 
 export interface OrderRow {
   id: string
@@ -13,7 +23,8 @@ export interface OrderRow {
   placedAt: Date
   buyerName: string
   total: Money
-  status: OrderStatus
+  phase: OrderPhase
+  status: OrderStatusLabel
   attentionReasons: AttentionReason[]
 }
 
@@ -38,7 +49,8 @@ export interface OrderDetail extends OrderRow {
   }>
   facts: Array<{ externalId: string; type: ChannelFactType; occurredAt: Date; note: string | null; recordedAt: Date }>
   events: EventRow[]
-  allowedTransitions: OrderStatus[]
+  /** Where a person may move the Order, phase by phase, then by position. */
+  allowedStatuses: OrderStatusLabel[]
 }
 
 const rowSelect = {
@@ -49,7 +61,8 @@ const rowSelect = {
   buyerName: true,
   currency: true,
   totalAmount: true,
-  status: true,
+  phase: true,
+  status: { select: { id: true, name: true, color: true, phase: true } },
   attentionReasons: true,
   connection: { select: { name: true } },
 } as const
@@ -62,7 +75,8 @@ function toRow(order: {
   buyerName: string
   currency: string
   totalAmount: { toFixed(): string }
-  status: OrderStatus
+  phase: OrderPhase
+  status: OrderStatusLabel
   attentionReasons: AttentionReason[]
   connection: { name: string }
 }): OrderRow {
@@ -74,6 +88,7 @@ function toRow(order: {
     placedAt: order.placedAt,
     buyerName: order.buyerName,
     total: { amount: order.totalAmount.toFixed(), currency: order.currency },
+    phase: order.phase,
     status: order.status,
     attentionReasons: order.attentionReasons,
   }
@@ -82,11 +97,12 @@ function toRow(order: {
 export async function listOrders(
   ctx: Context,
   organizationId: string,
-  query: { status?: OrderStatus; needsAttention?: boolean; skip: number; take: number },
+  query: { phase?: OrderPhase; statusId?: string; needsAttention?: boolean; skip: number; take: number },
 ): Promise<{ total: number; items: OrderRow[] }> {
   const where = {
     organizationId,
-    ...(query.status ? { status: query.status } : {}),
+    ...(query.phase ? { phase: query.phase } : {}),
+    ...(query.statusId ? { statusId: query.statusId } : {}),
     ...(query.needsAttention === undefined ? {} : { attentionReasons: { isEmpty: !query.needsAttention } }),
   }
   const [total, orders] = await Promise.all([
@@ -133,7 +149,18 @@ export async function getOrder(ctx: Context, organizationId: string, orderId: st
   })
   if (!order) return null
 
-  const events = await listEvents(ctx, organizationId, { type: 'order', id: order.id }, 50)
+  await ensureDefaultOrderStatuses(ctx.db, organizationId)
+  const [events, statuses] = await Promise.all([
+    listEvents(ctx, organizationId, { type: 'order', id: order.id }, 50),
+    ctx.db.orderStatus.findMany({
+      where: { organizationId, active: true },
+      orderBy: [{ position: 'asc' }, { createdAt: 'asc' }, { id: 'asc' }],
+      select: { id: true, name: true, color: true, phase: true, active: true },
+    }),
+  ])
+  const options = allowedStatuses({ phase: order.phase, statusId: order.status.id }, statuses)
+    .sort((a, b) => ORDER_PHASES.indexOf(a.phase) - ORDER_PHASES.indexOf(b.phase))
+    .map(({ id, name, color, phase }) => ({ id, name, color, phase }))
   return {
     ...toRow(order),
     payment: order.payment,
@@ -156,6 +183,6 @@ export async function getOrder(ctx: Context, organizationId: string, orderId: st
     })),
     facts: order.facts,
     events,
-    allowedTransitions: allowedTransitions(order.status),
+    allowedStatuses: options,
   }
 }

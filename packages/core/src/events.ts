@@ -1,7 +1,7 @@
 import type { Prisma, Tx } from '@hanza/db'
 import type { Context } from './context'
 
-export type EventSubject = { type: 'product' | 'offer' | 'order' | 'connection'; id: string }
+export type EventSubject = { type: 'product' | 'offer' | 'order' | 'connection' | 'order_status'; id: string }
 
 export type EventType =
   | 'system.ping'
@@ -19,8 +19,12 @@ export type EventType =
   | 'order.line_linked'
   | 'order.attention_raised'
   | 'order.attention_resolved'
+  | 'order_status.created'
+  | 'order_status.updated'
+  | 'order_status.deleted'
   | 'connection.created'
   | 'connection.health_changed'
+  | 'connection.status_mapping_changed'
 
 export interface EventRow {
   id: string

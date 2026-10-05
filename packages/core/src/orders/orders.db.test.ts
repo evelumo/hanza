@@ -67,7 +67,7 @@ describe.skipIf(!databaseUrl)('orders', () => {
       const { ctx, org, connectionId } = await setup()
       const { orderId } = await importOrder(ctx, org, connectionId, buildOrder({ lines: [orderLine('l1', { sku: 'NOPE' })] }))
       await expect(changeOrderStatus(ctx, org, orderId, 'shipped', user)).rejects.toMatchObject({ code: 'unmatched_lines' })
-      expect((await ctx.db.order.findFirstOrThrow({ where: { id: orderId } })).status).toBe('new')
+      expect((await ctx.db.order.findFirstOrThrow({ where: { id: orderId } })).phase).toBe('new')
     })
 
     it('removes shortage when cancelled by a person', async () => {
@@ -112,7 +112,7 @@ describe.skipIf(!databaseUrl)('orders', () => {
     it('on a shipped Order: consumed Reservation and Stock decreases', async () => {
       const env = await setup()
       const { orderId, lineId } = await unmatchedOrder(env, 2, [fact('s', 'shipped')])
-      expect((await env.ctx.db.order.findFirstOrThrow({ where: { id: orderId } })).status).toBe('shipped')
+      expect((await env.ctx.db.order.findFirstOrThrow({ where: { id: orderId } })).phase).toBe('shipped')
 
       await linkOrderLine(env.ctx, env.org, lineId, env.productId, user)
 
@@ -214,18 +214,25 @@ describe.skipIf(!databaseUrl)('orders', () => {
     expect(all.items[0]).toMatchObject({ connectionName: 'Test channel', buyerName: 'John Test', total: { amount: '84', currency: 'PLN' } })
     expect((await listOrders(ctx, org, { needsAttention: true, skip: 0, take: 10 })).items.map((row) => row.id)).toEqual([attention.orderId])
     expect((await listOrders(ctx, org, { needsAttention: false, skip: 0, take: 10 })).items.map((row) => row.id)).toEqual([ok.orderId])
-    expect((await listOrders(ctx, org, { status: 'cancelled', skip: 0, take: 10 })).total).toBe(0)
+    expect((await listOrders(ctx, org, { phase: 'cancelled', skip: 0, take: 10 })).total).toBe(0)
 
     const detail = await getOrder(ctx, org, ok.orderId)
     expect(detail).toMatchObject({
-      status: 'new',
+      phase: 'new',
+      status: { name: null, color: null, phase: 'new' },
       payment: 'prepaid',
       buyer: { name: 'John Test', email: 'john.test@example.com', phone: null, login: 'john_test' },
       shippingAddress: { city: 'Warsaw', countryCode: 'PL' },
       billingAddress: null,
       lines: [{ externalId: 'l1', productId, productSku: 'P', productName: 'Product', reservationStatus: 'open', unitPrice: { amount: '10', currency: 'PLN' } }],
       facts: [],
-      allowedTransitions: ['processing', 'shipped', 'cancelled'],
+    })
+    expect(detail?.allowedStatuses.map((status) => [status.phase, status.name])).toEqual([
+      ['processing', null],
+      ['shipped', null],
+      ['cancelled', null],
+    ])
+    expect(detail).toMatchObject({
     })
     expect(detail?.events.map((event) => event.type)).toEqual(['order.imported'])
   })

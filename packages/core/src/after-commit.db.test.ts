@@ -49,7 +49,7 @@ describe.skipIf(!databaseUrl)('post-commit enqueue failures', () => {
 
     await expect(changeOrderStatus(broken, org, orderId, 'shipped', user)).resolves.toBeUndefined()
 
-    expect((await ctx.db.order.findFirstOrThrow({ where: { id: orderId } })).status).toBe('shipped')
+    expect((await ctx.db.order.findFirstOrThrow({ where: { id: orderId } })).phase).toBe('shipped')
     expect((await getAvailability(ctx.db, org, [productId])).get(productId)).toEqual({ stock: 3, reserved: 0, available: 3 })
     expect(logged).toEqual([
       stockPushFailure,
