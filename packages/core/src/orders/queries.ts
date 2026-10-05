@@ -14,6 +14,8 @@ export interface OrderRow {
   buyerName: string
   total: Money
   status: OrderStatus
+  /** A prepaid Order the Buyer has not paid for yet; it cannot be fulfilled until the Channel reports the payment. */
+  awaitingPayment: boolean
   attentionReasons: AttentionReason[]
 }
 
@@ -50,6 +52,7 @@ const rowSelect = {
   currency: true,
   totalAmount: true,
   status: true,
+  awaitingPayment: true,
   attentionReasons: true,
   connection: { select: { name: true } },
 } as const
@@ -63,6 +66,7 @@ function toRow(order: {
   currency: string
   totalAmount: { toFixed(): string }
   status: OrderStatus
+  awaitingPayment: boolean
   attentionReasons: AttentionReason[]
   connection: { name: string }
 }): OrderRow {
@@ -75,6 +79,7 @@ function toRow(order: {
     buyerName: order.buyerName,
     total: { amount: order.totalAmount.toFixed(), currency: order.currency },
     status: order.status,
+    awaitingPayment: order.awaitingPayment,
     attentionReasons: order.attentionReasons,
   }
 }
@@ -82,12 +87,13 @@ function toRow(order: {
 export async function listOrders(
   ctx: Context,
   organizationId: string,
-  query: { status?: OrderStatus; needsAttention?: boolean; skip: number; take: number },
+  query: { status?: OrderStatus; needsAttention?: boolean; awaitingPayment?: boolean; skip: number; take: number },
 ): Promise<{ total: number; items: OrderRow[] }> {
   const where = {
     organizationId,
     ...(query.status ? { status: query.status } : {}),
     ...(query.needsAttention === undefined ? {} : { attentionReasons: { isEmpty: !query.needsAttention } }),
+    ...(query.awaitingPayment === undefined ? {} : { awaitingPayment: query.awaitingPayment }),
   }
   const [total, orders] = await Promise.all([
     ctx.db.order.count({ where }),
@@ -156,6 +162,6 @@ export async function getOrder(ctx: Context, organizationId: string, orderId: st
     })),
     facts: order.facts,
     events,
-    allowedTransitions: allowedTransitions(order.status),
+    allowedTransitions: allowedTransitions(order.status, order.awaitingPayment),
   }
 }

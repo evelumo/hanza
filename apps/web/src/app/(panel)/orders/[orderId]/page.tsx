@@ -5,7 +5,7 @@ import { notFound } from 'next/navigation'
 import { ActionForm } from '@/components/action-form'
 import { ActionButton } from '@/components/form'
 import { EmptyState, Section, linkClass, rowClass, tableClass, tdClass, thClass } from '@/components/section'
-import { AttentionBadge, OrderStatusBadge } from '@/components/status-badge'
+import { AttentionBadge, AwaitingPaymentBadge, OrderStatusBadge } from '@/components/status-badge'
 import { getT } from '@/i18n/server'
 import { getContext } from '@/lib/context'
 import { describeEvent } from '@/lib/events'
@@ -43,6 +43,7 @@ export default async function OrderPage({ params }: { params: Promise<{ orderId:
             {t('orders.detail.title')} <span className="font-mono">{order.externalId}</span>
           </h1>
           <OrderStatusBadge status={order.status} />
+          {order.awaitingPayment ? <AwaitingPaymentBadge /> : null}
           {order.attentionReasons.length > 0 ? <AttentionBadge /> : null}
         </div>
         <p className="mt-1 text-sm text-muted">
@@ -78,7 +79,14 @@ export default async function OrderPage({ params }: { params: Promise<{ orderId:
       ) : null}
 
       <Section title={t('orders.detail.statusTitle')} description={t('orders.detail.statusDescription')}>
-        <div className="px-5 py-4">
+        <div className="space-y-3 px-5 py-4">
+          {order.awaitingPayment ? (
+            <p className="text-sm text-amber-900">
+              {order.status === 'new' || order.status === 'processing'
+                ? t('orders.detail.awaitingPaymentHint')
+                : t('orders.detail.awaitingPaymentClosedHint')}
+            </p>
+          ) : null}
           {order.allowedTransitions.length === 0 ? (
             <p className="text-sm text-muted">{t('orders.detail.finalStatus', { status: orderStatusLabel(t, order.status) })}</p>
           ) : (

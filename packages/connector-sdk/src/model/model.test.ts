@@ -79,6 +79,21 @@ describe('orderSchema', () => {
     expect(orderSchema.safeParse({ ...order, lines: [line] }).success).toBe(false)
   })
 
+  it('accepts an Order awaiting payment; leaving the flag out keeps older connectors valid', () => {
+    expect(orderSchema.parse({ ...order, awaitingPayment: true })).toEqual({ ...order, awaitingPayment: true })
+    expect('awaitingPayment' in orderSchema.parse(order)).toBe(false)
+    const paidFact = { id: 'o-1:paid', type: 'paid', occurredAt: '2026-10-02T10:00:00Z', note: null }
+    expect(orderSchema.safeParse({ ...order, awaitingPayment: false, facts: [paidFact] }).success).toBe(true)
+  })
+
+  it('rejects an Order awaiting payment that is cash on delivery or already has a paid fact', () => {
+    const cod = orderSchema.safeParse({ ...order, payment: 'cash_on_delivery', awaitingPayment: true })
+    expect(cod.success).toBe(false)
+    expect(cod.error?.issues[0]?.path).toEqual(['awaitingPayment'])
+    const paidFact = { id: 'o-1:paid', type: 'paid', occurredAt: '2026-10-02T10:00:00Z', note: null }
+    expect(orderSchema.safeParse({ ...order, awaitingPayment: true, facts: [paidFact] }).success).toBe(false)
+  })
+
   it('rejects a lowercase country code', () => {
     expect(orderSchema.safeParse({ ...order, shippingAddress: { ...address, countryCode: 'pl' } }).success).toBe(false)
   })

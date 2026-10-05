@@ -27,6 +27,15 @@ describe('describeEvent', () => {
     expect(describeEvent('order.attention_raised', { reasons: ['unmatched_line', 'shortage'] }, t, number).detail).toBe('Unmatched line, Shortage')
   })
 
+  it('describes a payment reported by the Channel', () => {
+    expect(describeEvent('order.channel_fact_recorded', { type: 'paid' }, t, number)).toEqual({
+      title: 'The channel reported a change',
+      detail: 'Paid in the channel',
+    })
+    expect(describeEvent('order.payment_received', { factId: 'f' }, t, number)).toEqual({ title: 'Payment received', detail: null })
+    expect(describeEvent('order.payment_received', {}, translatorFor('pl'), numberPl).title).toBe(catalogues.pl.events.title.order_payment_received)
+  })
+
   it('pluralises counts the way each language does', () => {
     expect(describeEvent('stock.reserved', { units: 1 }, t, number).detail).toBe('1 unit')
     expect(describeEvent('stock.reserved', { units: 5 }, t, number).detail).toBe('5 units')

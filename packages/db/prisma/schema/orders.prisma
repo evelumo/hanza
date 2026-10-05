@@ -28,6 +28,7 @@ enum AttentionReason {
 enum ChannelFactType {
   cancelled
   shipped
+  paid
 
   @@map("channel_fact_type")
 }
@@ -41,6 +42,8 @@ model Order {
   attentionReasons AttentionReason[] @default([])
   placedAt         DateTime
   payment          PaymentMethod
+  /// A prepaid Order the Buyer has not paid for yet; cleared by a `paid` Channel fact. Not fulfillable while true.
+  awaitingPayment  Boolean           @default(false)
   currency         String            @db.Char(3)
   totalAmount      Decimal           @db.Decimal(19, 4)
   // Buyer snapshot (no encryption yet: issue #6).

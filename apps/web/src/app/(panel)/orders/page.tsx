@@ -6,7 +6,7 @@ import { redirect } from 'next/navigation'
 import { buttonClass } from '@/components/button-class'
 import { Pagination } from '@/components/pagination'
 import { EmptyState, linkClass, rowClass, tableClass, tdClass, thClass } from '@/components/section'
-import { AttentionBadge, OrderStatusBadge } from '@/components/status-badge'
+import { AttentionBadge, AwaitingPaymentBadge, OrderStatusBadge } from '@/components/status-badge'
 import { getT } from '@/i18n/server'
 import { getContext } from '@/lib/context'
 import { getFormatters } from '@/lib/formatters'
@@ -25,16 +25,22 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
   const { organizationId } = await requireTenant()
   const [t, format] = await Promise.all([getT(), getFormatters()])
   const params = await searchParams
-  const filters = orderListFiltersSchema.parse({ status: firstParam(params.status), attention: firstParam(params.attention) })
+  const filters = orderListFiltersSchema.parse({
+    status: firstParam(params.status),
+    attention: firstParam(params.attention),
+    payment: firstParam(params.payment),
+  })
+  const filterParams = { status: filters.status, attention: filters.attention, payment: filters.payment }
   const page = parsePage(params.page)
   const { total, items } = await listOrders(getContext(), organizationId, {
     status: filters.status,
     needsAttention: filters.attention === '1' ? true : undefined,
+    awaitingPayment: filters.payment === 'awaiting' ? true : undefined,
     ...pageWindow(page),
   })
-  const outOfRange = outOfRangeRedirect(page, total, '/orders', { status: filters.status, attention: filters.attention })
+  const outOfRange = outOfRangeRedirect(page, total, '/orders', filterParams)
   if (outOfRange) redirect(outOfRange)
-  const filtered = Boolean(filters.status || filters.attention)
+  const filtered = Boolean(filters.status || filters.attention || filters.payment)
 
   return (
     <div className="space-y-6">
@@ -59,6 +65,10 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
         <label className="flex items-center gap-2 pb-2 text-sm font-medium">
           <input type="checkbox" name="attention" value="1" defaultChecked={filters.attention === '1'} className="size-4 accent-accent" />
           {t('orders.filters.attentionOnly')}
+        </label>
+        <label className="flex items-center gap-2 pb-2 text-sm font-medium">
+          <input type="checkbox" name="payment" value="awaiting" defaultChecked={filters.payment === 'awaiting'} className="size-4 accent-accent" />
+          {t('orders.filters.awaitingPaymentOnly')}
         </label>
         <button type="submit" className={buttonClass('secondary')}>
           {t('orders.filters.apply')}
@@ -103,6 +113,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
                     <td className={tdClass}>
                       <span className="flex flex-wrap gap-1.5">
                         <OrderStatusBadge status={order.status} />
+                        {order.awaitingPayment ? <AwaitingPaymentBadge /> : null}
                         {order.attentionReasons.length > 0 ? <AttentionBadge /> : null}
                       </span>
                     </td>
@@ -114,7 +125,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
         )}
       </div>
 
-      <Pagination page={page} total={total} basePath="/orders" params={{ status: filters.status, attention: filters.attention }} />
+      <Pagination page={page} total={total} basePath="/orders" params={filterParams} />
     </div>
   )
 }

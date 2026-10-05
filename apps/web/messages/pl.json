@@ -166,6 +166,7 @@
       "status": "Status",
       "all": "Wszystkie",
       "attentionOnly": "Tylko wymagające uwagi",
+      "awaitingPaymentOnly": "Tylko oczekujące na płatność",
       "apply": "Filtruj",
       "clear": "Wyczyść"
     },
@@ -180,6 +181,7 @@
       "status": "Status"
     },
     "needsAttention": "Wymaga uwagi",
+    "awaitingPayment": "Oczekuje na płatność",
     "detail": {
       "title": "Zamówienie",
       "summary": "Kanał: {channel} · {date} · {payment} · {total}",
@@ -187,6 +189,8 @@
       "markReviewed": "Oznacz jako sprawdzone",
       "statusTitle": "Status",
       "statusDescription": "Postęp realizacji prowadzi Hanza; zmiana jest przekazywana do kanału, jeśli kanał to obsługuje.",
+      "awaitingPaymentHint": "Kupujący jeszcze nie zapłacił. Towar pozostaje zarezerwowany; zamówienie można realizować, gdy kanał zgłosi płatność, a do tego czasu można je tylko anulować.",
+      "awaitingPaymentClosedHint": "Kanał nie zgłosił płatności za to zamówienie.",
       "finalStatus": "Zamówienie ma status końcowy ({status}), nie można go zmienić.",
       "changeTo": "Zmień na: {status}",
       "confirmShipped": "Oznaczyć zamówienie jako wysłane? Zarezerwowany towar zostanie zdjęty ze stanu.",
@@ -296,12 +300,13 @@
       "order_status_push": "Statusy zamówień"
     },
     "payment": {
-      "prepaid": "Opłacone",
+      "prepaid": "Przedpłata",
       "cash_on_delivery": "Za pobraniem"
     },
     "channelFact": {
       "cancelled": "Anulowane w kanale",
-      "shipped": "Wysłane w kanale"
+      "shipped": "Wysłane w kanale",
+      "paid": "Opłacone w kanale"
     },
     "reservation": {
       "open": "Otwarta",
@@ -348,6 +353,7 @@
       "offer_unlinked": "Rozłączono ofertę z produktem",
       "order_imported": "Zaimportowano zamówienie",
       "order_channel_fact_recorded": "Kanał zgłosił zmianę",
+      "order_payment_received": "Płatność otrzymana",
       "order_status_changed": "Zmieniono status",
       "order_line_linked": "Połączono pozycję z produktem",
       "order_attention_raised": "Zamówienie wymaga uwagi",
@@ -362,6 +368,7 @@
       "not_found": "Nie znaleziono.",
       "sku_taken": "Produkt z tym SKU już istnieje.",
       "invalid_transition": "Tej zmiany statusu nie można wykonać.",
+      "awaiting_payment": "Zamówienie nie jest jeszcze opłacone. Można je realizować, gdy kanał zgłosi płatność.",
       "unmatched_lines": "Najpierw połącz wszystkie pozycje z produktami.",
       "already_linked": "Ta pozycja jest już połączona.",
       "unknown_connector": "Nieznany konektor.",

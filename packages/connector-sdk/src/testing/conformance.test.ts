@@ -121,6 +121,16 @@ const broken: Array<[id: string, connector: AnyConnectorDefinition, fixtures?: C
       return { items: [bad], nextCursor: '1', hasMore: false }
     },
   })],
+  ['C6', withCapabilities({
+    'orders.pull': async () => ({ items: [{ ...order('a'), payment: 'cash_on_delivery', awaitingPayment: true }], nextCursor: '1', hasMore: false }),
+  })],
+  ['C6', withCapabilities({
+    'orders.pull': async () => {
+      const bad: Order = { ...order('a'), awaitingPayment: true }
+      bad.facts = [{ id: 'a:paid', type: 'paid', occurredAt: '2026-10-02T10:00:00Z', note: null }]
+      return { items: [bad], nextCursor: '1', hasMore: false }
+    },
+  })],
   ['C7', (() => {
     let calls = 0
     return withCapabilities({
@@ -144,6 +154,14 @@ describe('assertConformance', () => {
 
   it('passes for a connector without orders.updateStatus and without an unauthorized fixture', async () => {
     const connector = validConnector({ capabilities: { ...validConnector().capabilities, 'orders.updateStatus': undefined } })
+    await expect(assertConformance(connector, { config: { region: 'eu' }, credentials: { apiKey: 'test' } })).resolves.toBeUndefined()
+  })
+
+  it('passes for a connector that also reports unpaid Orders and their payment', async () => {
+    const paid = order('b')
+    paid.facts = [{ id: 'b:paid', type: 'paid', occurredAt: '2026-10-02T10:00:00Z', note: null }]
+    const mixed = [{ ...order('a'), awaitingPayment: true }, { ...paid, awaitingPayment: false }, order('c')]
+    const connector = withCapabilities({ 'orders.pull': async (_ctx, cursor) => slice(mixed, cursor) })
     await expect(assertConformance(connector, { config: { region: 'eu' }, credentials: { apiKey: 'test' } })).resolves.toBeUndefined()
   })
 

@@ -14,7 +14,8 @@ import { allowedTransitions } from './status-rules'
 import { applyStockEffect } from './stock-effect'
 
 /**
- * A person moves an Order along `allowedTransitions`; shipped is refused while an Unmatched line exists.
+ * A person moves an Order along `allowedTransitions`; shipped is refused while an Unmatched line exists,
+ * and anything but cancelled while the Order is awaiting payment.
  * Cancelling releases its Reservations, shipping consumes them, and the new status is then pushed to the Channel.
  */
 export async function changeOrderStatus(ctx: Context, organizationId: string, orderId: string, to: OrderStatus, actor: Actor): Promise<void> {
@@ -22,9 +23,13 @@ export async function changeOrderStatus(ctx: Context, organizationId: string, or
 
   const connectionIds = await ctx.db.$transaction(async (tx) => {
     if (!(await lockOrder(tx, organizationId, orderId))) throw new DomainError('not_found')
-    const order = await tx.order.findFirst({ where: { id: orderId, organizationId }, select: { status: true, attentionReasons: true } })
+    const order = await tx.order.findFirst({
+      where: { id: orderId, organizationId },
+      select: { status: true, attentionReasons: true, awaitingPayment: true },
+    })
     if (!order) throw new DomainError('not_found')
-    if (!allowedTransitions(order.status).includes(to)) {
+    if (!allowedTransitions(order.status, order.awaitingPayment).includes(to)) {
+      if (allowedTransitions(order.status).includes(to)) throw new DomainError('awaiting_payment')
       throw new DomainError('invalid_transition', `Cannot change an Order from ${order.status} to ${to}`)
     }
     if (to === 'shipped') {

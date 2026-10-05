@@ -17,8 +17,9 @@ import { factTransition } from './status-rules'
 import { applyStockEffect } from './stock-effect'
 
 /**
- * Imports one Order from a Channel (input already parsed with `orderSchema`).
- * An existing Order is a snapshot: only Channel facts not recorded yet change it.
+ * Imports one Order from a Channel (input already parsed with `orderSchema`). An Order awaiting payment
+ * reserves like any other (ADR 0011). An existing Order is a snapshot: only Channel facts not recorded yet
+ * change it, so a later `awaitingPayment: false` means nothing without a `paid` fact.
  * Idempotent; a concurrent duplicate fails on the unique constraint and its retry takes the "exists" path.
  */
 export async function importOrder(
@@ -57,6 +58,7 @@ async function insertOrder(tx: Tx, organizationId: string, connectionId: string,
       externalId: order.externalId,
       placedAt: new Date(order.placedAt),
       payment: order.payment,
+      awaitingPayment: order.awaitingPayment === true,
       currency: order.total.currency,
       totalAmount: order.total.amount,
       buyerName: order.buyer.name,
@@ -117,6 +119,7 @@ async function insertOrder(tx: Tx, organizationId: string, connectionId: string,
     payload: {
       connectionId,
       externalId: order.externalId,
+      awaitingPayment: order.awaitingPayment === true,
       lineCount: created.lines.length,
       unmatchedLines,
       shortageLines: shortageLines.length,
@@ -138,9 +141,12 @@ async function applyNewFacts(tx: Tx, organizationId: string, orderId: string, fa
   )
   if (fresh.length === 0) return 0
 
-  const order = await tx.order.findFirst({ where: { id: orderId, organizationId }, select: { status: true, attentionReasons: true } })
+  const order = await tx.order.findFirst({
+    where: { id: orderId, organizationId },
+    select: { status: true, attentionReasons: true, awaitingPayment: true },
+  })
   if (!order) throw new DomainError('not_found')
-  let { status, attentionReasons: reasons } = order
+  let { status, attentionReasons: reasons, awaitingPayment } = order
   const subject = { type: 'order', id: orderId } as const
 
   for (const fact of fresh) {
@@ -154,7 +160,12 @@ async function applyNewFacts(tx: Tx, organizationId: string, orderId: string, fa
       payload: { factId: fact.id, type: fact.type, occurredAt: fact.occurredAt },
     })
 
-    const transition = factTransition(status, fact.type)
+    const transition = factTransition(status, fact.type, awaitingPayment)
+    if (transition.paid) {
+      // Its Reservations were made at import, so payment touches no Stock: from here on it is a ready Order.
+      awaitingPayment = false
+      await appendEvent(tx, { organizationId, type: 'order.payment_received', subject, payload: { factId: fact.id } })
+    }
     if (transition.to) {
       for (const productId of await applyStockEffect(tx, organizationId, orderId, transition.to)) touched.add(productId)
       await appendEvent(tx, {
@@ -175,7 +186,7 @@ async function applyNewFacts(tx: Tx, organizationId: string, orderId: string, fa
     }
   }
 
-  await tx.order.updateMany({ where: { id: orderId, organizationId }, data: { status, attentionReasons: reasons } })
+  await tx.order.updateMany({ where: { id: orderId, organizationId }, data: { status, attentionReasons: reasons, awaitingPayment } })
   return fresh.length
 }
 

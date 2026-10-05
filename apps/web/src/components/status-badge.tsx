@@ -30,6 +30,11 @@ export function HealthBadge({ health }: { health: ConnectionHealth }) {
   return <span className={`${base} ${healthTone[health]}`}>{healthLabel(t, health)}</span>
 }
 
+export function AwaitingPaymentBadge() {
+  const t = useT()
+  return <span className={`${base} border-amber-300 bg-amber-50 text-amber-900`}>{t('orders.awaitingPayment')}</span>
+}
+
 export function AttentionBadge({ label }: { label?: string }) {
   const t = useT()
   return <span className={`${base} border-red-300 bg-red-50 text-red-900`}>{label ?? t('orders.needsAttention')}</span>
