@@ -9,7 +9,7 @@ export async function ensureDefaultWarehouse(db: Db | Tx, organizationId: string
   const client: Tx = db
   await client.$executeRaw`
     INSERT INTO "warehouse" ("id", "organizationId", "code", "name")
-    VALUES (gen_random_uuid()::text, ${organizationId}, 'default', 'Magazyn główny')
+    VALUES (gen_random_uuid()::text, ${organizationId}, 'default', 'Main warehouse')
     ON CONFLICT ("organizationId", "code") DO NOTHING`
   return defaultWarehouseId(client, organizationId)
 }

@@ -18,7 +18,7 @@ describe.skipIf(!databaseUrl)('stock', () => {
     const org = await createTestOrganization(ctx.db)
     const ids = await Promise.all([ensureDefaultWarehouse(ctx.db, org), ensureDefaultWarehouse(ctx.db, org)])
     expect(ids[0]).toBe(ids[1])
-    expect(await ctx.db.warehouse.findMany({ where: { organizationId: org } })).toMatchObject([{ code: 'default', name: 'Magazyn główny' }])
+    expect(await ctx.db.warehouse.findMany({ where: { organizationId: org } })).toMatchObject([{ code: 'default', name: 'Main warehouse' }])
   })
 
   it('setStock writes stock.set with from/to, bumps linked Offers and requests a push', async () => {
