@@ -3,7 +3,7 @@ import { addressSchema } from '@hanza/connector-sdk'
 import type { AttentionReason, ChannelFactType, PaymentMethod } from '@hanza/db'
 import type { Context } from '../context'
 import { listEvents, type EventRow } from '../events'
-import { allowedTransitions } from './status-rules'
+import { allowedTransitions, OPEN_STATUSES } from './status-rules'
 
 export interface OrderRow {
   id: string
@@ -87,13 +87,19 @@ function toRow(order: {
 export async function listOrders(
   ctx: Context,
   organizationId: string,
+  /** `awaitingPayment` matches open (new, processing) Orders awaiting payment, or every other Order when false. */
   query: { status?: OrderStatus; needsAttention?: boolean; awaitingPayment?: boolean; skip: number; take: number },
 ): Promise<{ total: number; items: OrderRow[] }> {
   const where = {
     organizationId,
     ...(query.status ? { status: query.status } : {}),
     ...(query.needsAttention === undefined ? {} : { attentionReasons: { isEmpty: !query.needsAttention } }),
-    ...(query.awaitingPayment === undefined ? {} : { awaitingPayment: query.awaitingPayment }),
+    // Only open Orders are still waiting: a cancelled checkout that was never paid is not.
+    ...(query.awaitingPayment === undefined
+      ? {}
+      : query.awaitingPayment
+        ? { AND: [{ awaitingPayment: true }, { status: { in: OPEN_STATUSES } }] }
+        : { NOT: { awaitingPayment: true, status: { in: OPEN_STATUSES } } }),
   }
   const [total, orders] = await Promise.all([
     ctx.db.order.count({ where }),

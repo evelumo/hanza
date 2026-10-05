@@ -9,7 +9,7 @@ import { createInMemoryJobQueue, type InMemoryJobQueue } from './queue'
 
 export type TestContext = Context & { queue: InMemoryJobQueue }
 
-const silentLogger: Logger = { info() {}, error() {} }
+const silentLogger: Logger = { info() {}, warn() {}, error() {} }
 
 /** A real database, a random encryption key, a silent logger, an in-memory queue and the given connectors. */
 export function createTestContext(options: { databaseUrl: string; connectors?: AnyConnectorDefinition[] }): TestContext {

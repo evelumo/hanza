@@ -190,7 +190,7 @@
       "statusTitle": "Status",
       "statusDescription": "Hanza leads the fulfilment; a change is passed on to the channel if the channel supports it.",
       "awaitingPaymentHint": "The buyer has not paid yet. The goods stay reserved; the order can be fulfilled once the channel reports the payment, and until then it can only be cancelled.",
-      "awaitingPaymentClosedHint": "The channel has not reported the payment for this order.",
+      "awaitingPaymentShippedHint": "Shipped, but the channel has not reported the payment for this order.",
       "finalStatus": "The order has a final status ({status}) and cannot be changed.",
       "changeTo": "Change to: {status}",
       "confirmShipped": "Mark the order as shipped? The reserved goods will be taken off stock.",

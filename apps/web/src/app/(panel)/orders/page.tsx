@@ -11,6 +11,7 @@ import { getT } from '@/i18n/server'
 import { getContext } from '@/lib/context'
 import { getFormatters } from '@/lib/formatters'
 import { orderStatusLabel } from '@/lib/labels'
+import { showsAwaitingPayment } from '@/lib/payment'
 import { firstParam, outOfRangeRedirect, pageWindow, parsePage } from '@/lib/pagination'
 import { requireTenant } from '@/lib/session'
 import { orderListFiltersSchema } from './schemas'
@@ -113,7 +114,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
                     <td className={tdClass}>
                       <span className="flex flex-wrap gap-1.5">
                         <OrderStatusBadge status={order.status} />
-                        {order.awaitingPayment ? <AwaitingPaymentBadge /> : null}
+                        {showsAwaitingPayment(order) ? <AwaitingPaymentBadge /> : null}
                         {order.attentionReasons.length > 0 ? <AttentionBadge /> : null}
                       </span>
                     </td>

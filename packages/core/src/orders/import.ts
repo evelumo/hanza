@@ -34,17 +34,24 @@ export async function importOrder(
     const connection = await tx.connection.findFirst({ where: { id: connectionId, organizationId }, select: { id: true } })
     if (!connection) throw new DomainError('not_found')
 
-    const existing = await tx.$queryRaw<Array<{ id: string }>>`
-      SELECT "id" FROM "order"
+    const existing = await tx.$queryRaw<Array<{ id: string; awaitingPayment: boolean }>>`
+      SELECT "id", "awaitingPayment" FROM "order"
       WHERE "connectionId" = ${connectionId} AND "externalId" = ${order.externalId} AND "organizationId" = ${organizationId}
       FOR NO KEY UPDATE`
     const touched = new Set<string>()
     const orderId = existing[0]?.id ?? (await insertOrder(tx, organizationId, connectionId, order, touched))
     const factsApplied = await applyNewFacts(tx, organizationId, orderId, order.facts, touched)
     const connectionIds = await markOffersForStockPush(tx, organizationId, [...touched])
-    return { orderId, created: existing.length === 0, factsApplied, connectionIds }
+    return { orderId, created: existing.length === 0, wasAwaitingPayment: existing[0]?.awaitingPayment === true, factsApplied, connectionIds }
   }, TX_OPTIONS)
 
+  if (result.wasAwaitingPayment && droppedPaymentFlagWithoutFact(order)) {
+    // Ids only: the snapshot holds Buyer data.
+    ctx.log.warn('Order no longer awaiting payment on the Channel but no paid fact was reported; it stays awaiting payment', {
+      connectionId,
+      externalId: order.externalId,
+    })
+  }
   await requestStockPushAfterCommit(ctx, organizationId, result.connectionIds)
   return { orderId: result.orderId, created: result.created, factsApplied: result.factsApplied }
 }
@@ -188,6 +195,14 @@ async function applyNewFacts(tx: Tx, organizationId: string, orderId: string, fa
 
   await tx.order.updateMany({ where: { id: orderId, organizationId }, data: { status, attentionReasons: reasons, awaitingPayment } })
   return fresh.length
+}
+
+/**
+ * A connector broke the contract (ADR 0011): the snapshot says the Order is no longer awaiting payment but
+ * carries no `paid` fact. A `cancelled` fact explains it; a connector that never sends the flag never stores it.
+ */
+function droppedPaymentFlagWithoutFact(order: Order): boolean {
+  return order.awaitingPayment !== true && !order.facts.some((fact) => fact.type === 'paid' || fact.type === 'cancelled')
 }
 
 function compare(a: string, b: string): number {

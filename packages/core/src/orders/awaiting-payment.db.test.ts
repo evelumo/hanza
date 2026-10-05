@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { createProduct } from '../catalog/products'
 import { getAvailability } from '../stock/availability'
 import { createTestOrganization } from '../testing/context'
@@ -70,12 +70,43 @@ describe.skipIf(!databaseUrl)('Orders awaiting payment', () => {
     expect(await available()).toEqual({ stock: 8, reserved: 0, available: 8 })
   })
 
-  it('a later snapshot that only drops the flag, without a paid fact, changes nothing (ADR 0003)', async () => {
+  it('a later snapshot that only drops the flag, without a paid fact, changes nothing (ADR 0003) and is logged', async () => {
     const { ctx, org, connectionId, stored } = await setup()
+    const warn = vi.fn()
+    const watched = { ...ctx, log: { ...ctx.log, warn } }
     const order = unpaid()
-    const { orderId } = await importOrder(ctx, org, connectionId, order)
-    await importOrder(ctx, org, connectionId, { ...order, awaitingPayment: false })
+    const { orderId } = await importOrder(watched, org, connectionId, order)
+    expect(warn).not.toHaveBeenCalled()
+
+    for (const dropped of [{ ...order, awaitingPayment: false }, { ...order, awaitingPayment: undefined }]) {
+      await importOrder(watched, org, connectionId, dropped)
+    }
     expect((await stored(orderId)).awaitingPayment).toBe(true)
+    expect(warn).toHaveBeenCalledTimes(2)
+    // Ids only, never Buyer data.
+    expect(warn.mock.calls[0]?.[1]).toEqual({ connectionId, externalId: order.externalId })
+    expect(JSON.stringify(warn.mock.calls)).not.toContain('John Test')
+  })
+
+  it('does not warn when the flag is still set, is dropped with a paid or cancelled fact, or was never sent', async () => {
+    const { ctx, org, connectionId } = await setup()
+    const warn = vi.fn()
+    const watched = { ...ctx, log: { ...ctx.log, warn } }
+    const stillWaiting = unpaid()
+    await importOrder(watched, org, connectionId, stillWaiting)
+    await importOrder(watched, org, connectionId, stillWaiting)
+    const paid = unpaid()
+    await importOrder(watched, org, connectionId, paid)
+    await importOrder(watched, org, connectionId, { ...paid, awaitingPayment: false, facts: [paidFact()] })
+    await importOrder(watched, org, connectionId, { ...paid, awaitingPayment: false, facts: [paidFact()] })
+    const cancelled = unpaid()
+    await importOrder(watched, org, connectionId, cancelled)
+    await importOrder(watched, org, connectionId, { ...cancelled, awaitingPayment: false, facts: [fact('c', 'cancelled')] })
+    // A connector that never sends the flag never stores an Order awaiting payment.
+    const flagless = buildOrder({ lines: [orderLine('l1', { sku: 'P' })] })
+    await importOrder(watched, org, connectionId, flagless)
+    await importOrder(watched, org, connectionId, flagless)
+    expect(warn).not.toHaveBeenCalled()
   })
 
   it('an Order first seen already paid, with its paid fact, imports as ready with no payment Event', async () => {
@@ -149,14 +180,30 @@ describe.skipIf(!databaseUrl)('Orders awaiting payment', () => {
     const { ctx, org, connectionId } = await setup()
     const ready = await importOrder(ctx, org, connectionId, buildOrder({ placedAt: '2026-10-02T08:00:00Z', lines: [orderLine('l1', { sku: 'P' })] }))
     const waiting = await importOrder(ctx, org, connectionId, unpaid({ placedAt: '2026-10-01T08:00:00Z' }))
+    // Abandoned checkout: cancelled by the Channel, never paid. It keeps the stored flag but is not waiting any more.
+    const abandonedOrder = unpaid({ placedAt: '2026-09-30T08:00:00Z' })
+    const abandoned = await importOrder(ctx, org, connectionId, abandonedOrder)
+    await importOrder(ctx, org, connectionId, { ...abandonedOrder, facts: [fact('c', 'cancelled')] })
+    // Shipped by the Channel without payment: final, so not in the filter either (the badge still shows it).
+    const shippedOrder = unpaid({ placedAt: '2026-09-29T08:00:00Z' })
+    const shipped = await importOrder(ctx, org, connectionId, shippedOrder)
+    await importOrder(ctx, org, connectionId, { ...shippedOrder, facts: [fact('s', 'shipped')] })
 
     const all = await listOrders(ctx, org, { skip: 0, take: 10 })
-    expect(all.items.map((row) => [row.id, row.awaitingPayment])).toEqual([
-      [ready.orderId, false],
-      [waiting.orderId, true],
+    expect(all.items.map((row) => [row.id, row.status, row.awaitingPayment])).toEqual([
+      [ready.orderId, 'new', false],
+      [waiting.orderId, 'new', true],
+      [abandoned.orderId, 'cancelled', true],
+      [shipped.orderId, 'shipped', true],
     ])
     expect((await listOrders(ctx, org, { awaitingPayment: true, skip: 0, take: 10 })).items.map((row) => row.id)).toEqual([waiting.orderId])
-    expect((await listOrders(ctx, org, { awaitingPayment: false, skip: 0, take: 10 })).items.map((row) => row.id)).toEqual([ready.orderId])
+    expect((await listOrders(ctx, org, { awaitingPayment: true, status: 'cancelled', skip: 0, take: 10 })).total).toBe(0)
+    expect((await listOrders(ctx, org, { awaitingPayment: true, status: 'new', skip: 0, take: 10 })).total).toBe(1)
+    expect((await listOrders(ctx, org, { awaitingPayment: false, skip: 0, take: 10 })).items.map((row) => row.id)).toEqual([
+      ready.orderId,
+      abandoned.orderId,
+      shipped.orderId,
+    ])
     expect(await getOrder(ctx, org, waiting.orderId)).toMatchObject({ awaitingPayment: true, allowedTransitions: ['cancelled'] })
 
     const other = await createTestOrganization(ctx.db)

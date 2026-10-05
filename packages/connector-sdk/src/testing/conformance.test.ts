@@ -131,6 +131,11 @@ const broken: Array<[id: string, connector: AnyConnectorDefinition, fixtures?: C
       return { items: [bad], nextCursor: '1', hasMore: false }
     },
   })],
+  // The payment dropped from a later journal entry without a paid fact: Hanza would keep the Order awaiting payment.
+  ['C6', withCapabilities({
+    'orders.pull': async (_ctx, cursor) =>
+      slice([{ ...order('a'), awaitingPayment: true }, order('b'), { ...order('a'), awaitingPayment: false }], cursor),
+  })],
   ['C7', (() => {
     let calls = 0
     return withCapabilities({
@@ -158,9 +163,10 @@ describe('assertConformance', () => {
   })
 
   it('passes for a connector that also reports unpaid Orders and their payment', async () => {
-    const paid = order('b')
-    paid.facts = [{ id: 'b:paid', type: 'paid', occurredAt: '2026-10-02T10:00:00Z', note: null }]
-    const mixed = [{ ...order('a'), awaitingPayment: true }, { ...paid, awaitingPayment: false }, order('c')]
+    const paid = { ...order('a'), awaitingPayment: false, facts: [{ id: 'a:paid', type: 'paid' as const, occurredAt: '2026-10-02T10:00:00Z', note: null }] }
+    const cancelled = { ...order('b'), facts: [{ id: 'b:cancelled', type: 'cancelled' as const, occurredAt: '2026-10-02T10:00:00Z', note: null }] }
+    // The journal: a and b arrive unpaid, a is paid later, b is cancelled and no longer flagged.
+    const mixed = [{ ...order('a'), awaitingPayment: true }, { ...order('b'), awaitingPayment: true }, order('c'), paid, cancelled]
     const connector = withCapabilities({ 'orders.pull': async (_ctx, cursor) => slice(mixed, cursor) })
     await expect(assertConformance(connector, { config: { region: 'eu' }, credentials: { apiKey: 'test' } })).resolves.toBeUndefined()
   })
@@ -177,6 +183,15 @@ describe('assertConformance', () => {
     )
     expect(error, `expected ${id} to fail`).toBeInstanceOf(Error)
     expect(error!.message).toContain(`[${id}]`)
+  })
+
+  it('names the Order whose payment was dropped without a paid fact', async () => {
+    const connector = withCapabilities({
+      'orders.pull': async (_ctx, cursor) => slice([{ ...order('a'), awaitingPayment: true }, order('b'), order('a')], cursor),
+    })
+    await expect(assertConformance(connector, fixtures)).rejects.toThrow(
+      /\[C6\] Order "a" was awaiting payment and is returned again without awaitingPayment but with no paid fact/,
+    )
   })
 
   it('names every failure in one error', async () => {

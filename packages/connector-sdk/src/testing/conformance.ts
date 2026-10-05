@@ -215,6 +215,17 @@ export async function assertConformance(connector: AnyConnectorDefinition, fixtu
         }
       })
 
+      // Hanza reads awaitingPayment only on the first import: only a paid fact (or a cancellation) ends the wait (ADR 0011).
+      const waiting = new Set<string>()
+      for (const order of orders) {
+        if (!orderSchema.safeParse(order).success) continue
+        if (order.awaitingPayment === true) {
+          waiting.add(order.externalId)
+        } else if (waiting.delete(order.externalId) && !order.facts.some((fact) => fact.type === 'paid' || fact.type === 'cancelled')) {
+          fail('C6', `Order "${order.externalId}" was awaiting payment and is returned again without awaitingPayment but with no paid fact`)
+        }
+      }
+
       const ids = (items: Order[]) => JSON.stringify(items.map((item) => item?.externalId))
       await check('C7', async () => {
         for (const page of pages) {

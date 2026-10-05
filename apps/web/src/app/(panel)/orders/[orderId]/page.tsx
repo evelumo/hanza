@@ -11,6 +11,7 @@ import { getContext } from '@/lib/context'
 import { describeEvent } from '@/lib/events'
 import { getFormatters } from '@/lib/formatters'
 import { attentionReasonLabel, factLabel, orderStatusLabel, paymentLabel, reservationLabel } from '@/lib/labels'
+import { showsAwaitingPayment } from '@/lib/payment'
 import { requireTenant } from '@/lib/session'
 import { changeOrderStatusAction, resolveAttentionAction } from './actions'
 import { AddressBlock } from './address-block'
@@ -30,6 +31,7 @@ export default async function OrderPage({ params }: { params: Promise<{ orderId:
   if (!order) notFound()
 
   const unmatchedLines = order.lines.filter((line) => !line.productId).length
+  const awaitingPayment = showsAwaitingPayment(order)
   const manualReasons = order.attentionReasons.filter((reason) => reason !== 'unmatched_line')
 
   return (
@@ -43,7 +45,7 @@ export default async function OrderPage({ params }: { params: Promise<{ orderId:
             {t('orders.detail.title')} <span className="font-mono">{order.externalId}</span>
           </h1>
           <OrderStatusBadge status={order.status} />
-          {order.awaitingPayment ? <AwaitingPaymentBadge /> : null}
+          {awaitingPayment ? <AwaitingPaymentBadge /> : null}
           {order.attentionReasons.length > 0 ? <AttentionBadge /> : null}
         </div>
         <p className="mt-1 text-sm text-muted">
@@ -80,11 +82,9 @@ export default async function OrderPage({ params }: { params: Promise<{ orderId:
 
       <Section title={t('orders.detail.statusTitle')} description={t('orders.detail.statusDescription')}>
         <div className="space-y-3 px-5 py-4">
-          {order.awaitingPayment ? (
+          {awaitingPayment ? (
             <p className="text-sm text-amber-900">
-              {order.status === 'new' || order.status === 'processing'
-                ? t('orders.detail.awaitingPaymentHint')
-                : t('orders.detail.awaitingPaymentClosedHint')}
+              {order.status === 'shipped' ? t('orders.detail.awaitingPaymentShippedHint') : t('orders.detail.awaitingPaymentHint')}
             </p>
           ) : null}
           {order.allowedTransitions.length === 0 ? (

@@ -11,5 +11,6 @@ A connector may return Orders the Buyer has not paid for yet (`awaitingPayment: 
 ## Consequences
 
 - Units of an Order that is never paid stay reserved until the Channel or a person cancels it; a Hanza-side expiry or reminder is issue #41.
-- A connector that reports unpaid Orders must add a `paid` fact when the payment arrives; dropping the flag alone changes nothing, and the conformance kit cannot catch that.
-- A `shipped` fact still ships an unpaid Order (the Channel's reality decides Stock); it stays marked Awaiting payment until a `paid` fact. Money for an already cancelled Order marks it Needs attention.
+- A connector that reports unpaid Orders must add a `paid` fact when the payment arrives (synthesized from the snapshot's payment status, with a stable id). Dropping the flag alone changes nothing, but it is not silent: the import logs a warning (ids only), and conformance check C6 fails when the recorded journal returns an Order awaiting payment and later without the flag, without a `paid` or `cancelled` fact. The kit only sees what the fixtures contain, not a live Channel over time.
+- Once paid, an Order must never be reported awaiting payment again (chargebacks and refunds are not modelled): it breaks `orderSchema`, and one such Order fails the whole page and stops the Connection's Order feed.
+- A `shipped` fact still ships an unpaid Order (the Channel's reality decides Stock); it stays marked Awaiting payment until a `paid` fact. Money for an already cancelled Order marks it Needs attention, so the stored flag stays on a cancelled Order; the panel hides the mark there and the "awaiting payment" filter lists only open (new, processing) Orders.

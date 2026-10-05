@@ -49,7 +49,7 @@ Something the Channel reports about an Order after it was placed, such as "cance
 _Avoid_: External status, remote status
 
 **Awaiting payment**:
-A mark on a prepaid Order the Buyer has not paid for yet; never on cash on delivery. The Order is shown and reserves Stock, but a person can only cancel it, not fulfil it, until the Channel reports it paid. It is a payment state beside the Order status, not an Order status (ADR 0011).
+A mark on a prepaid Order the Buyer has not paid for yet; never on cash on delivery. The Order is shown and reserves Stock, but a person can only cancel it, not fulfil it, until the Channel reports it paid. A cancelled Order that was never paid is an abandoned checkout and is no longer shown as Awaiting payment. It is a payment state beside the Order status, not an Order status (ADR 0011).
 _Avoid_: Unpaid status, pending payment, not ready
 
 **Needs attention**:

@@ -9,7 +9,14 @@ and never imports the core or another connector. Layout and rules: see
 
 `orders.pull` returns Orders ready to fulfil. A connector may also return
 Orders the Buyer has not paid for yet, with `awaitingPayment: true`, if it adds
-a `paid` Channel fact once they are paid (ADR 0011; details in the skill).
+a `paid` Channel fact once they are paid (ADR 0011; details in the skill):
+
+- Synthesize the `paid` fact from the snapshot's payment status, with a stable
+  id (for example `${orderId}:paid`) and `occurredAt` = the payment time.
+  Dropping `awaitingPayment` without it leaves the Order awaiting payment.
+- Once a `paid` fact exists, never set `awaitingPayment` back to true (chargeback,
+  refund): one Order that breaks `orderSchema` turns the whole page into a
+  `PermanentError` and stops the Connection's Order feed.
 
 Every connector proves it follows the contract with the conformance kit
 (`assertConformance` from `@hanza/connector-sdk/testing`), called from its own

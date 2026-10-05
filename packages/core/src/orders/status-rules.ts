@@ -1,6 +1,9 @@
 import type { ChannelFactType, OrderStatus } from '@hanza/connector-sdk'
 import type { AttentionReason } from '@hanza/db'
 
+/** Orders still in fulfilment; shipped and cancelled are final. */
+export const OPEN_STATUSES: OrderStatus[] = ['new', 'processing']
+
 const MANUAL: Record<OrderStatus, OrderStatus[]> = {
   new: ['processing', 'shipped', 'cancelled'],
   processing: ['new', 'shipped', 'cancelled'],

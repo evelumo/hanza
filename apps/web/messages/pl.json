@@ -190,7 +190,7 @@
       "statusTitle": "Status",
       "statusDescription": "Postęp realizacji prowadzi Hanza; zmiana jest przekazywana do kanału, jeśli kanał to obsługuje.",
       "awaitingPaymentHint": "Kupujący jeszcze nie zapłacił. Towar pozostaje zarezerwowany; zamówienie można realizować, gdy kanał zgłosi płatność, a do tego czasu można je tylko anulować.",
-      "awaitingPaymentClosedHint": "Kanał nie zgłosił płatności za to zamówienie.",
+      "awaitingPaymentShippedHint": "Wysłane, ale kanał nie zgłosił płatności za to zamówienie.",
       "finalStatus": "Zamówienie ma status końcowy ({status}), nie można go zmienić.",
       "changeTo": "Zmień na: {status}",
       "confirmShipped": "Oznaczyć zamówienie jako wysłane? Zarezerwowany towar zostanie zdjęty ze stanu.",

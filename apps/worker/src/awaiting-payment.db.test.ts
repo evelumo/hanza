@@ -193,6 +193,8 @@ describe.skipIf(!databaseUrl)('Orders awaiting payment end to end (real Postgres
     expect(cancelled.lines[0]?.reservation?.status).toBe('released')
     expect(await available()).toEqual({ stock: 1, reserved: 0, available: 1 })
     expect(lastPushedTote()).toBe(1)
+    // An abandoned checkout is not waiting for anything: the "awaiting payment" filter leaves it out.
+    expect((await listOrders(ctx, org, { awaitingPayment: true, skip: 0, take: 50 })).total).toBe(0)
     // A Channel fact is never pushed back to the Channel.
     expect(fake.statusUpdates).not.toContainEqual(expect.objectContaining({ orderExternalId: 'unpaid-2' }))
   })
