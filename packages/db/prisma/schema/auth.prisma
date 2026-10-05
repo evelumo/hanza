@@ -91,6 +91,8 @@ model Organization {
   orderChannelFacts OrderChannelFact[]
   connections       Connection[]
   syncStates        SyncState[]
+  workflowRuns      WorkflowRun[]
+  workflowSignals   WorkflowSignal[]
 
   @@map("organization")
 }

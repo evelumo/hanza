@@ -70,6 +70,14 @@ describe.skipIf(!databaseUrl)('sync.tick', () => {
     ])
   })
 
+  it('enqueues the workflow sweep, coalesced', async () => {
+    const ctx = context()
+    await syncTickJob.handler(ctx, {}, { attempt: 1, maxAttempts: 5, retriedLater: 0 })
+    await syncTickJob.handler(ctx, {}, { attempt: 1, maxAttempts: 5, retriedLater: 0 })
+    const sweeps = ctx.queue.waiting.filter((job) => job.name === 'workflow.sweep')
+    expect(sweeps).toEqual([{ name: 'workflow.sweep', payload: {}, options: { coalesceKey: 'workflow.sweep' } }])
+  })
+
   it('enqueues only the streams whose interval has passed', async () => {
     const org = await createTestOrganization(context().db)
     const id = await connection(org, 'tick-channel')

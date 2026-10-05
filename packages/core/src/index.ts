@@ -2,7 +2,7 @@ export { createContext, closeContext, type Context, type CreateContextOptions } 
 export { loadEnv, loadWorkerEnv, type Env, type WorkerEnv } from './env'
 export { createLogger, type Logger } from './logger'
 export { defineJob, RetryLaterError, PermanentJobError, type JobDefinition, type JobRef, type JobRunInfo } from './jobs'
-export { jobs, findJob } from './registry'
+export { jobs, workflows, buildJobs, findJob } from './registry'
 export {
   createJobQueue,
   redisConnection,
@@ -30,3 +30,4 @@ export * from './stock/index'
 export * from './orders/index'
 export * from './connections/index'
 export * from './sync/index'
+export * from './workflows/index'

@@ -3,6 +3,7 @@ import { listConnectionsForTick } from '../connections/connections'
 import type { Context } from '../context'
 import { defineJob } from '../jobs'
 import { dueStreams, type ScheduledStream } from '../sync/schedule'
+import { workflowCoalesceKeys, workflowSweepRef } from '../workflows/refs'
 import { coalesceKeys, offersPullRef, ordersPullRef, stockPushRef, syncTickRef } from './refs'
 
 async function enqueueStream(ctx: Context, stream: ScheduledStream, organizationId: string, connectionId: string): Promise<void> {
@@ -24,10 +25,14 @@ async function enqueueStream(ctx: Context, stream: ScheduledStream, organization
   }
 }
 
-/** One global scheduler: enqueues every due stream of every Channel, except Connections waiting for sign-in. */
+/**
+ * One global scheduler: enqueues the workflow sweep (timers, signals, lost jobs; ADR 0012) and every due
+ * stream of every Channel, except Connections waiting for sign-in.
+ */
 export const syncTickJob = defineJob({
   ...syncTickRef,
   async handler(ctx) {
+    await ctx.queue.enqueue(workflowSweepRef, {}, { coalesceKey: workflowCoalesceKeys.sweep })
     const now = new Date()
     let enqueued = 0
     for (const connection of await listConnectionsForTick(ctx)) {

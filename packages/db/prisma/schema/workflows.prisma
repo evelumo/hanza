@@ -1,0 +1,69 @@
+// Durable state of workflow runs (ADR 0012). Steps run as jobs; these rows are the truth.
+
+enum WorkflowRunStatus {
+  /// A step is due or being run.
+  running
+  /// A durable timer: nothing happens before `wakeAt`.
+  sleeping
+  /// Waiting for a signal; `wakeAt` is the timeout, if any.
+  waiting
+  completed
+  failed
+  cancelled
+
+  @@map("workflow_run_status")
+}
+
+model WorkflowRun {
+  id             String            @id @default(uuid(7))
+  organizationId String
+  /// Workflow name, e.g. "system.check".
+  workflow       String
+  /// The caller's id for the run, unique per organization and workflow; null when the caller gave none.
+  key            String?
+  status         WorkflowRunStatus
+  /// Validated against the workflow's input schema; ids only, no credentials or personal data.
+  input          Json
+  /// Step being run, slept in or waited in; null once finished.
+  currentStep    String?
+  /// { [stepName]: result } of the steps done so far.
+  results        Json              @default("{}")
+  /// When the sweep enqueues the run: now when a step is due, the lease end while one runs, the wake-up time
+  /// while sleeping, the timeout while waiting; null when nothing is due.
+  wakeAt         DateTime?
+  /// Attempts used by the current step.
+  attempts       Int               @default(0)
+  /// Last error of the current step or the reason the run failed; truncated to 1000 characters.
+  lastError      String?
+  /// Bumped by every claim and transition; a step's result is committed only against the version that claimed it.
+  version        Int               @default(0)
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  finishedAt     DateTime?
+
+  organization Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  signals      WorkflowSignal[]
+
+  @@unique([organizationId, workflow, key])
+  @@index([organizationId, createdAt(sort: Desc)])
+  @@index([status, wakeAt])
+  @@map("workflow_run")
+}
+
+/// A signal sent to a run; kept until a wait step for it consumes it, so a signal may arrive early.
+model WorkflowSignal {
+  id             String    @id @default(uuid(7))
+  organizationId String
+  runId          String
+  name           String
+  payload        Json
+  createdAt      DateTime  @default(now())
+  consumedAt     DateTime?
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  run          WorkflowRun  @relation(fields: [runId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, runId, name])
+  @@index([runId, consumedAt])
+  @@map("workflow_signal")
+}
