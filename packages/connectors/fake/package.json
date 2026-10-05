@@ -1,17 +1,17 @@
 {
-  "name": "@hanza/connector-sdk",
+  "name": "@hanza/connector-fake",
   "version": "0.0.0",
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts",
-    "./testing": "./src/testing/index.ts"
+    ".": "./src/index.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },
   "dependencies": {
+    "@hanza/connector-sdk": "workspace:*",
     "zod": "^4.6.5"
   },
   "devDependencies": {

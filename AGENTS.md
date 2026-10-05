@@ -11,7 +11,7 @@ This block is written and re-added by `turbo` before repository-scoped commands 
 
 # Hanza — guide for contributors and AI agents
 
-Hanza is an open-source (MIT), self-hosted, AI-native e-commerce integration hub (an alternative to base.com / BaseLinker). A small, stable core (canonical data model + sync engine) talks to marketplaces, shops, couriers and invoicing tools through replaceable **connectors**. Stack: Next.js (panel + API), Prisma + PostgreSQL, BullMQ + Redis, a separate worker process, Better Auth, zod, pnpm + Turborepo, Vitest. Early scaffold: auth, tenants and the queue pipeline work; there are no connectors yet. The vision and roadmap live in `docs/plan-architektury.html` (Polish).
+Hanza is an open-source (MIT), self-hosted, AI-native e-commerce integration hub (an alternative to base.com / BaseLinker). A small, stable core (canonical data model + sync engine) talks to marketplaces, shops, couriers and invoicing tools through replaceable **connectors**. Stack: Next.js (panel + API), Prisma + PostgreSQL, BullMQ + Redis, a separate worker process, Better Auth, zod, pnpm + Turborepo, Vitest. Early scaffold: auth, tenants and the queue pipeline work; there are no real connectors yet, only a fake one for tests and demos. The vision and roadmap live in `docs/plan-architektury.html` (Polish).
 
 Items marked **planned** do not exist yet. Do not assume them.
 
@@ -23,8 +23,8 @@ Items marked **planned** do not exist yet. Do not assume them.
 | `apps/worker` | `@hanza/worker` — BullMQ worker (run with `tsx`, no build step). Runs the jobs from the core registry. |
 | `packages/core` | `@hanza/core` — `createContext()`, env validation, logger, `JobQueue` + BullMQ implementation, `defineJob`, job registry. |
 | `packages/db` | `@hanza/db` — Prisma schema (split per module), migrations, client factory `createDb()`. |
-| `packages/connector-sdk` | `@hanza/connector-sdk` — `defineConnector`, capability types, canonical `Order` / `StockLevel` zod schemas. **Draft** until stage 1. |
-| `packages/connectors/<id>` | One package per connector, `@hanza/connector-<id>`. None yet. |
+| `packages/connector-sdk` | `@hanza/connector-sdk` — `defineConnector`, capability types, canonical `Order` / `Offer` / `StockLevel` zod schemas, error taxonomy (`ConnectorError`), conformance kit at `@hanza/connector-sdk/testing`. |
+| `packages/connectors/<id>` | One package per connector, `@hanza/connector-<id>`. Only `fake` (`@hanza/connector-fake`, an in-memory Channel for tests) so far. |
 | `scripts/check-boundaries.mjs` | Enforces connector dependency boundaries. |
 | `.ai/specs`, `.ai/skills` | Specs (spec-first workflow) and agent skills. |
 | `docs/plan-architektury.html` | Architecture plan and roadmap (Polish). |
@@ -64,7 +64,7 @@ Config: copy `.env.example` to `.env` at the repo root (read by web, worker and 
 ## Architecture rules
 
 - **Dependency direction:** `apps/*` → `@hanza/core` → `@hanza/db`; connectors → `@hanza/connector-sdk` only. Packages never import from `apps/*`. `@hanza/db` imports nothing from the workspace.
-- **Connectors** live in `packages/connectors/<id>/`, depend only on `@hanza/connector-sdk` and `zod` (`pnpm check:boundaries`), contain no UI, never touch the database, never import the core or another connector. The core hands them a `CapabilityContext` (validated config, authenticated `fetch`, logger).
+- **Connectors** live in `packages/connectors/<id>/`, depend only on `@hanza/connector-sdk` and `zod` (`pnpm check:boundaries`), contain no UI, never touch the database, never import the core or another connector. The core hands them a `CapabilityContext` (validated config, decrypted credentials, plain `fetch` with a 30 s timeout, logger); a connector adds its own authentication to its requests, never logs credentials, and throws `ConnectorError` subclasses so the core knows whether to retry.
 - **Tenant scoping:** an organization is the tenant. Every tenant-owned table has `organizationId`; every panel page/route/action takes it from `requireTenant()`; every job payload carries it. Never trust an `organizationId` from client input.
 - **Queue behind an interface:** callers use `JobQueue` from the context, never `bullmq` directly (only `queue.ts` and the worker touch it). Temporal is deliberately postponed; the interface exists so it can be swapped in later.
 - **Background work runs in the worker**, never in the Next.js process. Jobs must be idempotent (the queue retries: 5 attempts, exponential backoff).

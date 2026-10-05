@@ -1,9 +1,9 @@
 import { z } from 'zod'
 
-// DRAFT — see order.ts.
-
+/** What Hanza tells a Channel about one Offer: max(0, Available) of its Product. */
 export const stockLevelSchema = z.object({
-  sku: z.string(),
+  offerExternalId: z.string().min(1),
+  sku: z.string().min(1).nullable(),
   available: z.number().int().nonnegative(),
 })
 

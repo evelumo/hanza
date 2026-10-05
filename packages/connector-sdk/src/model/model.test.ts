@@ -1,0 +1,101 @@
+import { describe, expect, it } from 'vitest'
+import { offerSchema } from './offer'
+import { moneySchema } from './money'
+import { orderSchema } from './order'
+import { stockLevelSchema } from './stock'
+
+const address = {
+  name: 'Jan Testowy',
+  company: null,
+  street: 'ul. Przykładowa 1',
+  postalCode: '00-001',
+  city: 'Warszawa',
+  countryCode: 'PL',
+  phone: null,
+  taxId: null,
+}
+
+const order = {
+  externalId: 'o-1',
+  placedAt: '2026-10-01T09:00:00Z',
+  payment: 'prepaid',
+  total: { amount: '79.98', currency: 'PLN' },
+  buyer: { name: 'Jan Testowy', email: null, phone: null, login: null },
+  shippingAddress: address,
+  billingAddress: null,
+  lines: [
+    {
+      externalId: 'l1',
+      offerExternalId: 'offer-1',
+      sku: 'SKU-1',
+      name: 'Kubek',
+      quantity: 2,
+      unitPrice: { amount: '39.99', currency: 'PLN' },
+    },
+  ],
+  facts: [{ id: 'o-1:cancelled', type: 'cancelled', occurredAt: '2026-10-02T10:00:00+02:00', note: null }],
+}
+
+describe('moneySchema', () => {
+  it.each(['0', '129.99', '1.5', '999999999999999.9999'])('accepts "%s"', (amount) => {
+    expect(moneySchema.safeParse({ amount, currency: 'PLN' }).success).toBe(true)
+  })
+
+  it.each([
+    ['a number instead of a string', 129.99],
+    ['5 fraction digits', '1.00001'],
+    ['16 integer digits', '1000000000000000'],
+    ['a negative amount', '-1.00'],
+    ['a trailing dot', '1.'],
+    ['an empty string', ''],
+  ])('rejects %s', (_label, amount) => {
+    expect(moneySchema.safeParse({ amount, currency: 'PLN' }).success).toBe(false)
+  })
+
+  it.each(['pln', 'PL', 'PLNN', ''])('rejects the currency "%s"', (currency) => {
+    expect(moneySchema.safeParse({ amount: '1.00', currency }).success).toBe(false)
+  })
+})
+
+describe('orderSchema', () => {
+  it('accepts a complete Order', () => {
+    expect(orderSchema.parse(order)).toEqual(order)
+  })
+
+  it('requires an offset in datetimes', () => {
+    expect(orderSchema.safeParse({ ...order, placedAt: '2026-10-01T09:00:00' }).success).toBe(false)
+    const fact = { ...order.facts[0], occurredAt: '2026-10-02T10:00:00' }
+    expect(orderSchema.safeParse({ ...order, facts: [fact] }).success).toBe(false)
+  })
+
+  it('rejects an Order without lines, a status field is not part of the model', () => {
+    expect(orderSchema.safeParse({ ...order, lines: [] }).success).toBe(false)
+    expect('status' in orderSchema.shape).toBe(false)
+  })
+
+  it('rejects an unknown fact type and a non-integer quantity', () => {
+    expect(orderSchema.safeParse({ ...order, facts: [{ ...order.facts[0], type: 'refunded' }] }).success).toBe(false)
+    const line = { ...order.lines[0], quantity: 1.5 }
+    expect(orderSchema.safeParse({ ...order, lines: [line] }).success).toBe(false)
+  })
+
+  it('rejects a lowercase country code', () => {
+    expect(orderSchema.safeParse({ ...order, shippingAddress: { ...address, countryCode: 'pl' } }).success).toBe(false)
+  })
+})
+
+describe('offerSchema and stockLevelSchema', () => {
+  it('accepts an Offer without SKU or url', () => {
+    expect(offerSchema.safeParse({ externalId: 'a', sku: null, name: 'Naklejki', url: null }).success).toBe(true)
+  })
+
+  it('rejects an Offer with a malformed url', () => {
+    expect(offerSchema.safeParse({ externalId: 'a', sku: null, name: 'x', url: 'not a url' }).success).toBe(false)
+  })
+
+  it('rejects negative and fractional availability', () => {
+    expect(stockLevelSchema.safeParse({ offerExternalId: 'a', sku: null, available: 0 }).success).toBe(true)
+    expect(stockLevelSchema.safeParse({ offerExternalId: 'a', sku: null, available: -1 }).success).toBe(false)
+    expect(stockLevelSchema.safeParse({ offerExternalId: 'a', sku: null, available: 1.5 }).success).toBe(false)
+  })
+})
