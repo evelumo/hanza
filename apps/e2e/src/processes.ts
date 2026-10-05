@@ -1,9 +1,17 @@
 import { spawn } from 'node:child_process'
 import { closeSync, openSync, readFileSync } from 'node:fs'
 import { createServer } from 'node:net'
+import { join } from 'node:path'
 import { setTimeout as sleep } from 'node:timers/promises'
+import { pathToFileURL } from 'node:url'
 
 const STOP_GRACE_MS = 10_000
+const GUARD = pathToFileURL(join(import.meta.dirname, 'parent-guard.mjs')).href
+
+/** The `--import` URL of the parent guard; the run id in it marks the process as this run's. */
+export function guardImport(runId: string): string {
+  return `${GUARD}?run=${runId}`
+}
 
 export async function freePort(): Promise<number> {
   return new Promise((resolve, reject) => {
@@ -18,33 +26,47 @@ export async function freePort(): Promise<number> {
 
 export interface Service {
   name: string
-  logFile: string
+  pid: number | undefined
+  /** Resolves with the exit code or signal once the process has exited. */
+  exited: Promise<number | string | null>
   /** Set once the process has exited. */
   readonly exitCode: number | string | null | undefined
   /** SIGTERM to the whole process group, SIGKILL after a grace period. Safe to call twice. */
   stop(): Promise<void>
+  /** Last lines of the log file ('' for inherited output). */
   tail(lines?: number): string
 }
 
-/** Starts a process in its own process group (so `stop` also reaches its children), output to `logFile`. */
+/**
+ * Runs `node <args>` in its own process group with the parent guard preloaded: `stop` reaches the
+ * process and all its children, and if this process dies (even by SIGKILL) the guard kills the group.
+ * Output goes to `output` (a log file) or to this process's stdout/stderr.
+ */
 export function startService(
   name: string,
-  command: string,
   args: string[],
-  options: { cwd: string; env: NodeJS.ProcessEnv; logFile: string },
+  options: { cwd: string; env: NodeJS.ProcessEnv; runId: string; output: string | 'inherit' },
 ): Service {
-  const fd = openSync(options.logFile, 'w')
-  const child = spawn(command, args, { cwd: options.cwd, env: options.env, detached: true, stdio: ['ignore', fd, fd] })
-  closeSync(fd)
+  const fd = options.output === 'inherit' ? undefined : openSync(options.output, 'w')
+  // The guard arms itself once per process tree; this process is the root of a new one.
+  const { HANZA_E2E_GUARD_ARMED: _armed, ...env } = options.env
+  const child = spawn(process.execPath, ['--import', guardImport(options.runId), ...args], {
+    cwd: options.cwd,
+    env,
+    detached: true,
+    // stdin stays an open pipe nobody writes to: the guard's lifeline to this process.
+    stdio: ['pipe', fd ?? 'inherit', fd ?? 'inherit'],
+  })
+  if (fd !== undefined) closeSync(fd)
   let exitCode: number | string | null | undefined
-  const exited = new Promise<void>((resolve) => {
+  const exited = new Promise<number | string | null>((resolve) => {
     child.once('exit', (code, signal) => {
       exitCode = code ?? signal
-      resolve()
+      resolve(exitCode)
     })
     child.once('error', (error) => {
       exitCode = error.message
-      resolve()
+      resolve(exitCode)
     })
   })
   const signalGroup = (signal: NodeJS.Signals) => {
@@ -57,7 +79,8 @@ export function startService(
 
   return {
     name,
-    logFile: options.logFile,
+    pid: child.pid,
+    exited,
     get exitCode() {
       return exitCode
     },
@@ -67,10 +90,12 @@ export function startService(
       // Children of the group leader may outlive it; they get no second chance.
       signalGroup('SIGKILL')
       if (!stopped) await exited
+      child.stdin?.destroy()
     },
     tail(lines = 40) {
+      if (options.output === 'inherit') return ''
       try {
-        return readFileSync(options.logFile, 'utf8').trimEnd().split('\n').slice(-lines).join('\n')
+        return readFileSync(options.output, 'utf8').trimEnd().split('\n').slice(-lines).join('\n')
       } catch {
         return ''
       }

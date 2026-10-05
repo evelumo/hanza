@@ -3,6 +3,8 @@ export const RUN_ENV = {
   baseUrl: 'HANZA_E2E_BASE_URL',
   probeUrl: 'HANZA_E2E_PROBE_URL',
   databaseUrl: 'HANZA_E2E_DATABASE_URL',
+  /** `apps/e2e/results/<run id>`: this run's logs, traces and report, so parallel runs never share files. */
+  outputDir: 'HANZA_E2E_OUTPUT_DIR',
 } as const
 
 export function readRunEnv(name: keyof typeof RUN_ENV): string {

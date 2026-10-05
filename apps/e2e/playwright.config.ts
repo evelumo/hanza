@@ -1,8 +1,12 @@
+import { join } from 'node:path'
 import { defineConfig, devices } from '@playwright/test'
 import { readRunEnv } from './src/run-env'
 
+const outputDir = readRunEnv('outputDir')
+
 export default defineConfig({
   testDir: './flows',
+  outputDir: join(outputDir, 'test-results'),
   // The fake Channel is one in-memory instance in the worker, shared by every flow.
   workers: 1,
   fullyParallel: false,
@@ -11,7 +15,7 @@ export default defineConfig({
   forbidOnly: true,
   timeout: 90_000,
   expect: { timeout: 10_000 },
-  reporter: [['list'], ['html', { open: 'never' }]],
+  reporter: [['list'], ['html', { open: 'never', outputFolder: join(outputDir, 'report') }]],
   use: {
     baseURL: readRunEnv('baseUrl'),
     locale: 'en-GB',

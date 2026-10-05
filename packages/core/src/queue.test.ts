@@ -6,11 +6,14 @@ import { defineJob, PermanentJobError, RetryLaterError, type JobDefinition } fro
 import { stockPushRef, syncTickRef } from './jobs/refs'
 import { bullJobOptions, createJobProcessor, createJobQueue, redisConnection, RETRY_LATER_KEY } from './queue'
 
-const bull = vi.hoisted(() => ({ add: vi.fn(), upsertJobScheduler: vi.fn() }))
+const bull = vi.hoisted(() => ({ add: vi.fn(), upsertJobScheduler: vi.fn(), created: [] as Array<{ name: string; prefix: unknown }> }))
 
 vi.mock('bullmq', async (importOriginal) => {
   const actual = await importOriginal<typeof import('bullmq')>()
   class Queue {
+    constructor(name: string, options: { prefix?: string }) {
+      bull.created.push({ name, prefix: options.prefix })
+    }
     add = bull.add
     upsertJobScheduler = bull.upsertJobScheduler
     async close() {}
@@ -67,6 +70,16 @@ describe('createJobQueue', () => {
     const queue = createJobQueue('redis://localhost:6389')
     await queue.schedule('sync.tick', syncTickRef, {}, { everyMs: 60_000 })
     expect(bull.upsertJobScheduler).toHaveBeenCalledWith('sync.tick', { every: 60_000 }, { name: 'sync.tick', data: {} })
+  })
+
+  it('uses the key prefix it is given, and BullMQ’s default without one', async () => {
+    bull.created.length = 0
+    await createJobQueue('redis://localhost:6389', { prefix: 'hanza-e2e-1' }).enqueue(stockPushRef, { organizationId: 'o', connectionId: 'c' })
+    await createJobQueue('redis://localhost:6389').enqueue(stockPushRef, { organizationId: 'o', connectionId: 'c' })
+    expect(bull.created).toEqual([
+      { name: 'hanza', prefix: 'hanza-e2e-1' },
+      { name: 'hanza', prefix: undefined },
+    ])
   })
 
   it('rejects an invalid payload before it reaches Redis', async () => {

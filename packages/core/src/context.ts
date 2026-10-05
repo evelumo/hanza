@@ -30,7 +30,7 @@ export function createContext(scope: string, options: CreateContextOptions = {})
   return {
     env,
     db: createDb(env.DATABASE_URL),
-    queue: createJobQueue(env.REDIS_URL),
+    queue: createJobQueue(env.REDIS_URL, { prefix: env.HANZA_QUEUE_PREFIX }),
     log: createLogger(scope),
     secrets: createSecretBox(env.HANZA_ENCRYPTION_KEY),
     connectors: createConnectorRegistry(options.connectors ?? []),

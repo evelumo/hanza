@@ -1,6 +1,6 @@
-import { randomUUID } from 'node:crypto'
+import { randomInt, randomUUID } from 'node:crypto'
 import type { FakeChannel } from '@hanza/connector-fake'
-import { test as base, expect, type Locator, type Page } from '@playwright/test'
+import { test as base, expect, type Page } from '@playwright/test'
 import pg from 'pg'
 import { readRunEnv } from './run-env'
 
@@ -45,36 +45,51 @@ export const test = base.extend<{ fakeChannel: FakeChannelProbe }, { db: pg.Pool
   ],
 })
 
-/**
- * Clicks `button`, which posts to the Better Auth endpoint `path`. Better Auth allows 3 sign-ins
- * and sign-ups per 10 s from one IP, and every flow comes from 127.0.0.1: on a 429 this waits as
- * long as the server asks and submits again, so the limit stays on and the flows stay independent.
- */
-export async function submitAuthForm(page: Page, button: Locator, path: '/api/auth/sign-up/email' | '/api/auth/sign-in/email'): Promise<void> {
-  for (let attempt = 1; ; attempt++) {
-    const response = page.waitForResponse((candidate) => new URL(candidate.url()).pathname === path && candidate.request().method() === 'POST')
-    await button.click()
-    const answer = await response
-    if (answer.status() !== 429 || attempt === 5) return
-    const seconds = Number(answer.headers()['x-retry-after']) || 10
-    await page.waitForTimeout(seconds * 1_000 + 250)
-  }
-}
-
-/** Registers a new user and creates their organization through the panel; ends on the dashboard. */
-export async function signUp(page: Page): Promise<Account> {
+function newAccount(): Account {
   const id = randomUUID().slice(0, 8)
-  const account: Account = {
+  return {
     name: `E2E User ${id}`,
     email: `e2e-${id}@example.test`,
     password: `e2e-password-${id}`,
     organization: `E2E Company ${id}`,
   }
+}
+
+// An address from 198.18.0.0/15 (reserved for benchmarking), new for every account.
+const clientAddress = () => `198.18.${randomInt(256)}.${randomInt(1, 255)}`
+
+/**
+ * A new user with their organization, created through the Better Auth API (the endpoints the
+ * panel's forms call) in the page's browser session, which ends signed in on the dashboard.
+ * Better Auth allows 3 sign-ups and sign-ins per 10 s per client address, and every flow comes
+ * from 127.0.0.1; each account gets its own address in X-Forwarded-For, which Better Auth reads
+ * (a single value is trusted) and `next start` passes on. Only `auth.spec.ts` uses the forms.
+ */
+export async function signUp(page: Page): Promise<Account> {
+  const account = newAccount()
+  const headers = { origin: readRunEnv('baseUrl'), 'x-forwarded-for': clientAddress() }
+  const signedUp = await page.request.post('/api/auth/sign-up/email', {
+    headers,
+    data: { name: account.name, email: account.email, password: account.password },
+  })
+  expect(signedUp.status(), await signedUp.text()).toBe(200)
+  const slug = account.organization.toLowerCase().replaceAll(' ', '-')
+  // Like the onboarding form: creating the organization makes it the session's active one.
+  const created = await page.request.post('/api/auth/organization/create', { headers, data: { name: account.organization, slug } })
+  expect(created.status(), await created.text()).toBe(200)
+  await page.goto('/dashboard')
+  await expect(page.getByRole('heading', { level: 1, name: 'Dashboard' })).toBeVisible()
+  return account
+}
+
+/** Like `signUp`, but through the register and onboarding forms; three of these in 10 s hit the rate limit. */
+export async function signUpThroughForms(page: Page): Promise<Account> {
+  const account = newAccount()
   await page.goto('/register')
   await page.getByLabel('Full name').fill(account.name)
   await page.getByLabel('Email').fill(account.email)
   await page.getByLabel('Password').fill(account.password)
-  await submitAuthForm(page, page.getByRole('button', { name: 'Create account' }), '/api/auth/sign-up/email')
+  await page.getByRole('button', { name: 'Create account' }).click()
   await expect(page.getByRole('heading', { name: 'Add your company' })).toBeVisible()
   await page.getByLabel('Company name').fill(account.organization)
   await page.getByRole('button', { name: 'Continue' }).click()
