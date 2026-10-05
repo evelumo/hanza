@@ -44,6 +44,14 @@ export default async function ProductPage({ params }: { params: Promise<{ produc
         </Link>
         <h1 className="mt-2 text-2xl font-semibold tracking-tight">{product.name}</h1>
         <p className="font-mono text-sm text-muted">{t('products.detail.skuLine', { sku: product.sku })}</p>
+        {product.family ? (
+          <p className="text-sm text-muted">
+            <Link href={`/families/${product.family.id}`} className={linkClass}>
+              {t('products.detail.familyLine', { name: product.family.name })}
+            </Link>{' '}
+            · {product.family.attributes.map((attribute) => `${attribute.name}: ${attribute.value}`).join(' · ')}
+          </p>
+        ) : null}
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3">

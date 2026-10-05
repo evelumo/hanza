@@ -16,7 +16,8 @@
     "dashboard": "Pulpit",
     "products": "Produkty",
     "orders": "Zamówienia",
-    "connections": "Połączenia"
+    "connections": "Połączenia",
+    "families": "Rodziny"
   },
   "pagination": {
     "label": "Paginacja",
@@ -76,6 +77,11 @@
     "searchPlaceholder": "Szukaj po SKU lub nazwie",
     "search": "Szukaj",
     "clear": "Wyczyść",
+    "familyFilter": {
+      "label": "Rodzina",
+      "all": "Wszystkie produkty",
+      "none": "Bez rodziny"
+    },
     "emptySearch": "Żaden produkt nie pasuje do wyszukiwania.",
     "empty": "Nie ma jeszcze produktów. Dodaj pierwszy albo utwórz je z ofert pobranych z kanału.",
     "columns": {
@@ -84,7 +90,8 @@
       "stock": "Stan",
       "reserved": "Zarezerwowane",
       "available": "Dostępne",
-      "offers": "Oferty"
+      "offers": "Oferty",
+      "family": "Rodzina"
     },
     "shortageHint": "(brak towaru)",
     "detail": {
@@ -118,7 +125,8 @@
       "reservationsTitle": "Otwarte rezerwacje",
       "reservationsDescription": "Towar obiecany zamówieniom, które jeszcze nie zostały wysłane.",
       "reservationsEmpty": "Brak otwartych rezerwacji.",
-      "reservationOrder": "Zamówienie {id}"
+      "reservationOrder": "Zamówienie {id}",
+      "familyLine": "Rodzina: {name}"
     },
     "new": {
       "title": "Dodaj produkt",
@@ -128,6 +136,57 @@
       "initialStock": "Stan początkowy",
       "submit": "Dodaj produkt",
       "submitting": "Dodawanie…"
+    }
+  },
+  "families": {
+    "title": "Rodziny produktów",
+    "intro": "Rodzina grupuje produkty, które są swoimi rozmiarami lub kolorami. Zamówienia, stany i oferty nadal dotyczą pojedynczych produktów.",
+    "add": "Dodaj rodzinę",
+    "empty": "Nie ma jeszcze rodzin produktów. Utwórz pierwszą, aby grupować produkty, np. rozmiary lub kolory.",
+    "columns": {
+      "name": "Nazwa",
+      "attributes": "Atrybuty",
+      "products": "Produkty"
+    },
+    "productCount": "{count, plural, one {# produkt} few {# produkty} many {# produktów} other {# produktu}}",
+    "new": {
+      "title": "Dodaj rodzinę",
+      "name": "Nazwa",
+      "attributes": "Atrybuty",
+      "attributesHint": "Czym różnią się produkty, po przecinku, np.: Rozmiar, Kolor. Najwyżej 5; nie można ich później zmienić.",
+      "submit": "Dodaj rodzinę",
+      "submitting": "Dodawanie…"
+    },
+    "detail": {
+      "title": "Rodzina produktów",
+      "attributesLine": "Atrybuty: {attributes}",
+      "renameTitle": "Nazwa",
+      "renameDescription": "Nazwa jest tylko dla Ciebie; kanały jej nie widzą.",
+      "name": "Nazwa",
+      "saveName": "Zapisz nazwę",
+      "membersTitle": "Produkty w tej rodzinie",
+      "membersDescription": "Każdy produkt ma jedną wartość dla każdego atrybutu. Dwa produkty nie mogą mieć tych samych wartości.",
+      "membersEmpty": "W tej rodzinie nie ma jeszcze produktów. Dodaj pierwszy poniżej.",
+      "columns": {
+        "available": "Dostępne"
+      },
+      "saveValues": "Zapisz",
+      "saving": "Zapisywanie…",
+      "remove": "Usuń z rodziny",
+      "removing": "Usuwanie…",
+      "removeConfirm": "Usunąć ten produkt z rodziny? Sam produkt pozostaje bez zmian.",
+      "valueLabel": "{attribute} dla {sku}",
+      "addTitle": "Dodaj produkt",
+      "addDescription": "Produkt może należeć naraz tylko do jednej rodziny.",
+      "sku": "SKU produktu",
+      "skuHint": "SKU istniejącego produktu, który nie należy do żadnej rodziny.",
+      "add": "Dodaj do rodziny",
+      "adding": "Dodawanie…",
+      "deleteTitle": "Usuń rodzinę",
+      "deleteDescription": "Produkty nie są usuwane: po prostu przestają być zgrupowane. Zamówienia, stany i oferty pozostają bez zmian.",
+      "delete": "Usuń rodzinę",
+      "deleting": "Usuwanie…",
+      "deleteConfirm": "Usunąć tę rodzinę? Jej produkty pozostaną, bez grupowania."
     }
   },
   "offers": {
@@ -353,7 +412,13 @@
       "order_attention_raised": "Zamówienie wymaga uwagi",
       "order_attention_resolved": "Oznaczono jako sprawdzone",
       "connection_created": "Utworzono połączenie",
-      "connection_health_changed": "Zmienił się stan połączenia"
+      "connection_health_changed": "Zmienił się stan połączenia",
+      "family_created": "Utworzono rodzinę produktów",
+      "family_renamed": "Zmieniono nazwę rodziny produktów",
+      "family_deleted": "Usunięto rodzinę produktów",
+      "family_product_added": "Dodano produkt do rodziny",
+      "family_product_updated": "Zmieniono atrybuty produktu w rodzinie",
+      "family_product_removed": "Usunięto produkt z rodziny"
     },
     "lines": "{count, plural, one {# pozycja} few {# pozycje} many {# pozycji} other {# pozycji}}"
   },
@@ -365,7 +430,10 @@
       "unmatched_lines": "Najpierw połącz wszystkie pozycje z produktami.",
       "already_linked": "Ta pozycja jest już połączona.",
       "unknown_connector": "Nieznany konektor.",
-      "invalid_config": "Sprawdź poprawność pól."
+      "invalid_config": "Sprawdź poprawność pól.",
+      "variant_taken": "Inny produkt w tej rodzinie ma już takie wartości.",
+      "invalid_attributes": "Wypełnij każdy atrybut (najwyżej 100 znaków) i zadbaj, by nazwy atrybutów się nie powtarzały.",
+      "already_in_family": "Ten produkt jest już w rodzinie. Najpierw usuń go z niej."
     },
     "unexpected": "Coś poszło nie tak. Spróbuj ponownie.",
     "invalidInput": "Sprawdź poprawność pól.",
@@ -394,6 +462,9 @@
     "offersRequired": "Zaznacz co najmniej jedną ofertę.",
     "offersTooMany": "Zaznacz najwyżej 200 ofert naraz.",
     "fieldRequired": "To pole jest wymagane.",
-    "fieldInvalid": "Nieprawidłowa wartość."
+    "fieldInvalid": "Nieprawidłowa wartość.",
+    "familyNameTooLong": "Nazwa może mieć najwyżej 100 znaków.",
+    "attributesInvalid": "Podaj od 1 do 5 różnych nazw atrybutów, każda do 50 znaków, po przecinku.",
+    "attributeValueRequired": "Podaj wartość o długości do 100 znaków."
   }
 }

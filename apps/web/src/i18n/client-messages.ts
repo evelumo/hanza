@@ -13,6 +13,7 @@ export function clientMessages(messages: Messages) {
     dashboard: { sendPing: messages.dashboard.sendPing, sendingPing: messages.dashboard.sendingPing },
     offers: messages.offers,
     products: { columns: messages.products.columns, detail: messages.products.detail, new: messages.products.new },
+    families: { new: messages.families.new, detail: messages.families.detail },
     orders: { linkLine: messages.orders.linkLine },
     connections: { new: messages.connections.new },
     errors: { page: messages.errors.page },

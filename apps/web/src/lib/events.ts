@@ -32,6 +32,15 @@ function detail(t: Translator, number: NumberFormat, type: string, payload: Payl
       const units = count(payload.units)
       return units ? t('common.units', { count: units }) : null
     }
+    case 'family.created':
+    case 'family.deleted':
+      return text(payload.name)
+    case 'family.renamed':
+      return arrow(text(nested(payload.name, 'from')), text(nested(payload.name, 'to')))
+    case 'family.product_added':
+    case 'family.product_updated':
+    case 'family.product_removed':
+      return text(payload.sku)
     case 'product.updated':
       return arrow(text(nested(payload.name, 'from')), text(nested(payload.name, 'to')))
     case 'order.status_changed':

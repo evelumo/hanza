@@ -39,6 +39,13 @@ describe('describeEvent', () => {
     expect(describeEvent('order.imported', { lineCount: 5 }, pl, numberPl).detail).toBe('5 pozycji')
   })
 
+  it('describes family events with the names and SKUs they carry', () => {
+    expect(describeEvent('family.created', { name: 'T-shirt', attributes: ['Size'] }, t, number)).toEqual({ title: 'Product family created', detail: 'T-shirt' })
+    expect(describeEvent('family.renamed', { name: { from: 'T-shirt', to: 'Shirt' } }, t, number)).toEqual({ title: 'Product family renamed', detail: 'T-shirt → Shirt' })
+    expect(describeEvent('family.product_added', { sku: 'TS-M', productId: 'p' }, t, number)).toEqual({ title: 'Product added to a family', detail: 'TS-M' })
+    expect(describeEvent('family.deleted', { name: 5 }, translatorFor('pl'), numberPl)).toEqual({ title: catalogues.pl.events.title.family_deleted, detail: null })
+  })
+
   it('shows a value this build does not know as it is', () => {
     expect(describeEvent('order.status_changed', { from: 'new', to: 'teleported' }, t, number).detail).toBe('New → teleported')
     expect(describeEvent('order.channel_fact_recorded', { type: 'exploded' }, t, number).detail).toBe('exploded')

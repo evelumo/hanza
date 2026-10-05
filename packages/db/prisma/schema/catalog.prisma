@@ -1,22 +1,52 @@
 // Catalog: Products (owned by Hanza) and Offers (pulled from Channels).
 
 model Product {
-  id             String   @id @default(uuid(7))
-  organizationId String
-  sku            String
-  name           String
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id              String   @id @default(uuid(7))
+  organizationId  String
+  sku             String
+  name            String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  /// Optional membership of one Product family; it never changes what the Product is.
+  familyId        String?
+  /// One value per attribute of the family, e.g. `{ "Size": "M" }`; set exactly when `familyId` is.
+  attributeValues Json?
+  /// The values trimmed and case-folded, in the family's attribute order: what makes a combination unique within a family.
+  attributeKey    String?
 
-  organization Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organization Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  /// Composite so a Product can only join a family of its own organization. Ungrouping is done by the services (a
+  /// composite foreign key cannot null just one of its columns), hence NoAction.
+  family       ProductFamily? @relation(fields: [familyId, organizationId], references: [id, organizationId], onDelete: NoAction)
   stock        Stock[]
   offers       Offer[]
   orderLines   OrderLine[]
   reservations Reservation[]
 
   @@unique([organizationId, sku])
+  @@unique([familyId, attributeKey])
   @@index([organizationId, name])
+  @@index([organizationId, familyId])
   @@map("product")
+}
+
+/// A group of Products that are sizes/colours of one another. Only a grouping: Orders, Stock, Reservations and Offers
+/// keep pointing at the Products.
+model ProductFamily {
+  id             String   @id @default(uuid(7))
+  organizationId String
+  name           String
+  /// Names of the Family attributes ("Size", "Colour"), in display order; fixed after creation.
+  attributes     String[]
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  products     Product[]
+
+  @@unique([id, organizationId])
+  @@index([organizationId, name])
+  @@map("product_family")
 }
 
 enum OfferLinkMethod {
