@@ -1,0 +1,64 @@
+// Stock lives only in Hanza (ADR 0001).
+
+model Warehouse {
+  id             String   @id @default(uuid(7))
+  organizationId String
+  /// "default" for the Warehouse every organization gets automatically.
+  code           String
+  name           String
+  createdAt      DateTime @default(now())
+
+  organization Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  stock        Stock[]
+  reservations Reservation[]
+
+  @@unique([organizationId, code])
+  @@map("warehouse")
+}
+
+model Stock {
+  id             String   @id @default(uuid(7))
+  organizationId String
+  productId      String
+  warehouseId    String
+  /// Units physically in the Warehouse. May go negative only through consuming a Shortage.
+  units          Int      @default(0)
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  product      Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
+  warehouse    Warehouse    @relation(fields: [warehouseId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, warehouseId])
+  @@index([organizationId])
+  @@map("stock")
+}
+
+enum ReservationStatus {
+  open
+  released
+  consumed
+
+  @@map("reservation_status")
+}
+
+model Reservation {
+  id             String            @id @default(uuid(7))
+  organizationId String
+  orderLineId    String            @unique
+  productId      String
+  warehouseId    String
+  units          Int
+  status         ReservationStatus @default(open)
+  createdAt      DateTime          @default(now())
+  closedAt       DateTime?
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  orderLine    OrderLine    @relation(fields: [orderLineId], references: [id], onDelete: Cascade)
+  product      Product      @relation(fields: [productId], references: [id], onDelete: Restrict)
+  warehouse    Warehouse    @relation(fields: [warehouseId], references: [id], onDelete: Restrict)
+
+  @@index([organizationId, productId, status])
+  @@index([productId, warehouseId, status])
+  @@map("reservation")
+}

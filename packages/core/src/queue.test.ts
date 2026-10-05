@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { redisConnection } from './queue'
+import { bullJobOptions, redisConnection } from './queue'
 
 describe('redisConnection', () => {
   it('parses host, port, credentials and database', () => {
@@ -19,5 +19,18 @@ describe('redisConnection', () => {
       port: 6379,
       tls: {},
     })
+  })
+})
+
+describe('bullJobOptions', () => {
+  it('maps coalesceKey to deduplication that keeps the last request while one is active', () => {
+    expect(bullJobOptions({ coalesceKey: 'stock.push:c1', delayMs: 500 })).toEqual({
+      deduplication: { id: 'stock.push:c1', keepLastIfActive: true },
+      delay: 500,
+    })
+  })
+
+  it('adds nothing without options', () => {
+    expect(bullJobOptions()).toEqual({})
   })
 })

@@ -1,0 +1,109 @@
+// Orders imported from Channels. Fulfilment progress is owned by Hanza.
+
+enum OrderStatus {
+  new
+  processing
+  shipped
+  cancelled
+
+  @@map("order_status")
+}
+
+enum PaymentMethod {
+  prepaid
+  cash_on_delivery
+
+  @@map("payment_method")
+}
+
+enum AttentionReason {
+  unmatched_line
+  shortage
+  cancelled_while_processing
+  channel_fact_conflict
+
+  @@map("attention_reason")
+}
+
+enum ChannelFactType {
+  cancelled
+  shipped
+
+  @@map("channel_fact_type")
+}
+
+model Order {
+  id               String            @id @default(uuid(7))
+  organizationId   String
+  connectionId     String
+  externalId       String
+  status           OrderStatus       @default(new)
+  attentionReasons AttentionReason[] @default([])
+  placedAt         DateTime
+  payment          PaymentMethod
+  currency         String            @db.Char(3)
+  totalAmount      Decimal           @db.Decimal(19, 4)
+  // Buyer snapshot (no encryption yet: issue #6).
+  buyerName        String
+  buyerEmail       String?
+  buyerPhone       String?
+  buyerLogin       String?
+  /// Canonical `Address` (zod-validated on write and read).
+  shippingAddress  Json
+  billingAddress   Json?
+  importedAt       DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  organization Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  connection   Connection         @relation(fields: [connectionId], references: [id], onDelete: Restrict)
+  lines        OrderLine[]
+  facts        OrderChannelFact[]
+
+  @@unique([connectionId, externalId])
+  @@index([organizationId, placedAt(sort: Desc)])
+  @@index([organizationId, status])
+  @@map("order")
+}
+
+model OrderLine {
+  id              String   @id @default(uuid(7))
+  organizationId  String
+  orderId         String
+  externalId      String
+  offerExternalId String?
+  sku             String?
+  name            String
+  quantity        Int
+  unitPriceAmount Decimal  @db.Decimal(19, 4)
+  /// Null = Unmatched line.
+  productId       String?
+  shortage        Boolean  @default(false)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  order        Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product      Product?     @relation(fields: [productId], references: [id], onDelete: Restrict)
+  reservation  Reservation?
+
+  @@unique([orderId, externalId])
+  @@index([organizationId, productId])
+  @@map("order_line")
+}
+
+model OrderChannelFact {
+  id             String          @id @default(uuid(7))
+  organizationId String
+  orderId        String
+  /// The connector's stable fact id; makes recording idempotent.
+  externalId     String
+  type           ChannelFactType
+  occurredAt     DateTime
+  note           String?
+  recordedAt     DateTime        @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  order        Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@unique([orderId, externalId])
+  @@index([organizationId, recordedAt(sort: Desc)])
+  @@map("order_channel_fact")
+}

@@ -2,6 +2,7 @@ import { createDb, type Db } from '@hanza/db'
 import { loadEnv, type Env } from './env'
 import { createLogger, type Logger } from './logger'
 import { createJobQueue, type JobQueue } from './queue'
+import { createSecretBox, type SecretBox } from './secrets'
 
 /**
  * Everything a command, job or route needs. Built once per process by
@@ -12,14 +13,21 @@ export interface Context {
   db: Db
   queue: JobQueue
   log: Logger
+  secrets: SecretBox
 }
 
-export function createContext(scope: string, env: Env = loadEnv()): Context {
+export interface CreateContextOptions {
+  env?: Env
+}
+
+export function createContext(scope: string, options: CreateContextOptions = {}): Context {
+  const env = options.env ?? loadEnv()
   return {
     env,
     db: createDb(env.DATABASE_URL),
     queue: createJobQueue(env.REDIS_URL),
     log: createLogger(scope),
+    secrets: createSecretBox(env.HANZA_ENCRYPTION_KEY),
   }
 }
 

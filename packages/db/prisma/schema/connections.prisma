@@ -1,0 +1,77 @@
+// Connections to connectors and the per-stream sync bookkeeping.
+
+enum ConnectionHealth {
+  unknown
+  ok
+  failing
+  auth_expired
+
+  @@map("connection_health")
+}
+
+enum SyncStream {
+  offers_pull
+  orders_pull
+  stock_push
+  order_status_push
+
+  @@map("sync_stream")
+}
+
+enum SyncErrorKind {
+  auth_expired
+  rate_limited
+  transient
+  permanent
+
+  @@map("sync_error_kind")
+}
+
+model Connection {
+  id              String           @id @default(uuid(7))
+  organizationId  String
+  /// Connector id from the registry, e.g. "fake".
+  connectorId     String
+  name            String
+  /// Non-secret settings, validated against the connector's `configSchema`.
+  config          Json
+  /// Sealed with HANZA_ENCRYPTION_KEY (§4.6). Never selected by panel queries.
+  credentials     String
+  health          ConnectionHealth @default(unknown)
+  healthChangedAt DateTime?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  offers       Offer[]
+  orders       Order[]
+  syncStates   SyncState[]
+
+  @@index([organizationId, connectorId])
+  @@map("connection")
+}
+
+model SyncState {
+  id              String         @id @default(uuid(7))
+  organizationId  String
+  connectionId    String
+  stream          SyncStream
+  /// Persisted only for `orders_pull`.
+  cursor          String?
+  lastStartedAt   DateTime?
+  lastFinishedAt  DateTime?
+  lastSucceededAt DateTime?
+  /// Counts from the last successful run, e.g. { "imported": 3 }.
+  lastResult      Json?
+  lastErrorKind   SyncErrorKind?
+  /// Truncated to 1000 characters; cleared on success.
+  lastError       String?
+  updatedAt       DateTime       @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  connection   Connection   @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+
+  @@unique([connectionId, stream])
+  @@index([organizationId])
+  @@map("sync_state")
+}

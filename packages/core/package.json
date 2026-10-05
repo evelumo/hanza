@@ -4,13 +4,15 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./testing": "./src/testing/index.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },
   "dependencies": {
+    "@hanza/connector-sdk": "workspace:*",
     "@hanza/db": "workspace:*",
     "bullmq": "^6.3.11",
     "ioredis": "^5.11.1",

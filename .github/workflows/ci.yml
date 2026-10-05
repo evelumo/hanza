@@ -15,12 +15,29 @@ jobs:
   verify:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: hanza
+          POSTGRES_PASSWORD: hanza
+          POSTGRES_DB: hanza
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U hanza -d hanza"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 20
     env:
       # Dummy values so env validation and `next build` pass; nothing connects to them.
       DATABASE_URL: postgresql://hanza:hanza@localhost:5432/hanza
       REDIS_URL: redis://localhost:6379
       BETTER_AUTH_SECRET: ci-dummy-secret-do-not-use-in-production-0123456789
       BETTER_AUTH_URL: http://localhost:3000
+      HANZA_ENCRYPTION_KEY: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+      # Database-backed tests create and drop their own database on the service above.
+      HANZA_TEST_DATABASE_URL: postgresql://hanza:hanza@localhost:5432/hanza
     steps:
       - uses: actions/checkout@v4
 
