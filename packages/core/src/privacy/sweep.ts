@@ -41,8 +41,9 @@ export async function sealLegacyBuyerData(
   for (const row of rows) {
     let columns: ReturnType<typeof sealBuyerData>
     try {
+      // Every row must leave the batch, sealed or marked; one skipped silently would be rescanned forever.
       const data = readBuyerData(ctx.secrets, row)
-      if (data === null) continue
+      if (data === null) throw new Error('Legacy row without Buyer data')
       columns = sealBuyerData(ctx.secrets, row, data)
     } catch (error) {
       failed++

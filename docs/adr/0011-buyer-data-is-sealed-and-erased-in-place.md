@@ -10,7 +10,7 @@ Orders carry the Buyer's name, contact details and addresses, which must be prot
 
 ## Consequences
 
-- No search by Buyer except exact email (Unicode NFC, trimmed, lowercased), and only for erasure requests. The organization id is part of the HMAC input, so the same Buyer cannot be linked across organizations by reading the database. Legacy rows are matched on their plaintext with `=`, never `LIKE`.
+- No search by Buyer except exact email (Unicode NFC, trimmed, lowercased), and only for erasure requests. The organization id is part of the HMAC input, so the same Buyer cannot be linked across organizations by reading the database. Legacy rows are matched on their plaintext with `=`, never `LIKE`, trimmed in SQL with exactly the characters JS `trim()` strips. Known limit: SQL `lower()` follows the database's LC_CTYPE, so for non-ASCII letters a legacy row may fold case differently from JS until the sweep seals it; ASCII always agrees.
 - A stored value that does not open (wrong or rotated key, damage) shows that one Order as "cannot be read" and logs its id; it never fails a whole list.
 - The Retention period counts from `closedAt`, when an Order became shipped or cancelled; Orders closed before this change count from their last change (`updatedAt`), so turning retention on can erase many old Orders at once. The panel shows that count and asks for confirmation first. Open Orders are never erased, not even on an erasure request, because their address is needed to ship them.
 - Changing the Retention period and handling an Erasure request are limited to the organization's owners and admins (Better Auth `member.role`), checked in the core services.

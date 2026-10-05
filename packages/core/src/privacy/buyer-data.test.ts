@@ -1,7 +1,7 @@
 import { randomBytes } from 'node:crypto'
 import { describe, expect, it } from 'vitest'
 import { createSecretBox } from '../secrets'
-import { buyerEmailIndex, normalizeEmail, openBuyerData, readBuyerData, sealBuyerData, viewBuyerData, type BuyerData } from './buyer-data'
+import { buyerEmailIndex, JS_TRIM_WHITESPACE, normalizeEmail, openBuyerData, readBuyerData, sealBuyerData, viewBuyerData, type BuyerData } from './buyer-data'
 import { retentionCutoff } from './settings'
 
 const box = () => createSecretBox(randomBytes(32).toString('base64'))
@@ -93,6 +93,12 @@ describe('readBuyerData', () => {
     expect(viewBuyerData(secrets, sealedRow)).toEqual({ state: 'erased' })
   })
 
+  it('treats a legacy row with a name but no address as unreadable, not as erased', () => {
+    const secrets = box()
+    expect(() => readBuyerData(secrets, { ...legacy, shippingAddress: null })).toThrow()
+    expect(viewBuyerData(secrets, { ...legacy, shippingAddress: null })).toEqual({ state: 'unreadable' })
+  })
+
   it('returns null once erased', () => {
     const erased = { ...legacy, buyerName: null, buyerEmail: null, buyerPhone: null, buyerLogin: null, shippingAddress: null }
     expect(readBuyerData(box(), erased)).toBeNull()
@@ -102,6 +108,14 @@ describe('readBuyerData', () => {
 describe('normalizeEmail', () => {
   it('trims and lowercases', () => {
     expect(normalizeEmail('  John@Example.COM\n')).toBe('john@example.com')
+  })
+
+  it('the SQL trim class holds exactly the characters JS trim() strips', () => {
+    const inClass = new RegExp(`^[${JS_TRIM_WHITESPACE}]$`, 'u')
+    for (let code = 0; code <= 0xffff; code++) {
+      const char = String.fromCharCode(code)
+      expect(inClass.test(char), `U+${code.toString(16)}`).toBe(char.trim() === '')
+    }
   })
 
   it('composes Unicode, so the same address typed two ways matches', () => {

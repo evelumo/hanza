@@ -4,19 +4,24 @@ import type { Context } from '../context'
 import { appendEvent } from '../events'
 import { FINAL_STATUSES, isFinalStatus } from '../orders/status-rules'
 import { TX_OPTIONS } from '../transaction'
-import { buyerEmailIndex, normalizeEmail } from './buyer-data'
+import { buyerEmailIndex, JS_TRIM_WHITESPACE, normalizeEmail } from './buyer-data'
 import { eraseBuyerDataOfOrders } from './erase'
 import { assertCanManagePrivacy } from './permissions'
+
+// Postgres `btrim` strips spaces only and its `\s` misses NBSP and BOM, so trim exactly what JS `trim()` does.
+const TRIM_PATTERN = `^[${JS_TRIM_WHITESPACE}]+|[${JS_TRIM_WHITESPACE}]+$`
 
 /**
  * Ids of legacy rows (not sealed yet, or marked unsealable) whose plaintext email equals `email` after
  * the same normalisation as the blind index. Plain `=`, never LIKE/ILIKE: `_` and `%` are common in emails.
+ * `lower()` follows the database's LC_CTYPE, which agrees with JS for ASCII; see ADR 0011 for the limit.
  */
 async function legacyMatches(db: Tx | Context['db'], organizationId: string, email: string): Promise<string[]> {
   const rows = await db.$queryRaw<Array<{ id: string }>>`
     SELECT "id" FROM "order"
     WHERE "organizationId" = ${organizationId} AND "buyerData" IS NULL AND "buyerDataErasedAt" IS NULL
-      AND "buyerEmail" IS NOT NULL AND lower(btrim(normalize("buyerEmail", NFC))) = ${normalizeEmail(email)}`
+      AND "buyerEmail" IS NOT NULL
+      AND lower(regexp_replace(normalize("buyerEmail", NFC), ${TRIM_PATTERN}, '', 'g')) = ${normalizeEmail(email)}`
   return rows.map((row) => row.id)
 }
 

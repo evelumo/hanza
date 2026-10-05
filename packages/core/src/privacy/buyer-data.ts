@@ -24,6 +24,12 @@ function aad(key: OrderKey): string {
   return JSON.stringify(['buyer-data', key.organizationId, key.connectionId, key.externalId])
 }
 
+/**
+ * Every character JS `String.prototype.trim()` strips (WhiteSpace and LineTerminator), as the body of a
+ * regex bracket expression, so SQL can trim legacy plaintext the same way `normalizeEmail` does.
+ */
+export const JS_TRIM_WHITESPACE = '\t\n\v\f\r    -     　﻿'
+
 /** Erasure requests match an email exactly, ignoring Unicode composition, case and surrounding spaces. */
 export function normalizeEmail(email: string): string {
   return email.normalize('NFC').trim().toLowerCase()
@@ -76,10 +82,13 @@ export const storedBuyerDataSelect = {
   billingAddress: true,
 } as const
 
-/** Throws when the stored value does not open or does not parse; null once the Buyer data was erased. */
+/**
+ * Throws when the stored value does not open or does not parse, including a legacy row with only part of
+ * the snapshot (a name without an address); null once the Buyer data was erased.
+ */
 export function readBuyerData(secrets: SecretBox, row: StoredBuyerData): BuyerData | null {
   if (row.buyerData !== null) return openBuyerData(secrets, row, row.buyerData)
-  if (row.buyerName === null || row.shippingAddress === null) return null
+  if (row.buyerName === null && row.shippingAddress === null) return null
   return buyerDataSchema.parse({
     buyer: { name: row.buyerName, email: row.buyerEmail, phone: row.buyerPhone, login: row.buyerLogin },
     shippingAddress: row.shippingAddress,

@@ -12,7 +12,7 @@ import { addMember, buildOrder, createTestConnection, fact } from '../testing/fi
 import { eraseBuyerData, previewBuyerErasure } from './erasure'
 import { canManagePrivacy } from './permissions'
 import { getPrivacySettings, previewBuyerDataRetention, setBuyerDataRetention } from './settings'
-import { applyBuyerDataRetention, sealLegacyBuyerData, sweepBuyerData } from './sweep'
+import { applyBuyerDataRetention, sealLegacyBuyerData, sweepBuyerData, SWEEP_BATCH_SIZE } from './sweep'
 
 const DAY = 86_400_000
 
@@ -203,6 +203,21 @@ describe.skipIf(!databaseUrl)('Buyer data privacy', () => {
     expect(await rawRow(base, badOld.orderId)).not.toMatch(/olga/i)
   })
 
+  it('legacy rows with a name but no address are marked, so a sweep over several batches ends', async () => {
+    const { ctx: base, org, connectionId } = await setup()
+    const { ctx, logged } = withLogCapture(base)
+    const count = SWEEP_BATCH_SIZE * 2 + 50
+    await base.db.$executeRaw`
+      INSERT INTO "order" ("id", "organizationId", "connectionId", "externalId", "placedAt", "payment", "currency", "totalAmount", "buyerName", "updatedAt")
+      SELECT gen_random_uuid()::text, ${org}, ${connectionId}, 'partial-' || n, now(), 'prepaid', 'PLN', 10, 'Paula Partial', now()
+      FROM generate_series(1, ${count}::int) AS n`
+
+    expect(await sweepBuyerData(ctx, org, new Date())).toEqual({ sealed: 0, sealFailed: count, erased: 0, more: false })
+    expect(await sweepBuyerData(ctx, org, new Date())).toEqual({ sealed: 0, sealFailed: 0, erased: 0, more: false })
+    expect(await base.db.order.count({ where: { organizationId: org, buyerDataSealFailedAt: { not: null } } })).toBe(count)
+    expect(JSON.stringify(logged)).not.toMatch(/paula/i)
+  })
+
   it('retention erases only Closed Orders past the period, in its own organization, and only once', async () => {
     const { ctx, org, admin, importOne } = await setup()
     const other = await setup()
@@ -356,6 +371,19 @@ describe.skipIf(!databaseUrl)('Buyer data privacy', () => {
     expect((await getOrder(ctx, org, underscore.orderId))?.buyerDataState).toBe('erased')
     expect((await getOrder(ctx, org, john.orderId))?.buyer?.name).toBe('John Wildcard')
     expect((await getOrder(ctx, org, legacyJohn.orderId))?.buyer?.name).toBe('John Legacy')
+  })
+
+  it('trims stored emails the way JS does (tab, NBSP, BOM, wide spaces) on legacy rows as on sealed ones', async () => {
+    const { ctx, org, admin, importOne } = await setup()
+    const stored = ['x@example.com\t', '\u00a0X@example.com\u2003', '\ufeffx@example.com\u3000', '\n x@EXAMPLE.com \r']
+    const legacy = []
+    for (const email of stored) legacy.push(await importOne(buyer(email, 'Xavier Space')))
+    const sealed = await importOne(buyer('x@example.com\t', 'Xavier Sealed'))
+    for (const row of legacy) await makeLegacy(ctx, row.orderId, row.order)
+    for (const { orderId } of [...legacy, sealed]) await closeDaysAgo(ctx, orderId, 1)
+
+    expect(await previewBuyerErasure(ctx, org, 'x@example.com', admin)).toEqual({ closed: 5, open: 0 })
+    expect(await previewBuyerErasure(ctx, org, 'x@example.co', admin)).toEqual({ closed: 0, open: 0 })
   })
 
   it('matches an email written with decomposed Unicode on sealed and legacy rows', async () => {
