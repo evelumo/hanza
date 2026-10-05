@@ -10,9 +10,9 @@ Early stage (stage 1 of the roadmap). Working today:
 
 - Email/password sign-up and login (Better Auth); an organization is the tenant, created during onboarding.
 - Multi-tenant data model: every tenant-owned table carries `organizationId`.
-- The domain core: Products, Offers, Stock with Reservations (Hanza owns Stock), Orders with their own status, Connections with encrypted credentials, and an event log.
+- The domain core: Products, Offers, Stock with Reservations (Hanza owns Stock), Orders with their own status (fixed Order phases, organization-defined Order statuses within them), Connections with encrypted credentials, and an event log.
 - The sync engine in the worker: pulls Offers and Orders from a Channel, pushes Available stock and Order status back, retries and tracks Connection health.
-- The panel (English by default, Polish as a second language; switch it in the header): Products (Stock, Available, linking Offers to Products), Orders (status changes, Needs attention, linking Unmatched lines) and Connections (add, sync now, sync results).
+- The panel (English by default, Polish as a second language; switch it in the header): Products (Stock, Available, linking Offers to Products), Orders (status changes, filters by phase and status, Needs attention, linking Unmatched lines), Connections (add, sync now, sync results, which Order status a Channel's Orders get) and Settings (the organization's Order statuses).
 - The final-for-now Connector SDK with a conformance test kit and an in-memory **fake connector** ("Test channel") that exercises the whole path without a real Channel.
 - `GET /api/health` (database + queue) and a dependency-boundary check for connectors.
 

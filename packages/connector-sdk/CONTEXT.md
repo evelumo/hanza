@@ -40,12 +40,16 @@ _Avoid_: Oversell, backorder
 A Buyer's purchase placed on one Channel. After it reaches Hanza, its progress through fulfilment is owned by Hanza and is not a mirror of the Channel's status.
 _Avoid_: Purchase, transaction, checkout form
 
+**Order phase**:
+Where an Order is in fulfilment as far as Stock and Channels are concerned: new, processing, shipped or cancelled (the last two are final). One fixed list shared by every organization; Reservations, Channel facts, Needs attention and the status sent to a Channel all depend on it, and each connector translates between it and its Channel's own statuses, in both directions (ADR 0003, ADR 0014). The SDK still names it `OrderStatus`.
+_Avoid_: Base status, system status, stage, state
+
 **Order status**:
-Where an Order is in fulfilment, from Hanza's point of view. One fixed list shared by every organization; each connector translates between it and its Channel's own statuses, in both directions.
-_Avoid_: State, stage, phase
+An organization's own label for where an Order is, such as "Waiting for packaging". Each one belongs to exactly one Order phase, and every phase has a default status; moving between two statuses of the same phase changes nothing but the label and is never sent to a Channel (ADR 0014).
+_Avoid_: State, stage, step, phase
 
 **Channel fact**:
-Something the Channel reports about an Order after it was placed, such as "cancelled by buyer". Always recorded as reported. It moves the Order status accordingly, except that an Order that is already shipped or cancelled stays as it is and is marked Needs attention instead (ADR 0003).
+Something the Channel reports about an Order after it was placed, such as "cancelled by buyer". Always recorded as reported. It moves the Order phase accordingly (to the status the Status mapping names, else the phase default), except that an Order that is already shipped or cancelled stays as it is and is marked Needs attention instead (ADR 0003).
 _Avoid_: External status, remote status
 
 **Needs attention**:

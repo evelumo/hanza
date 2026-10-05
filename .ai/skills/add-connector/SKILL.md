@@ -42,13 +42,13 @@ A **Channel** (`marketplace` or `shop`) must implement `offers.pull`, `orders.pu
 | `offers.pull(ctx, cursor)` | Every Offer on the Channel, paged. The engine always starts from `null`. Returns `{ items: Offer[], nextCursor, hasMore }`. |
 | `orders.pull(ctx, cursor)` | Incremental feed of Orders **ready to fulfil** (paid, or cash on delivery): new ones, and ones that got new Channel facts. The same cursor must give the same page. |
 | `stock.push(ctx, levels)` | Set absolute availability for up to 100 Offers (`{ offerExternalId, sku, available }`). Must be repeatable. |
-| `orders.updateStatus(ctx, { orderExternalId, status })` | Translate a Hanza Order status (`new`, `processing`, `shipped`, `cancelled`) to the Channel's own and set it. Resolve without a call if the Channel has no equivalent. Must be repeatable. |
+| `orders.updateStatus(ctx, { orderExternalId, status })` | Translate an Order phase (`new`, `processing`, `shipped`, `cancelled`; the SDK type is still called `OrderStatus`) to the Channel's own status and set it. Resolve without a call if the Channel has no equivalent. Must be repeatable. |
 
 `CapabilityContext` gives you `config` (parsed with `configSchema`), `credentials` (parsed with `credentialsSchema`), `fetch` (global fetch with a 30 s timeout; **you** add the authentication to your requests) and `log`.
 
 Paging: `nextCursor` is the position to resume from; when `hasMore` is true it must be non-null and differ from the input cursor. In `orders.pull` the feed is a journal: a cursor past the last entry returns `{ items: [], hasMore: false }`.
 
-Status translation is connector code. Inbound: the Channel's statuses and events decide which Orders you return and which **Channel facts** (`facts[]`, stage 1 types `cancelled` and `shipped`, each with an id that is stable for that Order) you attach. Hanza does not mirror the Channel's status. Outbound: `orders.updateStatus` maps the four Hanza statuses to the Channel's.
+Status translation is connector code. Inbound: the Channel's statuses and events decide which Orders you return and which **Channel facts** (`facts[]`, stage 1 types `cancelled` and `shipped`, each with an id that is stable for that Order) you attach. Hanza does not mirror the Channel's status. Outbound: `orders.updateStatus` maps the four Order phases to the Channel's statuses. Connectors speak phases only: an organization's own Order statuses are labels within a phase that never reach a connector, and the per-Channel Status mapping is data in the core (ADR 0014).
 
 Canonical schemas (all exported): `offerSchema`, `orderSchema` (with `buyerSchema`, `addressSchema`, `orderLineSchema`, `channelFactSchema`), `stockLevelSchema`, `moneySchema`. Use the glossary in `packages/connector-sdk/CONTEXT.md` for names (Offer, Order, Buyer, Channel fact; not "listing", "customer", "external status").
 

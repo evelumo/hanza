@@ -12,6 +12,10 @@ _Avoid_: Integration, account, link
 A Connection the organization sells through, i.e. a marketplace or a shop. Orders always come from a Channel; a courier or invoicing Connection is not a Channel.
 _Avoid_: Sales channel, marketplace, store, source
 
+**Status mapping**:
+Per Channel, which Order status an Order gets when that Channel reports an Order phase: new on import, shipped or cancelled through a Channel fact. Without one, the phase's default status applies. It never changes what is sent to the Channel, which is always the phase.
+_Avoid_: Status translation, status map, channel statuses
+
 **Connection health**:
 Whether Hanza can currently work with a Connection: not checked yet, working, failing, or waiting for the organization to sign in to the connector again.
 _Avoid_: Connection status, connection state

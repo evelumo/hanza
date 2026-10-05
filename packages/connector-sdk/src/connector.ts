@@ -36,7 +36,7 @@ export interface Capabilities<TConfig, TCredentials> {
   'orders.pull'?(ctx: CapabilityContext<TConfig, TCredentials>, cursor: string | null): Promise<PullResult<Order>>
   /** Set absolute availability for up to 100 Offers of this Connection. Must be repeatable. */
   'stock.push'?(ctx: CapabilityContext<TConfig, TCredentials>, levels: StockLevel[]): Promise<void>
-  /** Translate a Hanza Order status to the Channel's and set it. Resolve without a call if the Channel has no equivalent. Must be repeatable. */
+  /** Translate an Order phase (`status`) to the Channel's own status and set it. Resolve without a call if the Channel has no equivalent. Must be repeatable. */
   'orders.updateStatus'?(
     ctx: CapabilityContext<TConfig, TCredentials>,
     input: { orderExternalId: string; status: OrderStatus },

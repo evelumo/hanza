@@ -1,6 +1,10 @@
 import { z } from 'zod'
 import { moneySchema } from './money'
 
+/**
+ * The Order phases (ADR 0014): the fixed list Hanza and every connector speak. Organizations label Orders with their own
+ * Order statuses within these, which never reach a connector. Still named `OrderStatus` here (renaming it: issue #79).
+ */
 export const ORDER_STATUSES = ['new', 'processing', 'shipped', 'cancelled'] as const
 export const orderStatusSchema = z.enum(ORDER_STATUSES)
 

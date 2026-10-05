@@ -7,6 +7,10 @@ A connector may depend only on `@hanza/connector-sdk` and `zod` —
 and never imports the core or another connector. Layout and rules: see
 `AGENTS.md` at the repo root and `.ai/skills/add-connector/SKILL.md`. A connector that needs an SDK or core change starts with a spec, which is a GitHub issue (see "Specs, decisions and vocabulary" in `AGENTS.md`).
 
+Connectors speak **Order phases** (`new`, `processing`, `shipped`, `cancelled`), never an
+organization's own Order statuses: they translate Channel statuses to and from phases in
+code, and the core decides which Order status an Order gets (ADR 0014).
+
 Every connector proves it follows the contract with the conformance kit
 (`assertConformance` from `@hanza/connector-sdk/testing`), called from its own
 `connector.test.ts` with recorded fixtures and no network.
