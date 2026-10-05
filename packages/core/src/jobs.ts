@@ -11,6 +11,8 @@ export interface JobRef<TSchema extends z.ZodType = z.ZodType> {
 export interface JobRunInfo {
   attempt: number
   maxAttempts: number
+  /** `RetryLaterError` retries of this attempt so far (they use no attempt); 0 on the first run of each attempt. */
+  retriedLater: number
 }
 
 export interface JobDefinition<TSchema extends z.ZodType = z.ZodType> extends JobRef<TSchema> {

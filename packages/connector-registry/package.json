@@ -1,0 +1,19 @@
+{
+  "name": "@hanza/connector-registry",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@hanza/connector-fake": "workspace:*",
+    "@hanza/connector-sdk": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^6.0.3"
+  }
+}

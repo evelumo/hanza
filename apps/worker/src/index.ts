@@ -1,30 +1,14 @@
-import { Worker } from 'bullmq'
-import { QUEUE_NAME, closeContext, createContext, findJob, jobs, redisConnection } from '@hanza/core'
+import { connectors } from '@hanza/connector-registry'
+import { TICK_EVERY_MS, closeContext, createContext, jobs, loadWorkerEnv, startWorker, syncTickRef } from '@hanza/core'
 
-const ctx = createContext('worker')
+const { WORKER_CONCURRENCY } = loadWorkerEnv()
+const ctx = createContext('worker', { connectors })
 
-const worker = new Worker(
-  QUEUE_NAME,
-  async (job) => {
-    const definition = findJob(job.name)
-    if (!definition) throw new Error(`Unknown job "${job.name}"`)
-    await definition.handler(ctx, definition.schema.parse(job.data), {
-      attempt: job.attemptsMade + 1,
-      maxAttempts: job.opts.attempts ?? 1,
-    })
-  },
-  {
-    connection: redisConnection(ctx.env.REDIS_URL),
-    concurrency: Number(process.env.WORKER_CONCURRENCY ?? 10),
-  },
-)
+const worker = startWorker(ctx, jobs, { concurrency: WORKER_CONCURRENCY })
 
-worker.on('ready', () => ctx.log.info('worker ready', { jobs: jobs.map((job) => job.name) }))
-worker.on('completed', (job) => ctx.log.info('job completed', { name: job.name, id: job.id }))
-worker.on('failed', (job, error) =>
-  ctx.log.error('job failed', { name: job?.name, id: job?.id, attempt: job?.attemptsMade, error: error.message }),
-)
-worker.on('error', (error) => ctx.log.error('worker error', { error: error.message }))
+// Idempotent: every worker start updates the same scheduler instead of adding one.
+await ctx.queue.schedule('sync.tick', syncTickRef, {}, { everyMs: TICK_EVERY_MS })
+ctx.log.info('sync tick scheduled', { everyMs: TICK_EVERY_MS, connectors: connectors.map((connector) => connector.id) })
 
 async function shutdown(signal: string) {
   ctx.log.info('shutting down', { signal })

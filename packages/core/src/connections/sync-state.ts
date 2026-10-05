@@ -96,7 +96,17 @@ export async function finishSyncRun(
   connectionId: string,
   stream: SyncStream,
   result: Record<string, number>,
+  /**
+   * `calledChannel: false` = the run never contacted the Channel (nothing to send), so it proves
+   * nothing: only `lastFinishedAt` is updated; result, last success, last error and health stay.
+   */
+  options: { calledChannel?: boolean } = {},
 ): Promise<void> {
+  if (options.calledChannel === false) {
+    await requireConnection(ctx.db, organizationId, connectionId)
+    await writeState(ctx.db, organizationId, connectionId, stream, { lastFinishedAt: new Date() })
+    return
+  }
   await ctx.db.$transaction(async (tx) => {
     await requireConnection(tx, organizationId, connectionId)
     const now = new Date()
