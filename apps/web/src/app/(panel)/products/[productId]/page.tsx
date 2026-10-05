@@ -3,13 +3,15 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { ActionForm } from '@/components/action-form'
 import { ActionButton } from '@/components/form'
+import { PriceForm } from '@/components/price-form'
 import { EmptyState, Section, linkClass, rowClass, tableClass, tdClass, thClass } from '@/components/section'
 import { getContext } from '@/lib/context'
 import { getT } from '@/i18n/server'
 import { getFormatters } from '@/lib/formatters'
+import { isPriceBlocked, priceStatusText } from '@/lib/price-status'
 import { requireTenant } from '@/lib/session'
 import { notFound } from 'next/navigation'
-import { unlinkOfferAction } from './actions'
+import { setBasePriceAction, unlinkOfferAction } from './actions'
 import { NameForm } from './name-form'
 import { StockForm } from './stock-form'
 
@@ -35,6 +37,9 @@ export default async function ProductPage({ params }: { params: Promise<{ produc
   const { productId } = await params
   const product = await getProduct(getContext(), organizationId, productId)
   if (!product) notFound()
+  // Offered as a suggestion only when every Channel reports the same price, so no Channel's price is picked over another's.
+  const channelPrices = [...new Map(product.offers.flatMap((offer) => (offer.channelPrice ? [[`${offer.channelPrice.amount} ${offer.channelPrice.currency}`, offer.channelPrice] as const] : []))).values()]
+  const channelPrice = channelPrices.length === 1 ? channelPrices[0]! : null
 
   return (
     <div className="space-y-6">
@@ -69,6 +74,19 @@ export default async function ProductPage({ params }: { params: Promise<{ produc
         </div>
       </Section>
 
+      <Section title={t('products.detail.priceTitle')} description={t('products.detail.priceDescription')}>
+        <div className="px-5 py-4">
+          <PriceForm
+            action={setBasePriceAction}
+            idField="productId"
+            id={product.id}
+            price={product.basePrice}
+            defaultCurrency={product.offers.find((offer) => offer.channelPrice)?.channelPrice?.currency ?? null}
+            suggestion={channelPrice ? { price: channelPrice, label: format.money(channelPrice) } : null}
+          />
+        </div>
+      </Section>
+
       <Section title={t('products.detail.offersTitle')} description={t('products.detail.offersDescription')}>
         {product.offers.length === 0 ? (
           <EmptyState>{t('products.detail.offersEmpty')}</EmptyState>
@@ -81,6 +99,7 @@ export default async function ProductPage({ params }: { params: Promise<{ produc
                   <th scope="col" className={thClass}>{t('products.detail.offerColumns.offer')}</th>
                   <th scope="col" className={thClass}>{t('products.detail.offerColumns.link')}</th>
                   <th scope="col" className={thClass}>{t('products.detail.offerColumns.lastPushed')}</th>
+                  <th scope="col" className={thClass}>{t('products.detail.offerColumns.price')}</th>
                   <th scope="col" className={thClass}>
                     <span className="sr-only">{t('products.detail.offerColumns.actions')}</span>
                   </th>
@@ -91,7 +110,9 @@ export default async function ProductPage({ params }: { params: Promise<{ produc
                   <tr key={offer.id} className={rowClass}>
                     <td className={tdClass}>{offer.connectionName}</td>
                     <td className={tdClass}>
-                      {offer.name}
+                      <Link href={`/products/offers/${offer.id}`} className={linkClass}>
+                        {offer.name}
+                      </Link>
                       <span className="block font-mono text-xs text-muted">{offer.externalId}</span>
                     </td>
                     <td className={tdClass}>{offer.linkedBy === 'manual' ? t('products.detail.linkedManually') : t('products.detail.linkedBySku')}</td>
@@ -104,6 +125,22 @@ export default async function ProductPage({ params }: { params: Promise<{ produc
                       ) : (
                         <span className="text-muted">{t('products.detail.notPushed')}</span>
                       )}
+                    </td>
+                    <td className={tdClass}>
+                      {offer.effectivePrice ? (
+                        <>
+                          <span className="tabular-nums">{format.money(offer.effectivePrice)}</span>
+                          <span className="text-xs text-muted">
+                            {' · '}
+                            {offer.priceOverride ? t('products.detail.priceFromOffer') : t('products.detail.priceFromBase')}
+                          </span>
+                        </>
+                      ) : (
+                        <span className="text-muted">{t('prices.none')}</span>
+                      )}
+                      <span className={`block max-w-xs text-xs ${isPriceBlocked(offer.priceStatus) ? 'font-medium text-amber-800' : 'text-muted'}`}>
+                        {priceStatusText(t, offer, format.dateTime)}
+                      </span>
                     </td>
                     <td className={`${tdClass} text-right`}>
                       <ActionForm action={unlinkOfferAction} confirm={t('products.detail.unlinkConfirm')}>

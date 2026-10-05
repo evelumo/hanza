@@ -1,8 +1,12 @@
+import type { Money } from '@hanza/connector-sdk'
 import type { Actor } from '../actor'
 import type { Context } from '../context'
 import { DomainError, isUniqueViolation } from '../errors'
 import { appendEvent } from '../events'
 import { rematchAfterCommit } from '../orders/rematch'
+import { describeOfferPrice, offerPriceColumns, type OfferPriceView } from '../prices/offer-price'
+import { moneyFromColumns } from '../prices/price'
+import { requestPricePushAfterCommit } from '../prices/push'
 import { getAvailability } from '../stock/availability'
 import { requestStockPushAfterCommit } from '../stock/push'
 import { ensureDefaultWarehouse } from '../stock/warehouse'
@@ -21,16 +25,19 @@ export interface ProductRow {
 }
 
 export interface ProductDetail extends ProductRow {
-  offers: Array<{
-    id: string
-    connectionId: string
-    connectionName: string
-    externalId: string
-    name: string
-    linkedBy: 'sku' | 'manual'
-    lastPushedAvailable: number | null
-    lastPushedAt: Date | null
-  }>
+  basePrice: Money | null
+  offers: Array<
+    {
+      id: string
+      connectionId: string
+      connectionName: string
+      externalId: string
+      name: string
+      linkedBy: 'sku' | 'manual'
+      lastPushedAvailable: number | null
+      lastPushedAt: Date | null
+    } & OfferPriceView
+  >
   openReservations: Array<{ orderId: string; orderExternalId: string; units: number; createdAt: Date }>
 }
 
@@ -67,6 +74,7 @@ export async function createProduct(
   }, TX_OPTIONS)
 
   await requestStockPushAfterCommit(ctx, organizationId, connectionIds)
+  await requestPricePushAfterCommit(ctx, organizationId, connectionIds)
   await rematchAfterCommit(ctx, organizationId, { productId })
   return { productId }
 }
@@ -146,6 +154,8 @@ export async function getProduct(ctx: Context, organizationId: string, productId
       id: true,
       sku: true,
       name: true,
+      basePriceAmount: true,
+      basePriceCurrency: true,
       offers: {
         where: { organizationId },
         orderBy: { id: 'asc' },
@@ -157,12 +167,14 @@ export async function getProduct(ctx: Context, organizationId: string, productId
           linkedBy: true,
           lastPushedAvailable: true,
           lastPushedAt: true,
-          connection: { select: { name: true } },
+          ...offerPriceColumns,
+          connection: { select: { name: true, connectorId: true } },
         },
       },
     },
   })
   if (!product) return null
+  const basePrice = moneyFromColumns(product.basePriceAmount, product.basePriceCurrency)
 
   const [availability, reservations] = await Promise.all([
     getAvailability(ctx.db, organizationId, [product.id]),
@@ -178,6 +190,7 @@ export async function getProduct(ctx: Context, organizationId: string, productId
     name: product.name,
     ...(availability.get(product.id) ?? { stock: 0, reserved: 0, available: 0 }),
     linkedOffers: product.offers.length,
+    basePrice,
     offers: product.offers.map((offer) => ({
       id: offer.id,
       connectionId: offer.connectionId,
@@ -188,6 +201,7 @@ export async function getProduct(ctx: Context, organizationId: string, productId
       linkedBy: offer.linkedBy ?? 'manual',
       lastPushedAvailable: offer.lastPushedAvailable,
       lastPushedAt: offer.lastPushedAt,
+      ...describeOfferPrice(ctx, { ...offer, connectorId: offer.connection.connectorId }, { basePrice }),
     })),
     openReservations: reservations.map((reservation) => ({
       orderId: reservation.orderLine.order.id,
@@ -198,7 +212,11 @@ export async function getProduct(ctx: Context, organizationId: string, productId
   }
 }
 
-/** One Product per Offer (its SKU and name, Stock 0), the Offer linked by SKU. One transaction for all. */
+/**
+ * One Product per Offer (its SKU and name, Stock 0, no base price), the Offer linked by SKU. One transaction for all.
+ * The Channel price is never copied into the base price: auto-linking would push one Channel's price to every other
+ * Channel selling the SKU without anyone having set it (ADR 0011).
+ */
 export async function createProductsFromOffers(
   ctx: Context,
   organizationId: string,
@@ -269,7 +287,7 @@ export async function createProductsFromOffers(
       })
       const linked = await tx.offer.updateManyAndReturn({
         where: { id: item.offerId, organizationId, productId: null },
-        data: { productId, linkedBy: 'sku', stockPushSeq: { increment: 1 } },
+        data: { productId, linkedBy: 'sku', stockPushSeq: { increment: 1 }, pricePushSeq: { increment: 1 } },
         select: { connectionId: true },
       })
       for (const offer of linked) {
@@ -288,6 +306,7 @@ export async function createProductsFromOffers(
   }, TX_OPTIONS)
 
   await requestStockPushAfterCommit(ctx, organizationId, result.connectionIds)
+  await requestPricePushAfterCommit(ctx, organizationId, result.connectionIds)
   if (result.created.length > 0) await rematchAfterCommit(ctx, organizationId, { productIds: result.created.join(',') })
   return { created: result.created, skipped: result.skipped }
 }

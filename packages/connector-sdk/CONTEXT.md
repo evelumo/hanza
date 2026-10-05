@@ -34,6 +34,24 @@ _Avoid_: Free stock, sellable quantity
 An Order line whose Reservation could not be covered by Stock. A person decides what happens next; Hanza never cancels the Order on its own.
 _Avoid_: Oversell, backorder
 
+### Prices
+
+**Base price**:
+The price a Product sells for on every Channel, unless an Offer has a Price override. Owned by Hanza; a Product may have none, and then nothing is pushed.
+_Avoid_: List price, default price, catalogue price
+
+**Price override**:
+A price set in Hanza for one Offer only (the panel calls it the offer price); while set, it wins over the Product's Base price. The way to sell an Offer in a currency other than the Base price's.
+_Avoid_: Special price, custom price, channel-specific price
+
+**Effective price**:
+The Price override if there is one, else the Base price. What Hanza pushes to the Channel, only when its currency is the Channel price's (ADR 0011).
+_Avoid_: Final price, current price
+
+**Channel price**:
+The price the Channel reported for an Offer at the last pull. Recorded to learn the Channel's currency, never adopted.
+_Avoid_: External price, remote price, marketplace price
+
 ### Orders
 
 **Order**:
