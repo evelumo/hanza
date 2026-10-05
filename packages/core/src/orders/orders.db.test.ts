@@ -109,7 +109,16 @@ describe.skipIf(!databaseUrl)('orders', () => {
       const shipped = await build('shipped', ['unmatched_line'])
 
       const sql = await readFile(new URL('../../../db/prisma/migrations/20261005112748_clear_unmatched_line_on_cancelled_orders/migration.sql', import.meta.url), 'utf8')
-      for (let run = 0; run < 2; run++) await ctx.db.$executeRawUnsafe(sql)
+      const updatedAt = async (id: string) => (await ctx.db.order.findFirstOrThrow({ where: { id } })).updatedAt.getTime()
+      const before = { cancelled: await updatedAt(cancelled), open: await updatedAt(open), shipped: await updatedAt(shipped) }
+      await ctx.db.$executeRawUnsafe(sql)
+      const afterFirst = { cancelled: await updatedAt(cancelled), open: await updatedAt(open), shipped: await updatedAt(shipped) }
+      expect(afterFirst.cancelled).toBeGreaterThan(before.cancelled)
+      expect(afterFirst.open).toBe(before.open)
+      expect(afterFirst.shipped).toBe(before.shipped)
+      // A second run matches no row, so it changes nothing, not even updatedAt.
+      await ctx.db.$executeRawUnsafe(sql)
+      expect(await updatedAt(cancelled)).toBe(afterFirst.cancelled)
 
       const reasons = async (id: string) => (await ctx.db.order.findFirstOrThrow({ where: { id } })).attentionReasons
       expect(await reasons(cancelled)).toEqual(['channel_fact_conflict'])
