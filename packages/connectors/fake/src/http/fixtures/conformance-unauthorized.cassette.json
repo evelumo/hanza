@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "interactions": [
+    {
+      "request": {
+        "method": "POST",
+        "url": "https://fake-channel.example.test/oauth/token",
+        "headers": {
+          "accept": "application/json",
+          "content-type": "application/x-www-form-urlencoded"
+        },
+        "body": {
+          "text": "grant_type=client_credentials&client_id=%5Bscrubbed%5D&client_secret=%5Bscrubbed%5D"
+        }
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "json": {
+            "error": "invalid_client"
+          }
+        }
+      }
+    }
+  ]
+}
