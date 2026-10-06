@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { offerSchema } from './offer'
-import { moneySchema } from './money'
+import { currencyMinorUnits, moneySchema } from './money'
 import { orderSchema } from './order'
+import { offerPriceSchema } from './price'
 import { stockLevelSchema } from './stock'
 
 const address = {
@@ -57,6 +58,45 @@ describe('moneySchema', () => {
   })
 })
 
+describe('currencyMinorUnits', () => {
+  it.each([
+    ['PLN', 2],
+    ['EUR', 2],
+    ['HUF', 2],
+    ['IDR', 2],
+    ['JPY', 0],
+    ['KRW', 0],
+    ['VND', 0],
+    ['CLP', 0],
+    ['ISK', 0],
+    ['UGX', 0],
+    ['KWD', 3],
+    ['BHD', 3],
+    ['OMR', 3],
+    ['JOD', 3],
+    ['TND', 3],
+    ['IQD', 3],
+    ['CLF', 4],
+    ['XYZ', 2],
+    ['jpy', 2],
+  ] as const)('%s has %i', (currency, units) => {
+    expect(currencyMinorUnits(currency)).toBe(units)
+  })
+
+  it('does not depend on Intl', () => {
+    const original = Intl.NumberFormat
+    Intl.NumberFormat = (() => {
+      throw new Error('Intl must not be used')
+    }) as unknown as typeof Intl.NumberFormat
+    try {
+      expect(currencyMinorUnits('HUF')).toBe(2)
+      expect(currencyMinorUnits('JPY')).toBe(0)
+    } finally {
+      Intl.NumberFormat = original
+    }
+  })
+})
+
 describe('orderSchema', () => {
   it('accepts a complete Order', () => {
     expect(orderSchema.parse(order)).toEqual(order)
@@ -104,8 +144,21 @@ describe('offerSchema and stockLevelSchema', () => {
     expect(offerSchema.safeParse({ externalId: 'a', sku: null, name: 'Stickers', url: null }).success).toBe(true)
   })
 
+  it('accepts an Offer with, without or with a null Channel price, and rejects a float price', () => {
+    const offer = { externalId: 'a', sku: null, name: 'Stickers', url: null }
+    expect(offerSchema.safeParse({ ...offer, price: { amount: '12.50', currency: 'EUR' } }).success).toBe(true)
+    expect(offerSchema.safeParse({ ...offer, price: null }).success).toBe(true)
+    expect(offerSchema.safeParse({ ...offer, price: { amount: 12.5, currency: 'EUR' } }).success).toBe(false)
+  })
+
   it('rejects an Offer with a malformed url', () => {
     expect(offerSchema.safeParse({ externalId: 'a', sku: null, name: 'x', url: 'not a url' }).success).toBe(false)
+  })
+
+  it('requires a price on an OfferPrice', () => {
+    expect(offerPriceSchema.safeParse({ offerExternalId: 'a', sku: null, price: { amount: '9.99', currency: 'PLN' } }).success).toBe(true)
+    expect(offerPriceSchema.safeParse({ offerExternalId: 'a', sku: null, price: null }).success).toBe(false)
+    expect(offerPriceSchema.safeParse({ offerExternalId: '', sku: null, price: { amount: '9.99', currency: 'PLN' } }).success).toBe(false)
   })
 
   it('rejects negative and fractional availability', () => {

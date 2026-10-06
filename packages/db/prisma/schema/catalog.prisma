@@ -1,22 +1,59 @@
 // Catalog: Products (owned by Hanza) and Offers (pulled from Channels).
 
 model Product {
-  id             String   @id @default(uuid(7))
-  organizationId String
-  sku            String
-  name           String
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id              String   @id @default(uuid(7))
+  organizationId  String
+  sku             String
+  name            String
+  /// Base price: the price of every Offer without an override. Null = no price, nothing is pushed (ADR 0011).
+  /// Amount and currency are set together (CHECK constraint in the migration).
+  basePriceAmount   Decimal? @db.Decimal(19, 4)
+  basePriceCurrency String?  @db.Char(3)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  /// Optional membership of one Product family; it never changes what the Product is.
+  familyId        String?
+  /// One value per attribute of the family, e.g. `{ "Size": "M" }`; set exactly when `familyId` is.
+  attributeValues Json?
+  /// The values trimmed and case-folded, in the family's attribute order: what makes a combination unique within a family.
+  attributeKey    String?
 
-  organization Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organization Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  /// Composite so a Product can only join a family of its own organization. Ungrouping is done by the services (a
+  /// composite foreign key cannot null just one of its columns), hence NoAction.
+  family       ProductFamily? @relation(fields: [familyId, organizationId], references: [id, organizationId], onDelete: NoAction)
   stock        Stock[]
   offers       Offer[]
   orderLines   OrderLine[]
   reservations Reservation[]
 
   @@unique([organizationId, sku])
+  // Partial on purpose: Postgres treats the columns of a non-partial unique index as "key" columns, so updating them
+  // would lock the Product row FOR UPDATE and conflict with the FOR KEY SHARE that Order lines, Reservations, Stock and
+  // Offers take through their foreign keys (deadlocks with Order import). Needs the `partialIndexes` preview feature.
+  @@unique([familyId, attributeKey], where: raw("\"familyId\" IS NOT NULL"))
   @@index([organizationId, name])
+  @@index([organizationId, familyId])
   @@map("product")
+}
+
+/// A group of Products that are sizes/colours of one another. Only a grouping: Orders, Stock, Reservations and Offers
+/// keep pointing at the Products.
+model ProductFamily {
+  id             String   @id @default(uuid(7))
+  organizationId String
+  name           String
+  /// Names of the Family attributes ("Size", "Colour"), in display order; fixed after creation.
+  attributes     String[]
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  products     Product[]
+
+  @@unique([id, organizationId])
+  @@index([organizationId, name])
+  @@map("product_family")
 }
 
 enum OfferLinkMethod {
@@ -42,6 +79,19 @@ model Offer {
   stockPushedSeq      Int              @default(0)
   lastPushedAvailable Int?
   lastPushedAt        DateTime?
+  /// The price the Channel reported at the last pull: tells Hanza the Channel's currency, never adopted (ADR 0011).
+  channelPriceAmount      Decimal?  @db.Decimal(19, 4)
+  channelPriceCurrency    String?   @db.Char(3)
+  /// Price override for this Offer only; wins over the Product's base price. Amount and currency set together.
+  priceOverrideAmount     Decimal?  @db.Decimal(19, 4)
+  priceOverrideCurrency   String?   @db.Char(3)
+  /// Incremented whenever the Offer's effective price, link or Channel currency may have changed.
+  pricePushSeq            Int       @default(0)
+  /// The `pricePushSeq` value last handled: pushed, or skipped because there was nothing that could be pushed.
+  pricePushedSeq          Int       @default(0)
+  lastPushedPriceAmount   Decimal?  @db.Decimal(19, 4)
+  lastPushedPriceCurrency String?   @db.Char(3)
+  lastPricePushedAt       DateTime?
   lastSeenAt          DateTime
   createdAt           DateTime         @default(now())
   updatedAt           DateTime         @updatedAt

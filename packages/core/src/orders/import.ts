@@ -12,13 +12,13 @@ import { reserveLine } from '../stock/reservations'
 import { ensureDefaultWarehouse } from '../stock/warehouse'
 import { TX_OPTIONS } from '../transaction'
 import { matchLines } from './match'
-import { addReasons, removeReasons } from './reasons'
+import { addReasons, reasonsAfterCancel } from './reasons'
 import { factTransition } from './status-rules'
 import { applyStockEffect } from './stock-effect'
 
 /**
  * Imports one Order from a Channel (input already parsed with `orderSchema`). An Order awaiting payment
- * reserves like any other (ADR 0011). An existing Order is a snapshot: only Channel facts not recorded yet
+ * reserves like any other (ADR 0015). An existing Order is a snapshot: only Channel facts not recorded yet
  * change it, so a later `awaitingPayment: false` means nothing without a `paid` fact.
  * Idempotent; a concurrent duplicate fails on the unique constraint and its retry takes the "exists" path.
  */
@@ -154,6 +154,7 @@ async function applyNewFacts(tx: Tx, organizationId: string, orderId: string, fa
   })
   if (!order) throw new DomainError('not_found')
   let { status, attentionReasons: reasons, awaitingPayment } = order
+  const before = status
   const subject = { type: 'order', id: orderId } as const
 
   for (const fact of fresh) {
@@ -182,7 +183,7 @@ async function applyNewFacts(tx: Tx, organizationId: string, orderId: string, fa
         payload: { from: status, to: transition.to, cause: 'channel_fact', factId: fact.id, actor: systemActor },
       })
       status = transition.to
-      if (status === 'cancelled') reasons = removeReasons(reasons, ['shortage'])
+      if (status === 'cancelled') reasons = reasonsAfterCancel(reasons)
     }
     if (transition.reason) {
       const next = addReasons(reasons, [transition.reason])
@@ -193,12 +194,18 @@ async function applyNewFacts(tx: Tx, organizationId: string, orderId: string, fa
     }
   }
 
-  await tx.order.updateMany({ where: { id: orderId, organizationId }, data: { status, attentionReasons: reasons, awaitingPayment } })
+  // The Channel's own fact is newer than any status still waiting to be pushed, and is never pushed back (ADR 0003).
+  // A `paid` fact changes no status, so it leaves a pending push alone.
+  const statusPush = status !== before ? { statusPushDueAt: null } : {}
+  await tx.order.updateMany({
+    where: { id: orderId, organizationId },
+    data: { status, attentionReasons: reasons, awaitingPayment, ...statusPush },
+  })
   return fresh.length
 }
 
 /**
- * A connector broke the contract (ADR 0011): the snapshot says the Order is no longer awaiting payment but
+ * A connector broke the contract (ADR 0015): the snapshot says the Order is no longer awaiting payment but
  * carries no `paid` fact. A `cancelled` fact explains it; a connector that never sends the flag never stores it.
  */
 function droppedPaymentFlagWithoutFact(order: Order): boolean {

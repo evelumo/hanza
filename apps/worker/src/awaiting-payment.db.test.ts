@@ -78,7 +78,14 @@ describe.skipIf(!databaseUrl)('Orders awaiting payment end to end (real Postgres
     await ctx?.db.$disconnect()
   })
 
+  /** The test database is shared with other test files: run only this organization's jobs. */
+  function keepOwnJobs() {
+    const own = ctx.queue.waiting.filter((job) => (job.payload as { organizationId?: string }).organizationId === org)
+    ctx.queue.waiting.splice(0, ctx.queue.waiting.length, ...own)
+  }
+
   async function drain() {
+    keepOwnJobs()
     const result = await ctx.queue.drain(ctx, jobs)
     expect(result.failed).toEqual([])
     expect(ctx.queue.waiting).toEqual([])

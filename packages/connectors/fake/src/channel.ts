@@ -1,4 +1,4 @@
-import type { ChannelFact, Offer, Order, OrderStatus, StockLevel } from '@hanza/connector-sdk'
+import type { ChannelFact, Offer, OfferPrice, Order, OrderStatus, StockLevel } from '@hanza/connector-sdk'
 import { createFakeConnector, type FakeConnector, type FakeState } from './connector'
 import { seedFacts, seedOffers, seedOrders } from './seed'
 
@@ -14,13 +14,15 @@ export interface FakeChannel {
   addFact(orderExternalId: string, fact: ChannelFact): void
   /** Arguments of every stock.push call, in order. */
   readonly stockPushes: StockLevel[][]
+  /** Arguments of every price.push call, in order. A push also sets the Offer's price that offers.pull reports. */
+  readonly pricePushes: OfferPrice[][]
   readonly statusUpdates: Array<{ orderExternalId: string; status: OrderStatus }>
   /** Back to the seed, recorded calls cleared. */
   reset(): void
 }
 
 export function createFakeChannel(): FakeChannel {
-  const state: FakeState = { offers: [], orders: new Map(), journal: [], stockPushes: [], statusUpdates: [] }
+  const state: FakeState = { offers: [], orders: new Map(), journal: [], stockPushes: [], pricePushes: [], statusUpdates: [] }
 
   const appendToJournal = (orderExternalId: string) => {
     state.journal.push({ seq: state.journal.length + 1, orderExternalId })
@@ -50,12 +52,14 @@ export function createFakeChannel(): FakeChannel {
     },
     // The arrays are emptied in place on reset so references held by a test stay valid.
     stockPushes: state.stockPushes,
+    pricePushes: state.pricePushes,
     statusUpdates: state.statusUpdates,
     reset() {
       state.offers.length = 0
       state.orders.clear()
       state.journal.length = 0
       state.stockPushes.length = 0
+      state.pricePushes.length = 0
       state.statusUpdates.length = 0
       seedOffers.forEach(channel.addOffer)
       seedOrders.forEach(channel.addOrder)

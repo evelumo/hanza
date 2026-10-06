@@ -1,11 +1,13 @@
-import type { ReactNode } from 'react'
+import { useId, type ReactNode } from 'react'
 
+/** A region named by its heading, so assistive technology (and tests) can find e.g. the "Stock" section. */
 export function Section({ title, description, actions, children }: { title: string; description?: string; actions?: ReactNode; children: ReactNode }) {
+  const headingId = useId()
   return (
-    <section className="rounded-lg border border-line bg-white">
+    <section aria-labelledby={headingId} className="rounded-lg border border-line bg-white">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-5 py-4">
         <div>
-          <h2 className="font-semibold">{title}</h2>
+          <h2 id={headingId} className="font-semibold">{title}</h2>
           {description ? <p className="text-sm text-muted">{description}</p> : null}
         </div>
         {actions}

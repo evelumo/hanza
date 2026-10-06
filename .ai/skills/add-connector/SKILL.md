@@ -1,6 +1,6 @@
 ---
 name: add-connector
-description: Add a new marketplace, shop, courier or invoicing connector to Hanza as a package under packages/connectors/<id> against the Connector SDK. Use when asked to "add a connector", integrate an external API (Allegro, WooCommerce, ...), or write offers.pull / orders.pull / stock.push / orders.updateStatus for a Channel.
+description: Add a new marketplace, shop, courier or invoicing connector to Hanza as a package under packages/connectors/<id> against the Connector SDK. Use when asked to "add a connector", integrate an external API (Allegro, WooCommerce, ...), or write offers.pull / orders.pull / stock.push / price.push / orders.updateStatus for a Channel.
 ---
 
 # Add a connector
@@ -9,7 +9,7 @@ A connector is a package that translates one external system into the canonical 
 
 **Reference implementation: `packages/connectors/fake`** (`@hanza/connector-fake`). Read `src/connector.ts` and `src/connector.test.ts` first. It keeps its data in memory, which a real connector must never do; copy its shape, not its state.
 
-**Not supported yet** (do not invent them): `pnpm create-connector`, `pnpm generate` auto-discovery, `pnpm test:connector <id>`, OAuth flows and token refresh in the core (stage 2, with Allegro), a recording tool for fixtures, capabilities beyond the four below (no shipments, invoices, webhooks, `offers.push`). Registering a connector in the app is a separate step (`@hanza/connector-registry`, owned by the core; see "Registering").
+**Not supported yet** (do not invent them): `pnpm create-connector`, `pnpm generate` auto-discovery, `pnpm test:connector <id>`, OAuth flows and token refresh in the core (stage 2, with Allegro), a recording tool for fixtures, capabilities beyond the five below (no shipments, invoices, webhooks, `offers.push`). Registering a connector in the app is a separate step (`@hanza/connector-registry`, owned by the core; see "Registering").
 
 ## Rules
 
@@ -35,13 +35,14 @@ defineConnector({
 })
 ```
 
-A **Channel** (`marketplace` or `shop`) must implement `offers.pull`, `orders.pull` and `stock.push`; `defineConnector` throws otherwise. `orders.updateStatus` is optional. Couriers and invoicing tools implement what they support.
+A **Channel** (`marketplace` or `shop`) must implement `offers.pull`, `orders.pull` and `stock.push`; `defineConnector` throws otherwise. `price.push` and `orders.updateStatus` are optional. Couriers and invoicing tools implement what they support.
 
 | Capability | Contract |
 | --- | --- |
-| `offers.pull(ctx, cursor)` | Every Offer on the Channel, paged. The engine always starts from `null`. Returns `{ items: Offer[], nextCursor, hasMore }`. |
+| `offers.pull(ctx, cursor)` | Every Offer on the Channel, paged. The engine always starts from `null`. Returns `{ items: Offer[], nextCursor, hasMore }`. Set `price` (the Offer's current price on the Channel) whenever the API gives it: Hanza only records it, and uses its currency to decide whether it may push a price (ADR 0011). It must be valid `Money`: a decimal string with at most 4 decimal places and an upper-case ISO 4217 currency. A schema violation fails the whole page, as for any field, so report `price: null` rather than a value that does not fit. |
 | `orders.pull(ctx, cursor)` | Incremental feed of Orders: new ones, and ones that got new Channel facts. The same cursor must give the same page. Only Orders **ready to fulfil** (paid, or cash on delivery), unless you also report unpaid ones (see "Unpaid Orders"). |
 | `stock.push(ctx, levels)` | Set absolute availability for up to 100 Offers (`{ offerExternalId, sku, available }`). Must be repeatable. |
+| `price.push(ctx, prices)` | Optional. Set the price of up to 100 Offers (`{ offerExternalId, sku, price: { amount, currency } }`). The currency is always the one your `offers.pull` reported for that Offer; Hanza never converts and never pushes to an Offer without a reported price. Must be repeatable. Implement it only if the Channel lets you set prices. |
 | `orders.updateStatus(ctx, { orderExternalId, status })` | Translate a Hanza Order status (`new`, `processing`, `shipped`, `cancelled`) to the Channel's own and set it. Resolve without a call if the Channel has no equivalent. Must be repeatable. |
 
 `CapabilityContext` gives you `config` (parsed with `configSchema`), `credentials` (parsed with `credentialsSchema`), `fetch` (global fetch with a 30 s timeout; **you** add the authentication to your requests) and `log`.
@@ -50,12 +51,12 @@ Paging: `nextCursor` is the position to resume from; when `hasMore` is true it m
 
 Status translation is connector code. Inbound: the Channel's statuses and events decide which Orders you return and which **Channel facts** (`facts[]`, types `cancelled`, `shipped` and `paid`, each with an id that is stable for that Order) you attach. Hanza does not mirror the Channel's status. Outbound: `orders.updateStatus` maps the four Hanza statuses to the Channel's.
 
-**Unpaid Orders** (optional, ADR 0011). If the Channel exposes Orders before they are paid, return them with `awaitingPayment: true` (prepaid only; `orderSchema` rejects it on cash on delivery or next to a `paid` fact). Hanza imports and reserves them but will not fulfil them. A Buyer who never pays is a `cancelled` fact. A connector that leaves `awaitingPayment` out must return only ready Orders, as before. Two rules:
+**Unpaid Orders** (optional, ADR 0015). If the Channel exposes Orders before they are paid, return them with `awaitingPayment: true` (prepaid only; `orderSchema` rejects it on cash on delivery or next to a `paid` fact). Hanza imports and reserves them but will not fulfil them. A Buyer who never pays is a `cancelled` fact. A connector that leaves `awaitingPayment` out must return only ready Orders, as before. Two rules:
 
 - **The payment is a `paid` fact, which you synthesize.** Most APIs only give a payment status on the Order snapshot. When it says paid, set `awaitingPayment` to false **and** add a fact `{ id: \`${orderId}:paid\`, type: 'paid', occurredAt: <payment time, or the time the status changed>, note: null }`, with the same id on every later pull. Hanza reads the flag only on the first import, so dropping it without the fact leaves the Order awaiting payment for good (the core logs a warning, and conformance check C6 fails when your fixtures' journal shows it).
 - **Once a `paid` fact exists, never set `awaitingPayment` back to true** (a chargeback, a refund, a payment the Channel reverses). An Order with both breaks `orderSchema`, and one such Order turns the whole page into a `PermanentError` that stops the Connection's Order feed. Keep reporting it as paid; refunds are not modelled yet.
 
-Canonical schemas (all exported): `offerSchema`, `orderSchema` (with `buyerSchema`, `addressSchema`, `orderLineSchema`, `channelFactSchema`), `stockLevelSchema`, `moneySchema`. Use the glossary in `packages/connector-sdk/CONTEXT.md` for names (Offer, Order, Buyer, Channel fact; not "listing", "customer", "external status").
+Canonical schemas (all exported): `offerSchema`, `orderSchema` (with `buyerSchema`, `addressSchema`, `orderLineSchema`, `channelFactSchema`), `stockLevelSchema`, `offerPriceSchema`, `moneySchema`. Use the glossary in `packages/connector-sdk/CONTEXT.md` for names (Offer, Order, Buyer, Channel fact, Channel price; not "listing", "customer", "external status").
 
 ### Errors
 
@@ -70,7 +71,7 @@ Canonical schemas (all exported): `offerSchema`, `orderSchema` (with `buyerSchem
 
 ## Procedure
 
-1. **Check scope.** Read `AGENTS.md` and `packages/connectors/README.md`. Confirm the Channel's API can be expressed with the four capabilities and the canonical `Offer` / `Order` fields. If it needs something the model lacks (variants, tax breakdown, shipments, ...), stop and write a spec (a GitHub issue).
+1. **Check scope.** Read `AGENTS.md` and `packages/connectors/README.md`. Confirm the Channel's API can be expressed with the five capabilities and the canonical `Offer` / `Order` fields. If it needs something the model lacks (variants, tax breakdown, shipments, ...), stop and write a spec (a GitHub issue).
 2. **Pick the id.** Lowercase slug (`allegro`, `woocommerce`). Package `@hanza/connector-<id>`, directory `packages/connectors/<id>/`.
 3. **Create the package** (copy `packages/connectors/fake`): `package.json` with `"exports": { ".": "./src/index.ts" }`, `dependencies` of only `@hanza/connector-sdk` (`workspace:*`) and `zod`, `devDependencies` of `typescript` and `vitest` (same versions as the fake), and the same `tsconfig.json` (`DOM` lib gives the `fetch` types). Run `pnpm install` once to create the workspace link.
 4. **Lay out the sources** under `src/`:
@@ -83,8 +84,8 @@ Canonical schemas (all exported): `offerSchema`, `orderSchema` (with `buyerSchem
        ├── index.ts           # re-exports the connector
        ├── connector.ts       # defineConnector({ id, name, kind, auth, configSchema, credentialsSchema, capabilities })
        ├── client.ts          # thin helpers over ctx.fetch: URL building, auth header, zod-parsed responses, errorFromResponse
-       ├── capabilities/      # one file per capability: offers-pull.ts, orders-pull.ts, stock-push.ts, orders-update-status.ts
-       ├── mapping.ts         # pure functions: external JSON <-> canonical Offer / Order / StockLevel
+       ├── capabilities/      # one file per capability: offers-pull.ts, orders-pull.ts, stock-push.ts, price-push.ts, orders-update-status.ts
+       ├── mapping.ts         # pure functions: external JSON <-> canonical Offer / Order / StockLevel / OfferPrice
        ├── fixtures/          # recorded API responses (*.json)
        └── connector.test.ts
    ```
@@ -96,8 +97,8 @@ Canonical schemas (all exported): `offerSchema`, `orderSchema` (with `buyerSchem
 9. **Assemble `connector.ts`** and export it from `src/index.ts`.
 10. **Record fixtures.** There is no recorder. Call the Channel's sandbox once with a throwaway script (not committed), save the response bodies as `src/fixtures/<name>.json`, then scrub tokens, real names, emails, phone numbers and addresses. Include edge cases: empty page, last page, cancelled Order, multi-line Order, an unpaid Order (returned with `awaitingPayment: true` and later with a `paid` fact, or not returned at all if you do not report unpaid Orders), an unknown status. If there is no sandbox, hand-write fixtures from the official docs and say so in the connector's `AGENTS.md`.
 11. **Write `connector.test.ts`** (Vitest, no network):
-    - call `assertConformance(connector, { config, credentials, fetch, unauthorized })` from `@hanza/connector-sdk/testing`, with a `fetch` that serves the recorded fixtures (the default `fetch` rejects, on purpose) and `unauthorized` pointing at a fixture where the API answers 401. It checks the schemas, paging and cursors, idempotent re-pulls, repeatable pushes and error classes (checks C1 to C12, see `packages/connector-sdk/src/testing/conformance.ts`);
-    - add tests for what the kit cannot know: the mapper output for every fixture (amounts, currency, facts), the status mapping in both directions, the request bodies of `stock.push` and `orders.updateStatus`, and each error class from the matching HTTP status.
+    - call `assertConformance(connector, { config, credentials, fetch, unauthorized })` from `@hanza/connector-sdk/testing`, with a `fetch` that serves the recorded fixtures (the default `fetch` rejects, on purpose) and `unauthorized` pointing at a fixture where the API answers 401. It checks the schemas, paging and cursors, idempotent re-pulls, repeatable pushes and error classes (checks C1 to C13, see `packages/connector-sdk/src/testing/conformance.ts`; with `price.push`, C13 needs at least one fixture Offer that reports a `price`);
+    - add tests for what the kit cannot know: the mapper output for every fixture (amounts, currency, facts), the status mapping in both directions, the request bodies of `stock.push`, `price.push` and `orders.updateStatus`, and each error class from the matching HTTP status.
 12. **Validate** (run what you can; report what you could not):
 
     ```sh

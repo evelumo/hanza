@@ -3,13 +3,13 @@ import { createProduct } from '../catalog/products'
 import { getAvailability } from '../stock/availability'
 import { createTestOrganization } from '../testing/context'
 import { databaseUrl, useTestContext } from '../testing/db-test'
-import { buildOrder, createTestConnection, fact, orderLine, user } from '../testing/fixtures'
+import { buildOrder, createTestConnection, fact, orderLine, testChannel, user } from '../testing/fixtures'
 import { changeOrderStatus } from './change-status'
 import { importOrder } from './import'
 import { getOrder, listOrders } from './queries'
 
 describe.skipIf(!databaseUrl)('Orders awaiting payment', () => {
-  const context = useTestContext()
+  const context = useTestContext({ connectors: [testChannel] })
 
   async function setup(stock = 10) {
     const ctx = context()
@@ -131,7 +131,40 @@ describe.skipIf(!databaseUrl)('Orders awaiting payment', () => {
     await changeOrderStatus(ctx, org, orderId, 'cancelled', user)
     expect((await stored(orderId)).lines[0]?.reservation?.status).toBe('released')
     expect(await available()).toEqual({ stock: 10, reserved: 0, available: 10 })
+    // The cancel is pushed to the Channel like any status a person sets (ADR 0012).
     expect(statusPushes()).toHaveLength(1)
+    expect((await stored(orderId)).statusPushDueAt).not.toBeNull()
+  })
+
+  it('a paid fact changes no status, so it leaves a pending status push alone', async () => {
+    const { ctx, org, connectionId, stored } = await setup()
+    const order = unpaid()
+    const { orderId } = await importOrder(ctx, org, connectionId, order)
+    await changeOrderStatus(ctx, org, orderId, 'cancelled', user)
+    const { statusPushSeq, statusPushDueAt } = await stored(orderId)
+    expect(statusPushDueAt).not.toBeNull()
+
+    await importOrder(ctx, org, connectionId, { ...order, awaitingPayment: false, facts: [paidFact()] })
+    expect(await stored(orderId)).toMatchObject({
+      status: 'cancelled',
+      awaitingPayment: false,
+      attentionReasons: ['channel_fact_conflict'],
+      statusPushSeq,
+      statusPushDueAt,
+    })
+  })
+
+  it('a Channel cancellation of an unpaid Order with an Unmatched line and a Shortage releases it and clears both reasons', async () => {
+    const { ctx, org, connectionId, available, stored } = await setup(1)
+    const order = unpaid({ lines: [orderLine('l1', { sku: 'P', quantity: 2 }), orderLine('l2', { sku: 'NOPE' })] })
+    const { orderId } = await importOrder(ctx, org, connectionId, order)
+    expect((await stored(orderId)).attentionReasons).toEqual(['unmatched_line', 'shortage'])
+
+    await importOrder(ctx, org, connectionId, { ...order, facts: [fact('c', 'cancelled')] })
+    const cancelled = await stored(orderId)
+    expect(cancelled).toMatchObject({ status: 'cancelled', awaitingPayment: true, attentionReasons: [], statusPushDueAt: null })
+    expect(cancelled.lines.find((line) => line.externalId === 'l1')?.reservation?.status).toBe('released')
+    expect(await available()).toEqual({ stock: 1, reserved: 0, available: 1 })
   })
 
   it('a Channel cancellation releases the Reservation; a payment arriving afterwards needs a person', async () => {

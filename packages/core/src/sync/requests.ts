@@ -4,7 +4,7 @@ import { afterCommit } from '../after-commit'
 import { createConnection } from '../connections/connections'
 import type { Context } from '../context'
 import { DomainError } from '../errors'
-import { coalesceKeys, offersPullRef, stockPushRef } from '../jobs/refs'
+import { coalesceKeys, offersPullRef, pricePushRef, stockPushRef } from '../jobs/refs'
 
 type Issue = { path: string; message: string }
 
@@ -61,4 +61,5 @@ export async function requestSync(ctx: Context, organizationId: string, connecti
     { coalesceKey: coalesceKeys.offersPull(connectionId) },
   )
   await ctx.queue.enqueue(stockPushRef, { organizationId, connectionId }, { coalesceKey: coalesceKeys.stockPush(connectionId) })
+  await ctx.queue.enqueue(pricePushRef, { organizationId, connectionId }, { coalesceKey: coalesceKeys.pricePush(connectionId) })
 }

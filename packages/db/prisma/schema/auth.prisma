@@ -82,6 +82,7 @@ model Organization {
   events      EventLog[]
 
   products          Product[]
+  productFamilies   ProductFamily[]
   offers            Offer[]
   warehouses        Warehouse[]
   stock             Stock[]

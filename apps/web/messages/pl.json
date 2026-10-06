@@ -16,7 +16,8 @@
     "dashboard": "Pulpit",
     "products": "Produkty",
     "orders": "Zamówienia",
-    "connections": "Połączenia"
+    "connections": "Połączenia",
+    "families": "Rodziny"
   },
   "pagination": {
     "label": "Paginacja",
@@ -76,6 +77,11 @@
     "searchPlaceholder": "Szukaj po SKU lub nazwie",
     "search": "Szukaj",
     "clear": "Wyczyść",
+    "familyFilter": {
+      "label": "Rodzina",
+      "all": "Wszystkie produkty",
+      "none": "Bez rodziny"
+    },
     "emptySearch": "Żaden produkt nie pasuje do wyszukiwania.",
     "empty": "Nie ma jeszcze produktów. Dodaj pierwszy albo utwórz je z ofert pobranych z kanału.",
     "columns": {
@@ -84,7 +90,8 @@
       "stock": "Stan",
       "reserved": "Zarezerwowane",
       "available": "Dostępne",
-      "offers": "Oferty"
+      "offers": "Oferty",
+      "family": "Rodzina"
     },
     "shortageHint": "(brak towaru)",
     "detail": {
@@ -99,6 +106,8 @@
       "stockDescription": "Hanza jest źródłem prawdy o stanie. Kanały dostają tylko Dostępne (Stan minus Rezerwacje).",
       "stockSaved": "Zapisano. Nowy stan zostanie wysłany do kanałów.",
       "saveStock": "Zapisz stan",
+      "priceTitle": "Cena",
+      "priceDescription": "Hanza jest właścicielem cen. Cena bazowa trafia do każdej połączonej oferty bez własnej ceny, o ile kanał sprzedaje w tej samej walucie. Bez ceny bazowej nic nie jest wysyłane.",
       "offersTitle": "Oferty",
       "offersDescription": "Oferty tego produktu w kanałach.",
       "offersEmpty": "Ten produkt nie ma jeszcze połączonych ofert. Oferta łączy się automatycznie po SKU albo ręcznie na liście ofert bez produktu.",
@@ -107,18 +116,22 @@
         "offer": "Oferta",
         "link": "Powiązanie",
         "lastPushed": "Ostatnio wysłano",
+        "price": "Cena",
         "actions": "Akcje"
       },
       "linkedManually": "Ręcznie",
       "linkedBySku": "Po SKU",
       "notPushed": "jeszcze nie wysłano",
+      "priceFromOffer": "cena oferty",
+      "priceFromBase": "cena bazowa",
       "unlink": "Rozłącz",
       "unlinking": "Rozłączanie…",
       "unlinkConfirm": "Rozłączyć ofertę z tym produktem? Kanał nie dostanie już jego stanu.",
       "reservationsTitle": "Otwarte rezerwacje",
       "reservationsDescription": "Towar obiecany zamówieniom, które jeszcze nie zostały wysłane.",
       "reservationsEmpty": "Brak otwartych rezerwacji.",
-      "reservationOrder": "Zamówienie {id}"
+      "reservationOrder": "Zamówienie {id}",
+      "familyLine": "Rodzina: {name}"
     },
     "new": {
       "title": "Dodaj produkt",
@@ -130,11 +143,60 @@
       "submitting": "Dodawanie…"
     }
   },
+  "families": {
+    "title": "Rodziny produktów",
+    "intro": "Rodzina grupuje produkty, które są swoimi rozmiarami lub kolorami. Zamówienia, stany i oferty nadal dotyczą pojedynczych produktów.",
+    "add": "Dodaj rodzinę",
+    "empty": "Nie ma jeszcze rodzin produktów. Utwórz pierwszą, aby grupować produkty, np. rozmiary lub kolory.",
+    "columns": {
+      "name": "Nazwa",
+      "attributes": "Atrybuty",
+      "products": "Produkty"
+    },
+    "productCount": "{count, plural, one {# produkt} few {# produkty} many {# produktów} other {# produktu}}",
+    "new": {
+      "title": "Dodaj rodzinę",
+      "name": "Nazwa",
+      "attributes": "Atrybuty",
+      "attributesHint": "Czym różnią się produkty, po przecinku, np.: Rozmiar, Kolor. Najwyżej 5; nie można ich później zmienić.",
+      "submit": "Dodaj rodzinę",
+      "submitting": "Dodawanie…"
+    },
+    "detail": {
+      "title": "Rodzina produktów",
+      "attributesLine": "Atrybuty: {attributes}",
+      "renameTitle": "Nazwa",
+      "renameDescription": "Nazwa jest tylko dla Ciebie; kanały jej nie widzą.",
+      "name": "Nazwa",
+      "saveName": "Zapisz nazwę",
+      "membersTitle": "Produkty w tej rodzinie",
+      "membersDescription": "Każdy produkt ma jedną wartość dla każdego atrybutu. Dwa produkty nie mogą mieć tych samych wartości.",
+      "membersEmpty": "W tej rodzinie nie ma jeszcze produktów. Dodaj pierwszy poniżej.",
+      "availableLine": "Dostępne: {count}",
+      "saveValues": "Zapisz",
+      "saving": "Zapisywanie…",
+      "remove": "Usuń z rodziny",
+      "removing": "Usuwanie…",
+      "removeConfirm": "Usunąć ten produkt z rodziny? Sam produkt pozostaje bez zmian.",
+      "valueLabel": "{attribute} dla {sku}",
+      "addTitle": "Dodaj produkt",
+      "addDescription": "Produkt może należeć naraz tylko do jednej rodziny.",
+      "sku": "SKU produktu",
+      "skuHint": "SKU istniejącego produktu, który nie należy do żadnej rodziny.",
+      "add": "Dodaj do rodziny",
+      "adding": "Dodawanie…",
+      "deleteTitle": "Usuń rodzinę",
+      "deleteDescription": "Produkty nie są usuwane: po prostu przestają być zgrupowane. Zamówienia, stany i oferty pozostają bez zmian.",
+      "delete": "Usuń rodzinę",
+      "deleting": "Usuwanie…",
+      "deleteConfirm": "Usunąć tę rodzinę? Jej produkty pozostaną, bez grupowania."
+    }
+  },
   "offers": {
     "title": "Oferty bez produktu",
     "description": "Oferty pobrane z kanałów, których SKU nie pasuje do żadnego produktu.",
     "createTitle": "Utwórz produkty z ofert",
-    "createDescription": "Zaznacz oferty z SKU w tabeli. Produkt dostanie SKU i nazwę oferty oraz stan 0.",
+    "createDescription": "Zaznacz oferty z SKU w tabeli. Produkt dostanie SKU i nazwę oferty oraz stan 0. Nie dostanie ceny: ustaw ją na produkcie i dopiero wtedy trafi do kanałów.",
     "create": "Utwórz produkty z zaznaczonych",
     "creating": "Tworzenie…",
     "created": "{count, plural, one {Utworzono # produkt.} few {Utworzono # produkty.} many {Utworzono # produktów.} other {Utworzono # produktu.}}",
@@ -159,6 +221,42 @@
     "skuPlaceholder": "SKU produktu",
     "link": "Połącz z produktem",
     "linking": "Łączenie…"
+  },
+  "offerDetail": {
+    "title": "Oferta",
+    "connectionLine": "Połączenie: {connection} · ID: {externalId}",
+    "backToProduct": "Produkt {sku}",
+    "channelPrice": "Cena w kanale",
+    "channelPriceHint": "Tak, jak podano przy ostatniej synchronizacji. Hanza jej nie przejmuje.",
+    "effectivePrice": "Cena z Hanzy",
+    "lastPushedPrice": "Ostatnio wysłana cena",
+    "notSent": "jeszcze nie wysłano",
+    "productLine": "Połączona z: {name} (SKU {sku}). Cena bazowa: {price}.",
+    "overrideTitle": "Cena oferty",
+    "overrideDescription": "Cena tylko dla tej oferty. Ma pierwszeństwo przed ceną bazową produktu; usuń ją, aby wrócić do ceny bazowej.",
+    "mismatchHint": "Ustaw cenę oferty w {currency}, aby ją wysłać.",
+    "notLinked": "Ta oferta nie jest połączona z produktem, więc Hanza nie wysyła ani jej stanu, ani ceny. Połącz ją na liście ofert bez produktu."
+  },
+  "prices": {
+    "none": "Brak ceny",
+    "form": {
+      "amount": "Cena",
+      "currency": "Waluta",
+      "currencyPlaceholder": "PLN",
+      "save": "Zapisz cenę",
+      "clear": "Usuń cenę",
+      "saved": "Zapisano. Kanały wkrótce dostaną nową cenę.",
+      "useChannelPrice": "Użyj ceny z kanału ({price})"
+    },
+    "status": {
+      "not_linked": "Nie wysłano: oferta nie jest połączona z produktem.",
+      "unsupported": "Nie wysłano: konektor tego kanału nie umie ustawiać cen.",
+      "no_price": "Brak ceny, więc nic nie jest wysyłane.",
+      "currency_unknown": "Nie wysłano: kanał nie podał waluty oferty.",
+      "currency_mismatch": "Nie wysłano: kanał sprzedaje tę ofertę w {channelCurrency}, a cena jest w {priceCurrency}.",
+      "pending": "Czeka na wysłanie.",
+      "pushed": "Wysłano {date}."
+    }
   },
   "orders": {
     "title": "Zamówienia",
@@ -285,7 +383,8 @@
       "unmatched_line": "Niepołączona pozycja",
       "shortage": "Brak na stanie",
       "cancelled_while_processing": "Anulowane w trakcie realizacji",
-      "channel_fact_conflict": "Kanał zgłosił zmianę po zakończeniu"
+      "channel_fact_conflict": "Kanał zgłosił zmianę po zakończeniu",
+      "status_push_failed": "Kanał odrzucił nowy status"
     },
     "health": {
       "unknown": "Nie sprawdzono",
@@ -297,7 +396,8 @@
       "offers_pull": "Oferty",
       "orders_pull": "Zamówienia",
       "stock_push": "Stany magazynowe",
-      "order_status_push": "Statusy zamówień"
+      "order_status_push": "Statusy zamówień",
+      "price_push": "Ceny"
     },
     "payment": {
       "prepaid": "Przedpłata",
@@ -337,7 +437,8 @@
       "factsApplied": "zmiany z kanału",
       "pages": "strony",
       "pushed": "wysłane",
-      "truncated": "przerwane na limicie stron"
+      "truncated": "przerwane na limicie stron",
+      "skipped": "niewysłane"
     }
   },
   "events": {
@@ -345,12 +446,14 @@
       "system_ping": "Zadanie testowe",
       "product_created": "Utworzono produkt",
       "product_updated": "Zmieniono nazwę produktu",
+      "product_price_changed": "Zmieniono cenę bazową",
       "stock_set": "Ustawiono stan",
       "stock_reserved": "Zarezerwowano towar",
       "stock_released": "Zwolniono rezerwację",
       "stock_consumed": "Pobrano towar ze stanu",
       "offer_linked": "Połączono ofertę z produktem",
       "offer_unlinked": "Rozłączono ofertę z produktem",
+      "offer_price_changed": "Zmieniono cenę oferty",
       "order_imported": "Zaimportowano zamówienie",
       "order_channel_fact_recorded": "Kanał zgłosił zmianę",
       "order_payment_received": "Płatność otrzymana",
@@ -359,7 +462,13 @@
       "order_attention_raised": "Zamówienie wymaga uwagi",
       "order_attention_resolved": "Oznaczono jako sprawdzone",
       "connection_created": "Utworzono połączenie",
-      "connection_health_changed": "Zmienił się stan połączenia"
+      "connection_health_changed": "Zmienił się stan połączenia",
+      "family_created": "Utworzono rodzinę produktów",
+      "family_renamed": "Zmieniono nazwę rodziny produktów",
+      "family_deleted": "Usunięto rodzinę produktów",
+      "family_product_added": "Dodano produkt do rodziny",
+      "family_product_updated": "Zmieniono atrybuty produktu w rodzinie",
+      "family_product_removed": "Usunięto produkt z rodziny"
     },
     "lines": "{count, plural, one {# pozycja} few {# pozycje} many {# pozycji} other {# pozycji}}"
   },
@@ -372,7 +481,11 @@
       "unmatched_lines": "Najpierw połącz wszystkie pozycje z produktami.",
       "already_linked": "Ta pozycja jest już połączona.",
       "unknown_connector": "Nieznany konektor.",
-      "invalid_config": "Sprawdź poprawność pól."
+      "invalid_config": "Sprawdź poprawność pól.",
+      "combination_taken": "Inny produkt w tej rodzinie ma już takie wartości.",
+      "invalid_attributes": "Wypełnij każdy atrybut (najwyżej 100 znaków) i zadbaj, by nazwy atrybutów się nie powtarzały.",
+      "already_in_family": "Ten produkt jest już w rodzinie. Najpierw usuń go z niej.",
+      "invalid_price": "Ta cena nie pasuje do swojej waluty: sprawdź miejsca po przecinku."
     },
     "unexpected": "Coś poszło nie tak. Spróbuj ponownie.",
     "invalidInput": "Sprawdź poprawność pól.",
@@ -401,6 +514,13 @@
     "offersRequired": "Zaznacz co najmniej jedną ofertę.",
     "offersTooMany": "Zaznacz najwyżej 200 ofert naraz.",
     "fieldRequired": "To pole jest wymagane.",
-    "fieldInvalid": "Nieprawidłowa wartość."
+    "fieldInvalid": "Nieprawidłowa wartość.",
+    "familyNameTooLong": "Nazwa może mieć najwyżej 100 znaków.",
+    "attributesInvalid": "Podaj od 1 do 5 różnych nazw atrybutów, każda do 50 znaków, po przecinku.",
+    "attributeValueRequired": "Podaj wartość o długości do 100 znaków.",
+    "priceInvalid": "Podaj cenę większą od 0, np. 49,99.",
+    "priceAmbiguous": "Niejednoznaczne: trzy cyfry po separatorze. Wpisz 1234, jeśli chodzi o tysiące, albo podaj mniej miejsc po przecinku.",
+    "priceTooManyDecimals": "Za dużo miejsc po przecinku dla tej waluty (PLN ma 2, JPY żadnego).",
+    "currencyInvalid": "Podaj trzyliterowy kod waluty, np. PLN."
   }
 }
