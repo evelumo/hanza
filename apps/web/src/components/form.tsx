@@ -1,6 +1,6 @@
 'use client'
 
-import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode, SelectHTMLAttributes } from 'react'
+import { useId, type ButtonHTMLAttributes, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes } from 'react'
 import { useFormStatus } from 'react-dom'
 import { useT } from '@/i18n/use-t'
 import { buttonClass, type ButtonVariant } from './button-class'
@@ -8,14 +8,28 @@ import { buttonClass, type ButtonVariant } from './button-class'
 const control =
   'mt-1 block w-full rounded-md border bg-white px-3 py-2 text-base font-normal outline-none focus:border-accent focus:ring-2 focus:ring-accent/20'
 
+// The hint and the error sit outside the <label> and are linked as its description, so the
+// control's accessible name is the label alone (what screen readers announce and tests look up).
 export function Field({ label, error, hint, ...input }: { label: string; error?: string; hint?: string } & InputHTMLAttributes<HTMLInputElement>) {
+  const generatedId = useId()
+  const id = input.id ?? generatedId
+  const note = error ?? hint
   return (
-    <label className="block text-sm font-medium">
-      {label}
-      <input {...input} aria-invalid={error ? true : undefined} className={`${control} ${error ? 'border-red-400' : 'border-line'}`} />
-      {hint && !error ? <span className="mt-1 block text-xs font-normal text-muted">{hint}</span> : null}
-      {error ? <span className="mt-1 block text-xs font-normal text-red-700">{error}</span> : null}
-    </label>
+    <div className="block text-sm font-medium">
+      <label htmlFor={id}>{label}</label>
+      <input
+        {...input}
+        id={id}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={note ? `${id}-note` : undefined}
+        className={`${control} ${error ? 'border-red-400' : 'border-line'}`}
+      />
+      {note ? (
+        <span id={`${id}-note`} className={`mt-1 block text-xs font-normal ${error ? 'text-red-700' : 'text-muted'}`}>
+          {note}
+        </span>
+      ) : null}
+    </div>
   )
 }
 
@@ -25,14 +39,26 @@ export function Select({
   children,
   ...select
 }: { label: string; error?: string; children: ReactNode } & SelectHTMLAttributes<HTMLSelectElement>) {
+  const generatedId = useId()
+  const id = select.id ?? generatedId
   return (
-    <label className="block text-sm font-medium">
-      {label}
-      <select {...select} aria-invalid={error ? true : undefined} className={`${control} ${error ? 'border-red-400' : 'border-line'}`}>
+    <div className="block text-sm font-medium">
+      <label htmlFor={id}>{label}</label>
+      <select
+        {...select}
+        id={id}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={error ? `${id}-note` : undefined}
+        className={`${control} ${error ? 'border-red-400' : 'border-line'}`}
+      >
         {children}
       </select>
-      {error ? <span className="mt-1 block text-xs font-normal text-red-700">{error}</span> : null}
-    </label>
+      {error ? (
+        <span id={`${id}-note`} className="mt-1 block text-xs font-normal text-red-700">
+          {error}
+        </span>
+      ) : null}
+    </div>
   )
 }
 

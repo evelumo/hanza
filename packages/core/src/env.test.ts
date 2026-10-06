@@ -21,6 +21,17 @@ describe('loadEnv', () => {
   it('rejects a missing key', () => {
     expect(() => loadEnv(base)).toThrow(/HANZA_ENCRYPTION_KEY/)
   })
+
+  const withKey = { ...base, HANZA_ENCRYPTION_KEY: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=' }
+
+  it('leaves HANZA_QUEUE_PREFIX unset by default and accepts a plain prefix', () => {
+    expect(loadEnv(withKey).HANZA_QUEUE_PREFIX).toBeUndefined()
+    expect(loadEnv({ ...withKey, HANZA_QUEUE_PREFIX: 'hanza-e2e-3f9a_1' }).HANZA_QUEUE_PREFIX).toBe('hanza-e2e-3f9a_1')
+  })
+
+  it.each(['', 'a:b', '{x}', 'with space', '-leading', 'x'.repeat(65)])('rejects HANZA_QUEUE_PREFIX=%j', (value) => {
+    expect(() => loadEnv({ ...withKey, HANZA_QUEUE_PREFIX: value })).toThrow(/HANZA_QUEUE_PREFIX/)
+  })
 })
 
 describe('loadWorkerEnv', () => {
