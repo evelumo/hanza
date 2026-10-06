@@ -50,3 +50,22 @@ describe('createSecretBox', () => {
     expect(() => createSecretBox(key()).open('v2:a:b:c', 'org-1')).toThrow(/format/)
   })
 })
+
+describe('digest', () => {
+  it('is stable for one key and purpose, versioned, and does not contain the value', () => {
+    const secret = key()
+    const digest = createSecretBox(secret).digest('john@example.com', 'buyer-email')
+    expect(digest).toMatch(/^v1:[A-Za-z0-9_-]{43}$/)
+    expect(digest).not.toContain('john')
+    expect(createSecretBox(secret).digest('john@example.com', 'buyer-email')).toBe(digest)
+  })
+
+  it('depends on the key, the purpose and the value', () => {
+    const secret = key()
+    const box = createSecretBox(secret)
+    const digest = box.digest('john@example.com', 'buyer-email')
+    expect(createSecretBox(key()).digest('john@example.com', 'buyer-email')).not.toBe(digest)
+    expect(box.digest('john@example.com', 'other')).not.toBe(digest)
+    expect(box.digest('jane@example.com', 'buyer-email')).not.toBe(digest)
+  })
+})

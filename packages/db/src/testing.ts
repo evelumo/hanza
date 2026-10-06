@@ -22,7 +22,8 @@ async function withClient<T>(url: string, fn: (client: pg.Client) => Promise<T>)
   }
 }
 
-async function migrationNames(): Promise<string[]> {
+/** Every migration, in the order they are applied. */
+export async function migrationNames(): Promise<string[]> {
   return (await readdir(MIGRATIONS_DIR, { withFileTypes: true }))
     .filter((entry) => entry.isDirectory())
     .map((entry) => entry.name)
@@ -37,24 +38,32 @@ export async function applyMigration(url: string, migration: string): Promise<vo
   })
 }
 
+const TEST_DATABASE_NAME = /^hanza_(test|e2e)_[a-z0-9_]{1,40}$/
+
+/** Ends its sessions and drops it; only a name of the throwaway-database form is accepted. */
+export async function dropTestDatabase(adminUrl: string, name: string): Promise<void> {
+  if (!TEST_DATABASE_NAME.test(name)) throw new Error(`Refusing to drop "${name}": not a throwaway test database name`)
+  await withClient(adminUrl, async (client) => {
+    await client.query('SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = $1 AND pid <> pg_backend_pid()', [name])
+    await client.query(`DROP DATABASE IF EXISTS "${name}"`)
+  })
+}
+
 /**
  * A throwaway database with every migration applied (or only those before `options.before`, to test a data
  * migration against rows shaped like the previous schema), created on the server `adminUrl` points to.
+ * `name` (default `hanza_test_<pid>_<random>`) lets a caller record it before it exists.
  */
 export async function createTestDatabase(
   adminUrl: string,
-  options: { before?: string } = {},
+  options: { name?: string; before?: string } = {},
 ): Promise<{ url: string; drop(): Promise<void> }> {
-  const name = `hanza_test_${process.pid}_${randomBytes(4).toString('hex')}`
+  const name = options.name ?? `hanza_test_${process.pid}_${randomBytes(4).toString('hex')}`
+  if (!TEST_DATABASE_NAME.test(name)) throw new Error(`"${name}" is not a throwaway test database name`)
   await withClient(adminUrl, (client) => client.query(`CREATE DATABASE "${name}"`))
   const url = withDatabase(adminUrl, name)
 
-  const drop = async () => {
-    await withClient(adminUrl, async (client) => {
-      await client.query('SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = $1 AND pid <> pg_backend_pid()', [name])
-      await client.query(`DROP DATABASE IF EXISTS "${name}"`)
-    })
-  }
+  const drop = () => dropTestDatabase(adminUrl, name)
 
   try {
     const all = await migrationNames()

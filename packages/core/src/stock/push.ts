@@ -22,6 +22,20 @@ export async function markOffersForStockPush(tx: Tx, organizationId: string, pro
   return [...new Set(rows.map((row) => row.connectionId))]
 }
 
+/**
+ * Bumps `stockPushSeq` of every linked Offer of one Connection, in the transaction that changed what
+ * its Channel is told (its stock rules or its Warehouses). Rows are locked in id order, as above.
+ */
+export async function markConnectionOffersForStockPush(tx: Tx, organizationId: string, connectionId: string): Promise<void> {
+  await tx.$executeRaw`
+    UPDATE "offer" SET "stockPushSeq" = "stockPushSeq" + 1, "updatedAt" = now()
+    WHERE "id" IN (
+      SELECT "id" FROM "offer"
+      WHERE "organizationId" = ${organizationId} AND "connectionId" = ${connectionId} AND "productId" IS NOT NULL
+      ORDER BY "id"
+      FOR UPDATE)`
+}
+
 /** Enqueues a coalesced `stock.push` per Connection. Call after commit. */
 export async function requestStockPush(ctx: Context, organizationId: string, connectionIds: string[]): Promise<void> {
   for (const connectionId of new Set(connectionIds)) {

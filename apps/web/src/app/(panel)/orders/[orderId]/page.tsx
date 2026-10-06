@@ -1,20 +1,22 @@
-import { getOrder, ORDER_PHASES } from '@hanza/core'
+import { getOrder, listWarehouses, ORDER_PHASES } from '@hanza/core'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { ActionForm } from '@/components/action-form'
 import { ActionButton } from '@/components/form'
 import { EmptyState, Section, linkClass, rowClass, tableClass, tdClass, thClass } from '@/components/section'
-import { AttentionBadge, OrderStatusBadge } from '@/components/status-badge'
+import { AttentionBadge, AwaitingPaymentBadge, OrderStatusBadge } from '@/components/status-badge'
 import { getT } from '@/i18n/server'
 import { getContext } from '@/lib/context'
 import { describeEvent } from '@/lib/events'
 import { getFormatters } from '@/lib/formatters'
 import { attentionReasonLabel, factLabel, orderPhaseLabel, orderStatusName, paymentLabel, reservationLabel } from '@/lib/labels'
+import { showsAwaitingPayment } from '@/lib/payment'
 import { requireTenant } from '@/lib/session'
 import { changeOrderStatusAction, resolveAttentionAction } from './actions'
 import { AddressBlock } from './address-block'
 import { LinkLineForm } from './link-line-form'
+import { MoveReservationForm } from './move-reservation-form'
 
 export const dynamic = 'force-dynamic'
 
@@ -26,10 +28,17 @@ export default async function OrderPage({ params }: { params: Promise<{ orderId:
   const { organizationId } = await requireTenant()
   const [t, format] = await Promise.all([getT(), getFormatters()])
   const { orderId } = await params
-  const order = await getOrder(getContext(), organizationId, orderId)
+  const ctx = getContext()
+  const order = await getOrder(ctx, organizationId, orderId)
   if (!order) notFound()
+  // Reservations move only while the Order is in an open phase (the core refuses it otherwise).
+  const orderOpen = order.phase === 'new' || order.phase === 'processing'
+  const activeWarehouses = orderOpen
+    ? (await listWarehouses(ctx, organizationId)).filter((warehouse) => warehouse.active).map(({ id, name }) => ({ id, name }))
+    : []
 
   const unmatchedLines = order.lines.filter((line) => !line.productId).length
+  const awaitingPayment = showsAwaitingPayment(order)
   const manualReasons = order.attentionReasons.filter((reason) => reason !== 'unmatched_line')
   const statusGroups = ORDER_PHASES.map((phase) => ({ phase, statuses: order.allowedStatuses.filter((status) => status.phase === phase) })).filter(
     (group) => group.statuses.length > 0,
@@ -47,6 +56,7 @@ export default async function OrderPage({ params }: { params: Promise<{ orderId:
           </h1>
           <OrderStatusBadge status={order.status} />
           <span className="text-sm text-muted">{t('orders.detail.phaseLine', { phase: orderPhaseLabel(t, order.phase) })}</span>
+          {awaitingPayment ? <AwaitingPaymentBadge /> : null}
           {order.attentionReasons.length > 0 ? <AttentionBadge /> : null}
         </div>
         <p className="mt-1 text-sm text-muted">
@@ -82,7 +92,12 @@ export default async function OrderPage({ params }: { params: Promise<{ orderId:
       ) : null}
 
       <Section title={t('orders.detail.statusTitle')} description={t('orders.detail.statusDescription')}>
-        <div className="px-5 py-4">
+        <div className="space-y-3 px-5 py-4">
+          {awaitingPayment ? (
+            <p className="text-sm text-amber-900">
+              {order.phase === 'shipped' ? t('orders.detail.awaitingPaymentShippedHint') : t('orders.detail.awaitingPaymentHint')}
+            </p>
+          ) : null}
           {statusGroups.length === 0 ? (
             <p className="text-sm text-muted">{t('orders.detail.finalStatus', { status: orderStatusName(t, order.status) })}</p>
           ) : (
@@ -134,6 +149,7 @@ export default async function OrderPage({ params }: { params: Promise<{ orderId:
                 <th scope="col" className={`${thClass} text-right`}>{t('orders.detail.lineColumns.price')}</th>
                 <th scope="col" className={thClass}>{t('orders.detail.lineColumns.product')}</th>
                 <th scope="col" className={thClass}>{t('orders.detail.lineColumns.reservation')}</th>
+                <th scope="col" className={thClass}>{t('orders.detail.lineColumns.warehouse')}</th>
               </tr>
             </thead>
             <tbody>
@@ -161,6 +177,21 @@ export default async function OrderPage({ params }: { params: Promise<{ orderId:
                       {line.shortage ? <AttentionBadge label={t('orders.detail.shortage')} /> : null}
                     </span>
                   </td>
+                  <td className={tdClass}>
+                    {line.reservationWarehouse ? (
+                      <div className="space-y-2">
+                        <span>{line.reservationWarehouse.name}</span>
+                        {orderOpen && line.reservationStatus === 'open' && activeWarehouses.length > 1 ? (
+                          <MoveReservationForm
+                            lineId={line.id}
+                            targets={activeWarehouses.filter((warehouse) => warehouse.id !== line.reservationWarehouse?.id)}
+                          />
+                        ) : null}
+                      </div>
+                    ) : (
+                      <span className="text-muted">{t('common.none')}</span>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -169,34 +200,49 @@ export default async function OrderPage({ params }: { params: Promise<{ orderId:
       </Section>
 
       <Section title={t('orders.detail.buyerTitle')}>
-        <div className="grid gap-6 px-5 py-4 sm:grid-cols-3">
-          <div>
-            <h3 className="text-sm font-medium text-muted">{t('orders.detail.contact')}</h3>
-            <p className="mt-1 text-sm leading-6">
-              {order.buyer.name}
-              {order.buyer.email ? (
-                <>
-                  <br />
-                  {order.buyer.email}
-                </>
-              ) : null}
-              {order.buyer.phone ? (
-                <>
-                  <br />
-                  {t('orders.detail.phone', { phone: order.buyer.phone })}
-                </>
-              ) : null}
-              {order.buyer.login ? (
-                <>
-                  <br />
-                  {t('orders.detail.channelLogin', { login: order.buyer.login })}
-                </>
-              ) : null}
-            </p>
+        {order.buyer === null ? (
+          <div className="space-y-1 px-5 py-4 text-sm">
+            {order.buyerDataState === 'unreadable' ? (
+              <p role="alert" className="text-red-800">
+                {t('orders.detail.buyerUnreadable')}
+              </p>
+            ) : (
+              <p>{order.buyerDataErasedAt ? t('orders.detail.buyerErased', { date: format.dateTime(order.buyerDataErasedAt) }) : null}</p>
+            )}
+            {order.shippingCountryCode ? (
+              <p className="text-muted">{t('orders.detail.shippingCountry', { country: order.shippingCountryCode })}</p>
+            ) : null}
           </div>
-          <AddressBlock title={t('orders.detail.shippingAddress')} address={order.shippingAddress} />
-          <AddressBlock title={t('orders.detail.billingAddress')} address={order.billingAddress} />
-        </div>
+        ) : (
+          <div className="grid gap-6 px-5 py-4 sm:grid-cols-3">
+            <div>
+              <h3 className="text-sm font-medium text-muted">{t('orders.detail.contact')}</h3>
+              <p className="mt-1 text-sm leading-6">
+                {order.buyer.name}
+                {order.buyer.email ? (
+                  <>
+                    <br />
+                    {order.buyer.email}
+                  </>
+                ) : null}
+                {order.buyer.phone ? (
+                  <>
+                    <br />
+                    {t('orders.detail.phone', { phone: order.buyer.phone })}
+                  </>
+                ) : null}
+                {order.buyer.login ? (
+                  <>
+                    <br />
+                    {t('orders.detail.channelLogin', { login: order.buyer.login })}
+                  </>
+                ) : null}
+              </p>
+            </div>
+            <AddressBlock title={t('orders.detail.shippingAddress')} address={order.shippingAddress} />
+            <AddressBlock title={t('orders.detail.billingAddress')} address={order.billingAddress} />
+          </div>
+        )}
       </Section>
 
       <Section title={t('orders.detail.factsTitle')}>
@@ -225,7 +271,7 @@ export default async function OrderPage({ params }: { params: Promise<{ orderId:
         ) : (
           <ul className="divide-y divide-line">
             {order.events.map((event) => {
-              const { title, detail } = describeEvent(event.type, event.payload, t, format.number)
+              const { title, detail } = describeEvent(event.type, event.payload, t, format)
               return (
                 <li key={event.id} className="flex flex-wrap items-center justify-between gap-3 px-5 py-3 text-sm">
                   <span>

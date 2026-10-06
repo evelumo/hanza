@@ -6,6 +6,7 @@ import { idSchema, skuSchema } from '@/lib/schemas'
 export const changeOrderStatusSchema = z.object({ orderId: idSchema, statusId: idSchema })
 export const linkOrderLineSchema = z.object({ orderLineId: idSchema, sku: skuSchema })
 export const resolveAttentionSchema = z.object({ orderId: idSchema })
+export const moveReservationSchema = z.object({ orderLineId: idSchema, warehouseId: idSchema })
 
 const phaseSchema = z.enum(ORDER_PHASES)
 
@@ -18,6 +19,7 @@ export const orderListFiltersSchema = z
     phase: phaseSchema.optional().catch(undefined),
     status: idSchema.optional().catch(undefined),
     attention: z.literal('1').optional().catch(undefined),
+    payment: z.literal('awaiting').optional().catch(undefined),
   })
   .transform((filters) => {
     const legacyPhase = phaseSchema.safeParse(filters.status)

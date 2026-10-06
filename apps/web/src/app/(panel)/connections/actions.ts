@@ -1,6 +1,6 @@
 'use server'
 
-import { DomainError, addConnection, requestSync, setStatusMapping } from '@hanza/core'
+import { DomainError, addConnection, requestSync, setStatusMapping, updateChannelStockRules, updateChannelWarehouses } from '@hanza/core'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { getT } from '@/i18n/server'
@@ -9,7 +9,7 @@ import { describeFields, fieldErrorsFromIssues, issuesOf, publicValues, readFiel
 import { getContext } from '@/lib/context'
 import { domainErrorMessage } from '@/lib/domain-errors'
 import { requireTenant } from '@/lib/session'
-import { addConnectionSchema, requestSyncSchema, statusMappingSchema } from './schemas'
+import { addConnectionSchema, channelWarehousesSchema, requestSyncSchema, statusMappingSchema, stockRulesSchema } from './schemas'
 
 export async function addConnectionAction(_previous: ActionState, formData: FormData): Promise<ActionState> {
   const { user, organizationId } = await requireTenant()
@@ -60,6 +60,44 @@ export async function requestSyncAction(_previous: ActionState, formData: FormDa
   } catch (error) {
     return failure(error, t)
   }
+  return { ok: true }
+}
+
+export async function updateChannelWarehousesAction(_previous: ActionState, formData: FormData): Promise<ActionState> {
+  const { user, organizationId } = await requireTenant()
+  const t = await getT()
+  const parsed = channelWarehousesSchema.safeParse({
+    ...formText(formData),
+    warehouseIds: formData.getAll('warehouseIds').filter((id) => typeof id === 'string'),
+  })
+  if (!parsed.success) return invalidInput(parsed.error, t)
+
+  const { connectionId } = parsed.data
+  const choice = parsed.data.mode === 'all' ? ({ all: true } as const) : { all: false as const, warehouseIds: parsed.data.warehouseIds }
+  try {
+    await updateChannelWarehouses(getContext(), organizationId, connectionId, choice, { type: 'user', userId: user.id })
+  } catch (error) {
+    return failure(error, t)
+  }
+  revalidatePath(`/connections/${connectionId}`)
+  revalidatePath('/warehouses', 'layout')
+  return { ok: true }
+}
+
+export async function updateStockRulesAction(_previous: ActionState, formData: FormData): Promise<ActionState> {
+  const { user, organizationId } = await requireTenant()
+  const t = await getT()
+  const values = formText(formData)
+  const parsed = stockRulesSchema.safeParse(values)
+  if (!parsed.success) return invalidInput(parsed.error, t, values)
+
+  const { connectionId, safetyBuffer, channelLimit } = parsed.data
+  try {
+    await updateChannelStockRules(getContext(), organizationId, connectionId, { safetyBuffer, channelLimit }, { type: 'user', userId: user.id })
+  } catch (error) {
+    return failure(error, t, { values })
+  }
+  revalidatePath(`/connections/${connectionId}`)
   return { ok: true }
 }
 

@@ -9,8 +9,11 @@ import type { MessageKey } from '@/i18n/types'
 const links: Array<{ href: string; label: MessageKey; section?: string }> = [
   { href: '/dashboard', label: 'nav.dashboard' },
   { href: '/products', label: 'nav.products' },
+  { href: '/families', label: 'nav.families' },
   { href: '/orders', label: 'nav.orders' },
+  { href: '/warehouses', label: 'nav.warehouses' },
   { href: '/connections', label: 'nav.connections' },
+  { href: '/privacy', label: 'nav.privacy' },
   { href: '/settings/order-statuses', label: 'nav.settings', section: '/settings' },
 ]
 

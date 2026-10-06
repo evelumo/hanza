@@ -5,6 +5,7 @@ import { loadEnv, type Env } from './env'
 import { createLogger, type Logger } from './logger'
 import { createJobQueue, type JobQueue } from './queue'
 import { createSecretBox, type SecretBox } from './secrets'
+import { createWorkflowEngine, type WorkflowEngine } from './workflows/engine'
 
 /**
  * Everything a command, job or route needs. Built once per process by
@@ -17,6 +18,7 @@ export interface Context {
   log: Logger
   secrets: SecretBox
   connectors: ConnectorRegistry
+  workflows: WorkflowEngine
 }
 
 export interface CreateContextOptions {
@@ -27,13 +29,17 @@ export interface CreateContextOptions {
 
 export function createContext(scope: string, options: CreateContextOptions = {}): Context {
   const env = options.env ?? loadEnv()
+  const db = createDb(env.DATABASE_URL)
+  const queue = createJobQueue(env.REDIS_URL, { prefix: env.HANZA_QUEUE_PREFIX })
+  const log = createLogger(scope)
   return {
     env,
-    db: createDb(env.DATABASE_URL),
-    queue: createJobQueue(env.REDIS_URL),
-    log: createLogger(scope),
+    db,
+    queue,
+    log,
     secrets: createSecretBox(env.HANZA_ENCRYPTION_KEY),
     connectors: createConnectorRegistry(options.connectors ?? []),
+    workflows: createWorkflowEngine({ db, queue, log }),
   }
 }
 

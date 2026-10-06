@@ -1,8 +1,11 @@
 # Available is computed, never stored, and writers lock the Order before Stock
 
+Status: amended by ADR 0017. Available is now per Warehouse, the organization's Warehouse rows are share-locked between the Order and the Stock rows, and a Shortage is judged against the Order's Channel's Warehouses.
+
 Available is what Hanza tells Channels, so a wrong value sells goods that do not exist (ADR 0001). A stored counter would have to be kept equal to Stock minus open Reservations by every write path, forever. We decided Available is always computed in one statement (Stock over all Warehouses minus open Reservations), and that every transaction that changes Stock or Reservations takes row locks in a fixed order: the Order row first, then the Stock rows of the Products involved, sorted by Product. Available is read only after the locks are held, under Postgres' default READ COMMITTED, so the value a Reservation is checked against is exact. Serialisable transactions were rejected: they turn the same contention into retries scattered across the code.
 
 ## Consequences
 
 - Any new code that touches Stock or Reservations must take the locks in this order (`lockOrder`, then `lockStock`), or it can deadlock with the existing write paths or reserve against a stale value.
 - Available can go below zero when two Channels sell the last unit at once; the Order line becomes a Shortage and a person decides. The value pushed to a Channel is never below zero.
+- Columns that services update on `product` must not be part of a non-partial unique index: Postgres then takes `FOR UPDATE` on the row instead of `FOR NO KEY UPDATE`, which blocks or deadlocks the `FOR KEY SHARE` taken by the foreign-key checks of Order import (see `families-locking.db.test.ts`; the Product family index is partial for this reason).

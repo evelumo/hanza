@@ -1,10 +1,13 @@
-import type { Offer } from '@hanza/connector-sdk'
+import type { Money, Offer } from '@hanza/connector-sdk'
 import type { Actor } from '../actor'
 import { systemActor } from '../actor'
 import type { Context } from '../context'
 import { DomainError } from '../errors'
 import { appendEvent } from '../events'
 import { rematchAfterCommit } from '../orders/rematch'
+import { describeOfferPrice, offerPriceColumns, type OfferPriceView } from '../prices/offer-price'
+import { moneyFromColumns } from '../prices/price'
+import { requestPricePushAfterCommit } from '../prices/push'
 import { requestStockPushAfterCommit } from '../stock/push'
 import { TX_OPTIONS } from '../transaction'
 import { normalizeSku } from './sku'
@@ -30,7 +33,12 @@ export interface OfferRow {
  *
  * Unlike the panel-facing services this enqueues nothing: when `linked > 0` the
  * caller (the `offers.pull` job) must call `requestStockPush` for the
- * Connection and `rematchUnmatchedLines` itself, after this returns.
+ * Connection and `rematchUnmatchedLines` itself, after this returns, and
+ * `requestPricePush` when `linked` or `repriced` is above 0.
+ *
+ * The Channel's price is stored as reported and never adopted (ADR 0011); a
+ * linked Offer whose Channel currency changed is marked for a price push, since
+ * the currency decides whether its price can be pushed at all.
  */
 export async function upsertOffers(
   ctx: Context,
@@ -38,7 +46,7 @@ export async function upsertOffers(
   connectionId: string,
   offers: Offer[],
   seenAt: Date,
-): Promise<{ created: number; updated: number; linked: number }> {
+): Promise<{ created: number; updated: number; linked: number; repriced: number }> {
   return ctx.db.$transaction(async (tx) => {
     const connection = await tx.connection.findFirst({ where: { id: connectionId, organizationId }, select: { id: true } })
     if (!connection) throw new DomainError('not_found')
@@ -52,7 +60,7 @@ export async function upsertOffers(
       FOR UPDATE`
     const existing = await tx.offer.findMany({
       where: { organizationId, connectionId, externalId: { in: externalIds } },
-      select: { id: true, externalId: true, productId: true, linkedBy: true, product: { select: { sku: true } } },
+      select: { id: true, externalId: true, productId: true, linkedBy: true, channelPriceCurrency: true, product: { select: { sku: true } } },
     })
     const current = new Map(existing.map((offer) => [offer.externalId, offer]))
 
@@ -60,7 +68,7 @@ export async function upsertOffers(
     const products = await tx.product.findMany({ where: { organizationId, sku: { in: skus } }, select: { id: true, sku: true } })
     const productBySku = new Map(products.map((product) => [product.sku, product.id]))
 
-    const counts = { created: 0, updated: 0, linked: 0 }
+    const counts = { created: 0, updated: 0, linked: 0, repriced: 0 }
     const linkedEvent = (offerId: string, productId: string) =>
       appendEvent(tx, {
         organizationId,
@@ -72,7 +80,15 @@ export async function upsertOffers(
     for (const offer of incoming) {
       const match = offer.sku ? productBySku.get(offer.sku) : undefined
       const known = current.get(offer.externalId)
-      const fields = { sku: offer.sku, name: offer.name, url: offer.url, lastSeenAt: seenAt }
+      const channelPrice = offer.price ?? null
+      const fields = {
+        sku: offer.sku,
+        name: offer.name,
+        url: offer.url,
+        channelPriceAmount: channelPrice?.amount ?? null,
+        channelPriceCurrency: channelPrice?.currency ?? null,
+        lastSeenAt: seenAt,
+      }
 
       if (!known) {
         const created = await tx.offer.create({
@@ -84,6 +100,7 @@ export async function upsertOffers(
             productId: match ?? null,
             linkedBy: match ? 'sku' : null,
             stockPushSeq: match ? 1 : 0,
+            pricePushSeq: match ? 1 : 0,
           },
           select: { id: true },
         })
@@ -92,6 +109,7 @@ export async function upsertOffers(
           externalId: offer.externalId,
           productId: match ?? null,
           linkedBy: match ? 'sku' : null,
+          channelPriceCurrency: fields.channelPriceCurrency,
           product: match && offer.sku ? { sku: offer.sku } : null,
         })
         counts.created++
@@ -109,11 +127,18 @@ export async function upsertOffers(
         link = match ? { productId: match, linkedBy: 'sku' } : { productId: null, linkedBy: null }
       }
 
+      const linkedTo = link ? link.productId : known.productId
+      const repriced = linkedTo !== null && (link !== undefined || known.channelPriceCurrency !== fields.channelPriceCurrency)
       await tx.offer.updateMany({
         where: { id: known.id, organizationId },
-        data: { ...fields, ...(link ? { ...link, ...(link.productId ? { stockPushSeq: { increment: 1 } } : {}) } : {}) },
+        data: {
+          ...fields,
+          ...(link ? { ...link, ...(link.productId ? { stockPushSeq: { increment: 1 } } : {}) } : {}),
+          ...(repriced ? { pricePushSeq: { increment: 1 } } : {}),
+        },
       })
       counts.updated++
+      if (repriced) counts.repriced++
       if (link) {
         if (known.productId && known.productId !== link.productId) {
           await appendEvent(tx, {
@@ -129,6 +154,7 @@ export async function upsertOffers(
         }
         current.set(offer.externalId, {
           ...known,
+          channelPriceCurrency: fields.channelPriceCurrency,
           productId: link.productId,
           linkedBy: link.linkedBy,
           product: link.productId && offer.sku ? { sku: offer.sku } : null,
@@ -148,7 +174,7 @@ export async function linkOffer(ctx: Context, organizationId: string, offerId: s
     if (!product) throw new DomainError('not_found')
     await tx.offer.updateMany({
       where: { id: offerId, organizationId },
-      data: { productId, linkedBy: 'manual', stockPushSeq: { increment: 1 } },
+      data: { productId, linkedBy: 'manual', stockPushSeq: { increment: 1 }, pricePushSeq: { increment: 1 } },
     })
     await appendEvent(tx, {
       organizationId,
@@ -160,6 +186,7 @@ export async function linkOffer(ctx: Context, organizationId: string, offerId: s
   }, TX_OPTIONS)
 
   await requestStockPushAfterCommit(ctx, organizationId, [connectionId])
+  await requestPricePushAfterCommit(ctx, organizationId, [connectionId])
   await rematchAfterCommit(ctx, organizationId, { offerId })
 }
 
@@ -214,6 +241,60 @@ export async function listOffers(
       linkedBy: offer.linkedBy,
       lastSeenAt: offer.lastSeenAt,
     })),
+  }
+}
+
+export interface OfferDetail extends OfferPriceView {
+  id: string
+  connectionId: string
+  connectionName: string
+  externalId: string
+  sku: string | null
+  name: string
+  url: string | null
+  linkedBy: 'sku' | 'manual' | null
+  lastSeenAt: Date
+  product: { id: string; sku: string; name: string; basePrice: Money | null } | null
+}
+
+export async function getOffer(ctx: Context, organizationId: string, offerId: string): Promise<OfferDetail | null> {
+  const offer = await ctx.db.offer.findFirst({
+    where: { id: offerId, organizationId },
+    select: {
+      id: true,
+      connectionId: true,
+      externalId: true,
+      sku: true,
+      name: true,
+      url: true,
+      linkedBy: true,
+      lastSeenAt: true,
+      ...offerPriceColumns,
+      connection: { select: { name: true, connectorId: true } },
+      product: { select: { id: true, sku: true, name: true, basePriceAmount: true, basePriceCurrency: true } },
+    },
+  })
+  if (!offer) return null
+  const product = offer.product
+    ? {
+        id: offer.product.id,
+        sku: offer.product.sku,
+        name: offer.product.name,
+        basePrice: moneyFromColumns(offer.product.basePriceAmount, offer.product.basePriceCurrency),
+      }
+    : null
+  return {
+    id: offer.id,
+    connectionId: offer.connectionId,
+    connectionName: offer.connection.name,
+    externalId: offer.externalId,
+    sku: offer.sku,
+    name: offer.name,
+    url: offer.url,
+    linkedBy: offer.linkedBy,
+    lastSeenAt: offer.lastSeenAt,
+    product,
+    ...describeOfferPrice(ctx, { ...offer, connectorId: offer.connection.connectorId }, product),
   }
 }
 

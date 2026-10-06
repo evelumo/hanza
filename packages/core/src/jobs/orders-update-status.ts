@@ -8,7 +8,7 @@ import { ordersUpdateStatusRef } from './refs'
 
 /**
  * Tells the Channel the Order's current status (not the one at enqueue time) while a push is pending, so
- * coalesced requests lose nothing and a request whose push already happened sends nothing (ADR 0011).
+ * coalesced requests lose nothing and a request whose push already happened sends nothing (ADR 0012).
  */
 export const ordersUpdateStatusJob = defineJob({
   ...ordersUpdateStatusRef,

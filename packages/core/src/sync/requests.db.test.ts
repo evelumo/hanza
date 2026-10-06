@@ -82,7 +82,7 @@ describe.skipIf(!databaseUrl)('addConnection and requestSync', () => {
     const errors: Array<[string, Record<string, unknown> | undefined]> = []
     const ctx = {
       ...base,
-      log: { info() {}, error: (message: string, fields?: Record<string, unknown>) => void errors.push([message, fields]) },
+      log: { info() {}, warn() {}, error: (message: string, fields?: Record<string, unknown>) => void errors.push([message, fields]) },
       queue: {
         ...base.queue,
         enqueue: async () => {
@@ -103,7 +103,7 @@ describe.skipIf(!databaseUrl)('addConnection and requestSync', () => {
     ])
   })
 
-  it('requestSync enqueues an Offer pull and a stock push, only for the organization\'s own Connection', async () => {
+  it('requestSync enqueues an Offer pull, a stock push and a price push, only for the organization\'s own Connection', async () => {
     const ctx = context()
     const org = await createTestOrganization(ctx.db)
     const other = await createTestOrganization(ctx.db)
@@ -120,6 +120,7 @@ describe.skipIf(!databaseUrl)('addConnection and requestSync', () => {
     expect(ctx.queue.waiting.map((job) => [job.name, job.payload])).toEqual([
       ['offers.pull', { organizationId: org, connectionId, trigger: 'manual' }],
       ['stock.push', { organizationId: org, connectionId }],
+      ['price.push', { organizationId: org, connectionId }],
     ])
   })
 })

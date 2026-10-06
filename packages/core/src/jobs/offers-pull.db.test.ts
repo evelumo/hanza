@@ -108,7 +108,7 @@ describe.skipIf(!databaseUrl)('offers.pull', () => {
   it('stops after 50 pages and says so in the result and the log', async () => {
     const { ctx: base, organizationId, connectionId, state } = await setup()
     const errors: string[] = []
-    const ctx = { ...base, log: { info() {}, error: (message: string) => void errors.push(message) } }
+    const ctx = { ...base, log: { info() {}, warn() {}, error: (message: string) => void errors.push(message) } }
     pull = async (cursor) => {
       const page = cursor === null ? 0 : Number(cursor)
       return { items: [offer(`o${page}`)], nextCursor: String(page + 1), hasMore: true }

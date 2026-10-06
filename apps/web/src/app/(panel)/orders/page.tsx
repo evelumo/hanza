@@ -5,11 +5,12 @@ import { redirect } from 'next/navigation'
 import { buttonClass } from '@/components/button-class'
 import { Pagination } from '@/components/pagination'
 import { EmptyState, linkClass, rowClass, tableClass, tdClass, thClass } from '@/components/section'
-import { AttentionBadge, OrderStatusBadge } from '@/components/status-badge'
+import { AttentionBadge, AwaitingPaymentBadge, OrderStatusBadge } from '@/components/status-badge'
 import { getT } from '@/i18n/server'
 import { getContext } from '@/lib/context'
 import { getFormatters } from '@/lib/formatters'
 import { orderPhaseLabel, orderStatusName } from '@/lib/labels'
+import { showsAwaitingPayment } from '@/lib/payment'
 import { firstParam, outOfRangeRedirect, pageWindow, parsePage } from '@/lib/pagination'
 import { requireTenant } from '@/lib/session'
 import { orderListFiltersSchema } from './schemas'
@@ -28,6 +29,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
     phase: firstParam(params.phase),
     status: firstParam(params.status),
     attention: firstParam(params.attention),
+    payment: firstParam(params.payment),
   })
   const page = parsePage(params.page)
   const ctx = getContext()
@@ -36,14 +38,15 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
       phase: filters.phase,
       statusId: filters.status,
       needsAttention: filters.attention === '1' ? true : undefined,
+      awaitingPayment: filters.payment === 'awaiting' ? true : undefined,
       ...pageWindow(page),
     }),
     listOrderStatusOptions(ctx, organizationId),
   ])
-  const filterParams = { phase: filters.phase, status: filters.status, attention: filters.attention }
+  const filterParams = { phase: filters.phase, status: filters.status, attention: filters.attention, payment: filters.payment }
   const outOfRange = outOfRangeRedirect(page, total, '/orders', filterParams)
   if (outOfRange) redirect(outOfRange)
-  const filtered = Boolean(filters.phase || filters.status || filters.attention)
+  const filtered = Boolean(filters.phase || filters.status || filters.attention || filters.payment)
   const selectClass =
     'mt-1 block rounded-md border border-line bg-white px-3 py-1.5 text-sm font-normal outline-none focus:border-accent focus:ring-2 focus:ring-accent/20'
 
@@ -84,6 +87,10 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
           <input type="checkbox" name="attention" value="1" defaultChecked={filters.attention === '1'} className="size-4 accent-accent" />
           {t('orders.filters.attentionOnly')}
         </label>
+        <label className="flex items-center gap-2 pb-2 text-sm font-medium">
+          <input type="checkbox" name="payment" value="awaiting" defaultChecked={filters.payment === 'awaiting'} className="size-4 accent-accent" />
+          {t('orders.filters.awaitingPaymentOnly')}
+        </label>
         <button type="submit" className={buttonClass('secondary')}>
           {t('orders.filters.apply')}
         </button>
@@ -122,11 +129,18 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
                     </td>
                     <td className={tdClass}>{order.connectionName}</td>
                     <td className={tdClass}>{format.dateTime(order.placedAt)}</td>
-                    <td className={tdClass}>{order.buyerName}</td>
+                    <td className={tdClass}>
+                      {order.buyerName ?? (
+                        <span className={order.buyerDataState === 'unreadable' ? 'text-red-800' : 'text-muted'}>
+                          {order.buyerDataState === 'unreadable' ? t('orders.buyerUnreadable') : t('orders.buyerErased')}
+                        </span>
+                      )}
+                    </td>
                     <td className={`${tdClass} text-right tabular-nums`}>{format.money(order.total)}</td>
                     <td className={tdClass}>
                       <span className="flex flex-wrap gap-1.5">
                         <OrderStatusBadge status={order.status} />
+                        {showsAwaitingPayment(order) ? <AwaitingPaymentBadge /> : null}
                         {order.attentionReasons.length > 0 ? <AttentionBadge /> : null}
                       </span>
                     </td>

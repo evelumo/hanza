@@ -82,6 +82,7 @@ model Organization {
   events      EventLog[]
 
   products          Product[]
+  productFamilies   ProductFamily[]
   offers            Offer[]
   warehouses        Warehouse[]
   stock             Stock[]
@@ -93,6 +94,10 @@ model Organization {
   orderChannelFacts OrderChannelFact[]
   connections       Connection[]
   syncStates        SyncState[]
+  channelWarehouses ConnectionWarehouse[]
+  privacySettings   PrivacySettings?
+  workflowRuns      WorkflowRun[]
+  workflowSignals   WorkflowSignal[]
 
   @@map("organization")
 }

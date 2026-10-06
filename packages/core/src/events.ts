@@ -1,31 +1,54 @@
 import type { Prisma, Tx } from '@hanza/db'
 import type { Context } from './context'
 
-export type EventSubject = { type: 'product' | 'offer' | 'order' | 'connection' | 'order_status'; id: string }
+export type EventSubject = {
+  type: 'product' | 'product_family' | 'offer' | 'order' | 'connection' | 'warehouse' | 'order_status'
+  id: string
+}
 
 export type EventType =
   | 'system.ping'
   | 'product.created'
   | 'product.updated'
+  | 'family.created'
+  | 'family.renamed'
+  | 'family.deleted'
+  | 'family.product_added'
+  | 'family.product_updated'
+  | 'family.product_removed'
+  | 'product.price_changed'
   | 'stock.set'
   | 'stock.reserved'
   | 'stock.released'
   | 'stock.consumed'
   | 'offer.linked'
   | 'offer.unlinked'
+  | 'offer.price_changed'
   | 'order.imported'
   | 'order.channel_fact_recorded'
+  | 'order.payment_received'
   | 'order.status_changed'
   | 'order.line_linked'
   | 'order.attention_raised'
   | 'order.attention_resolved'
+  | 'order.reservation_moved'
+  | 'order.buyer_data_erased'
   | 'order_status.created'
   | 'order_status.updated'
   | 'order_status.deletion_requested'
   | 'order_status.deleted'
   | 'connection.created'
   | 'connection.health_changed'
+  | 'connection.stock_rules_changed'
+  | 'connection.warehouses_changed'
   | 'connection.status_mapping_changed'
+  | 'warehouse.created'
+  | 'warehouse.updated'
+  | 'warehouse.deactivated'
+  | 'warehouse.activated'
+  | 'warehouse.deleted'
+  | 'privacy.retention_changed'
+  | 'privacy.erasure_requested'
 
 export interface EventRow {
   id: string

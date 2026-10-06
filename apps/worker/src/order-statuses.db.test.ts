@@ -19,7 +19,7 @@ import { afterAll, beforeAll, describe, expect, inject, it } from 'vitest'
 
 const databaseUrl = inject('hanzaTestDatabaseUrl')
 
-// The engine end to end with organization-defined Order statuses (issue #1, ADR 0014): the core works on phases,
+// The engine end to end with organization-defined Order statuses (issue #1, ADR 0018): the core works on phases,
 // the statuses are labels within them, and the Channel only ever hears about phases.
 describe.skipIf(!databaseUrl)('Order statuses end to end (real Postgres, in-memory queue, fake Channel)', () => {
   let ctx: TestContext

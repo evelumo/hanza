@@ -12,6 +12,7 @@ import {
 import { classifyConnectorError, isConnectorError } from '../errors'
 import { offerSchema, type Offer } from '../model/offer'
 import { ORDER_STATUSES, orderSchema, type Order } from '../model/order'
+import { offerPriceSchema, type OfferPrice } from '../model/price'
 import { stockLevelSchema, type StockLevel } from '../model/stock'
 
 export interface ConformanceFixtures {
@@ -215,6 +216,17 @@ export async function assertConformance(connector: AnyConnectorDefinition, fixtu
         }
       })
 
+      // Hanza reads awaitingPayment only on the first import: only a paid fact (or a cancellation) ends the wait (ADR 0015).
+      const waiting = new Set<string>()
+      for (const order of orders) {
+        if (!orderSchema.safeParse(order).success) continue
+        if (order.awaitingPayment === true) {
+          waiting.add(order.externalId)
+        } else if (waiting.delete(order.externalId) && !order.facts.some((fact) => fact.type === 'paid' || fact.type === 'cancelled')) {
+          fail('C6', `Order "${order.externalId}" was awaiting payment and is returned again without awaitingPayment but with no paid fact`)
+        }
+      }
+
       const ids = (items: Order[]) => JSON.stringify(items.map((item) => item?.externalId))
       await check('C7', async () => {
         for (const page of pages) {
@@ -259,6 +271,27 @@ export async function assertConformance(connector: AnyConnectorDefinition, fixtu
         for (let attempt = 0; attempt < 2; attempt++) {
           await call('orders.updateStatus', () => updateStatus(context, { orderExternalId: firstOrder.externalId, status }))
         }
+      }
+    })
+  }
+
+  // C13
+  const pushPrice = capabilities['price.push']
+  if (pushPrice) {
+    await check('C13', async () => {
+      // Hanza pushes a price only in the currency the Channel reported for the Offer, so an Offer without a price never gets one.
+      const priced = offers.filter((offer) => offerSchema.safeParse(offer).success && offer.price)
+      if (priced.length === 0) {
+        fail('C13', 'price.push is implemented but no Offer from offers.pull reports a price, so Hanza could never push one')
+        return
+      }
+      await call('price.push', () => pushPrice(context, []))
+      for (const amount of ['19.99', '25']) {
+        const prices: OfferPrice[] = priced.slice(0, 3).map((offer) =>
+          offerPriceSchema.parse({ offerExternalId: offer.externalId, sku: offer.sku, price: { amount, currency: offer.price!.currency } }),
+        )
+        await call('price.push', () => pushPrice(context, prices))
+        await call('price.push', () => pushPrice(context, prices))
       }
     })
   }

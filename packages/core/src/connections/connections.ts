@@ -2,6 +2,7 @@ import type { ConnectionHealth, Prisma, SyncErrorKind, SyncStream } from '@hanza
 import type { Actor } from '../actor'
 import type { Context } from '../context'
 import { appendEvent } from '../events'
+import type { ChannelStockRules } from '../stock/channel-available'
 import { TX_OPTIONS } from '../transaction'
 
 export interface ConnectionRow {
@@ -108,14 +109,34 @@ export async function getConnection(
   ctx: Context,
   organizationId: string,
   connectionId: string,
-): Promise<(ConnectionRow & { config: Record<string, unknown> }) | null> {
+): Promise<
+  | (ConnectionRow & {
+      config: Record<string, unknown>
+      stockRules: ChannelStockRules
+      /** `all`: every active Warehouse counts; otherwise only `warehouseIds` (ADR 0017). */
+      warehouses: { all: boolean; warehouseIds: string[] }
+    })
+  | null
+> {
   const row = await ctx.db.connection.findFirst({
     where: { id: connectionId, organizationId },
-    select: { ...rowSelect, config: true },
+    select: {
+      ...rowSelect,
+      config: true,
+      safetyBuffer: true,
+      channelLimit: true,
+      allWarehouses: true,
+      warehouses: { where: { organizationId }, orderBy: { warehouseId: 'asc' }, select: { warehouseId: true } },
+    },
   })
   if (!row) return null
-  const { config, ...rest } = row
-  return { ...toRow(rest), config: config as Record<string, unknown> }
+  const { config, safetyBuffer, channelLimit, allWarehouses, warehouses, ...rest } = row
+  return {
+    ...toRow(rest),
+    config: config as Record<string, unknown>,
+    stockRules: { safetyBuffer, channelLimit },
+    warehouses: { all: allWarehouses, warehouseIds: allWarehouses ? [] : warehouses.map((choice) => choice.warehouseId) },
+  }
 }
 
 /** Decrypts the credentials. Worker only: never hand the result to the panel. */

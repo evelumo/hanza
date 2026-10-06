@@ -5,22 +5,26 @@ import { createConnectorRegistry } from '../connectors/registry'
 import type { Context } from '../context'
 import type { Logger } from '../logger'
 import { createSecretBox } from '../secrets'
+import { createWorkflowEngine } from '../workflows/engine'
 import { createInMemoryJobQueue, type InMemoryJobQueue } from './queue'
 
 export type TestContext = Context & { queue: InMemoryJobQueue }
 
-const silentLogger: Logger = { info() {}, error() {} }
+const silentLogger: Logger = { info() {}, warn() {}, error() {} }
 
-/** A real database, a random encryption key, a silent logger, an in-memory queue and the given connectors. */
+/** A real database, a random encryption key, a silent logger, an in-memory queue, the given connectors and the workflow engine on them. */
 export function createTestContext(options: { databaseUrl: string; connectors?: AnyConnectorDefinition[] }): TestContext {
   const key = randomBytes(32).toString('base64')
+  const db = createDb(options.databaseUrl)
+  const queue = createInMemoryJobQueue()
   return {
     env: { DATABASE_URL: options.databaseUrl, REDIS_URL: 'redis://localhost:6379', HANZA_ENCRYPTION_KEY: key },
-    db: createDb(options.databaseUrl),
-    queue: createInMemoryJobQueue(),
+    db,
+    queue,
     log: silentLogger,
     secrets: createSecretBox(key),
     connectors: createConnectorRegistry(options.connectors ?? []),
+    workflows: createWorkflowEngine({ db, queue, log: silentLogger }),
   }
 }
 

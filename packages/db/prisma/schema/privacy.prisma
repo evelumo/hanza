@@ -1,0 +1,12 @@
+// How an organization handles Buyer personal data (ADR 0016).
+
+model PrivacySettings {
+  organizationId         String   @id
+  /// Days after an Order closed before its Buyer data is erased; null = keep it (the default).
+  buyerDataRetentionDays Int?
+  updatedAt              DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@map("privacy_settings")
+}

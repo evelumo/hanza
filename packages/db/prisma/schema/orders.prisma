@@ -1,6 +1,6 @@
 // Orders imported from Channels. Fulfilment progress is owned by Hanza.
 
-/// The fixed Order phases the core reasons about (ADR 0003, ADR 0014). Connectors speak phases too.
+/// The fixed Order phases the core reasons about (ADR 0003, ADR 0018). Connectors speak phases too.
 enum OrderPhase {
   new
   processing
@@ -44,38 +44,52 @@ enum AttentionReason {
 enum ChannelFactType {
   cancelled
   shipped
+  paid
 
   @@map("channel_fact_type")
 }
 
 model Order {
-  id               String            @id @default(uuid(7))
-  organizationId   String
-  connectionId     String
-  externalId       String
+  id                    String            @id @default(uuid(7))
+  organizationId        String
+  connectionId          String
+  externalId            String
   /// What the core reasons about (Reservations, Stock, Channel facts, the status push).
-  phase            OrderPhase        @default(new)
+  phase                 OrderPhase        @default(new)
   /// The organization's Order status, always one of `phase` (composite foreign key).
-  statusId         String
-  attentionReasons AttentionReason[] @default([])
-  placedAt         DateTime
-  payment          PaymentMethod
-  currency         String            @db.Char(3)
-  totalAmount      Decimal           @db.Decimal(19, 4)
-  // Buyer snapshot (no encryption yet: issue #6).
-  buyerName        String
-  buyerEmail       String?
-  buyerPhone       String?
-  buyerLogin       String?
-  /// Canonical `Address` (zod-validated on write and read).
-  shippingAddress  Json
-  billingAddress   Json?
+  statusId              String
+  attentionReasons      AttentionReason[] @default([])
+  placedAt              DateTime
+  payment               PaymentMethod
+  /// A prepaid Order the Buyer has not paid for yet; cleared by a `paid` Channel fact. Not fulfillable while true.
+  awaitingPayment       Boolean           @default(false)
+  currency              String            @db.Char(3)
+  totalAmount           Decimal           @db.Decimal(19, 4)
+  /// The Buyer snapshot `{ buyer, shippingAddress, billingAddress }`, sealed with HANZA_ENCRYPTION_KEY (ADR 0016). Null once erased.
+  buyerData             String?
+  /// Keyed HMAC of the Buyer's normalised email, for exact-match erasure requests only.
+  buyerEmailIndex       String?
+  /// Kept after the Buyer data is erased: accounting needs the destination country.
+  shippingCountryCode   String?           @db.Char(2)
+  /// When the Order reached phase shipped or cancelled; retention counts from here. A move between statuses of a
+  /// final phase leaves it alone.
+  closedAt              DateTime?
+  buyerDataErasedAt     DateTime?
+  /// Set when `privacy.sweep` could not seal this legacy row (it fails the schema); the sweep skips it from then on.
+  buyerDataSealFailedAt DateTime?
+  // Legacy plaintext Buyer snapshot, written before ADR 0016; `privacy.sweep` seals and clears it.
+  buyerName             String?
+  buyerEmail            String?
+  buyerPhone            String?
+  buyerLogin            String?
+  shippingAddress       Json?
+  billingAddress        Json?
   /// Incremented by every status change a person makes; a push clears `statusPushDueAt` only for the value it read.
-  statusPushSeq    Int               @default(0)
-  /// Non-null while the Channel has not been told the current status: when `sync.tick` may enqueue the push again (ADR 0011).
-  statusPushDueAt  DateTime?
-  importedAt       DateTime          @default(now())
-  updatedAt        DateTime          @updatedAt
+  statusPushSeq         Int               @default(0)
+  /// Non-null while the Channel has not been told the current status: when `sync.tick` may enqueue the push again (ADR 0012).
+  statusPushDueAt       DateTime?
+  importedAt            DateTime          @default(now())
+  updatedAt             DateTime          @updatedAt
 
   organization Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   connection   Connection         @relation(fields: [connectionId], references: [id], onDelete: Restrict)
@@ -89,6 +103,8 @@ model Order {
   @@index([organizationId, placedAt(sort: Desc)])
   @@index([organizationId, phase])
   @@index([organizationId, statusId])
+  @@index([organizationId, buyerEmailIndex])
+  @@index([organizationId, closedAt])
   @@index([connectionId, statusPushDueAt])
   @@map("order")
 }
@@ -136,7 +152,7 @@ model OrderChannelFact {
   @@map("order_channel_fact")
 }
 
-/// An organization-defined Order status: a finer label within one Order phase (ADR 0014). Every organization has a
+/// An organization-defined Order status: a finer label within one Order phase (ADR 0018). Every organization has a
 /// default status per phase, created on first use; `organizationId`, `phase` and `id` never change after insert.
 model OrderStatus {
   id             String            @id @default(uuid(7))

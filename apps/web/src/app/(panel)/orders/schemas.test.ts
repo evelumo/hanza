@@ -27,13 +27,24 @@ describe('resolveAttentionSchema', () => {
 
 describe('orderListFiltersSchema', () => {
   it('ignores filter values it does not know instead of failing the page', () => {
-    expect(orderListFiltersSchema.parse({ phase: 'bogus', status: '', attention: 'yes' })).toEqual({ phase: undefined, status: undefined, attention: undefined })
-    expect(orderListFiltersSchema.parse({ phase: 'shipped', status: 'status-id', attention: '1' })).toEqual({ phase: 'shipped', status: 'status-id', attention: '1' })
+    expect(orderListFiltersSchema.parse({ phase: 'bogus', status: '', attention: 'yes', payment: 'paid' })).toEqual({
+      phase: undefined,
+      status: undefined,
+      attention: undefined,
+      payment: undefined,
+    })
+    expect(orderListFiltersSchema.parse({ phase: 'shipped', status: 'status-id', attention: '1', payment: 'awaiting' })).toEqual({
+      phase: 'shipped',
+      status: 'status-id',
+      attention: '1',
+      payment: 'awaiting',
+    })
     expect(orderListFiltersSchema.parse({})).toEqual({})
   })
 
   it('reads a phase in `status` (links from before Order statuses) as the phase filter', () => {
     expect(orderListFiltersSchema.parse({ status: 'shipped' })).toEqual({ phase: 'shipped', status: undefined })
     expect(orderListFiltersSchema.parse({ phase: 'new', status: 'cancelled', attention: '1' })).toEqual({ phase: 'new', status: undefined, attention: '1' })
+    expect(orderListFiltersSchema.parse({ status: 'new', payment: 'awaiting' })).toEqual({ phase: 'new', status: undefined, payment: 'awaiting' })
   })
 })

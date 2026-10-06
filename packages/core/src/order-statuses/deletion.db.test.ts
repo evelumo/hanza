@@ -27,7 +27,7 @@ async function addAdmin(ctx: TestContext, organizationId: string): Promise<Actor
   return { type: 'user', userId }
 }
 
-// A status in use is deleted in two steps (ADR 0014): marked with its replacement at once, its Orders moved by the
+// A status in use is deleted in two steps (ADR 0018): marked with its replacement at once, its Orders moved by the
 // `orderStatuses.delete` job. These tests change things between the two steps.
 describe.skipIf(!databaseUrl)('deleting an Order status while things change around it', () => {
   const context = useTestContext({ applicationName })

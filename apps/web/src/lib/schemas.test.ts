@@ -3,18 +3,25 @@ import { z } from 'zod'
 import { changeOrderStatusSchema, linkOrderLineSchema } from '@/app/(panel)/orders/schemas'
 import { addConnectionSchema, statusMappingSchema } from '@/app/(panel)/connections/schemas'
 import {
+  createProductSchema,
+  createProductsFromOffersSchema,
+  linkOfferSchema,
+  setBasePriceSchema,
+  setOfferPriceSchema,
+  setStockSchema,
+} from '@/app/(panel)/products/schemas'
+import {
   createOrderStatusSchema,
   deleteOrderStatusSchema,
   moveOrderStatusSchema,
   setOrderStatusActiveSchema,
   updateOrderStatusSchema,
 } from '@/app/(panel)/settings/order-statuses/schemas'
-import { createProductSchema, createProductsFromOffersSchema, linkOfferSchema, setStockSchema } from '@/app/(panel)/products/schemas'
 import { catalogues } from '@/i18n/catalogues'
 import { translatorFor } from '@/i18n/testing'
 import { isMessageKey } from '@/i18n/keys'
 import { invalidInput } from './action-state'
-import { idSchema, skuSchema, unitsSchema } from './schemas'
+import { currencyCodeSchema, idSchema, skuSchema, unitsSchema } from './schemas'
 
 describe('idSchema', () => {
   it('accepts ids up to 64 characters and rejects empty, longer and non-string values', () => {
@@ -27,7 +34,34 @@ describe('idSchema', () => {
 })
 
 describe('validation messages', () => {
-  const garbage = [{}, { orderId: 'a'.repeat(99) }, { orderId: 1, productId: 1, offerId: 1, offerIds: 'x', status: 'zzz', statusId: 1, phase: 'zzz', color: 'pink', direction: 'left', active: 'yes', replacementId: 1, new: 1, sku: 1, stock: 1, name: 1, orderLineId: 1, connectorId: 1 }]
+  const garbage = [
+    {},
+    { orderId: 'a'.repeat(99) },
+    {
+      orderId: 1,
+      productId: 1,
+      offerId: 1,
+      offerIds: 'x',
+      status: 'zzz',
+      statusId: 1,
+      phase: 'zzz',
+      color: 'pink',
+      direction: 'left',
+      active: 'yes',
+      replacementId: 1,
+      new: 1,
+      sku: 1,
+      stock: 1,
+      name: 1,
+      orderLineId: 1,
+      connectorId: 1,
+    },
+    { intent: 'set', productId: 'p', offerId: 'o', amount: '0', currency: 'zł' },
+    { intent: 'set', productId: 'p', offerId: 'o', amount: '1,234', currency: 'PLN' },
+    { intent: 'set', productId: 'p', offerId: 'o', amount: '45.5', currency: 'JPY' },
+    { intent: 'set', amount: 1, currency: 1 },
+    { intent: 'zzz' },
+  ]
   const schemas = {
     idSchema,
     skuSchema,
@@ -39,6 +73,9 @@ describe('validation messages', () => {
     setStockSchema,
     linkOfferSchema,
     createProductsFromOffersSchema,
+    currencyCodeSchema,
+    setBasePriceSchema,
+    setOfferPriceSchema,
     createOrderStatusSchema,
     updateOrderStatusSchema,
     moveOrderStatusSchema,

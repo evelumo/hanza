@@ -7,7 +7,7 @@ import { appendEvent } from '../events'
 import { ORDER_PHASES, type OrderPhase } from '../orders/phases'
 import { TX_OPTIONS } from '../transaction'
 import { ensureDefaultOrderStatuses, findStatus, isPendingReplacement, snapshotOf } from './defaults'
-import { assertCanManageOrderStatuses } from './permissions'
+import { assertCanManageOrganization } from '../permissions'
 
 export const ORDER_STATUS_COLORS = ['gray', 'blue', 'teal', 'green', 'amber', 'orange', 'red', 'violet'] as const satisfies readonly OrderStatusColor[]
 export const ORDER_STATUS_NAME_MAX = 60
@@ -96,7 +96,7 @@ export async function createOrderStatus(
   input: { phase: OrderPhase; name: string; color: OrderStatusColor | null },
   actor: Actor,
 ): Promise<{ statusId: string }> {
-  await assertCanManageOrderStatuses(ctx, organizationId, actor)
+  await assertCanManageOrganization(ctx, organizationId, actor)
   const name = nameSchema.parse(input.name)
   await ensureDefaultOrderStatuses(ctx.db, organizationId)
   return withNameTaken(() =>
@@ -130,7 +130,7 @@ export async function updateOrderStatus(
   input: { name: string | null; color: OrderStatusColor | null },
   actor: Actor,
 ): Promise<void> {
-  await assertCanManageOrderStatuses(ctx, organizationId, actor)
+  await assertCanManageOrganization(ctx, organizationId, actor)
   const name = input.name === null || input.name.trim() === '' ? null : nameSchema.parse(input.name)
   await withNameTaken(() =>
     ctx.db.$transaction(async (tx) => {
@@ -155,7 +155,7 @@ export async function updateOrderStatus(
 
 /** Swaps the status with its neighbour within the phase and renumbers the phase from 0. */
 export async function moveOrderStatus(ctx: Context, organizationId: string, statusId: string, direction: 'up' | 'down', actor: Actor): Promise<void> {
-  await assertCanManageOrderStatuses(ctx, organizationId, actor)
+  await assertCanManageOrganization(ctx, organizationId, actor)
   await ctx.db.$transaction(async (tx) => {
     const { phase } = await findStatus(tx, organizationId, statusId)
     await lockPhase(tx, organizationId, phase)
@@ -187,7 +187,7 @@ export async function moveOrderStatus(ctx: Context, organizationId: string, stat
  * activated again, and a status a deletion moves Orders to cannot be deactivated.
  */
 export async function setOrderStatusActive(ctx: Context, organizationId: string, statusId: string, active: boolean, actor: Actor): Promise<void> {
-  await assertCanManageOrderStatuses(ctx, organizationId, actor)
+  await assertCanManageOrganization(ctx, organizationId, actor)
   await withNameTaken(() =>
     ctx.db.$transaction(async (tx) => {
       await lockStatuses(tx, organizationId, [statusId])
@@ -210,7 +210,7 @@ export async function setOrderStatusActive(ctx: Context, organizationId: string,
 
 /** The status Orders get when they enter its phase without a Status mapping. Orders already in the phase keep theirs. */
 export async function makeDefaultOrderStatus(ctx: Context, organizationId: string, statusId: string, actor: Actor): Promise<void> {
-  await assertCanManageOrderStatuses(ctx, organizationId, actor)
+  await assertCanManageOrganization(ctx, organizationId, actor)
   await ensureDefaultOrderStatuses(ctx.db, organizationId)
   await ctx.db.$transaction(async (tx) => {
     const { phase } = await findStatus(tx, organizationId, statusId)

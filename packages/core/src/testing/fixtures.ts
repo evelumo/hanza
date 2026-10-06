@@ -3,33 +3,44 @@ import { defineConnector, type ChannelFact, type Order, type OrderLine } from '@
 import { z } from 'zod'
 import type { Actor } from '../actor'
 import { createConnection } from '../connections/connections'
+import type { OrderPhase } from '../orders/phases'
 import type { TestContext } from './context'
 
 // Fixtures for core's own DB tests; not exported from `@hanza/core/testing`.
 
 export const user: Actor = { type: 'user', userId: 'user-1' }
 
+const nothingToPull = async () => ({ items: [], nextCursor: null, hasMore: false })
+
 /**
- * A do-nothing Channel registered as `fake`, the connector id of `createTestConnection`. Register it
- * (`useTestContext({ connectors: [testChannel] })`) where a test needs status changes to be pushable.
+ * A do-nothing marketplace Channel registered as `fake`, the connector id `createTestConnection` uses.
+ * Register it (`useTestContext({ connectors: [testChannel] })`) where a service checks that a Connection
+ * is a Channel, or where a test needs status changes to be pushable.
  */
 export const testChannel = defineConnector({
   id: 'fake',
   name: 'Test channel',
   kind: 'marketplace',
   auth: { type: 'none' },
-  configSchema: z.object({}).passthrough(),
-  credentialsSchema: z.object({}).passthrough(),
+  configSchema: z.looseObject({}),
+  credentialsSchema: z.looseObject({}),
   capabilities: {
-    async 'offers.pull'() {
-      return { items: [], nextCursor: null, hasMore: false }
-    },
-    async 'orders.pull'() {
-      return { items: [], nextCursor: null, hasMore: false }
-    },
+    'offers.pull': nothingToPull,
+    'orders.pull': nothingToPull,
     async 'stock.push'() {},
     async 'orders.updateStatus'() {},
   },
+})
+
+/** A connector that is not a Channel. */
+export const testCourier = defineConnector({
+  id: 'test-courier',
+  name: 'Test courier',
+  kind: 'courier',
+  auth: { type: 'none' },
+  configSchema: z.object({}),
+  credentialsSchema: z.object({}),
+  capabilities: {},
 })
 
 export async function createTestConnection(ctx: TestContext, organizationId: string, name = 'Test channel'): Promise<string> {
@@ -84,4 +95,20 @@ export function buildOrder(overrides: Partial<Order> = {}): Order {
 
 export function uniqueSku(prefix = 'SKU'): string {
   return `${prefix}-${randomUUID().slice(0, 8)}`
+}
+
+/** A user who is a member of the organization with `role` (Better Auth's `member.role`); returns them as an Actor. */
+export async function addMember(ctx: TestContext, organizationId: string, role: string): Promise<Actor> {
+  const userId = randomUUID()
+  await ctx.db.user.create({ data: { id: userId, name: `User ${userId.slice(0, 8)}`, email: `${userId}@example.org` } })
+  await ctx.db.member.create({ data: { id: randomUUID(), organizationId, userId, role, createdAt: new Date() } })
+  return { type: 'user', userId }
+}
+
+/**
+ * The organization's default status of `phase`, for a test that writes an Order's phase directly (a state older code
+ * left behind): the composite foreign key needs the phase and a status of it together. The defaults must exist.
+ */
+export async function defaultStatusId(ctx: TestContext, organizationId: string, phase: OrderPhase): Promise<string> {
+  return (await ctx.db.orderStatus.findFirstOrThrow({ where: { organizationId, phase, isDefault: true }, select: { id: true } })).id
 }

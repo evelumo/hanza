@@ -1,6 +1,7 @@
 import { DelayedError, Queue, UnrecoverableError, Worker, type ConnectionOptions, type Job, type JobsOptions } from 'bullmq'
 import type { z } from 'zod'
 import type { Context } from './context'
+import { describeFailure } from './describe-failure'
 import { PermanentJobError, RetryLaterError, type JobDefinition, type JobRef } from './jobs'
 
 export const QUEUE_NAME = 'hanza'
@@ -54,12 +55,13 @@ export function bullJobOptions(options: EnqueueOptions = {}): JobsOptions {
   return jobOptions
 }
 
-export function createJobQueue(redisUrl: string): JobQueue {
+export function createJobQueue(redisUrl: string, options: { prefix?: string } = {}): JobQueue {
   // Created on first use, so importing the context never opens a connection.
   let instance: Queue | undefined
   const queue = () =>
     (instance ??= new Queue(QUEUE_NAME, {
       connection: redisConnection(redisUrl),
+      prefix: options.prefix,
       defaultJobOptions: {
         attempts: 5,
         backoff: { type: 'exponential', delay: 2_000 },
@@ -132,12 +134,13 @@ export function createJobProcessor(ctx: Context, jobs: JobDefinition[]): (job: P
 export function startWorker(ctx: Context, jobs: JobDefinition[], options: { concurrency: number }): QueueWorker {
   const worker = new Worker(QUEUE_NAME, createJobProcessor(ctx, jobs), {
     connection: redisConnection(ctx.env.REDIS_URL),
+    prefix: ctx.env.HANZA_QUEUE_PREFIX,
     concurrency: options.concurrency,
   })
   worker.on('ready', () => ctx.log.info('worker ready', { jobs: jobs.map((job) => job.name), concurrency: options.concurrency }))
   worker.on('completed', (job) => ctx.log.info('job completed', { name: job.name, id: job.id }))
   worker.on('failed', (job, error) =>
-    ctx.log.error('job failed', { name: job?.name, id: job?.id, attemptsMade: job?.attemptsMade, error: error.message }),
+    ctx.log.error('job failed', { name: job?.name, id: job?.id, attemptsMade: job?.attemptsMade, error: describeFailure(error) }),
   )
   worker.on('error', (error) => ctx.log.error('worker error', { error: error.message }))
   return { close: () => worker.close() }

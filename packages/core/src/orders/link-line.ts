@@ -68,7 +68,12 @@ export async function linkLineInTx(
   let shortage = false
   if (order.phase !== 'cancelled') {
     const mode = order.phase === 'shipped' ? 'consumed' : 'open'
-    ;({ shortage } = await reserveLine(tx, organizationId, { orderId: order.id, orderLineId, productId, units: line.quantity }, mode))
+    ;({ shortage } = await reserveLine(
+      tx,
+      organizationId,
+      { orderId: order.id, orderLineId, connectionId: order.connectionId, productId, units: line.quantity },
+      mode,
+    ))
     availableChanged = true
     if (shortage) await tx.orderLine.updateMany({ where: { id: orderLineId, organizationId }, data: { shortage: true } })
   }

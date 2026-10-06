@@ -10,7 +10,7 @@ import type { OrderPhase } from '../orders/phases'
 import { TX_OPTIONS } from '../transaction'
 import { ensureDefaultOrderStatuses, findStatus, isPendingReplacement, snapshotOf, type StatusSnapshot } from './defaults'
 import { moveMappings } from './mapping'
-import { assertCanManageOrderStatuses } from './permissions'
+import { assertCanManageOrganization } from '../permissions'
 import { lockStatuses } from './statuses'
 
 /** Orders moved per transaction: each batch holds its row locks only briefly. */
@@ -37,7 +37,7 @@ export async function deleteOrderStatus(
   replacementId: string | null,
   actor: Actor,
 ): Promise<{ deleted: boolean }> {
-  await assertCanManageOrderStatuses(ctx, organizationId, actor)
+  await assertCanManageOrganization(ctx, organizationId, actor)
   const started = await ctx.db.$transaction(async (tx) => {
     await lockStatuses(tx, organizationId, replacementId ? [statusId, replacementId] : [statusId])
     const status = await findStatus(tx, organizationId, statusId)

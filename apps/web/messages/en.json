@@ -17,7 +17,10 @@
     "products": "Products",
     "orders": "Orders",
     "connections": "Connections",
-    "settings": "Settings"
+    "settings": "Settings",
+    "families": "Families",
+    "privacy": "Privacy",
+    "warehouses": "Warehouses"
   },
   "pagination": {
     "label": "Pagination",
@@ -77,6 +80,11 @@
     "searchPlaceholder": "Search by SKU or name",
     "search": "Search",
     "clear": "Clear",
+    "familyFilter": {
+      "label": "Family",
+      "all": "All products",
+      "none": "Without a family"
+    },
     "emptySearch": "No product matches your search.",
     "empty": "There are no products yet. Add the first one, or create them from offers pulled from a channel.",
     "columns": {
@@ -85,7 +93,8 @@
       "stock": "Stock",
       "reserved": "Reserved",
       "available": "Available",
-      "offers": "Offers"
+      "offers": "Offers",
+      "family": "Family"
     },
     "shortageHint": "(shortage)",
     "detail": {
@@ -97,9 +106,11 @@
       "name": "Name",
       "saveName": "Save name",
       "stockTitle": "Stock",
-      "stockDescription": "Hanza is the source of truth for stock. Channels only receive Available (Stock minus Reservations).",
+      "stockDescription": "Hanza is the source of truth for stock. Set it per warehouse. A line of an order is never split between warehouses, so each channel is told the most that one of its warehouses can cover (and never more than all of them together), less its safety buffer, and at most its channel limit.",
       "stockSaved": "Saved. The new stock will be sent to the channels.",
       "saveStock": "Save stock",
+      "priceTitle": "Price",
+      "priceDescription": "Hanza owns prices. The base price goes to every linked offer without a price of its own, wherever the channel sells in the same currency. Without a base price, nothing is sent.",
       "offersTitle": "Offers",
       "offersDescription": "This product's offers in channels.",
       "offersEmpty": "This product has no linked offers yet. An offer is linked automatically by SKU, or manually in the list of offers without a product.",
@@ -108,18 +119,31 @@
         "offer": "Offer",
         "link": "Link",
         "lastPushed": "Last pushed",
+        "price": "Price",
         "actions": "Actions"
       },
       "linkedManually": "Manual",
       "linkedBySku": "By SKU",
       "notPushed": "not pushed yet",
+      "priceFromOffer": "offer price",
+      "priceFromBase": "base price",
       "unlink": "Unlink",
       "unlinking": "Unlinking…",
       "unlinkConfirm": "Unlink the offer from this product? The channel will no longer receive its stock.",
       "reservationsTitle": "Open reservations",
       "reservationsDescription": "Goods promised to orders that have not been shipped yet.",
       "reservationsEmpty": "No open reservations.",
-      "reservationOrder": "Order {id}"
+      "reservationOrder": "Order {id}",
+      "familyLine": "Family: {name}",
+      "warehouseColumns": {
+        "warehouse": "Warehouse",
+        "stock": "Stock",
+        "reserved": "Reserved",
+        "available": "Available"
+      },
+      "manageWarehouses": "Manage warehouses",
+      "reservationWarehouse": "in {warehouse}",
+      "stockIn": "Stock in {warehouse}"
     },
     "new": {
       "title": "Add product",
@@ -131,11 +155,60 @@
       "submitting": "Adding…"
     }
   },
+  "families": {
+    "title": "Product families",
+    "intro": "A family groups the products that are sizes or colours of one another. Orders, stock and offers keep working on the individual products.",
+    "add": "Add family",
+    "empty": "There are no product families yet. Create one to group products such as sizes or colours.",
+    "columns": {
+      "name": "Name",
+      "attributes": "Attributes",
+      "products": "Products"
+    },
+    "productCount": "{count, plural, one {# product} other {# products}}",
+    "new": {
+      "title": "Add family",
+      "name": "Name",
+      "attributes": "Attributes",
+      "attributesHint": "What tells the products apart, separated by commas, for example: Size, Colour. At most 5; they cannot be changed later.",
+      "submit": "Add family",
+      "submitting": "Adding…"
+    },
+    "detail": {
+      "title": "Product family",
+      "attributesLine": "Attributes: {attributes}",
+      "renameTitle": "Name",
+      "renameDescription": "The name is only for you; channels do not see it.",
+      "name": "Name",
+      "saveName": "Save name",
+      "membersTitle": "Products in this family",
+      "membersDescription": "Each product has one value per attribute. No two products can have the same values.",
+      "membersEmpty": "No products in this family yet. Add the first one below.",
+      "availableLine": "Available: {count}",
+      "saveValues": "Save",
+      "saving": "Saving…",
+      "remove": "Remove",
+      "removing": "Removing…",
+      "removeConfirm": "Remove this product from the family? The product itself stays as it is.",
+      "valueLabel": "{attribute} of {sku}",
+      "addTitle": "Add a product",
+      "addDescription": "A product can be in one family at a time.",
+      "sku": "Product SKU",
+      "skuHint": "The SKU of an existing product that is in no family.",
+      "add": "Add to family",
+      "adding": "Adding…",
+      "deleteTitle": "Delete family",
+      "deleteDescription": "Its products are not deleted: they just stop being grouped. Orders, stock and offers are not affected.",
+      "delete": "Delete family",
+      "deleting": "Deleting…",
+      "deleteConfirm": "Delete this family? Its products stay, ungrouped."
+    }
+  },
   "offers": {
     "title": "Offers without a product",
     "description": "Offers pulled from channels whose SKU does not match any product.",
     "createTitle": "Create products from offers",
-    "createDescription": "Select the offers that have a SKU in the table. A product gets the offer's SKU and name and a stock of 0.",
+    "createDescription": "Select the offers that have a SKU in the table. A product gets the offer's SKU and name and a stock of 0. It gets no price: set one on the product, and only then is it sent to the channels.",
     "create": "Create products from selected",
     "creating": "Creating…",
     "created": "{count, plural, one {Created # product.} other {Created # products.}}",
@@ -161,12 +234,49 @@
     "link": "Link to product",
     "linking": "Linking…"
   },
+  "offerDetail": {
+    "title": "Offer",
+    "connectionLine": "Connection: {connection} · ID: {externalId}",
+    "backToProduct": "Product {sku}",
+    "channelPrice": "Price in the channel",
+    "channelPriceHint": "As reported at the last sync. Hanza does not take it over.",
+    "effectivePrice": "Price from Hanza",
+    "lastPushedPrice": "Last sent price",
+    "notSent": "not sent yet",
+    "productLine": "Linked to {name} (SKU {sku}). Base price: {price}.",
+    "overrideTitle": "Offer price",
+    "overrideDescription": "A price for this offer only. It wins over the product's base price; remove it to go back to the base price.",
+    "mismatchHint": "Set an offer price in {currency} to send one.",
+    "notLinked": "This offer is not linked to a product, so Hanza sends neither its stock nor its price. Link it on the list of offers without a product."
+  },
+  "prices": {
+    "none": "No price",
+    "form": {
+      "amount": "Price",
+      "currency": "Currency",
+      "currencyPlaceholder": "PLN",
+      "save": "Save price",
+      "clear": "Remove price",
+      "saved": "Saved. The channels will receive the new price shortly.",
+      "useChannelPrice": "Use the channel price ({price})"
+    },
+    "status": {
+      "not_linked": "Not sent: the offer is not linked to a product.",
+      "unsupported": "Not sent: this channel's connector cannot set prices.",
+      "no_price": "No price, so nothing is sent.",
+      "currency_unknown": "Not sent: the channel did not report the offer's currency.",
+      "currency_mismatch": "Not sent: the channel sells this offer in {channelCurrency} and the price is in {priceCurrency}.",
+      "pending": "Waiting to be sent.",
+      "pushed": "Sent {date}."
+    }
+  },
   "orders": {
     "title": "Orders",
     "filters": {
       "status": "Status",
       "all": "All",
       "attentionOnly": "Only those needing attention",
+      "awaitingPaymentOnly": "Only awaiting payment",
       "apply": "Filter",
       "clear": "Clear",
       "phase": "Phase"
@@ -182,6 +292,9 @@
       "status": "Status"
     },
     "needsAttention": "Needs attention",
+    "awaitingPayment": "Awaiting payment",
+    "buyerErased": "Erased",
+    "buyerUnreadable": "Cannot be read",
     "detail": {
       "title": "Order",
       "summary": "Channel: {channel} · {date} · {payment} · {total}",
@@ -189,6 +302,8 @@
       "markReviewed": "Mark as reviewed",
       "statusTitle": "Status",
       "statusDescription": "Hanza leads the fulfilment. Moving the order to another phase is passed on to the channel if the channel supports it; statuses within one phase are your own labels and stay in Hanza.",
+      "awaitingPaymentHint": "The buyer has not paid yet. The goods stay reserved; the order can be fulfilled once the channel reports the payment, and until then it can only be cancelled or given another status of the New phase.",
+      "awaitingPaymentShippedHint": "Shipped, but the channel has not reported the payment for this order.",
       "finalStatus": "The order is in a final phase ({status}) and has no other status to move to.",
       "changeTo": "Change to: {status}",
       "confirmShipped": "Mark the order as shipped? The reserved goods will be taken off stock.",
@@ -200,11 +315,15 @@
         "quantity": "Quantity",
         "price": "Price",
         "product": "Product",
-        "reservation": "Reservation"
+        "reservation": "Reservation",
+        "warehouse": "Warehouse"
       },
       "unmatched": "Unmatched",
       "shortage": "Shortage",
       "buyerTitle": "Buyer",
+      "buyerErased": "Buyer data was erased on {date}.",
+      "buyerUnreadable": "The buyer data of this order cannot be read: it does not decrypt with the current encryption key, or it is damaged.",
+      "shippingCountry": "Shipping country: {country}",
       "contact": "Contact details",
       "phone": "Phone: {phone}",
       "channelLogin": "Channel login: {login}",
@@ -223,6 +342,12 @@
       "skuPlaceholder": "Product SKU",
       "submit": "Link",
       "submitting": "Linking…"
+    },
+    "moveReservation": {
+      "label": "Move the reservation to",
+      "submit": "Move",
+      "submitting": "Moving…",
+      "hint": "Only to a warehouse that has enough available for the whole line."
     }
   },
   "connections": {
@@ -278,6 +403,59 @@
       "optionalField": "{label} (optional)",
       "submit": "Add connection",
       "submitting": "Adding…"
+    },
+    "stockRules": {
+      "title": "Stock sent to this channel",
+      "description": "The channel is told the most that one of the warehouses it counts (below) can cover, less the safety buffer, and never more than the channel limit. Orders reserve against Available, not against this number.",
+      "safetyBuffer": "Safety buffer",
+      "safetyBufferHint": "Units held back from this channel, for example to keep the last units for your shop.",
+      "channelLimit": "Channel limit",
+      "channelLimitHint": "The most units this channel is told. Leave empty for no limit.",
+      "save": "Save stock settings",
+      "saved": "Saved. The new numbers will be sent to this channel."
+    },
+    "warehouses": {
+      "title": "Warehouses counted for this channel",
+      "description": "The channel is told what one of these warehouses can cover, since a line is never split: the largest Available among them, and never more than their total. Its orders reserve in them: in the first one, by priority, that can cover the whole line. A line none of them can cover is a shortage, even if another warehouse has the goods.",
+      "all": "All active warehouses",
+      "allHint": "Includes warehouses you add later.",
+      "only": "Only the chosen warehouses",
+      "legend": "Warehouses",
+      "save": "Save warehouses",
+      "saved": "Saved. The new numbers will be sent to this channel."
+    }
+  },
+  "privacy": {
+    "title": "Privacy",
+    "intro": "Buyer data on orders (names, contact details, addresses) is stored encrypted. Here you decide how long it is kept and handle a request to erase one person's data.",
+    "adminsOnly": "Only an owner or admin of the organization can change the retention period or erase a buyer's data.",
+    "retention": {
+      "title": "Buyer data retention",
+      "description": "Buyer data is erased this many days after an order was shipped or cancelled. Order lines, amounts and the shipping country are kept. Open orders are never affected.",
+      "label": "Days after the order closed",
+      "hint": "From 1 to 3650 days. Leave empty to keep buyer data until you erase it. Orders that were already closed before Hanza recorded closing times count from their last change.",
+      "save": "Save",
+      "saved": "Saved. The check runs every hour.",
+      "currentDays": "Now: buyer data is erased {count, plural, one {# day} other {# days}} after an order closed.",
+      "currentOff": "Now: buyer data is kept until you erase it.",
+      "confirmTitle": "Confirm the new retention period",
+      "confirmCount": "{count, plural, =0 {With {days, number} days, no order would have its buyer data erased at the next check.} one {With {days, number} days, # order will have its buyer data erased at the next check, within an hour. This cannot be undone.} other {With {days, number} days, # orders will have their buyer data erased at the next check, within an hour. This cannot be undone.}}",
+      "confirm": "Save and erase at the next check",
+      "confirmDialog": "Save the new retention period? Buyer data past it is erased within an hour and cannot be restored."
+    },
+    "erasure": {
+      "title": "Erase a buyer's data",
+      "description": "Finds this organization's orders placed with exactly this email address (letter case does not matter) and erases their buyer data. Orders for which the channel gave no email cannot be found this way.",
+      "emailLabel": "Buyer's email address",
+      "find": "Find orders",
+      "finding": "Searching…",
+      "noMatch": "No order of this organization has buyer data with this email address.",
+      "previewClosed": "{count, plural, =0 {No shipped or cancelled order to erase.} one {# shipped or cancelled order will have its buyer data erased.} other {# shipped or cancelled orders will have their buyer data erased.}}",
+      "openKept": "{count, plural, one {# order is still open and is kept: its address is needed to ship it. Ship or cancel it, then erase again.} other {# orders are still open and are kept: their address is needed to ship them. Ship or cancel them, then erase again.}}",
+      "confirm": "Erase the buyer data of these orders? This cannot be undone.",
+      "submit": "Erase buyer data",
+      "erasing": "Erasing…",
+      "done": "{count, plural, =0 {Nothing was erased.} one {Buyer data erased on # order.} other {Buyer data erased on # orders.}}"
     }
   },
   "labels": {
@@ -304,7 +482,8 @@
       "offers_pull": "Offers",
       "orders_pull": "Orders",
       "stock_push": "Stock levels",
-      "order_status_push": "Order statuses"
+      "order_status_push": "Order statuses",
+      "price_push": "Prices"
     },
     "payment": {
       "prepaid": "Prepaid",
@@ -312,7 +491,8 @@
     },
     "channelFact": {
       "cancelled": "Cancelled in the channel",
-      "shipped": "Shipped in the channel"
+      "shipped": "Shipped in the channel",
+      "paid": "Paid in the channel"
     },
     "reservation": {
       "open": "Open",
@@ -345,6 +525,10 @@
       "new": "A new order arrives",
       "shipped": "The channel reports it shipped",
       "cancelled": "The channel reports it cancelled"
+    },
+    "erasureCause": {
+      "retention": "retention period",
+      "erasure_request": "erasure request"
     }
   },
   "sync": {
@@ -358,7 +542,8 @@
       "factsApplied": "channel changes",
       "pages": "pages",
       "pushed": "pushed",
-      "truncated": "stopped at the page limit"
+      "truncated": "stopped at the page limit",
+      "skipped": "not sent"
     }
   },
   "events": {
@@ -366,14 +551,17 @@
       "system_ping": "Test job",
       "product_created": "Product created",
       "product_updated": "Product name changed",
+      "product_price_changed": "Base price changed",
       "stock_set": "Stock set",
       "stock_reserved": "Goods reserved",
       "stock_released": "Reservation released",
       "stock_consumed": "Goods taken off stock",
       "offer_linked": "Offer linked to a product",
       "offer_unlinked": "Offer unlinked from a product",
+      "offer_price_changed": "Offer price changed",
       "order_imported": "Order imported",
       "order_channel_fact_recorded": "The channel reported a change",
+      "order_payment_received": "Payment received",
       "order_status_changed": "Status changed",
       "order_line_linked": "Line linked to a product",
       "order_attention_raised": "Order needs attention",
@@ -384,20 +572,50 @@
       "order_status_updated": "Status edited",
       "order_status_deleted": "Status deleted",
       "connection_status_mapping_changed": "Order statuses from the channel changed",
-      "order_status_deletion_requested": "Status deletion started"
+      "order_status_deletion_requested": "Status deletion started",
+      "family_created": "Product family created",
+      "family_renamed": "Product family renamed",
+      "family_deleted": "Product family deleted",
+      "family_product_added": "Product added to a family",
+      "family_product_updated": "Product attributes in a family changed",
+      "family_product_removed": "Product removed from a family",
+      "connection_stock_rules_changed": "Stock settings changed",
+      "order_buyer_data_erased": "Buyer data erased",
+      "privacy_retention_changed": "Buyer data retention changed",
+      "privacy_erasure_requested": "Erasure request handled",
+      "order_reservation_moved": "Reservation moved to another warehouse",
+      "connection_warehouses_changed": "Warehouses of the channel changed",
+      "warehouse_created": "Warehouse added",
+      "warehouse_updated": "Warehouse changed",
+      "warehouse_deactivated": "Warehouse deactivated",
+      "warehouse_activated": "Warehouse activated",
+      "warehouse_deleted": "Warehouse deleted"
     },
     "lines": "{count, plural, one {# line} other {# lines}}",
-    "defaultStatus": "default status"
+    "defaultStatus": "default status",
+    "stockRules": "safety buffer {buffer}, channel limit {limit}",
+    "retentionDays": "{count, plural, one {# day} other {# days}}",
+    "retentionOff": "kept",
+    "ordersErased": "{count, plural, one {# order erased} other {# orders erased}}",
+    "allWarehouses": "all warehouses",
+    "someWarehouses": "{count, plural, one {# chosen warehouse} other {# chosen warehouses}}",
+    "priority": "priority {change}"
   },
   "errors": {
     "domain": {
       "not_found": "Not found.",
       "sku_taken": "A product with this SKU already exists.",
       "invalid_transition": "This status change is not allowed.",
+      "awaiting_payment": "The order is not paid yet. It can be fulfilled once the channel reports the payment.",
       "unmatched_lines": "Link all the lines to products first.",
       "already_linked": "This line is already linked.",
       "unknown_connector": "Unknown connector.",
       "invalid_config": "Check the fields.",
+      "combination_taken": "Another product in this family already has these values.",
+      "invalid_attributes": "Fill in every attribute (at most 100 characters) and keep the attribute names distinct.",
+      "already_in_family": "This product is already in a family. Remove it from there first.",
+      "invalid_price": "This price does not fit its currency: check the decimal places.",
+      "not_a_channel": "This connection is not a sales channel, so it has no stock settings.",
       "forbidden": "Only an owner or admin of the organization can do this.",
       "status_is_default": "A default status cannot be deactivated or deleted. Make another status the default first.",
       "status_in_use": "This status is still used. Choose a status to move its orders to.",
@@ -406,7 +624,14 @@
       "status_inactive": "This status is inactive. Activate it first.",
       "status_name_required": "Enter a name. Only a default status can go without one.",
       "status_pending_deletion": "This status is being deleted.",
-      "status_is_replacement": "Orders of a status being deleted are moving to this one. Try again when that deletion is done."
+      "status_is_replacement": "Orders of a status being deleted are moving to this one. Try again when that deletion is done.",
+      "warehouse_inactive": "This warehouse is inactive.",
+      "warehouse_is_default": "The default warehouse cannot be deactivated or deleted.",
+      "warehouse_not_empty": "The warehouse still holds stock or open reservations.",
+      "warehouse_in_use": "The warehouse is still in use: a channel chose it, or it has reservations in its history. Change the channel’s warehouses first, or deactivate it instead of deleting it.",
+      "no_warehouse_selected": "Choose at least one warehouse.",
+      "reservation_not_open": "Only an open reservation of a new or processing order can be moved.",
+      "not_enough_stock": "That warehouse does not have enough available for the whole line."
     },
     "unexpected": "Something went wrong. Please try again.",
     "invalidInput": "Check the fields.",
@@ -439,7 +664,18 @@
     "statusNameTooLong": "The name can have at most 60 characters.",
     "colorInvalid": "Choose a colour from the list.",
     "phaseInvalid": "Choose a valid phase.",
-    "statusNameReserved": "This is the name of a phase. Leave the name of the default status empty to use it."
+    "statusNameReserved": "This is the name of a phase. Leave the name of the default status empty to use it.",
+    "familyNameTooLong": "The name can have at most 100 characters.",
+    "attributesInvalid": "Enter 1 to 5 different attribute names, each at most 50 characters, separated by commas.",
+    "attributeValueRequired": "Enter a value of at most 100 characters.",
+    "priceInvalid": "Enter a price above 0, e.g. 49.99.",
+    "priceAmbiguous": "Ambiguous: three digits after the separator. Write 1234 for a thousands amount, or use fewer decimal places.",
+    "priceTooManyDecimals": "Too many decimal places for this currency (PLN has 2, JPY none).",
+    "currencyInvalid": "Enter a three-letter currency code, e.g. PLN.",
+    "emailInvalid": "Enter an email address (with @, at most 320 characters).",
+    "retentionDaysInvalid": "Enter a whole number of days from 1 to 3650, or leave the field empty.",
+    "warehouseNameTooLong": "The name can have at most 100 characters.",
+    "warehousesRequired": "Choose at least one warehouse."
   },
   "settings": {
     "title": "Settings",
@@ -489,6 +725,48 @@
       "deleteScheduled": "Deleting: its orders are being moved to the chosen status. The status disappears when that is done.",
       "deleteFor": "Delete {status}",
       "deletionInProgress": "Being deleted: its orders are moving to {status}."
+    }
+  },
+  "warehouses": {
+    "title": "Warehouses",
+    "description": "Places where your stock is kept. Each line of a new order is reserved in the first warehouse, by priority, that can cover it in full. On a connection page you can limit a channel to some warehouses.",
+    "listTitle": "Your warehouses",
+    "columns": {
+      "name": "Name",
+      "priority": "Priority",
+      "stock": "Stock",
+      "reserved": "Reserved",
+      "channels": "Chosen by channels"
+    },
+    "default": "Default",
+    "inactive": "Inactive",
+    "newTitle": "Add a warehouse",
+    "newDescription": "A new warehouse starts empty and active. Channels that count all warehouses count it at once.",
+    "name": "Name",
+    "priority": "Priority",
+    "priorityHint": "Lower numbers are used first. Leave empty to put it last.",
+    "priorityHintEdit": "Lower numbers are used first when an order is reserved.",
+    "create": "Add warehouse",
+    "created": "Warehouse added.",
+    "detail": {
+      "title": "Warehouse",
+      "summary": "Stock: {stock} · Reserved: {reserved}",
+      "dataTitle": "Warehouse details",
+      "save": "Save",
+      "saved": "Saved.",
+      "statusTitle": "Use",
+      "statusActive": "Active: it can hold stock and receive reservations.",
+      "statusInactive": "Inactive: it holds nothing and counts for no channel.",
+      "activate": "Activate",
+      "deactivate": "Deactivate",
+      "deactivateHint": "Only an empty warehouse can be deactivated: no stock, no open reservations, and no channel that chose it.",
+      "delete": "Delete warehouse",
+      "deleteConfirm": "Delete this warehouse? This cannot be undone.",
+      "deleteHint": "A warehouse that has ever had a reservation can only be deactivated.",
+      "defaultNote": "This is the default warehouse: new products get their initial stock here. It is always active and cannot be deleted.",
+      "channelsLine": "Chosen by: {channels}",
+      "historyTitle": "History",
+      "historyEmpty": "No events."
     }
   }
 }

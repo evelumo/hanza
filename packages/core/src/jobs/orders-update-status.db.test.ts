@@ -158,9 +158,11 @@ describe.skipIf(!databaseUrl)('orders.updateStatus', () => {
 
     failWith = null
     await changeOrderStatus(ctx, organizationId, orderId, 'cancelled', user)
+    // Cancelling drops `unmatched_line` (nothing left to ship), but the refusal stays until the Channel takes a status.
+    expect((await order()).attentionReasons).toEqual(['status_push_failed'])
     await push()
     expect(updates).toEqual([{ orderExternalId: 'status-order-1', status: 'cancelled' }])
-    expect(await order()).toMatchObject({ statusPushDueAt: null, attentionReasons: ['unmatched_line'] })
+    expect(await order()).toMatchObject({ statusPushDueAt: null, attentionReasons: [] })
   })
 
   it('a job enqueued before pending pushes were tracked (seq 0, nothing marked) still pushes the status', async () => {

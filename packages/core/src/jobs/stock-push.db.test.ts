@@ -4,6 +4,7 @@ import { z } from 'zod'
 import { createProduct } from '../catalog/products'
 import { upsertOffers } from '../catalog/offers'
 import { createConnection } from '../connections/connections'
+import { updateChannelStockRules } from '../connections/stock-rules'
 import { failSyncRun } from '../connections/sync-state'
 import { importOrder } from '../orders/import'
 import { createTestOrganization } from '../testing/context'
@@ -12,6 +13,8 @@ import { buildOrder, orderLine, uniqueSku, user } from '../testing/fixtures'
 import { stockPushJob } from './stock-push'
 
 const pushes: StockLevel[][] = []
+/** Runs once inside the next `stock.push` call, after the levels are recorded. */
+let duringNextPush: (() => Promise<void>) | undefined
 
 const channel = defineConnector({
   id: 'push-channel',
@@ -29,6 +32,9 @@ const channel = defineConnector({
     },
     async 'stock.push'(_ctx, levels) {
       pushes.push(levels)
+      const hook = duringNextPush
+      duringNextPush = undefined
+      await hook?.()
     },
   },
 })
@@ -88,6 +94,65 @@ describe.skipIf(!databaseUrl)('stock.push', () => {
     pushes.length = 0
     await stockPushJob.handler(ctx, { organizationId, connectionId }, run)
     expect(pushes).toEqual([])
+  })
+
+  it('pushes Channel Available: the Safety buffer and Channel limit of this Connection, and again after they change', async () => {
+    const { ctx, organizationId, connectionId } = await setup()
+    const plenty = uniqueSku()
+    const few = uniqueSku()
+    await createProduct(ctx, organizationId, { sku: plenty, name: 'A', stock: 20 }, user)
+    await createProduct(ctx, organizationId, { sku: few, name: 'B', stock: 2 }, user)
+    await upsertOffers(
+      ctx,
+      organizationId,
+      connectionId,
+      [
+        { externalId: 'offer-plenty', sku: plenty, name: 'A', url: null },
+        { externalId: 'offer-few', sku: few, name: 'B', url: null },
+      ],
+      new Date(),
+    )
+    await updateChannelStockRules(ctx, organizationId, connectionId, { safetyBuffer: 3, channelLimit: 10 }, user)
+
+    pushes.length = 0
+    await stockPushJob.handler(ctx, { organizationId, connectionId }, run)
+    const sorted = (levels: StockLevel[] | undefined) => [...(levels ?? [])].sort((a, b) => a.offerExternalId.localeCompare(b.offerExternalId))
+    // 20 − 3 = 17, capped at 10; 2 − 3 is below zero, so 0.
+    expect(sorted(pushes[0])).toEqual([
+      { offerExternalId: 'offer-few', sku: few, available: 0 },
+      { offerExternalId: 'offer-plenty', sku: plenty, available: 10 },
+    ])
+    const offers = await ctx.db.offer.findMany({ where: { organizationId, connectionId }, orderBy: { externalId: 'asc' } })
+    expect(offers.map((offer) => [offer.externalId, offer.lastPushedAvailable])).toEqual([
+      ['offer-few', 0],
+      ['offer-plenty', 10],
+    ])
+
+    await updateChannelStockRules(ctx, organizationId, connectionId, { safetyBuffer: 0, channelLimit: null }, user)
+    pushes.length = 0
+    await stockPushJob.handler(ctx, { organizationId, connectionId }, run)
+    expect(sorted(pushes[0])).toEqual([
+      { offerExternalId: 'offer-few', sku: few, available: 2 },
+      { offerExternalId: 'offer-plenty', sku: plenty, available: 20 },
+    ])
+  })
+
+  it('a settings change during a running push leaves the Offer pending, and the same run then pushes the new number', async () => {
+    const { ctx, organizationId, connectionId } = await setup()
+    const sku = uniqueSku()
+    await createProduct(ctx, organizationId, { sku, name: 'A', stock: 5 }, user)
+    await upsertOffers(ctx, organizationId, connectionId, [{ externalId: 'offer-a', sku, name: 'A', url: null }], new Date())
+    // The rules commit after this push read the Offer's sequence and the old rules, before it marks the Offer pushed.
+    duringNextPush = () => updateChannelStockRules(ctx, organizationId, connectionId, { safetyBuffer: 0, channelLimit: 2 }, user)
+
+    pushes.length = 0
+    await stockPushJob.handler(ctx, { organizationId, connectionId }, run)
+
+    expect(duringNextPush).toBeUndefined()
+    expect(pushes).toEqual([[{ offerExternalId: 'offer-a', sku, available: 5 }], [{ offerExternalId: 'offer-a', sku, available: 2 }]])
+    const offer = await ctx.db.offer.findFirstOrThrow({ where: { organizationId, connectionId, externalId: 'offer-a' } })
+    expect(offer.stockPushedSeq).toBe(offer.stockPushSeq)
+    expect(offer.lastPushedAvailable).toBe(2)
   })
 
   it('with nothing to push it calls nothing and records only that it finished', async () => {

@@ -6,7 +6,7 @@ import { appendEvent } from '../events'
 import { CHANNEL_REPORTED_PHASES, type ChannelReportedPhase } from '../orders/phases'
 import { TX_OPTIONS } from '../transaction'
 import { sharedStatus, snapshotOf, type StatusSnapshot } from './defaults'
-import { assertCanManageOrderStatuses } from './permissions'
+import { assertCanManageOrganization } from '../permissions'
 
 /** Per reported phase, the status this Channel's Orders get instead of the phase default; null = the default. */
 export type StatusMapping = Record<ChannelReportedPhase, string | null>
@@ -31,7 +31,7 @@ export async function setStatusMapping(
   mapping: Partial<StatusMapping>,
   actor: Actor,
 ): Promise<void> {
-  await assertCanManageOrderStatuses(ctx, organizationId, actor)
+  await assertCanManageOrganization(ctx, organizationId, actor)
   await ctx.db.$transaction(async (tx) => {
     const connection = await tx.connection.findFirst({ where: { id: connectionId, organizationId }, select: { id: true } })
     if (!connection) throw new DomainError('not_found')

@@ -17,7 +17,10 @@
     "products": "Produkty",
     "orders": "Zamówienia",
     "connections": "Połączenia",
-    "settings": "Ustawienia"
+    "settings": "Ustawienia",
+    "families": "Rodziny",
+    "privacy": "Prywatność",
+    "warehouses": "Magazyny"
   },
   "pagination": {
     "label": "Paginacja",
@@ -77,6 +80,11 @@
     "searchPlaceholder": "Szukaj po SKU lub nazwie",
     "search": "Szukaj",
     "clear": "Wyczyść",
+    "familyFilter": {
+      "label": "Rodzina",
+      "all": "Wszystkie produkty",
+      "none": "Bez rodziny"
+    },
     "emptySearch": "Żaden produkt nie pasuje do wyszukiwania.",
     "empty": "Nie ma jeszcze produktów. Dodaj pierwszy albo utwórz je z ofert pobranych z kanału.",
     "columns": {
@@ -85,7 +93,8 @@
       "stock": "Stan",
       "reserved": "Zarezerwowane",
       "available": "Dostępne",
-      "offers": "Oferty"
+      "offers": "Oferty",
+      "family": "Rodzina"
     },
     "shortageHint": "(brak towaru)",
     "detail": {
@@ -97,9 +106,11 @@
       "name": "Nazwa",
       "saveName": "Zapisz nazwę",
       "stockTitle": "Stan",
-      "stockDescription": "Hanza jest źródłem prawdy o stanie. Kanały dostają tylko Dostępne (Stan minus Rezerwacje).",
+      "stockDescription": "Hanza jest źródłem prawdy o stanie. Ustawiasz go dla każdego magazynu. Pozycja zamówienia nigdy nie jest dzielona między magazyny, więc każdy kanał dostaje tyle, ile może pokryć jeden z jego magazynów (i nigdy więcej niż wszystkie razem), pomniejszone o bufor bezpieczeństwa i najwyżej tyle, ile wynosi jego limit kanału.",
       "stockSaved": "Zapisano. Nowy stan zostanie wysłany do kanałów.",
       "saveStock": "Zapisz stan",
+      "priceTitle": "Cena",
+      "priceDescription": "Hanza jest właścicielem cen. Cena bazowa trafia do każdej połączonej oferty bez własnej ceny, o ile kanał sprzedaje w tej samej walucie. Bez ceny bazowej nic nie jest wysyłane.",
       "offersTitle": "Oferty",
       "offersDescription": "Oferty tego produktu w kanałach.",
       "offersEmpty": "Ten produkt nie ma jeszcze połączonych ofert. Oferta łączy się automatycznie po SKU albo ręcznie na liście ofert bez produktu.",
@@ -108,18 +119,31 @@
         "offer": "Oferta",
         "link": "Powiązanie",
         "lastPushed": "Ostatnio wysłano",
+        "price": "Cena",
         "actions": "Akcje"
       },
       "linkedManually": "Ręcznie",
       "linkedBySku": "Po SKU",
       "notPushed": "jeszcze nie wysłano",
+      "priceFromOffer": "cena oferty",
+      "priceFromBase": "cena bazowa",
       "unlink": "Rozłącz",
       "unlinking": "Rozłączanie…",
       "unlinkConfirm": "Rozłączyć ofertę z tym produktem? Kanał nie dostanie już jego stanu.",
       "reservationsTitle": "Otwarte rezerwacje",
       "reservationsDescription": "Towar obiecany zamówieniom, które jeszcze nie zostały wysłane.",
       "reservationsEmpty": "Brak otwartych rezerwacji.",
-      "reservationOrder": "Zamówienie {id}"
+      "reservationOrder": "Zamówienie {id}",
+      "familyLine": "Rodzina: {name}",
+      "warehouseColumns": {
+        "warehouse": "Magazyn",
+        "stock": "Stan",
+        "reserved": "Zarezerwowane",
+        "available": "Dostępne"
+      },
+      "manageWarehouses": "Zarządzaj magazynami",
+      "reservationWarehouse": "w: {warehouse}",
+      "stockIn": "Stan w: {warehouse}"
     },
     "new": {
       "title": "Dodaj produkt",
@@ -131,11 +155,60 @@
       "submitting": "Dodawanie…"
     }
   },
+  "families": {
+    "title": "Rodziny produktów",
+    "intro": "Rodzina grupuje produkty, które są swoimi rozmiarami lub kolorami. Zamówienia, stany i oferty nadal dotyczą pojedynczych produktów.",
+    "add": "Dodaj rodzinę",
+    "empty": "Nie ma jeszcze rodzin produktów. Utwórz pierwszą, aby grupować produkty, np. rozmiary lub kolory.",
+    "columns": {
+      "name": "Nazwa",
+      "attributes": "Atrybuty",
+      "products": "Produkty"
+    },
+    "productCount": "{count, plural, one {# produkt} few {# produkty} many {# produktów} other {# produktu}}",
+    "new": {
+      "title": "Dodaj rodzinę",
+      "name": "Nazwa",
+      "attributes": "Atrybuty",
+      "attributesHint": "Czym różnią się produkty, po przecinku, np.: Rozmiar, Kolor. Najwyżej 5; nie można ich później zmienić.",
+      "submit": "Dodaj rodzinę",
+      "submitting": "Dodawanie…"
+    },
+    "detail": {
+      "title": "Rodzina produktów",
+      "attributesLine": "Atrybuty: {attributes}",
+      "renameTitle": "Nazwa",
+      "renameDescription": "Nazwa jest tylko dla Ciebie; kanały jej nie widzą.",
+      "name": "Nazwa",
+      "saveName": "Zapisz nazwę",
+      "membersTitle": "Produkty w tej rodzinie",
+      "membersDescription": "Każdy produkt ma jedną wartość dla każdego atrybutu. Dwa produkty nie mogą mieć tych samych wartości.",
+      "membersEmpty": "W tej rodzinie nie ma jeszcze produktów. Dodaj pierwszy poniżej.",
+      "availableLine": "Dostępne: {count}",
+      "saveValues": "Zapisz",
+      "saving": "Zapisywanie…",
+      "remove": "Usuń z rodziny",
+      "removing": "Usuwanie…",
+      "removeConfirm": "Usunąć ten produkt z rodziny? Sam produkt pozostaje bez zmian.",
+      "valueLabel": "{attribute} dla {sku}",
+      "addTitle": "Dodaj produkt",
+      "addDescription": "Produkt może należeć naraz tylko do jednej rodziny.",
+      "sku": "SKU produktu",
+      "skuHint": "SKU istniejącego produktu, który nie należy do żadnej rodziny.",
+      "add": "Dodaj do rodziny",
+      "adding": "Dodawanie…",
+      "deleteTitle": "Usuń rodzinę",
+      "deleteDescription": "Produkty nie są usuwane: po prostu przestają być zgrupowane. Zamówienia, stany i oferty pozostają bez zmian.",
+      "delete": "Usuń rodzinę",
+      "deleting": "Usuwanie…",
+      "deleteConfirm": "Usunąć tę rodzinę? Jej produkty pozostaną, bez grupowania."
+    }
+  },
   "offers": {
     "title": "Oferty bez produktu",
     "description": "Oferty pobrane z kanałów, których SKU nie pasuje do żadnego produktu.",
     "createTitle": "Utwórz produkty z ofert",
-    "createDescription": "Zaznacz oferty z SKU w tabeli. Produkt dostanie SKU i nazwę oferty oraz stan 0.",
+    "createDescription": "Zaznacz oferty z SKU w tabeli. Produkt dostanie SKU i nazwę oferty oraz stan 0. Nie dostanie ceny: ustaw ją na produkcie i dopiero wtedy trafi do kanałów.",
     "create": "Utwórz produkty z zaznaczonych",
     "creating": "Tworzenie…",
     "created": "{count, plural, one {Utworzono # produkt.} few {Utworzono # produkty.} many {Utworzono # produktów.} other {Utworzono # produktu.}}",
@@ -161,12 +234,49 @@
     "link": "Połącz z produktem",
     "linking": "Łączenie…"
   },
+  "offerDetail": {
+    "title": "Oferta",
+    "connectionLine": "Połączenie: {connection} · ID: {externalId}",
+    "backToProduct": "Produkt {sku}",
+    "channelPrice": "Cena w kanale",
+    "channelPriceHint": "Tak, jak podano przy ostatniej synchronizacji. Hanza jej nie przejmuje.",
+    "effectivePrice": "Cena z Hanzy",
+    "lastPushedPrice": "Ostatnio wysłana cena",
+    "notSent": "jeszcze nie wysłano",
+    "productLine": "Połączona z: {name} (SKU {sku}). Cena bazowa: {price}.",
+    "overrideTitle": "Cena oferty",
+    "overrideDescription": "Cena tylko dla tej oferty. Ma pierwszeństwo przed ceną bazową produktu; usuń ją, aby wrócić do ceny bazowej.",
+    "mismatchHint": "Ustaw cenę oferty w {currency}, aby ją wysłać.",
+    "notLinked": "Ta oferta nie jest połączona z produktem, więc Hanza nie wysyła ani jej stanu, ani ceny. Połącz ją na liście ofert bez produktu."
+  },
+  "prices": {
+    "none": "Brak ceny",
+    "form": {
+      "amount": "Cena",
+      "currency": "Waluta",
+      "currencyPlaceholder": "PLN",
+      "save": "Zapisz cenę",
+      "clear": "Usuń cenę",
+      "saved": "Zapisano. Kanały wkrótce dostaną nową cenę.",
+      "useChannelPrice": "Użyj ceny z kanału ({price})"
+    },
+    "status": {
+      "not_linked": "Nie wysłano: oferta nie jest połączona z produktem.",
+      "unsupported": "Nie wysłano: konektor tego kanału nie umie ustawiać cen.",
+      "no_price": "Brak ceny, więc nic nie jest wysyłane.",
+      "currency_unknown": "Nie wysłano: kanał nie podał waluty oferty.",
+      "currency_mismatch": "Nie wysłano: kanał sprzedaje tę ofertę w {channelCurrency}, a cena jest w {priceCurrency}.",
+      "pending": "Czeka na wysłanie.",
+      "pushed": "Wysłano {date}."
+    }
+  },
   "orders": {
     "title": "Zamówienia",
     "filters": {
       "status": "Status",
       "all": "Wszystkie",
       "attentionOnly": "Tylko wymagające uwagi",
+      "awaitingPaymentOnly": "Tylko oczekujące na płatność",
       "apply": "Filtruj",
       "clear": "Wyczyść",
       "phase": "Faza"
@@ -182,6 +292,9 @@
       "status": "Status"
     },
     "needsAttention": "Wymaga uwagi",
+    "awaitingPayment": "Oczekuje na płatność",
+    "buyerErased": "Usunięte",
+    "buyerUnreadable": "Nie można odczytać",
     "detail": {
       "title": "Zamówienie",
       "summary": "Kanał: {channel} · {date} · {payment} · {total}",
@@ -189,6 +302,8 @@
       "markReviewed": "Oznacz jako sprawdzone",
       "statusTitle": "Status",
       "statusDescription": "Postęp realizacji prowadzi Hanza. Przejście do innej fazy jest przekazywane do kanału, jeśli kanał to obsługuje; statusy w ramach jednej fazy są Twoimi etykietami i zostają w Hanzie.",
+      "awaitingPaymentHint": "Kupujący jeszcze nie zapłacił. Towar pozostaje zarezerwowany; zamówienie można realizować, gdy kanał zgłosi płatność, a do tego czasu można je tylko anulować albo zmienić mu status w fazie Nowe.",
+      "awaitingPaymentShippedHint": "Wysłane, ale kanał nie zgłosił płatności za to zamówienie.",
       "finalStatus": "Zamówienie jest w fazie końcowej ({status}) i nie ma innego statusu, na który można je przenieść.",
       "changeTo": "Zmień na: {status}",
       "confirmShipped": "Oznaczyć zamówienie jako wysłane? Zarezerwowany towar zostanie zdjęty ze stanu.",
@@ -200,11 +315,15 @@
         "quantity": "Ilość",
         "price": "Cena",
         "product": "Produkt",
-        "reservation": "Rezerwacja"
+        "reservation": "Rezerwacja",
+        "warehouse": "Magazyn"
       },
       "unmatched": "Niepołączona",
       "shortage": "Brak na stanie",
       "buyerTitle": "Kupujący",
+      "buyerErased": "Dane kupującego usunięto {date}.",
+      "buyerUnreadable": "Nie można odczytać danych kupującego tego zamówienia: nie dają się odszyfrować obecnym kluczem szyfrowania albo są uszkodzone.",
+      "shippingCountry": "Kraj dostawy: {country}",
       "contact": "Dane kontaktowe",
       "phone": "tel. {phone}",
       "channelLogin": "Login w kanale: {login}",
@@ -223,6 +342,12 @@
       "skuPlaceholder": "SKU produktu",
       "submit": "Połącz",
       "submitting": "Łączenie…"
+    },
+    "moveReservation": {
+      "label": "Przenieś rezerwację do",
+      "submit": "Przenieś",
+      "submitting": "Przenoszenie…",
+      "hint": "Tylko do magazynu, który ma dość Dostępnego na całą pozycję."
     }
   },
   "connections": {
@@ -278,6 +403,59 @@
       "optionalField": "{label} (opcjonalnie)",
       "submit": "Dodaj połączenie",
       "submitting": "Dodawanie…"
+    },
+    "stockRules": {
+      "title": "Stan wysyłany do tego kanału",
+      "description": "Kanał dostaje tyle, ile może pokryć jeden z magazynów, które liczy (poniżej), pomniejszone o bufor bezpieczeństwa i nigdy więcej niż limit kanału. Zamówienia rezerwują z Dostępnego, a nie z tej liczby.",
+      "safetyBuffer": "Bufor bezpieczeństwa",
+      "safetyBufferHint": "Sztuki, których ten kanał nie widzi, na przykład ostatnie sztuki zostawione dla Twojego sklepu.",
+      "channelLimit": "Limit kanału",
+      "channelLimitHint": "Najwięcej sztuk, jakie zobaczy ten kanał. Zostaw puste, aby nie ograniczać.",
+      "save": "Zapisz ustawienia stanu",
+      "saved": "Zapisano. Nowe liczby zostaną wysłane do tego kanału."
+    },
+    "warehouses": {
+      "title": "Magazyny liczone dla tego kanału",
+      "description": "Kanał dostaje tyle, ile może pokryć jeden z tych magazynów, bo pozycja nigdy nie jest dzielona: największe Dostępne spośród nich i nigdy więcej niż ich suma. Jego zamówienia rezerwują w nich: w pierwszym według priorytetu, który pokrywa całą pozycję. Pozycja, której żaden z nich nie pokrywa, jest brakiem, nawet jeśli inny magazyn ma towar.",
+      "all": "Wszystkie aktywne magazyny",
+      "allHint": "Także magazyny dodane później.",
+      "only": "Tylko wybrane magazyny",
+      "legend": "Magazyny",
+      "save": "Zapisz magazyny",
+      "saved": "Zapisano. Nowe liczby zostaną wysłane do tego kanału."
+    }
+  },
+  "privacy": {
+    "title": "Prywatność",
+    "intro": "Dane kupujących w zamówieniach (imiona i nazwiska, dane kontaktowe, adresy) są przechowywane w postaci zaszyfrowanej. Tutaj decydujesz, jak długo są przechowywane, i obsługujesz prośbę o usunięcie danych jednej osoby.",
+    "adminsOnly": "Tylko właściciel lub administrator organizacji może zmienić okres przechowywania albo usunąć dane kupującego.",
+    "retention": {
+      "title": "Okres przechowywania danych kupujących",
+      "description": "Dane kupującego są usuwane po tylu dniach od wysłania lub anulowania zamówienia. Pozycje, kwoty i kraj dostawy zostają. Otwarte zamówienia nigdy nie są zmieniane.",
+      "label": "Dni od zamknięcia zamówienia",
+      "hint": "Od 1 do 3650 dni. Zostaw puste, aby przechowywać dane kupujących, dopóki ich nie usuniesz. Zamówienia zamknięte, zanim Hanza zaczęła zapisywać czas zamknięcia, liczą się od ostatniej zmiany.",
+      "save": "Zapisz",
+      "saved": "Zapisano. Sprawdzanie odbywa się co godzinę.",
+      "currentDays": "Teraz: dane kupującego są usuwane {count, plural, one {# dzień} few {# dni} many {# dni} other {# dnia}} po zamknięciu zamówienia.",
+      "currentOff": "Teraz: dane kupujących są przechowywane, dopóki ich nie usuniesz.",
+      "confirmTitle": "Potwierdź nowy okres przechowywania",
+      "confirmCount": "{count, plural, =0 {Przy {days, number} dniach przy najbliższym sprawdzeniu nie zostaną usunięte dane kupującego z żadnego zamówienia.} one {Przy {days, number} dniach przy najbliższym sprawdzeniu, w ciągu godziny, zostaną usunięte dane kupującego z # zamówienia. Tego nie można cofnąć.} few {Przy {days, number} dniach przy najbliższym sprawdzeniu, w ciągu godziny, zostaną usunięte dane kupującego z # zamówień. Tego nie można cofnąć.} many {Przy {days, number} dniach przy najbliższym sprawdzeniu, w ciągu godziny, zostaną usunięte dane kupującego z # zamówień. Tego nie można cofnąć.} other {Przy {days, number} dniach przy najbliższym sprawdzeniu, w ciągu godziny, zostaną usunięte dane kupującego z # zamówienia. Tego nie można cofnąć.}}",
+      "confirm": "Zapisz i usuń przy najbliższym sprawdzeniu",
+      "confirmDialog": "Zapisać nowy okres przechowywania? Dane kupujących starsze niż ten okres zostaną usunięte w ciągu godziny i nie da się ich przywrócić."
+    },
+    "erasure": {
+      "title": "Usuń dane kupującego",
+      "description": "Wyszukuje zamówienia tej organizacji złożone dokładnie z tym adresem e-mail (wielkość liter nie ma znaczenia) i usuwa z nich dane kupującego. Zamówień, dla których kanał nie podał adresu e-mail, nie da się w ten sposób znaleźć.",
+      "emailLabel": "Adres e-mail kupującego",
+      "find": "Znajdź zamówienia",
+      "finding": "Wyszukiwanie…",
+      "noMatch": "Żadne zamówienie tej organizacji nie ma danych kupującego z tym adresem e-mail.",
+      "previewClosed": "{count, plural, =0 {Brak wysłanych lub anulowanych zamówień, z których można usunąć dane.} one {Dane kupującego zostaną usunięte z # wysłanego lub anulowanego zamówienia.} few {Dane kupującego zostaną usunięte z # wysłanych lub anulowanych zamówień.} many {Dane kupującego zostaną usunięte z # wysłanych lub anulowanych zamówień.} other {Dane kupującego zostaną usunięte z # wysłanego lub anulowanego zamówienia.}}",
+      "openKept": "{count, plural, one {# zamówienie jest wciąż otwarte i zostaje: jego adres jest potrzebny do wysyłki. Wyślij je lub anuluj, a potem usuń dane ponownie.} few {# zamówienia są wciąż otwarte i zostają: ich adresy są potrzebne do wysyłki. Wyślij je lub anuluj, a potem usuń dane ponownie.} many {# zamówień jest wciąż otwartych i zostaje: ich adresy są potrzebne do wysyłki. Wyślij je lub anuluj, a potem usuń dane ponownie.} other {# zamówienia jest wciąż otwarte i zostaje: jego adres jest potrzebny do wysyłki. Wyślij je lub anuluj, a potem usuń dane ponownie.}}",
+      "confirm": "Usunąć dane kupującego z tych zamówień? Tego nie można cofnąć.",
+      "submit": "Usuń dane kupującego",
+      "erasing": "Usuwanie…",
+      "done": "{count, plural, =0 {Nic nie usunięto.} one {Usunięto dane kupującego z # zamówienia.} few {Usunięto dane kupującego z # zamówień.} many {Usunięto dane kupującego z # zamówień.} other {Usunięto dane kupującego z # zamówienia.}}"
     }
   },
   "labels": {
@@ -304,15 +482,17 @@
       "offers_pull": "Oferty",
       "orders_pull": "Zamówienia",
       "stock_push": "Stany magazynowe",
-      "order_status_push": "Statusy zamówień"
+      "order_status_push": "Statusy zamówień",
+      "price_push": "Ceny"
     },
     "payment": {
-      "prepaid": "Opłacone",
+      "prepaid": "Przedpłata",
       "cash_on_delivery": "Za pobraniem"
     },
     "channelFact": {
       "cancelled": "Anulowane w kanale",
-      "shipped": "Wysłane w kanale"
+      "shipped": "Wysłane w kanale",
+      "paid": "Opłacone w kanale"
     },
     "reservation": {
       "open": "Otwarta",
@@ -345,6 +525,10 @@
       "new": "Przychodzi nowe zamówienie",
       "shipped": "Kanał zgłasza wysłanie",
       "cancelled": "Kanał zgłasza anulowanie"
+    },
+    "erasureCause": {
+      "retention": "okres przechowywania",
+      "erasure_request": "prośba o usunięcie"
     }
   },
   "sync": {
@@ -358,7 +542,8 @@
       "factsApplied": "zmiany z kanału",
       "pages": "strony",
       "pushed": "wysłane",
-      "truncated": "przerwane na limicie stron"
+      "truncated": "przerwane na limicie stron",
+      "skipped": "niewysłane"
     }
   },
   "events": {
@@ -366,14 +551,17 @@
       "system_ping": "Zadanie testowe",
       "product_created": "Utworzono produkt",
       "product_updated": "Zmieniono nazwę produktu",
+      "product_price_changed": "Zmieniono cenę bazową",
       "stock_set": "Ustawiono stan",
       "stock_reserved": "Zarezerwowano towar",
       "stock_released": "Zwolniono rezerwację",
       "stock_consumed": "Pobrano towar ze stanu",
       "offer_linked": "Połączono ofertę z produktem",
       "offer_unlinked": "Rozłączono ofertę z produktem",
+      "offer_price_changed": "Zmieniono cenę oferty",
       "order_imported": "Zaimportowano zamówienie",
       "order_channel_fact_recorded": "Kanał zgłosił zmianę",
+      "order_payment_received": "Płatność otrzymana",
       "order_status_changed": "Zmieniono status",
       "order_line_linked": "Połączono pozycję z produktem",
       "order_attention_raised": "Zamówienie wymaga uwagi",
@@ -384,20 +572,50 @@
       "order_status_updated": "Zmieniono ustawienia statusu",
       "order_status_deleted": "Usunięto status",
       "connection_status_mapping_changed": "Zmieniono statusy zamówień z kanału",
-      "order_status_deletion_requested": "Rozpoczęto usuwanie statusu"
+      "order_status_deletion_requested": "Rozpoczęto usuwanie statusu",
+      "family_created": "Utworzono rodzinę produktów",
+      "family_renamed": "Zmieniono nazwę rodziny produktów",
+      "family_deleted": "Usunięto rodzinę produktów",
+      "family_product_added": "Dodano produkt do rodziny",
+      "family_product_updated": "Zmieniono atrybuty produktu w rodzinie",
+      "family_product_removed": "Usunięto produkt z rodziny",
+      "connection_stock_rules_changed": "Zmieniono ustawienia stanu",
+      "order_buyer_data_erased": "Usunięto dane kupującego",
+      "privacy_retention_changed": "Zmieniono okres przechowywania danych kupujących",
+      "privacy_erasure_requested": "Obsłużono prośbę o usunięcie danych",
+      "order_reservation_moved": "Przeniesiono rezerwację do innego magazynu",
+      "connection_warehouses_changed": "Zmieniono magazyny kanału",
+      "warehouse_created": "Dodano magazyn",
+      "warehouse_updated": "Zmieniono magazyn",
+      "warehouse_deactivated": "Dezaktywowano magazyn",
+      "warehouse_activated": "Aktywowano magazyn",
+      "warehouse_deleted": "Usunięto magazyn"
     },
     "lines": "{count, plural, one {# pozycja} few {# pozycje} many {# pozycji} other {# pozycji}}",
-    "defaultStatus": "status domyślny"
+    "defaultStatus": "status domyślny",
+    "stockRules": "bufor bezpieczeństwa {buffer}, limit kanału {limit}",
+    "retentionDays": "{count, plural, one {# dzień} few {# dni} many {# dni} other {# dnia}}",
+    "retentionOff": "bez limitu",
+    "ordersErased": "{count, plural, one {usunięto z # zamówienia} few {usunięto z # zamówień} many {usunięto z # zamówień} other {usunięto z # zamówienia}}",
+    "allWarehouses": "wszystkie magazyny",
+    "someWarehouses": "{count, plural, one {# wybrany magazyn} few {# wybrane magazyny} many {# wybranych magazynów} other {# wybranego magazynu}}",
+    "priority": "priorytet {change}"
   },
   "errors": {
     "domain": {
       "not_found": "Nie znaleziono.",
       "sku_taken": "Produkt z tym SKU już istnieje.",
       "invalid_transition": "Tej zmiany statusu nie można wykonać.",
+      "awaiting_payment": "Zamówienie nie jest jeszcze opłacone. Można je realizować, gdy kanał zgłosi płatność.",
       "unmatched_lines": "Najpierw połącz wszystkie pozycje z produktami.",
       "already_linked": "Ta pozycja jest już połączona.",
       "unknown_connector": "Nieznany konektor.",
       "invalid_config": "Sprawdź poprawność pól.",
+      "combination_taken": "Inny produkt w tej rodzinie ma już takie wartości.",
+      "invalid_attributes": "Wypełnij każdy atrybut (najwyżej 100 znaków) i zadbaj, by nazwy atrybutów się nie powtarzały.",
+      "already_in_family": "Ten produkt jest już w rodzinie. Najpierw usuń go z niej.",
+      "invalid_price": "Ta cena nie pasuje do swojej waluty: sprawdź miejsca po przecinku.",
+      "not_a_channel": "To połączenie nie jest kanałem sprzedaży, więc nie ma ustawień stanu.",
       "forbidden": "Tylko właściciel lub administrator organizacji może to zrobić.",
       "status_is_default": "Statusu domyślnego nie można wyłączyć ani usunąć. Najpierw ustaw inny status jako domyślny.",
       "status_in_use": "Ten status jest nadal używany. Wybierz status, do którego przenieść jego zamówienia.",
@@ -406,7 +624,14 @@
       "status_inactive": "Ten status jest wyłączony. Najpierw go włącz.",
       "status_name_required": "Wpisz nazwę. Tylko status domyślny może jej nie mieć.",
       "status_pending_deletion": "Ten status jest właśnie usuwany.",
-      "status_is_replacement": "Do tego statusu są przenoszone zamówienia z usuwanego statusu. Spróbuj ponownie, gdy usuwanie się skończy."
+      "status_is_replacement": "Do tego statusu są przenoszone zamówienia z usuwanego statusu. Spróbuj ponownie, gdy usuwanie się skończy.",
+      "warehouse_inactive": "Ten magazyn jest nieaktywny.",
+      "warehouse_is_default": "Magazynu domyślnego nie można dezaktywować ani usunąć.",
+      "warehouse_not_empty": "W magazynie nadal jest stan lub otwarte rezerwacje.",
+      "warehouse_in_use": "Magazyn jest nadal używany: wybrał go kanał albo ma rezerwacje w historii. Najpierw zmień magazyny kanału albo dezaktywuj magazyn zamiast go usuwać.",
+      "no_warehouse_selected": "Wybierz co najmniej jeden magazyn.",
+      "reservation_not_open": "Przenieść można tylko otwartą rezerwację nowego lub realizowanego zamówienia.",
+      "not_enough_stock": "Ten magazyn nie ma dość Dostępnego na całą pozycję."
     },
     "unexpected": "Coś poszło nie tak. Spróbuj ponownie.",
     "invalidInput": "Sprawdź poprawność pól.",
@@ -439,7 +664,18 @@
     "statusNameTooLong": "Nazwa może mieć najwyżej 60 znaków.",
     "colorInvalid": "Wybierz kolor z listy.",
     "phaseInvalid": "Wybierz poprawną fazę.",
-    "statusNameReserved": "To nazwa fazy. Żeby jej użyć, zostaw pustą nazwę statusu domyślnego."
+    "statusNameReserved": "To nazwa fazy. Żeby jej użyć, zostaw pustą nazwę statusu domyślnego.",
+    "familyNameTooLong": "Nazwa może mieć najwyżej 100 znaków.",
+    "attributesInvalid": "Podaj od 1 do 5 różnych nazw atrybutów, każda do 50 znaków, po przecinku.",
+    "attributeValueRequired": "Podaj wartość o długości do 100 znaków.",
+    "priceInvalid": "Podaj cenę większą od 0, np. 49,99.",
+    "priceAmbiguous": "Niejednoznaczne: trzy cyfry po separatorze. Wpisz 1234, jeśli chodzi o tysiące, albo podaj mniej miejsc po przecinku.",
+    "priceTooManyDecimals": "Za dużo miejsc po przecinku dla tej waluty (PLN ma 2, JPY żadnego).",
+    "currencyInvalid": "Podaj trzyliterowy kod waluty, np. PLN.",
+    "emailInvalid": "Podaj adres e-mail (z @, najwyżej 320 znaków).",
+    "retentionDaysInvalid": "Podaj liczbę całkowitą dni od 1 do 3650 albo zostaw pole puste.",
+    "warehouseNameTooLong": "Nazwa może mieć najwyżej 100 znaków.",
+    "warehousesRequired": "Wybierz co najmniej jeden magazyn."
   },
   "settings": {
     "title": "Ustawienia",
@@ -489,6 +725,48 @@
       "deleteScheduled": "Usuwanie: zamówienia są przenoszone do wybranego statusu. Status zniknie, gdy to się skończy.",
       "deleteFor": "Usuń status {status}",
       "deletionInProgress": "Usuwany: jego zamówienia są przenoszone do statusu {status}."
+    }
+  },
+  "warehouses": {
+    "title": "Magazyny",
+    "description": "Miejsca, w których trzymasz towar. Każda pozycja nowego zamówienia jest rezerwowana w pierwszym magazynie według priorytetu, który pokrywa ją w całości. Na stronie połączenia możesz ograniczyć kanał do wybranych magazynów.",
+    "listTitle": "Twoje magazyny",
+    "columns": {
+      "name": "Nazwa",
+      "priority": "Priorytet",
+      "stock": "Stan",
+      "reserved": "Zarezerwowane",
+      "channels": "Wybrany przez kanały"
+    },
+    "default": "Domyślny",
+    "inactive": "Nieaktywny",
+    "newTitle": "Dodaj magazyn",
+    "newDescription": "Nowy magazyn jest pusty i aktywny. Kanały, które liczą wszystkie magazyny, od razu go uwzględniają.",
+    "name": "Nazwa",
+    "priority": "Priorytet",
+    "priorityHint": "Niższe liczby są używane najpierw. Zostaw puste, aby dodać go na końcu.",
+    "priorityHintEdit": "Niższe liczby są używane najpierw przy rezerwowaniu zamówienia.",
+    "create": "Dodaj magazyn",
+    "created": "Dodano magazyn.",
+    "detail": {
+      "title": "Magazyn",
+      "summary": "Stan: {stock} · Zarezerwowane: {reserved}",
+      "dataTitle": "Dane magazynu",
+      "save": "Zapisz",
+      "saved": "Zapisano.",
+      "statusTitle": "Użycie",
+      "statusActive": "Aktywny: może mieć stan i przyjmować rezerwacje.",
+      "statusInactive": "Nieaktywny: nic w nim nie ma i nie liczy się dla żadnego kanału.",
+      "activate": "Aktywuj",
+      "deactivate": "Dezaktywuj",
+      "deactivateHint": "Dezaktywować można tylko pusty magazyn: bez stanu, bez otwartych rezerwacji i niewybrany przez żaden kanał.",
+      "delete": "Usuń magazyn",
+      "deleteConfirm": "Usunąć ten magazyn? Tego nie można cofnąć.",
+      "deleteHint": "Magazyn, który kiedykolwiek miał rezerwację, można tylko dezaktywować.",
+      "defaultNote": "To magazyn domyślny: tu trafia początkowy stan nowych produktów. Jest zawsze aktywny i nie można go usunąć.",
+      "channelsLine": "Wybrany przez: {channels}",
+      "historyTitle": "Historia",
+      "historyEmpty": "Brak zdarzeń."
     }
   }
 }

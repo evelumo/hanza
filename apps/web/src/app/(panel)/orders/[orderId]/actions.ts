@@ -1,12 +1,12 @@
 'use server'
 
-import { changeOrderStatus, findProductBySku, linkOrderLine, resolveAttention } from '@hanza/core'
+import { changeOrderStatus, findProductBySku, linkOrderLine, moveReservation, resolveAttention } from '@hanza/core'
 import { getT } from '@/i18n/server'
 import { failure, formText, invalidInput, type ActionState } from '@/lib/action-state'
 import { getContext } from '@/lib/context'
 import { revalidateCatalogAndOrders } from '@/lib/revalidate'
 import { requireTenant } from '@/lib/session'
-import { changeOrderStatusSchema, linkOrderLineSchema, resolveAttentionSchema } from '../schemas'
+import { changeOrderStatusSchema, linkOrderLineSchema, moveReservationSchema, resolveAttentionSchema } from '../schemas'
 
 export async function changeOrderStatusAction(_previous: ActionState, formData: FormData): Promise<ActionState> {
   const { user, organizationId } = await requireTenant()
@@ -37,6 +37,21 @@ export async function linkOrderLineAction(_previous: ActionState, formData: Form
     await linkOrderLine(ctx, organizationId, parsed.data.orderLineId, product.id, { type: 'user', userId: user.id })
   } catch (error) {
     return failure(error, t, { values })
+  }
+  revalidateCatalogAndOrders()
+  return { ok: true }
+}
+
+export async function moveReservationAction(_previous: ActionState, formData: FormData): Promise<ActionState> {
+  const { user, organizationId } = await requireTenant()
+  const t = await getT()
+  const parsed = moveReservationSchema.safeParse(formText(formData))
+  if (!parsed.success) return invalidInput(parsed.error, t)
+
+  try {
+    await moveReservation(getContext(), organizationId, parsed.data.orderLineId, parsed.data.warehouseId, { type: 'user', userId: user.id })
+  } catch (error) {
+    return failure(error, t)
   }
   revalidateCatalogAndOrders()
   return { ok: true }

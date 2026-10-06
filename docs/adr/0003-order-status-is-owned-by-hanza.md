@@ -4,6 +4,6 @@ Each Channel has its own statuses, and stock depends on where an Order is: a Res
 
 ## Consequences
 
-- Organization-defined statuses and per-Channel mapping are a later, larger change (issue #1): ADR 0014 keeps this fixed list as the Order phases and adds the organization's Order statuses within them.
+- Organization-defined statuses and per-Channel mapping are a later, larger change (issue #1): ADR 0018 keeps this fixed list as the Order phases and adds the organization's Order statuses within them.
 - A Channel that disagrees with Hanza about a final Order needs a person, not an automatic fix.
 - An imported Order is a snapshot: only new Channel facts change it afterwards.

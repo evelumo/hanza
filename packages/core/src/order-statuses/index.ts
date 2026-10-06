@@ -1,5 +1,4 @@
 export { ensureDefaultOrderStatuses, type StatusSnapshot } from './defaults'
-export { canManageOrderStatuses } from './permissions'
 export {
   listOrderStatuses,
   listOrderStatusOptions,

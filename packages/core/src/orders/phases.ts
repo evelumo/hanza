@@ -3,7 +3,7 @@ import type { OrderPhase as DbOrderPhase } from '@hanza/db'
 import { z } from 'zod'
 
 /**
- * The fixed Order phases the core reasons about (ADR 0014). The SDK still calls them `OrderStatus`, the name they had
+ * The fixed Order phases the core reasons about (ADR 0018). The SDK still calls them `OrderStatus`, the name they had
  * before organizations could define their own statuses: connectors translate Channel statuses to and from phases.
  */
 export const ORDER_PHASES = ORDER_STATUSES

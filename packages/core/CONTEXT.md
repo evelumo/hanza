@@ -23,3 +23,36 @@ _Avoid_: Connection status, connection state
 **Event**:
 A record that something happened to an organization's data, written together with the change it describes. Events are a trail and a trigger, never the source of truth.
 _Avoid_: Log entry, message, notification
+
+**Workflow**:
+A named, straight-line process of steps that may span days and several systems, for example "wait for the label, then ship the Order". A step runs code, sleeps until a time, or waits for a Signal.
+_Avoid_: Automation (the user-facing rule built on top, later), pipeline, saga
+
+**Workflow run**:
+One execution of a Workflow for an organization, with its current step, the results of the steps done so far and its status (running, sleeping, waiting, completed, failed, cancelled). Identified by its id, or by the caller's key.
+_Avoid_: Workflow instance, execution, job
+
+**Signal**:
+A named message with a payload sent to a Workflow run from outside, for example "label created"; a waiting run resumes when it arrives, and one sent early is kept until the run waits for it.
+_Avoid_: Event (an Event is a record of a change), callback, webhook
+### Buyer data
+
+**Buyer data**:
+Everything personal an Order holds about its Buyer: name, email, phone, Channel login, shipping and billing address. Stored sealed with the encryption key, read in plaintext only by the panel (ADR 0016).
+_Avoid_: Customer data, PII, personal info
+
+**Closed Order**:
+An Order that reached the Order phase shipped or cancelled. Its `closedAt` is when that happened; nothing changes its phase afterwards, and moving it to another Order status of that phase (shipped → "Delivered") leaves `closedAt` alone.
+_Avoid_: Completed, finished, terminal Order
+
+**Erasure**:
+Clearing the Buyer data of an Order while the Order itself, its lines, amounts, dates and shipping country stay. Only Closed Orders are erased, and an Erasure cannot be undone.
+_Avoid_: Anonymisation, deletion, purge
+
+**Retention period**:
+How many days after an Order closed its Buyer data is kept before Hanza erases it. One value per organization, off by default; only owners and admins change it, after seeing how many Orders the next check would erase.
+_Avoid_: TTL, expiry, data lifetime
+
+**Erasure request**:
+A person asking for their Buyer data to be erased now. Handled by an owner or admin; matched by exact email within the organization; matching Orders that are not closed yet are kept and reported.
+_Avoid_: Deletion request, GDPR request, right to be forgotten

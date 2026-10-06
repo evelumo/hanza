@@ -10,8 +10,8 @@ import { markOffersForStockPush, requestStockPushAfterCommit } from '../stock/pu
 import { ensureDefaultWarehouse } from '../stock/warehouse'
 import { TX_OPTIONS } from '../transaction'
 import type { OrderPhase } from './phases'
-import { removeReasons } from './reasons'
-import { canMoveToStatus } from './status-rules'
+import { reasonsAfterCancel } from './reasons'
+import { canMoveToStatus, isFinalPhase } from './status-rules'
 import { markStatusPushPending } from './status-push'
 import { applyStockEffect } from './stock-effect'
 
@@ -19,10 +19,12 @@ import { applyStockEffect } from './stock-effect'
 export type StatusTarget = OrderPhase | { statusId: string }
 
 /**
- * A person moves an Order to another status (`canMoveToStatus`); shipped is refused while an Unmatched line exists.
- * Only a change of phase does anything beyond the label (ADR 0014): cancelling releases the Reservations, shipping
- * consumes them, and the new phase is then pushed to the Channel, at once if the enqueue works, otherwise by the
- * tick's sweep of pending pushes (ADR 0011). A move within the phase pushes nothing and leaves the push marker alone.
+ * A person moves an Order to another status (`canMoveToStatus`); shipped is refused while an Unmatched line exists,
+ * and any phase but cancelled while the Order is awaiting payment. Only a change of phase does anything beyond the label
+ * (ADR 0018): cancelling releases the Reservations, shipping consumes them, reaching shipped or cancelled starts the
+ * retention clock (`closedAt`), and the new phase is then pushed to the Channel, at once if the enqueue works,
+ * otherwise by the tick's sweep of pending pushes (ADR 0012). A move within the phase pushes nothing and leaves the
+ * push marker and `closedAt` alone.
  */
 export async function changeOrderStatus(ctx: Context, organizationId: string, orderId: string, to: StatusTarget, actor: Actor): Promise<void> {
   await ensureDefaultWarehouse(ctx.db, organizationId)
@@ -36,6 +38,7 @@ export async function changeOrderStatus(ctx: Context, organizationId: string, or
         phase: true,
         statusId: true,
         attentionReasons: true,
+        awaitingPayment: true,
         status: { select: { id: true, name: true, phase: true } },
         connection: { select: { connectorId: true } },
       },
@@ -44,6 +47,7 @@ export async function changeOrderStatus(ctx: Context, organizationId: string, or
     const target = typeof to === 'string' ? await defaultStatus(tx, organizationId, to) : await lockedStatus(tx, organizationId, to.statusId)
     if (!target) throw new DomainError('not_found')
     if (!canMoveToStatus(order, target)) {
+      if (canMoveToStatus({ ...order, awaitingPayment: false }, target)) throw new DomainError('awaiting_payment')
       throw new DomainError('invalid_transition', `Cannot change an Order from ${order.phase} to ${target.phase}`)
     }
 
@@ -56,8 +60,16 @@ export async function changeOrderStatus(ctx: Context, organizationId: string, or
         if (unmatched > 0) throw new DomainError('unmatched_lines')
       }
       touched = await applyStockEffect(tx, organizationId, orderId, target.phase)
-      const reasons = target.phase === 'cancelled' ? removeReasons(order.attentionReasons, ['shortage']) : order.attentionReasons
-      await tx.order.updateMany({ where: { id: orderId, organizationId }, data: { phase: target.phase, statusId: target.id, attentionReasons: reasons } })
+      const reasons = target.phase === 'cancelled' ? reasonsAfterCancel(order.attentionReasons) : order.attentionReasons
+      await tx.order.updateMany({
+        where: { id: orderId, organizationId },
+        data: {
+          phase: target.phase,
+          statusId: target.id,
+          attentionReasons: reasons,
+          ...(isFinalPhase(target.phase) ? { closedAt: new Date() } : {}),
+        },
+      })
       pushable = ctx.connectors.get(order.connection.connectorId)?.capabilities['orders.updateStatus'] !== undefined
       await markStatusPushPending(tx, organizationId, orderId, pushable)
     } else {

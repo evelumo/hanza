@@ -1,5 +1,13 @@
-import { canManageOrderStatuses, CHANNEL_REPORTED_PHASES, getConnection, getStatusMapping, listEvents, listOrderStatuses } from '@hanza/core'
 import { isChannel } from '@hanza/connector-sdk'
+import {
+  canManageOrganization,
+  CHANNEL_REPORTED_PHASES,
+  getConnection,
+  getStatusMapping,
+  listEvents,
+  listOrderStatuses,
+  listWarehouses,
+} from '@hanza/core'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
@@ -16,7 +24,9 @@ import { requireTenant } from '@/lib/session'
 import { isSyncRunning } from '@/lib/sync-status'
 import { requestSyncAction } from '../actions'
 import { formatSyncResult } from '../sync-summary'
+import { ChannelWarehousesForm } from './channel-warehouses-form'
 import { StatusMappingForm, type MappingRow } from './status-mapping-form'
+import { StockRulesForm } from './stock-rules-form'
 
 export const dynamic = 'force-dynamic'
 
@@ -34,11 +44,12 @@ export default async function ConnectionPage({ params }: { params: Promise<{ con
   if (!connection) notFound()
   const connector = ctx.connectors.get(connection.connectorId)
   const connectorName = connector?.name ?? connection.connectorId
-  const [events, statuses, mapping, canManage] = await Promise.all([
+  const [events, warehouses, statuses, mapping, canManage] = await Promise.all([
     listEvents(ctx, organizationId, { type: 'connection', id: connection.id }, 20),
+    listWarehouses(ctx, organizationId),
     listOrderStatuses(ctx, organizationId),
     getStatusMapping(ctx, organizationId, connection.id),
-    canManageOrderStatuses(ctx, organizationId, user.id),
+    canManageOrganization(ctx, organizationId, user.id),
   ])
   const mappingRows: MappingRow[] = CHANNEL_REPORTED_PHASES.map((phase) => {
     const inPhase = statuses.filter((status) => status.phase === phase)
@@ -124,10 +135,31 @@ export default async function ConnectionPage({ params }: { params: Promise<{ con
       </Section>
 
       {connector && isChannel(connector) ? (
-        <Section title={t('connections.detail.statusMapping.title')} description={t('connections.detail.statusMapping.description')}>
-          {canManage ? null : <p className="px-5 pt-4 text-sm font-medium">{t('connections.detail.statusMapping.adminsOnly')}</p>}
-          <StatusMappingForm connectionId={connection.id} rows={mappingRows} disabled={!canManage} />
-        </Section>
+        <>
+          <Section title={t('connections.stockRules.title')} description={t('connections.stockRules.description')}>
+            <div className="px-5 py-4">
+              <StockRulesForm
+                connectionId={connection.id}
+                safetyBuffer={connection.stockRules.safetyBuffer}
+                channelLimit={connection.stockRules.channelLimit}
+              />
+            </div>
+          </Section>
+          <Section title={t('connections.warehouses.title')} description={t('connections.warehouses.description')}>
+            <div className="px-5 py-4">
+              <ChannelWarehousesForm
+                connectionId={connection.id}
+                all={connection.warehouses.all}
+                chosen={connection.warehouses.warehouseIds}
+                warehouses={warehouses.filter((warehouse) => warehouse.active).map(({ id, name }) => ({ id, name }))}
+              />
+            </div>
+          </Section>
+          <Section title={t('connections.detail.statusMapping.title')} description={t('connections.detail.statusMapping.description')}>
+            {canManage ? null : <p className="px-5 pt-4 text-sm font-medium">{t('connections.detail.statusMapping.adminsOnly')}</p>}
+            <StatusMappingForm connectionId={connection.id} rows={mappingRows} disabled={!canManage} />
+          </Section>
+        </>
       ) : null}
 
       <Section title={t('connections.detail.eventsTitle')}>
@@ -136,7 +168,7 @@ export default async function ConnectionPage({ params }: { params: Promise<{ con
         ) : (
           <ul className="divide-y divide-line">
             {events.map((event) => {
-              const { title, detail } = describeEvent(event.type, event.payload, t, format.number)
+              const { title, detail } = describeEvent(event.type, event.payload, t, format)
               return (
                 <li key={event.id} className="flex flex-wrap items-center justify-between gap-3 px-5 py-3 text-sm">
                   <span>

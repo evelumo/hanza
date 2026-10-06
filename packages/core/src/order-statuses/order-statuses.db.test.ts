@@ -1,15 +1,16 @@
-import { randomUUID } from 'node:crypto'
 import { describe, expect, it, onTestFinished } from 'vitest'
-import type { Actor } from '../actor'
 import { createProduct } from '../catalog/products'
 import { changeOrderStatus } from '../orders/change-status'
 import { importOrder } from '../orders/import'
 import { getOrder, listOrders } from '../orders/queries'
 import { getAvailability } from '../stock/availability'
-import { createTestOrganization, type TestContext } from '../testing/context'
+import { createTestOrganization } from '../testing/context'
 import { databaseUrl, useTestContext } from '../testing/db-test'
-import { buildOrder, createTestConnection, fact, orderLine, testChannel } from '../testing/fixtures'
+import { addMember, buildOrder, createTestConnection, fact, orderLine, testChannel } from '../testing/fixtures'
 import { orderStatusesDeleteJob } from '../jobs/order-statuses-delete'
+import { moveReservation } from '../orders/move-reservation'
+import { setStock } from '../stock/set-stock'
+import { createWarehouse } from '../warehouses/warehouses'
 import { deleteOrderStatus, finishOrderStatusDeletion } from './delete'
 import { getStatusMapping, setStatusMapping } from './mapping'
 import {
@@ -20,13 +21,6 @@ import {
   setOrderStatusActive,
   updateOrderStatus,
 } from './statuses'
-
-async function addMember(ctx: TestContext, organizationId: string, role: string): Promise<Actor> {
-  const userId = randomUUID()
-  await ctx.db.user.create({ data: { id: userId, name: role, email: `${userId}@example.org` } })
-  await ctx.db.member.create({ data: { id: randomUUID(), organizationId, userId, role, createdAt: new Date() } })
-  return { type: 'user', userId }
-}
 
 describe.skipIf(!databaseUrl)('Order statuses (Postgres)', () => {
   const context = useTestContext({ connectors: [testChannel] })
@@ -210,6 +204,93 @@ describe.skipIf(!databaseUrl)('Order statuses (Postgres)', () => {
       cause: 'user',
     })
     expect((await getOrder(ctx, org, orderId))?.status).toEqual({ id: delivered, name: 'Delivered', color: null, phase: 'shipped' })
+  })
+
+  // The rules other features hang on where an Order is all read the phase (ADR 0018): a status of the same phase never
+  // starts them again, and a custom status of a phase behaves like its default.
+  describe('with the rules that depend on the phase', () => {
+    it('starts the retention clock (closedAt) only when the phase becomes final, never on a move within a final phase', async () => {
+      const { ctx, org, admin, connectionId, stored } = await setup()
+      const packing = (await createOrderStatus(ctx, org, { phase: 'processing', name: 'Packing', color: null }, admin)).statusId
+      const delivered = (await createOrderStatus(ctx, org, { phase: 'shipped', name: 'Delivered', color: null }, admin)).statusId
+      const refunded = (await createOrderStatus(ctx, org, { phase: 'cancelled', name: 'Refunded', color: null }, admin)).statusId
+      await createProduct(ctx, org, { sku: 'P', name: 'Product', stock: 5 }, admin)
+
+      const { orderId } = await importOrder(ctx, org, connectionId, buildOrder({ lines: [orderLine('l1', { sku: 'P' })] }))
+      await changeOrderStatus(ctx, org, orderId, { statusId: packing }, admin)
+      expect((await stored(orderId)).closedAt).toBeNull()
+      await changeOrderStatus(ctx, org, orderId, 'shipped', admin)
+      const shipped = await stored(orderId)
+      expect(shipped.closedAt).toBeInstanceOf(Date)
+      await new Promise((resolve) => setTimeout(resolve, 5))
+      await changeOrderStatus(ctx, org, orderId, { statusId: delivered }, admin)
+      expect(await stored(orderId)).toMatchObject({ phase: 'shipped', statusId: delivered, closedAt: shipped.closedAt })
+
+      // A Channel fact closes it too (on the mapped or default status), and a later move within cancelled keeps the time.
+      const cancelledByFact = (await importOrder(ctx, org, connectionId, buildOrder({ facts: [fact('c', 'cancelled')] }))).orderId
+      const closedAt = (await stored(cancelledByFact)).closedAt
+      expect(closedAt).toBeInstanceOf(Date)
+      await new Promise((resolve) => setTimeout(resolve, 5))
+      await changeOrderStatus(ctx, org, cancelledByFact, { statusId: refunded }, admin)
+      expect(await stored(cancelledByFact)).toMatchObject({ phase: 'cancelled', statusId: refunded, closedAt })
+    })
+
+    it('lets an Order awaiting payment change its status within phase new, and leave new only to cancelled', async () => {
+      const { ctx, org, admin, connectionId, stored, defaultOf } = await setup()
+      const toCheck = (await createOrderStatus(ctx, org, { phase: 'new', name: 'To check', color: null }, admin)).statusId
+      const packing = (await createOrderStatus(ctx, org, { phase: 'processing', name: 'Packing', color: null }, admin)).statusId
+      const abandoned = (await createOrderStatus(ctx, org, { phase: 'cancelled', name: 'Abandoned', color: null }, admin)).statusId
+      const { orderId } = await importOrder(ctx, org, connectionId, buildOrder({ awaitingPayment: true }))
+      const pushes = () => ctx.queue.enqueued.filter((job) => job.name === 'orders.updateStatus' && (job.payload as { orderId: string }).orderId === orderId)
+
+      const offered = (await getOrder(ctx, org, orderId))!
+      expect(offered.allowedTransitions).toEqual(['cancelled'])
+      expect(offered.allowedStatuses.map((status) => status.id)).toEqual([toCheck, (await defaultOf('cancelled')).id, abandoned])
+
+      await changeOrderStatus(ctx, org, orderId, { statusId: toCheck }, admin)
+      expect(await stored(orderId)).toMatchObject({ phase: 'new', statusId: toCheck, awaitingPayment: true, statusPushSeq: 0, statusPushDueAt: null })
+      expect(pushes()).toEqual([])
+      for (const to of [{ statusId: packing }, { statusId: (await defaultOf('shipped')).id }, 'processing' as const]) {
+        await expect(changeOrderStatus(ctx, org, orderId, to, admin)).rejects.toMatchObject({ code: 'awaiting_payment' })
+      }
+      expect(await stored(orderId)).toMatchObject({ phase: 'new', statusId: toCheck })
+
+      await changeOrderStatus(ctx, org, orderId, { statusId: abandoned }, admin)
+      expect(await stored(orderId)).toMatchObject({ phase: 'cancelled', statusId: abandoned, awaitingPayment: true, statusPushSeq: 1 })
+      expect(pushes()).toHaveLength(1)
+    })
+
+    it('clears shortage and unmatched_line when a person cancels to any cancelled status', async () => {
+      const { ctx, org, admin, connectionId, stored } = await setup()
+      await createProduct(ctx, org, { sku: 'SCARCE', name: 'Scarce', stock: 0 }, admin)
+      const refunded = (await createOrderStatus(ctx, org, { phase: 'cancelled', name: 'Refunded', color: null }, admin)).statusId
+      const lines = [orderLine('l1', { sku: 'SCARCE' }), orderLine('l2', { sku: 'NOPE' })]
+      const { orderId } = await importOrder(ctx, org, connectionId, buildOrder({ lines }))
+      expect((await stored(orderId)).attentionReasons).toEqual(['unmatched_line', 'shortage'])
+
+      await changeOrderStatus(ctx, org, orderId, { statusId: refunded }, admin)
+      expect(await stored(orderId)).toMatchObject({ phase: 'cancelled', statusId: refunded, attentionReasons: [] })
+    })
+
+    it('moves a Reservation to another Warehouse in any status of an open phase, never once the phase is final', async () => {
+      const { ctx, org, admin, connectionId, stored } = await setup()
+      const { productId } = await createProduct(ctx, org, { sku: 'P', name: 'Product', stock: 5 }, admin)
+      const { warehouseId: north } = await createWarehouse(ctx, org, { name: 'North' }, admin)
+      await setStock(ctx, org, productId, 5, admin, north)
+      const packing = (await createOrderStatus(ctx, org, { phase: 'processing', name: 'Packing', color: null }, admin)).statusId
+      const delivered = (await createOrderStatus(ctx, org, { phase: 'shipped', name: 'Delivered', color: null }, admin)).statusId
+      const { orderId } = await importOrder(ctx, org, connectionId, buildOrder({ lines: [orderLine('l1', { sku: 'P', quantity: 2 })] }))
+      const line = async () => (await stored(orderId)).lines[0]!
+
+      await changeOrderStatus(ctx, org, orderId, { statusId: packing }, admin)
+      const from = (await line()).reservation!.warehouseId
+      const to = from === north ? (await ctx.db.warehouse.findFirstOrThrow({ where: { organizationId: org, NOT: { id: north } } })).id : north
+      await moveReservation(ctx, org, (await line()).id, to, admin)
+      expect((await line()).reservation).toMatchObject({ warehouseId: to, status: 'open' })
+
+      await changeOrderStatus(ctx, org, orderId, { statusId: delivered }, admin)
+      await expect(moveReservation(ctx, org, (await line()).id, from, admin)).rejects.toMatchObject({ code: 'reservation_not_open' })
+    })
   })
 
   it('lists and filters Orders by phase and by status, and offers the allowed statuses grouped by phase', async () => {

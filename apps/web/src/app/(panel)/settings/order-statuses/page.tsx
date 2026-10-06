@@ -1,4 +1,4 @@
-import { canManageOrderStatuses, listOrderStatuses, ORDER_PHASES, ORDER_STATUS_COLORS, ORDER_STATUS_NAME_MAX } from '@hanza/core'
+import { canManageOrganization, listOrderStatuses, ORDER_PHASES, ORDER_STATUS_COLORS, ORDER_STATUS_NAME_MAX } from '@hanza/core'
 import type { Metadata } from 'next'
 import { ActionForm } from '@/components/action-form'
 import { ActionButton } from '@/components/form'
@@ -23,7 +23,7 @@ export default async function OrderStatusesPage() {
   const { user, organizationId } = await requireTenant()
   const t = await getT()
   const ctx = getContext()
-  const [statuses, canManage] = await Promise.all([listOrderStatuses(ctx, organizationId), canManageOrderStatuses(ctx, organizationId, user.id)])
+  const [statuses, canManage] = await Promise.all([listOrderStatuses(ctx, organizationId), canManageOrganization(ctx, organizationId, user.id)])
   const options: StatusFormOptions = {
     colors: ORDER_STATUS_COLORS.map((value) => ({ value, label: statusColorLabel(t, value) })),
     nameMax: ORDER_STATUS_NAME_MAX,

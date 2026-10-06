@@ -1,4 +1,4 @@
--- Organization-defined Order statuses (issue #1, ADR 0014). The fixed list becomes the Order phases: renamed in
+-- Organization-defined Order statuses (issue #1, ADR 0018). The fixed list becomes the Order phases: renamed in
 -- place, never dropped, so every existing Order keeps its value. Each organization gets a default status per phase and
 -- every existing Order is moved to the default status of its phase.
 --
