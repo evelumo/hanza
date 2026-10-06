@@ -2,18 +2,19 @@ import { PermanentError, type AnyConnectorDefinition, type CapabilityContext } f
 import type { z } from 'zod'
 import type { OpenedConnection } from '../connections/connections'
 import type { Context } from '../context'
-
-const FETCH_TIMEOUT_MS = 30_000
+import { connectorApp, timedFetch } from './auth-context'
 
 function issuePaths(prefix: string, error: z.ZodError): string[] {
   return error.issues.map((issue) => [prefix, ...issue.path.map(String)].join('.'))
 }
 
 /**
- * What a capability gets. Throws `PermanentError` when the stored config or credentials no longer
- * match the connector's schemas, so call it inside `runConnectorCall` (the run fails, health → failing).
+ * What a capability gets. Throws `PermanentError` when the connector is not set up on this installation, or the
+ * stored config or credentials no longer match the connector's schemas, so call it inside `runConnectorCall` (the
+ * run fails, health → failing).
  */
 export function buildCapabilityContext(ctx: Context, opened: OpenedConnection, connector: AnyConnectorDefinition): CapabilityContext {
+  const app = connectorApp(ctx, connector)
   const config = connector.configSchema.safeParse(opened.config)
   const credentials = connector.credentialsSchema.safeParse(opened.credentials)
   if (!config.success || !credentials.success) {
@@ -26,9 +27,10 @@ export function buildCapabilityContext(ctx: Context, opened: OpenedConnection, c
   }
   const fields = { connectionId: opened.id, connectorId: connector.id }
   return {
+    app,
     config: config.data,
     credentials: credentials.data,
-    fetch: (input, init) => fetch(input, { ...init, signal: init?.signal ?? AbortSignal.timeout(FETCH_TIMEOUT_MS) }),
+    fetch: timedFetch,
     log: (message, extra) => ctx.log.info(message, { ...extra, ...fields }),
   }
 }

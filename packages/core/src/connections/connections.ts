@@ -1,4 +1,4 @@
-import type { ConnectionHealth, Prisma, SyncErrorKind, SyncStream } from '@hanza/db'
+import type { ConnectionHealth, Prisma, SyncErrorKind, SyncStream, Tx } from '@hanza/db'
 import type { Actor } from '../actor'
 import type { Context } from '../context'
 import { appendEvent } from '../events'
@@ -9,6 +9,8 @@ export interface ConnectionRow {
   id: string
   connectorId: string
   name: string
+  /** The Channel account it signed in as (e.g. the seller's login), if the connector reports one. */
+  accountLabel: string | null
   health: ConnectionHealth
   healthChangedAt: Date | null
   createdAt: Date
@@ -30,6 +32,8 @@ export interface OpenedConnection {
   name: string
   config: unknown
   credentials: unknown
+  /** Bumped on every write of the credentials; a refresh compares it (ADR 0019). */
+  credentialsVersion: number
   health: ConnectionHealth
 }
 
@@ -38,6 +42,7 @@ const rowSelect = {
   id: true,
   connectorId: true,
   name: true,
+  accountLabel: true,
   health: true,
   healthChangedAt: true,
   createdAt: true,
@@ -64,36 +69,48 @@ function toRow(row: SelectedRow): ConnectionRow {
   }
 }
 
+export interface NewConnection {
+  connectorId: string
+  name: string
+  config: Record<string, unknown>
+  credentials: Record<string, unknown>
+  /** When the access token expires, if the connector reports it. */
+  credentialsExpireAt?: Date | null
+  /** The Channel account, from a sign-in. */
+  account?: { id: string; label: string } | null
+}
+
 /**
- * The caller has validated config and credentials against the connector.
- * Credentials are sealed with the organization id as AAD, so a value copied to another tenant's row does not open.
+ * Inserts the Connection and its `connection.created` Event in `tx`. The caller has validated config and
+ * credentials against the connector. Credentials are sealed with the organization id as AAD, so a value
+ * copied to another tenant's row does not open.
  */
-export async function createConnection(
-  ctx: Context,
-  organizationId: string,
-  input: { connectorId: string; name: string; config: Record<string, unknown>; credentials: Record<string, unknown> },
-  actor: Actor,
-): Promise<{ connectionId: string }> {
-  const credentials = ctx.secrets.seal(JSON.stringify(input.credentials), organizationId)
-  return ctx.db.$transaction(async (tx) => {
-    const connection = await tx.connection.create({
-      data: {
-        organizationId,
-        connectorId: input.connectorId,
-        name: input.name,
-        config: input.config as Prisma.InputJsonObject,
-        credentials,
-      },
-      select: { id: true },
-    })
-    await appendEvent(tx, {
+export async function insertConnection(ctx: Context, tx: Tx, organizationId: string, input: NewConnection, actor: Actor): Promise<string> {
+  const connection = await tx.connection.create({
+    data: {
       organizationId,
-      type: 'connection.created',
-      subject: { type: 'connection', id: connection.id },
-      payload: { connectorId: input.connectorId, actor },
-    })
-    return { connectionId: connection.id }
-  }, TX_OPTIONS)
+      connectorId: input.connectorId,
+      name: input.name,
+      config: input.config as Prisma.InputJsonObject,
+      credentials: ctx.secrets.seal(JSON.stringify(input.credentials), organizationId),
+      credentialsExpireAt: input.credentialsExpireAt ?? null,
+      accountId: input.account?.id ?? null,
+      accountLabel: input.account?.label ?? null,
+    },
+    select: { id: true },
+  })
+  await appendEvent(tx, {
+    organizationId,
+    type: 'connection.created',
+    subject: { type: 'connection', id: connection.id },
+    payload: { connectorId: input.connectorId, actor },
+  })
+  return connection.id
+}
+
+export async function createConnection(ctx: Context, organizationId: string, input: NewConnection, actor: Actor): Promise<{ connectionId: string }> {
+  const connectionId = await ctx.db.$transaction((tx) => insertConnection(ctx, tx, organizationId, input, actor), TX_OPTIONS)
+  return { connectionId }
 }
 
 export async function listConnections(ctx: Context, organizationId: string): Promise<ConnectionRow[]> {
@@ -143,7 +160,16 @@ export async function getConnection(
 export async function openConnection(ctx: Context, organizationId: string, connectionId: string): Promise<OpenedConnection | null> {
   const row = await ctx.db.connection.findFirst({
     where: { id: connectionId, organizationId },
-    select: { id: true, organizationId: true, connectorId: true, name: true, config: true, credentials: true, health: true },
+    select: {
+      id: true,
+      organizationId: true,
+      connectorId: true,
+      name: true,
+      config: true,
+      credentials: true,
+      credentialsVersion: true,
+      health: true,
+    },
   })
   if (!row) return null
   return { ...row, credentials: JSON.parse(ctx.secrets.open(row.credentials, row.organizationId)) as unknown }

@@ -17,6 +17,7 @@ import { seedFacts, seedOffers, seedOrders } from './seed'
 type FakeContext = CapabilityContext<{ failMode: 'none' | 'rate_limited' | 'transient' | 'permanent' }, { apiKey: string }>
 
 const context = (overrides: Partial<FakeContext['config']> = {}, apiKey = 'test'): FakeContext => ({
+  app: {},
   config: { failMode: 'none', ...overrides },
   credentials: { apiKey },
   fetch: async () => {

@@ -9,6 +9,7 @@ import {
   type CapabilityContext,
   type PullResult,
 } from '../connector'
+import { deviceSignInPollSchema, deviceSignInStartSchema, isAllowedVerificationUri, type AuthContext } from '../auth'
 import { classifyConnectorError, isConnectorError } from '../errors'
 import { offerSchema, type Offer } from '../model/offer'
 import { ORDER_STATUSES, orderSchema, type Order } from '../model/order'
@@ -16,6 +17,8 @@ import { offerPriceSchema, type OfferPrice } from '../model/price'
 import { stockLevelSchema, type StockLevel } from '../model/stock'
 
 export interface ConformanceFixtures {
+  /** Installation settings, checked against `appConfigSchema` when the connector has one. Default `{}`. */
+  app?: unknown
   config: unknown
   credentials: unknown
   /** Serves recorded responses. Default: a fetch that rejects with "network disabled in conformance tests". */
@@ -24,6 +27,13 @@ export interface ConformanceFixtures {
   unauthorized?: { credentials?: unknown; fetch?: typeof fetch }
   /** Page limit per pull loop. Default 100. */
   maxPages?: number
+  /**
+   * Required when the connector has `auth.refresh` (C14): `auth.refresh` of `credentials` with this `fetch`
+   * must succeed; with `refused`, it must fail with kind 'auth_expired'.
+   */
+  refresh?: { fetch?: typeof fetch; refused?: { credentials?: unknown; fetch?: typeof fetch } }
+  /** Required when the connector has `auth.deviceFlow` (C15): `start`, then one `poll` of its device code, with this `fetch`. */
+  deviceFlow?: { fetch?: typeof fetch }
 }
 
 const pullResultSchema = z.object({
@@ -99,9 +109,12 @@ export async function assertConformance(connector: AnyConnectorDefinition, fixtu
   if (!config.success) fail('C2', 'configSchema rejects the config fixture')
   const credentials = connector.credentialsSchema.safeParse(fixtures.credentials)
   if (!credentials.success) fail('C2', 'credentialsSchema rejects the credentials fixture')
+  const app = connector.appConfigSchema ? connector.appConfigSchema.safeParse(fixtures.app ?? {}) : { success: true as const, data: {} }
+  if (!app.success) fail('C2', 'appConfigSchema rejects the app fixture')
   for (const [label, schema] of [
     ['configSchema', connector.configSchema],
     ['credentialsSchema', connector.credentialsSchema],
+    ...(connector.appConfigSchema ? [['appConfigSchema', connector.appConfigSchema] as const] : []),
   ] as const) {
     const problem = formShapeProblem(schema)
     if (problem !== null) fail('C2', `${label} ${problem}`)
@@ -114,11 +127,12 @@ export async function assertConformance(connector: AnyConnectorDefinition, fixtu
     }
   }
 
-  if (!config.success || !credentials.success) {
+  if (!config.success || !credentials.success || !app.success) {
     return finish(failures, nonConnectorErrors, false)
   }
 
   const context: CapabilityContext = {
+    app: app.data,
     config: config.data,
     credentials: credentials.data,
     fetch:
@@ -324,6 +338,86 @@ export async function assertConformance(connector: AnyConnectorDefinition, fixtu
         return
       }
       fail('C11', 'orders.pull with the unauthorized fixture resolved; it must reject')
+    })
+  }
+
+  const authContext = (fetchOverride?: typeof fetch): AuthContext => ({
+    app: context.app,
+    config: context.config,
+    fetch: fetchOverride ?? context.fetch,
+    log: () => {},
+  })
+  const { auth } = connector
+  const isIsoTime = (value: unknown) => value === null || z.iso.datetime({ offset: true }).safeParse(value).success
+
+  // C14
+  if (auth.type === 'oauth2' && (auth.refresh || auth.expiresAt)) {
+    await check('C14', async () => {
+      if (auth.expiresAt && !isIsoTime(auth.expiresAt(context.credentials))) {
+        fail('C14', 'auth.expiresAt must return null or an ISO datetime with an offset')
+      }
+      if (!auth.refresh) return
+      if (!fixtures.refresh) {
+        fail('C14', 'auth.refresh is implemented: pass a refresh fixture')
+        return
+      }
+      const refreshed = await call('auth.refresh', () => auth.refresh!(authContext(fixtures.refresh!.fetch), context.credentials))
+      const parsed = connector.credentialsSchema.safeParse(refreshed)
+      if (!parsed.success) fail('C14', 'auth.refresh returned credentials that credentialsSchema rejects')
+      else if (auth.expiresAt && !isIsoTime(auth.expiresAt(parsed.data))) {
+        fail('C14', 'auth.expiresAt of the refreshed credentials must return null or an ISO datetime with an offset')
+      }
+      const refused = fixtures.refresh.refused
+      if (!refused) return
+      let value = context.credentials
+      if (refused.credentials !== undefined) {
+        const parsedRefused = connector.credentialsSchema.safeParse(refused.credentials)
+        if (!parsedRefused.success) {
+          fail('C14', 'credentialsSchema rejects the refused refresh credentials fixture')
+          return
+        }
+        value = parsedRefused.data
+      }
+      try {
+        await call('auth.refresh', () => auth.refresh!(authContext(refused.fetch ?? fixtures.refresh!.fetch), value))
+      } catch (error) {
+        const { kind } = classifyConnectorError(error)
+        if (kind !== 'auth_expired') fail('C14', `a refused auth.refresh failed as '${kind}', expected 'auth_expired'`)
+        return
+      }
+      fail('C14', 'auth.refresh with the refused fixture resolved; it must reject')
+    })
+  }
+
+  // C15
+  const deviceFlow = auth.type === 'oauth2' ? auth.deviceFlow : undefined
+  if (deviceFlow) {
+    await check('C15', async () => {
+      if (!fixtures.deviceFlow) {
+        fail('C15', 'auth.deviceFlow is implemented: pass a deviceFlow fixture')
+        return
+      }
+      const authCtx = authContext(fixtures.deviceFlow.fetch)
+      const started = deviceSignInStartSchema.safeParse(await call('deviceFlow.start', () => deviceFlow.start(authCtx)))
+      if (!started.success) {
+        fail('C15', `deviceFlow.start returned an invalid result: ${z.prettifyError(started.error)}`)
+        return
+      }
+      const { verificationUri, verificationUriComplete, deviceCode } = started.data
+      if (!isAllowedVerificationUri(verificationUri, deviceFlow.verificationHosts)) {
+        fail('C15', 'verificationUri must be an https: URL on one of verificationHosts')
+      }
+      if (verificationUriComplete !== null && !isAllowedVerificationUri(verificationUriComplete, deviceFlow.verificationHosts)) {
+        fail('C15', 'verificationUriComplete must be null or an https: URL on one of verificationHosts')
+      }
+      const polled = deviceSignInPollSchema.safeParse(await call('deviceFlow.poll', () => deviceFlow.poll(authCtx, deviceCode)))
+      if (!polled.success) {
+        fail('C15', `deviceFlow.poll returned an invalid result: ${z.prettifyError(polled.error)}`)
+        return
+      }
+      if (polled.data.status === 'approved' && !connector.credentialsSchema.safeParse(polled.data.credentials).success) {
+        fail('C15', 'deviceFlow.poll approved with credentials that credentialsSchema rejects')
+      }
     })
   }
 

@@ -12,8 +12,15 @@ export type TestContext = Context & { queue: InMemoryJobQueue }
 
 const silentLogger: Logger = { info() {}, warn() {}, error() {} }
 
-/** A real database, a random encryption key, a silent logger, an in-memory queue, the given connectors and the workflow engine on them. */
-export function createTestContext(options: { databaseUrl: string; connectors?: AnyConnectorDefinition[] }): TestContext {
+/**
+ * A real database, a random encryption key, a silent logger, an in-memory queue, the given connectors and the workflow engine on them.
+ * Connector installation settings come only from `connectorSettings` (never the machine's environment).
+ */
+export function createTestContext(options: {
+  databaseUrl: string
+  connectors?: AnyConnectorDefinition[]
+  connectorSettings?: Readonly<Record<string, string>>
+}): TestContext {
   const key = randomBytes(32).toString('base64')
   const db = createDb(options.databaseUrl)
   const queue = createInMemoryJobQueue()
@@ -23,7 +30,7 @@ export function createTestContext(options: { databaseUrl: string; connectors?: A
     queue,
     log: silentLogger,
     secrets: createSecretBox(key),
-    connectors: createConnectorRegistry(options.connectors ?? []),
+    connectors: createConnectorRegistry(options.connectors ?? [], { settings: options.connectorSettings ?? {} }),
     workflows: createWorkflowEngine({ db, queue, log: silentLogger }),
   }
 }

@@ -1,5 +1,6 @@
 export {
   defineConnector,
+  deviceFlowOf,
   isChannel,
   listCapabilities,
   CHANNEL_KINDS,
@@ -12,6 +13,20 @@ export {
   type ConnectorKind,
   type PullResult,
 } from './connector'
+export {
+  deviceSignInPollSchema,
+  deviceSignInStartSchema,
+  isAllowedVerificationUri,
+  signedInAccountSchema,
+  DEVICE_SIGN_IN_WAITING,
+  type AuthContext,
+  type ConnectorAuth,
+  type DeviceFlow,
+  type DeviceSignInPoll,
+  type DeviceSignInStart,
+  type OAuth2Auth,
+  type SignedInAccount,
+} from './auth'
 export {
   classifyConnectorError,
   errorFromResponse,
