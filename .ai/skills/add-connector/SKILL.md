@@ -9,7 +9,7 @@ A connector is a package that translates one external system into the canonical 
 
 **Reference implementation: `packages/connectors/fake`** (`@hanza/connector-fake`). Read `src/connector.ts` and `src/connector.test.ts` first. It keeps its data in memory, which a real connector must never do; copy its shape, not its state.
 
-**Not supported yet** (do not invent them): `pnpm create-connector`, `pnpm generate` auto-discovery, `pnpm test:connector <id>`, OAuth flows and token refresh in the core (stage 2, with Allegro), a recording tool for fixtures, capabilities beyond the five below (no shipments, invoices, webhooks, `offers.push`). Registering a connector in the app is a separate step (`@hanza/connector-registry`, owned by the core; see "Registering").
+**Not supported yet** (do not invent them): `pnpm create-connector`, `pnpm generate` auto-discovery, `pnpm test:connector <id>`, OAuth flows and token refresh in the core (stage 2, with Allegro), capabilities beyond the five below (no shipments, invoices, webhooks, `offers.push`). Registering a connector in the app is a separate step (`@hanza/connector-registry`, owned by the core; see "Registering").
 
 ## Rules
 
@@ -73,7 +73,7 @@ Canonical schemas (all exported): `offerSchema`, `orderSchema` (with `buyerSchem
 
 1. **Check scope.** Read `AGENTS.md` and `packages/connectors/README.md`. Confirm the Channel's API can be expressed with the five capabilities and the canonical `Offer` / `Order` fields. If it needs something the model lacks (variants, tax breakdown, shipments, ...), stop and write a spec (a GitHub issue).
 2. **Pick the id.** Lowercase slug (`allegro`, `woocommerce`). Package `@hanza/connector-<id>`, directory `packages/connectors/<id>/`.
-3. **Create the package** (copy `packages/connectors/fake`): `package.json` with `"exports": { ".": "./src/index.ts" }`, `dependencies` of only `@hanza/connector-sdk` (`workspace:*`) and `zod`, `devDependencies` of `typescript` and `vitest` (same versions as the fake), and the same `tsconfig.json` (`DOM` lib gives the `fetch` types). Run `pnpm install` once to create the workspace link.
+3. **Create the package** (copy `packages/connectors/fake`): `package.json` with `"exports": { ".": "./src/index.ts" }`, `dependencies` of only `@hanza/connector-sdk` (`workspace:*`) and `zod`, `devDependencies` of `typescript`, `vitest` and `@types/node` (same versions as the fake; the recorded-fixture tools in `@hanza/connector-sdk/testing` use Node's `fs`), and the same `tsconfig.json` (`DOM` lib gives the `fetch` types, `types: ["node"]` the Node ones). Run `pnpm install` once to create the workspace link.
 4. **Lay out the sources** under `src/`:
 
    ```
@@ -86,7 +86,7 @@ Canonical schemas (all exported): `offerSchema`, `orderSchema` (with `buyerSchem
        ├── client.ts          # thin helpers over ctx.fetch: URL building, auth header, zod-parsed responses, errorFromResponse
        ├── capabilities/      # one file per capability: offers-pull.ts, orders-pull.ts, stock-push.ts, price-push.ts, orders-update-status.ts
        ├── mapping.ts         # pure functions: external JSON <-> canonical Offer / Order / StockLevel / OfferPrice
-       ├── fixtures/          # recorded API responses (*.json)
+       ├── fixtures/          # recorded cassettes (<scenario>.cassette.json), scrubbed
        └── connector.test.ts
    ```
 
@@ -95,9 +95,14 @@ Canonical schemas (all exported): `offerSchema`, `orderSchema` (with `buyerSchem
 7. **Write `mapping.ts`**: pure, synchronous, no I/O. Keep API amount strings as they are; if the API returns numbers, format them string-safely and test rounding. `placedAt` and fact `occurredAt` must be ISO datetimes with an offset or `Z`. Every line's `unitPrice.currency` equals the Order's `total.currency`. End each mapper with `offerSchema.parse(...)` / `orderSchema.parse(...)` so an invalid canonical object cannot leave the connector. Wrap a parse failure in `PermanentError` (with `cause`) instead of letting the raw `ZodError` escape a capability: conformance check C12 requires every rejection to be a `ConnectorError`.
 8. **Implement capabilities.** Use only `ctx.fetch`, `ctx.config`, `ctx.credentials`, `ctx.log`. Idempotent and repeatable; no module-level state. Implement only what the Channel supports (a Channel still needs the three required ones).
 9. **Assemble `connector.ts`** and export it from `src/index.ts`.
-10. **Record fixtures.** There is no recorder. Call the Channel's sandbox once with a throwaway script (not committed), save the response bodies as `src/fixtures/<name>.json`, then scrub tokens, real names, emails, phone numbers and addresses. Include edge cases: empty page, last page, cancelled Order, multi-line Order, an unpaid Order (returned with `awaitingPayment: true` and later with a `paid` fact, or not returned at all if you do not report unpaid Orders), an unknown status. If there is no sandbox, hand-write fixtures from the official docs and say so in the connector's `AGENTS.md`.
+10. **Record fixtures** with the recorder (`packages/connectors/README.md`, "Recorded fixtures"; the reference is `packages/connectors/fake/src/http/`):
+    - Write the connector's `ScrubConfig`: every personal field the API sends (names, addresses, postal codes, tax and national ids, logins, notes) by key or path. Tokens, credential headers, `Bearer`/JWT strings, real e-mails and `+` phone numbers are scrubbed by default.
+    - Put the sandbox credentials in `packages/connectors/<id>/.recording/` (ignored by git); the test's `recording()` reads them. Never anywhere else.
+    - Record with `HANZA_RECORD_FIXTURES=1 pnpm --filter @hanza/connector-<id> exec vitest run src/connector.test.ts`. A recording that still looks like it holds a secret or personal data is not written: declare the field and record again. Read the diff before committing.
+    - Cover edge cases with scenario cassettes (`openCassette`): empty page, last page, cancelled Order, multi-line Order, an unpaid Order (returned with `awaitingPayment: true` and later with a `paid` fact, or not returned at all if you do not report unpaid Orders), an unknown status, error statuses.
+    - Without a sandbox, hand-write cassettes from the official docs (same format) and say so in the connector's `AGENTS.md`; the lint checks them too.
 11. **Write `connector.test.ts`** (Vitest, no network):
-    - call `assertConformance(connector, { config, credentials, fetch, unauthorized })` from `@hanza/connector-sdk/testing`, with a `fetch` that serves the recorded fixtures (the default `fetch` rejects, on purpose) and `unauthorized` pointing at a fixture where the API answers 401. It checks the schemas, paging and cursors, idempotent re-pulls, repeatable pushes and error classes (checks C1 to C13, see `packages/connector-sdk/src/testing/conformance.ts`; with `price.push`, C13 needs at least one fixture Offer that reports a `price`);
+    - call `runConformance(connector, { fixtures, config, credentials, unauthorized, scrub, recording })` from `@hanza/connector-sdk/testing`: it lints the fixtures, replays `conformance.cassette.json` (and `conformance-unauthorized.cassette.json`, where the API answers 401) and runs `assertConformance`. Test credentials stand in for the recorded ones (8+ characters). It checks the schemas, paging and cursors, idempotent re-pulls, repeatable pushes and error classes (checks C1 to C13, see `packages/connector-sdk/src/testing/conformance.ts`; with `price.push`, C13 needs at least one fixture Offer that reports a `price`), and reports every request the cassettes could not answer;
     - add tests for what the kit cannot know: the mapper output for every fixture (amounts, currency, facts), the status mapping in both directions, the request bodies of `stock.push`, `price.push` and `orders.updateStatus`, and each error class from the matching HTTP status.
 12. **Validate** (run what you can; report what you could not):
 
@@ -114,8 +119,8 @@ Canonical schemas (all exported): `offerSchema`, `orderSchema` (with `buyerSchem
 
 ## Definition of done
 
-- `pnpm check:boundaries`, typecheck and tests pass, including `assertConformance`.
+- `pnpm check:boundaries`, typecheck and tests pass, including `runConformance` on recorded cassettes.
 - Only `@hanza/connector-sdk` and `zod` in `dependencies`.
-- No `process.env`, no database, no module-level state, no imports outside the SDK, no UI, no real credentials or personal data in fixtures or error messages.
+- No `process.env`, no database, no module-level state, no imports outside the SDK, no UI, no real credentials or personal data in fixtures (the lint passes) or error messages.
 - Every external response is zod-parsed; every canonical object is validated against the SDK schema.
 - The connector's `AGENTS.md` documents the API's pitfalls.
