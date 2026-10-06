@@ -8,3 +8,6 @@ dist
 next-env.d.ts
 packages/db/src/generated
 .DS_Store
+
+# Recording credentials for connector fixtures (see packages/connectors/README.md)
+.recording/
