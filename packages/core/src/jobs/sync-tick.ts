@@ -4,6 +4,7 @@ import type { Context } from '../context'
 import { defineJob } from '../jobs'
 import { claimDueStatusPushes, STATUS_PUSH_SWEEP_LIMIT, STATUS_PUSH_SWEEP_LIMIT_FAILING } from '../orders/status-push'
 import { dueStreams, STREAM_CAPABILITIES, type ScheduledStream } from '../sync/schedule'
+import { workflowCoalesceKeys, workflowSweepRef } from '../workflows/refs'
 import { coalesceKeys, offersPullRef, ordersPullRef, ordersUpdateStatusRef, pricePushRef, stockPushRef, syncTickRef } from './refs'
 
 async function enqueueStream(ctx: Context, stream: ScheduledStream, organizationId: string, connectionId: string): Promise<void> {
@@ -28,12 +29,14 @@ async function enqueueStream(ctx: Context, stream: ScheduledStream, organization
 }
 
 /**
- * One global scheduler: enqueues every due stream a Channel's connector implements, except for Connections waiting for sign-in,
- * and sweeps the Channel's overdue Order status pushes when its connector has `orders.updateStatus` (ADR 0012).
+ * One global scheduler: enqueues the workflow sweep (timers, signals, lost jobs; ADR 0014) and every due stream a
+ * Channel's connector implements, except for Connections waiting for sign-in, and sweeps the Channel's overdue Order
+ * status pushes when its connector has `orders.updateStatus` (ADR 0012).
  */
 export const syncTickJob = defineJob({
   ...syncTickRef,
   async handler(ctx) {
+    await ctx.queue.enqueue(workflowSweepRef, {}, { coalesceKey: workflowCoalesceKeys.sweep })
     const now = new Date()
     let enqueued = 0
     let statusPushes = 0
