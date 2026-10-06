@@ -1,15 +1,27 @@
-import type { OrderStatus } from '@hanza/connector-sdk'
-import type { ConnectionHealth } from '@hanza/db'
+import type { OrderPhase } from '@hanza/core'
+import type { ConnectionHealth, OrderStatusColor } from '@hanza/db'
 import { useT } from '@/i18n/use-t'
-import { healthLabel, orderStatusLabel } from '@/lib/labels'
+import { healthLabel, orderPhaseLabel, orderStatusName } from '@/lib/labels'
 
 const base = 'inline-flex items-center whitespace-nowrap rounded-full border px-2 py-0.5 text-xs font-medium'
 
-const statusTone: Record<OrderStatus, string> = {
+const phaseTone: Record<OrderPhase, string> = {
   new: 'border-sky-300 bg-sky-50 text-sky-900',
   processing: 'border-amber-300 bg-amber-50 text-amber-900',
   shipped: 'border-green-300 bg-green-50 text-green-900',
   cancelled: 'border-line bg-canvas text-muted',
+}
+
+// Whole class names, so Tailwind sees every one of them.
+const colorTone: Record<OrderStatusColor, string> = {
+  gray: 'border-gray-300 bg-gray-50 text-gray-900',
+  blue: 'border-blue-300 bg-blue-50 text-blue-900',
+  teal: 'border-teal-300 bg-teal-50 text-teal-900',
+  green: 'border-green-300 bg-green-50 text-green-900',
+  amber: 'border-amber-300 bg-amber-50 text-amber-900',
+  orange: 'border-orange-300 bg-orange-50 text-orange-900',
+  red: 'border-red-300 bg-red-50 text-red-900',
+  violet: 'border-violet-300 bg-violet-50 text-violet-900',
 }
 
 const healthTone: Record<ConnectionHealth, string> = {
@@ -20,9 +32,14 @@ const healthTone: Record<ConnectionHealth, string> = {
 }
 
 // The meaning is always in the text; colour only reinforces it.
-export function OrderStatusBadge({ status }: { status: OrderStatus }) {
+export function OrderStatusBadge({ status }: { status: { name: string | null; phase: OrderPhase; color: OrderStatusColor | null } }) {
   const t = useT()
-  return <span className={`${base} ${statusTone[status]}`}>{orderStatusLabel(t, status)}</span>
+  const tone = status.color ? colorTone[status.color] : phaseTone[status.phase]
+  return (
+    <span className={`${base} ${tone}`} title={orderPhaseLabel(t, status.phase)}>
+      {orderStatusName(t, status)}
+    </span>
+  )
 }
 
 export function HealthBadge({ health }: { health: ConnectionHealth }) {

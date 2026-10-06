@@ -40,7 +40,7 @@ describe.skipIf(!databaseUrl)('importOrder', () => {
 
     expect(result).toMatchObject({ created: true, factsApplied: 0 })
     const stored = await ctx.db.order.findFirstOrThrow({ where: { id: result.orderId }, include: { lines: { include: { reservation: true } } } })
-    expect(stored).toMatchObject({ status: 'new', attentionReasons: [], currency: 'PLN', shippingCountryCode: 'PL', closedAt: null })
+    expect(stored).toMatchObject({ phase: 'new', attentionReasons: [], currency: 'PLN', shippingCountryCode: 'PL', closedAt: null })
     // Buyer data is sealed (ADR 0016): no plaintext column is written.
     expect(stored).toMatchObject({ buyerName: null, buyerEmail: null, shippingAddress: null, billingAddress: null })
     expect(stored.buyerData).toMatch(/^v1:/)
@@ -138,13 +138,26 @@ describe.skipIf(!databaseUrl)('importOrder', () => {
 
     // early: processing + cancelled → cancelled (released), reason; late: cancelled + shipped → conflict.
     const stored = await ctx.db.order.findFirstOrThrow({ where: { id: orderId } })
-    expect(stored.status).toBe('cancelled')
+    expect(stored.phase).toBe('cancelled')
     expect(stored.attentionReasons).toEqual(['cancelled_while_processing', 'channel_fact_conflict'])
     expect(await available()).toEqual({ stock: 10, reserved: 0, available: 10 })
+    const defaults = await ctx.db.orderStatus.findMany({ where: { organizationId: org, isDefault: true }, select: { id: true, name: true, phase: true } })
+    const defaultOf = (phase: string) => {
+      const status = defaults.find((candidate) => candidate.phase === phase)
+      return { id: status?.id, name: null, phase }
+    }
     const changed = await ctx.db.eventLog.findMany({ where: { subjectId: orderId, type: 'order.status_changed' }, orderBy: { id: 'asc' } })
     expect(changed.map((event) => event.payload)).toEqual([
-      { from: 'new', to: 'processing', cause: 'user', factId: null, actor: user },
-      { from: 'processing', to: 'cancelled', cause: 'channel_fact', factId: 'early', actor: { type: 'system' } },
+      { from: 'new', to: 'processing', fromStatus: defaultOf('new'), toStatus: defaultOf('processing'), cause: 'user', factId: null, actor: user },
+      {
+        from: 'processing',
+        to: 'cancelled',
+        fromStatus: defaultOf('processing'),
+        toStatus: defaultOf('cancelled'),
+        cause: 'channel_fact',
+        factId: 'early',
+        actor: { type: 'system' },
+      },
     ])
     // A fact-driven change is never pushed back to the Channel.
     expect(ctx.queue.enqueued.filter((job) => job.name === 'orders.updateStatus')).toHaveLength(1)
@@ -171,7 +184,7 @@ describe.skipIf(!databaseUrl)('importOrder', () => {
       await importOrder(ctx, org, connectionId, { ...order, facts: [fact('f', cell.fact)] })
 
       const stored = await ctx.db.order.findFirstOrThrow({ where: { id: orderId }, include: { lines: { include: { reservation: true } } } })
-      expect(stored.status).toBe(cell.status)
+      expect(stored.phase).toBe(cell.status)
       expect(stored.attentionReasons).toEqual(cell.reasons)
       expect(stored.lines[0]?.reservation?.status).toBe(cell.reservation)
       expect((await available()).stock).toBe(cell.stock)
@@ -186,7 +199,7 @@ describe.skipIf(!databaseUrl)('importOrder', () => {
     expect((await ctx.db.order.findFirstOrThrow({ where: { id: orderId } })).attentionReasons).toEqual(['unmatched_line', 'shortage'])
     await importOrder(ctx, org, connectionId, { ...order, facts: [fact('c', 'cancelled')] })
     const stored = await ctx.db.order.findFirstOrThrow({ where: { id: orderId } })
-    expect(stored.status).toBe('cancelled')
+    expect(stored.phase).toBe('cancelled')
     expect(stored.attentionReasons).toEqual([])
     // The line itself stays Unmatched: only the Order-level mark goes.
     expect(await ctx.db.orderLine.count({ where: { orderId, productId: null } })).toBe(1)
@@ -210,7 +223,7 @@ describe.skipIf(!databaseUrl)('importOrder', () => {
       buildOrder({ lines: [orderLine('l1', { sku: 'NOPE' })], facts: [fact('c', 'cancelled')] }),
     )
     const stored = await ctx.db.order.findFirstOrThrow({ where: { id: orderId } })
-    expect(stored).toMatchObject({ status: 'cancelled', attentionReasons: [] })
+    expect(stored).toMatchObject({ phase: 'cancelled', attentionReasons: [] })
     const events = await ctx.db.eventLog.findMany({ where: { subjectId: orderId }, orderBy: { id: 'asc' } })
     expect(events.map((event) => event.type)).toEqual([
       'order.imported',
@@ -226,7 +239,7 @@ describe.skipIf(!databaseUrl)('importOrder', () => {
     const order = buildOrder({ lines: [orderLine('l1', { sku: 'NOPE' })] })
     const { orderId } = await importOrder(ctx, org, connectionId, order)
     await importOrder(ctx, org, connectionId, { ...order, facts: [fact('s', 'shipped')] })
-    expect(await ctx.db.order.findFirstOrThrow({ where: { id: orderId } })).toMatchObject({ status: 'shipped', attentionReasons: ['unmatched_line'] })
+    expect(await ctx.db.order.findFirstOrThrow({ where: { id: orderId } })).toMatchObject({ phase: 'shipped', attentionReasons: ['unmatched_line'] })
   })
 
   it('a fact that moves the status drops the status push still pending; one that does not keeps it', async () => {

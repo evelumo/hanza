@@ -10,7 +10,7 @@ describe('showsAwaitingPayment', () => {
     ['new', false, false],
     ['shipped', false, false],
     ['cancelled', false, false],
-  ] as const)('%s, awaitingPayment %s → %s', (status, awaitingPayment, expected) => {
-    expect(showsAwaitingPayment({ status, awaitingPayment })).toBe(expected)
+  ] as const)('%s, awaitingPayment %s → %s', (phase, awaitingPayment, expected) => {
+    expect(showsAwaitingPayment({ phase, awaitingPayment })).toBe(expected)
   })
 })

@@ -46,7 +46,7 @@ export interface Capabilities<TConfig, TCredentials> {
    * Channel reported for that Offer in `offers.pull` (Hanza never converts). Must be repeatable.
    */
   'price.push'?(ctx: CapabilityContext<TConfig, TCredentials>, prices: OfferPrice[]): Promise<void>
-  /** Translate a Hanza Order status to the Channel's and set it. Resolve without a call if the Channel has no equivalent. Must be repeatable. */
+  /** Translate an Order phase (`status`) to the Channel's own status and set it. Resolve without a call if the Channel has no equivalent. Must be repeatable. */
   'orders.updateStatus'?(
     ctx: CapabilityContext<TConfig, TCredentials>,
     input: { orderExternalId: string; status: OrderStatus },

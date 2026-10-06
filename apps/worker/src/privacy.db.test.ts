@@ -181,7 +181,7 @@ describe.skipIf(!databaseUrl)('Buyer data privacy end to end (real Postgres, in-
 
     expect(await buyerOf(orgA, 'fake-order-2')).toBeNull()
     const erased = await ctx.db.order.findFirstOrThrow({ where: { id: await orderId(orgA, 'fake-order-2') }, include: { lines: true, facts: true } })
-    expect(erased).toMatchObject({ buyerData: null, buyerEmailIndex: null, shippingCountryCode: 'PL', status: 'cancelled' })
+    expect(erased).toMatchObject({ buyerData: null, buyerEmailIndex: null, shippingCountryCode: 'PL', phase: 'cancelled' })
     expect(erased.buyerDataErasedAt).toBeInstanceOf(Date)
     expect(erased.totalAmount.toFixed()).toBe('84')
     expect(erased.lines).toHaveLength(2)

@@ -1,4 +1,4 @@
-import { canManagePrivacy, getPrivacySettings } from '@hanza/core'
+import { canManageOrganization, getPrivacySettings } from '@hanza/core'
 import type { Metadata } from 'next'
 import { Section } from '@/components/section'
 import { getT } from '@/i18n/server'
@@ -20,7 +20,7 @@ export default async function PrivacyPage() {
   const [{ buyerDataRetentionDays: days }, canManage] = await Promise.all([
     getPrivacySettings(ctx, organizationId),
     // The services check this again; here it only decides whether the forms are shown.
-    canManagePrivacy(ctx, organizationId, user.id),
+    canManageOrganization(ctx, organizationId, user.id),
   ])
 
   return (

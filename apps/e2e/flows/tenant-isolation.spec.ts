@@ -86,7 +86,15 @@ test('a second organization sees none of the first one’s data and cannot act o
     [productId, ownProductId],
   ])
   expect(Object.fromEntries(units.rows.map((row) => [row.productId, row.units]))).toEqual({ [productId]: 7, [ownProductId]: 3 })
-  const statuses = await db.query<{ id: string; status: string }>(`SELECT id, status::text FROM "order" WHERE id = ANY($1)`, [[orderId, ownOrderId]])
-  expect(Object.fromEntries(statuses.rows.map((row) => [row.id, row.status]))).toEqual({ [orderId]: 'new', [ownOrderId]: 'new' })
+  // Both Orders are still in phase new, on their own organization's default status.
+  const statuses = await db.query<{ id: string; phase: string; ownDefault: boolean }>(
+    `SELECT o.id, o.phase::text, (s."organizationId" = o."organizationId" AND s."isDefault") AS "ownDefault"
+     FROM "order" o JOIN "order_status" s ON s.id = o."statusId" WHERE o.id = ANY($1)`,
+    [[orderId, ownOrderId]],
+  )
+  expect(Object.fromEntries(statuses.rows.map((row) => [row.id, [row.phase, row.ownDefault]]))).toEqual({
+    [orderId]: ['new', true],
+    [ownOrderId]: ['new', true],
+  })
   await context.close()
 })

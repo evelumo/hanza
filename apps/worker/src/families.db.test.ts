@@ -76,7 +76,7 @@ async function runScenario(options: { grouped: boolean }) {
         offers: offers.map((offer) => [offer.externalId, skuOf(offer.productId), offer.linkedBy, offer.stockPushSeq, offer.stockPushedSeq, offer.lastPushedAvailable]),
         orders: orders.map((order) => [
           order.externalId,
-          order.status,
+          order.phase,
           order.attentionReasons,
           order.lines.map((line) => [line.externalId, skuOf(line.productId), line.quantity, line.shortage, line.reservation?.status ?? null, line.reservation?.units ?? null]),
         ]),
@@ -135,15 +135,15 @@ describe.skipIf(!databaseUrl)('Product families do not change what a Product is 
       ['fake-offer-4', 'STICKERS', 'manual', 10],
       ['fake-offer-5', null, null, null],
     ])
-    const orders = Object.fromEntries(grouped.result.orders.map(([externalId, status, attention, lines]) => [externalId, { status, attention, lines }]))
-    expect(orders['fake-order-1']).toMatchObject({ status: 'shipped', attention: [] })
-    expect(orders['fake-order-2']).toMatchObject({ status: 'cancelled', attention: [] })
+    const orders = Object.fromEntries(grouped.result.orders.map(([externalId, phase, attention, lines]) => [externalId, { phase, attention, lines }]))
+    expect(orders['fake-order-1']).toMatchObject({ phase: 'shipped', attention: [] })
+    expect(orders['fake-order-2']).toMatchObject({ phase: 'cancelled', attention: [] })
     expect((orders['fake-order-2']!.lines as unknown[][]).map((line) => [line[1], line[3], line[4]])).toEqual([
       ['FAKE-SKU-2', false, 'released'],
       ['FAKE-SKU-3', true, 'released'],
     ])
-    expect(orders['fake-order-3']).toMatchObject({ status: 'new', attention: ['unmatched_line'] })
-    expect(orders['fake-order-4']).toMatchObject({ status: 'cancelled' })
+    expect(orders['fake-order-3']).toMatchObject({ phase: 'new', attention: ['unmatched_line'] })
+    expect(orders['fake-order-4']).toMatchObject({ phase: 'cancelled' })
     expect(grouped.result.statusUpdates).toContainEqual({ orderExternalId: 'fake-order-1', status: 'shipped' })
 
     // Deleting the family ungroups the Products and changes nothing else.

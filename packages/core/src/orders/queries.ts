@@ -1,9 +1,18 @@
-import type { Address, Buyer, Money, OrderStatus } from '@hanza/connector-sdk'
-import type { AttentionReason, ChannelFactType, PaymentMethod } from '@hanza/db'
+import type { Address, Buyer, Money } from '@hanza/connector-sdk'
+import type { AttentionReason, ChannelFactType, OrderStatusColor, PaymentMethod } from '@hanza/db'
 import type { Context } from '../context'
 import { listEvents, type EventRow } from '../events'
 import { storedBuyerDataSelect, viewBuyerData, type BuyerDataView, type StoredBuyerData } from '../privacy/buyer-data'
-import { allowedTransitions, OPEN_STATUSES } from './status-rules'
+import { ORDER_PHASES, type OrderPhase } from './phases'
+import { allowedStatuses, allowedTransitions, OPEN_PHASES } from './status-rules'
+
+/** An Order status as the panel shows it; a null name is the phase's own name. */
+export interface OrderStatusLabel {
+  id: string
+  name: string | null
+  color: OrderStatusColor | null
+  phase: OrderPhase
+}
 
 export interface OrderRow {
   id: string
@@ -17,7 +26,8 @@ export interface OrderRow {
   buyerDataState: BuyerDataView['state']
   buyerDataErasedAt: Date | null
   total: Money
-  status: OrderStatus
+  phase: OrderPhase
+  status: OrderStatusLabel
   /** A prepaid Order the Buyer has not paid for yet; it cannot be fulfilled until the Channel reports the payment. */
   awaitingPayment: boolean
   attentionReasons: AttentionReason[]
@@ -49,7 +59,10 @@ export interface OrderDetail extends OrderRow {
   }>
   facts: Array<{ externalId: string; type: ChannelFactType; occurredAt: Date; note: string | null; recordedAt: Date }>
   events: EventRow[]
-  allowedTransitions: OrderStatus[]
+  /** The other phases a person may move the Order to (`allowedTransitions`); empty in a final phase. */
+  allowedTransitions: OrderPhase[]
+  /** Where a person may move the Order, phase by phase, then by position. */
+  allowedStatuses: OrderStatusLabel[]
 }
 
 const rowSelect = {
@@ -60,7 +73,8 @@ const rowSelect = {
   buyerDataErasedAt: true,
   currency: true,
   totalAmount: true,
-  status: true,
+  phase: true,
+  status: { select: { id: true, name: true, color: true, phase: true } },
   awaitingPayment: true,
   attentionReasons: true,
   connection: { select: { name: true } },
@@ -73,7 +87,8 @@ function toRow(
     buyerDataErasedAt: Date | null
     currency: string
     totalAmount: { toFixed(): string }
-    status: OrderStatus
+    phase: OrderPhase
+    status: OrderStatusLabel
     awaitingPayment: boolean
     attentionReasons: AttentionReason[]
     connection: { name: string }
@@ -90,6 +105,7 @@ function toRow(
     buyerDataState: view.state,
     buyerDataErasedAt: order.buyerDataErasedAt,
     total: { amount: order.totalAmount.toFixed(), currency: order.currency },
+    phase: order.phase,
     status: order.status,
     awaitingPayment: order.awaitingPayment,
     attentionReasons: order.attentionReasons,
@@ -100,18 +116,19 @@ export async function listOrders(
   ctx: Context,
   organizationId: string,
   /** `awaitingPayment` matches open (new, processing) Orders awaiting payment, or every other Order when false. */
-  query: { status?: OrderStatus; needsAttention?: boolean; awaitingPayment?: boolean; skip: number; take: number },
+  query: { phase?: OrderPhase; statusId?: string; needsAttention?: boolean; awaitingPayment?: boolean; skip: number; take: number },
 ): Promise<{ total: number; items: OrderRow[] }> {
   const where = {
     organizationId,
-    ...(query.status ? { status: query.status } : {}),
+    ...(query.phase ? { phase: query.phase } : {}),
+    ...(query.statusId ? { statusId: query.statusId } : {}),
     ...(query.needsAttention === undefined ? {} : { attentionReasons: { isEmpty: !query.needsAttention } }),
     // Only open Orders are still waiting: a cancelled checkout that was never paid is not.
     ...(query.awaitingPayment === undefined
       ? {}
       : query.awaitingPayment
-        ? { AND: [{ awaitingPayment: true }, { status: { in: OPEN_STATUSES } }] }
-        : { NOT: { awaitingPayment: true, status: { in: OPEN_STATUSES } } }),
+        ? { AND: [{ awaitingPayment: true }, { phase: { in: OPEN_PHASES } }] }
+        : { NOT: { awaitingPayment: true, phase: { in: OPEN_PHASES } } }),
   }
   const [total, orders] = await Promise.all([
     ctx.db.order.count({ where }),
@@ -161,7 +178,19 @@ export async function getOrder(ctx: Context, organizationId: string, orderId: st
   })
   if (!order) return null
 
-  const events = await listEvents(ctx, organizationId, { type: 'order', id: order.id }, 50)
+  // An Order always has a status, so its organization's defaults exist already.
+  const [events, statuses] = await Promise.all([
+    listEvents(ctx, organizationId, { type: 'order', id: order.id }, 50),
+    ctx.db.orderStatus.findMany({
+      where: { organizationId, active: true },
+      orderBy: [{ position: 'asc' }, { createdAt: 'asc' }, { id: 'asc' }],
+      select: { id: true, name: true, color: true, phase: true, active: true },
+    }),
+  ])
+  const current = { phase: order.phase, statusId: order.status.id, awaitingPayment: order.awaitingPayment }
+  const options = allowedStatuses(current, statuses)
+    .sort((a, b) => ORDER_PHASES.indexOf(a.phase) - ORDER_PHASES.indexOf(b.phase))
+    .map(({ id, name, color, phase }) => ({ id, name, color, phase }))
   const buyerData = view(ctx, order)
   const present = buyerData.state === 'present' ? buyerData.data : null
   return {
@@ -188,6 +217,7 @@ export async function getOrder(ctx: Context, organizationId: string, orderId: st
     })),
     facts: order.facts,
     events,
-    allowedTransitions: allowedTransitions(order.status, order.awaitingPayment),
+    allowedTransitions: allowedTransitions(order.phase, order.awaitingPayment),
+    allowedStatuses: options,
   }
 }

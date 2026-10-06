@@ -21,6 +21,7 @@ export { ordersPullJob } from './jobs/orders-pull'
 export { stockPushJob } from './jobs/stock-push'
 export { pricePushJob } from './jobs/price-push'
 export { ordersUpdateStatusJob } from './jobs/orders-update-status'
+export { orderStatusesDeleteJob } from './jobs/order-statuses-delete'
 export { privacyTickJob, PRIVACY_TICK_EVERY_MS } from './jobs/privacy-tick'
 export { privacySweepJob } from './jobs/privacy-sweep'
 export {
@@ -30,11 +31,13 @@ export {
   stockPushRef,
   pricePushRef,
   ordersUpdateStatusRef,
+  orderStatusesDeleteRef,
   privacyTickRef,
   privacySweepRef,
   coalesceKeys,
 } from './jobs/refs'
 export { systemActor, type Actor } from './actor'
+export { canManageOrganization } from './permissions'
 export { DomainError, type DomainErrorCode } from './errors'
 export { createSecretBox, type SecretBox } from './secrets'
 export { describeFailure } from './describe-failure'
@@ -43,6 +46,7 @@ export * from './catalog/index'
 export * from './stock/index'
 export * from './prices/index'
 export * from './orders/index'
+export * from './order-statuses/index'
 export * from './connections/index'
 export * from './warehouses/index'
 export * from './sync/index'

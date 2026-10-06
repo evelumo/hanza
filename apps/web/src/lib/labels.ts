@@ -1,10 +1,14 @@
-import type { OrderStatus } from '@hanza/connector-sdk'
-import type { AttentionReason, ChannelFactType, ConnectionHealth, PaymentMethod, SyncErrorKind, SyncStream } from '@hanza/db'
+import type { ChannelReportedPhase, OrderPhase } from '@hanza/core'
+import type { AttentionReason, ChannelFactType, ConnectionHealth, OrderStatusColor, PaymentMethod, SyncErrorKind, SyncStream } from '@hanza/db'
 import en from '../../messages/en.json'
 import type { MessageKey, Translator } from '@/i18n/types'
 
 // Each lookup builds its key from the value, so a status the catalogue lacks does not compile.
-export const orderStatusLabel = (t: Translator, status: OrderStatus) => t(`labels.orderStatus.${status}`)
+export const orderPhaseLabel = (t: Translator, phase: OrderPhase) => t(`labels.orderPhase.${phase}`)
+export const statusColorLabel = (t: Translator, color: OrderStatusColor) => t(`labels.statusColor.${color}`)
+export const reportedPhaseLabel = (t: Translator, phase: ChannelReportedPhase) => t(`labels.reportedPhase.${phase}`)
+/** An Order status as people see it: its name, or the phase's name in their language while it has none. */
+export const orderStatusName = (t: Translator, status: { name: string | null; phase: OrderPhase }) => status.name ?? orderPhaseLabel(t, status.phase)
 export const attentionReasonLabel = (t: Translator, reason: AttentionReason) => t(`labels.attentionReason.${reason}`)
 export const healthLabel = (t: Translator, health: ConnectionHealth) => t(`labels.health.${health}`)
 export const streamLabel = (t: Translator, stream: SyncStream) => t(`labels.syncStream.${stream}`)
@@ -15,7 +19,7 @@ export const syncErrorLabel = (t: Translator, kind: SyncErrorKind) => t(`labels.
 
 type OpenGroup =
   | 'labels.connectorKind'
-  | 'labels.orderStatus'
+  | 'labels.orderPhase'
   | 'labels.health'
   | 'labels.attentionReason'
   | 'labels.channelFact'

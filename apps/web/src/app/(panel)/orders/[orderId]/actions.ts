@@ -15,7 +15,7 @@ export async function changeOrderStatusAction(_previous: ActionState, formData: 
   if (!parsed.success) return invalidInput(parsed.error, t)
 
   try {
-    await changeOrderStatus(getContext(), organizationId, parsed.data.orderId, parsed.data.status, { type: 'user', userId: user.id })
+    await changeOrderStatus(getContext(), organizationId, parsed.data.orderId, { statusId: parsed.data.statusId }, { type: 'user', userId: user.id })
   } catch (error) {
     return failure(error, t)
   }

@@ -16,9 +16,15 @@ export function clientMessages(messages: Messages) {
     products: { columns: messages.products.columns, detail: messages.products.detail, new: messages.products.new },
     families: { new: messages.families.new, detail: messages.families.detail },
     orders: { linkLine: messages.orders.linkLine, moveReservation: messages.orders.moveReservation },
-    connections: { new: messages.connections.new, stockRules: messages.connections.stockRules, warehouses: messages.connections.warehouses },
+    connections: {
+      new: messages.connections.new,
+      stockRules: messages.connections.stockRules,
+      warehouses: messages.connections.warehouses,
+      detail: { statusMapping: messages.connections.detail.statusMapping },
+    },
     warehouses: messages.warehouses,
     privacy: { retention: messages.privacy.retention, erasure: messages.privacy.erasure },
+    settings: { orderStatuses: messages.settings.orderStatuses },
     errors: { page: messages.errors.page },
   } satisfies Partial<Record<keyof Messages, unknown>>
 }

@@ -2,11 +2,11 @@ import type { Prisma, Tx } from '@hanza/db'
 import type { Actor } from '../actor'
 import type { Context } from '../context'
 import { appendEvent } from '../events'
-import { FINAL_STATUSES, isFinalStatus } from '../orders/status-rules'
+import { FINAL_PHASES, isFinalPhase } from '../orders/status-rules'
 import { TX_OPTIONS } from '../transaction'
 import { buyerEmailIndex, JS_TRIM_WHITESPACE, normalizeEmail } from './buyer-data'
 import { eraseBuyerDataOfOrders } from './erase'
-import { assertCanManagePrivacy } from './permissions'
+import { assertCanManageOrganization } from '../permissions'
 
 // Postgres `btrim` strips spaces only and its `\s` misses NBSP and BOM, so trim exactly what JS `trim()` does.
 const TRIM_PATTERN = `^[${JS_TRIM_WHITESPACE}]+|[${JS_TRIM_WHITESPACE}]+$`
@@ -38,7 +38,7 @@ async function matchingOrders(ctx: Context, db: Tx | Context['db'], organization
   }
 }
 
-const closed = { status: { in: [...FINAL_STATUSES] } } satisfies Prisma.OrderWhereInput
+const closed = { phase: { in: [...FINAL_PHASES] } } satisfies Prisma.OrderWhereInput
 
 export interface ErasurePreview {
   /** Shipped or cancelled: erased on confirmation. */
@@ -48,7 +48,7 @@ export interface ErasurePreview {
 }
 
 export async function previewBuyerErasure(ctx: Context, organizationId: string, email: string, actor: Actor): Promise<ErasurePreview> {
-  await assertCanManagePrivacy(ctx, organizationId, actor)
+  await assertCanManageOrganization(ctx, organizationId, actor)
   const where = await matchingOrders(ctx, ctx.db, organizationId, email)
   const [all, closedCount] = await Promise.all([
     ctx.db.order.count({ where }),
@@ -67,11 +67,11 @@ export async function eraseBuyerData(
   email: string,
   actor: Actor,
 ): Promise<{ erased: number; keptOpen: number }> {
-  await assertCanManagePrivacy(ctx, organizationId, actor)
+  await assertCanManageOrganization(ctx, organizationId, actor)
   return ctx.db.$transaction(async (tx) => {
     const where = await matchingOrders(ctx, tx, organizationId, email)
-    const rows = await tx.order.findMany({ where, select: { id: true, status: true } })
-    const closedIds = rows.filter((row) => isFinalStatus(row.status)).map((row) => row.id)
+    const rows = await tx.order.findMany({ where, select: { id: true, phase: true } })
+    const closedIds = rows.filter((row) => isFinalPhase(row.phase)).map((row) => row.id)
     const erased = await eraseBuyerDataOfOrders(tx, organizationId, closedIds, closed, { cause: 'erasure_request' }, actor, new Date())
     const result = { erased: erased.length, keptOpen: rows.length - closedIds.length }
     await appendEvent(tx, { organizationId, type: 'privacy.erasure_requested', subject: null, payload: { ...result, actor } })

@@ -7,10 +7,11 @@ import { lockOrder, lockStock } from '../stock/locks'
 import { markOffersForStockPush, requestStockPushAfterCommit } from '../stock/push'
 import { TX_OPTIONS } from '../transaction'
 import { removeReasons } from './reasons'
+import { OPEN_PHASES } from './status-rules'
 
 /**
- * A person moves the open Reservation of a line of a new or processing Order to another active
- * Warehouse, any of the organization's. Refused (`not_enough_stock`) unless the target's Available
+ * A person moves the open Reservation of a line of an Order in phase new or processing (whatever its Order status)
+ * to another active Warehouse, any of the organization's. Refused (`not_enough_stock`) unless the target's Available
  * covers the whole line, so a move never makes a Shortage; it clears the line's Shortage mark, and
  * the Order's `shortage` reason once no line is short. Locks: Order, Warehouses, Stock (ADR 0017).
  * Every Channel of the Product is pushed: the Available of both Warehouses changed.
@@ -32,13 +33,13 @@ export async function moveReservation(
       where: { id: orderLineId, organizationId },
       select: {
         shortage: true,
-        order: { select: { id: true, status: true, attentionReasons: true } },
+        order: { select: { id: true, phase: true, attentionReasons: true } },
         reservation: { select: { id: true, productId: true, warehouseId: true, units: true, status: true } },
       },
     })
     if (!line) throw new DomainError('not_found')
     const { order, reservation } = line
-    if (!reservation || reservation.status !== 'open' || (order.status !== 'new' && order.status !== 'processing')) {
+    if (!reservation || reservation.status !== 'open' || !OPEN_PHASES.includes(order.phase)) {
       throw new DomainError('reservation_not_open')
     }
     if (reservation.warehouseId === toWarehouseId) return []

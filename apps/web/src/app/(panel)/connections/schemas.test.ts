@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { addConnectionSchema, channelWarehousesSchema, requestSyncSchema, stockRulesSchema } from './schemas'
+import { addConnectionSchema, channelWarehousesSchema, requestSyncSchema, statusMappingSchema, stockRulesSchema } from './schemas'
 
 describe('channelWarehousesSchema', () => {
   it('reads "all" without Warehouses', () => {
@@ -67,5 +67,18 @@ describe('stockRulesSchema', () => {
     for (const [safetyBuffer, channelLimit] of [['', ''], ['-1', ''], ['1.5', ''], ['1000001', ''], ['0', '-1'], ['0', '2.5'], ['0', '1000001'], ['0', 'x']]) {
       expect(stockRulesSchema.safeParse({ connectionId: 'c', safetyBuffer, channelLimit }).success).toBe(false)
     }
+  })
+})
+
+describe('statusMappingSchema', () => {
+  it('turns an empty choice into the phase default and needs every reported phase', () => {
+    expect(statusMappingSchema.parse({ connectionId: 'c', new: '', shipped: 's', cancelled: '' })).toEqual({
+      connectionId: 'c',
+      new: null,
+      shipped: 's',
+      cancelled: null,
+    })
+    expect(statusMappingSchema.safeParse({ connectionId: 'c', new: '' }).success).toBe(false)
+    expect(statusMappingSchema.safeParse({ connectionId: 'c', new: 'x'.repeat(65), shipped: '', cancelled: '' }).success).toBe(false)
   })
 })

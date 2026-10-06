@@ -81,7 +81,12 @@ function detail(t: Translator, format: EventFormatters, type: string, payload: P
     case 'offer.price_changed':
       return arrow(priceText(t, format.money, payload.from), priceText(t, format.money, payload.to))
     case 'order.status_changed':
-      return arrow(statusLabel(t, text(payload.from)), statusLabel(t, text(payload.to)))
+      return arrow(statusName(t, payload.fromStatus, text(payload.from)), statusName(t, payload.toStatus, text(payload.to)))
+    case 'connection.status_mapping_changed': {
+      const phase = text(payload.phase)
+      const change = arrow(mappedName(t, payload.from, phase), mappedName(t, payload.to, phase))
+      return phase && change ? `${labelOrRaw(t, 'labels.orderPhase', phase)}: ${change}` : change
+    }
     case 'order.channel_fact_recorded':
       return labelOrRaw(t, 'labels.channelFact', text(payload.type) ?? '')
     case 'order.attention_raised':
@@ -117,7 +122,23 @@ function detail(t: Translator, format: EventFormatters, type: string, payload: P
   }
 }
 
-const statusLabel = (t: Translator, value: string | null) => (value === null ? null : labelOrRaw(t, 'labels.orderStatus', value))
+const phaseLabel = (t: Translator, value: string | null) => (value === null ? null : labelOrRaw(t, 'labels.orderPhase', value))
+
+/**
+ * The status name kept in the Event (renaming the status later does not change it). An unnamed status (a default) is
+ * shown as its phase, in the viewer's language: the snapshot's own phase, else the phase the Event names.
+ */
+function statusName(t: Translator, snapshot: unknown, phase: string | null): string | null {
+  if (typeof snapshot !== 'object' || snapshot === null) return phaseLabel(t, phase)
+  const { name, phase: own } = snapshot as Payload
+  return text(name) ?? phaseLabel(t, text(own) ?? phase)
+}
+
+/** A Status mapping side: no status at all is "the phase default"; an unnamed status is shown as its phase. */
+function mappedName(t: Translator, snapshot: unknown, phase: string | null): string {
+  if (typeof snapshot !== 'object' || snapshot === null) return t('events.defaultStatus')
+  return statusName(t, snapshot, phase) ?? t('events.defaultStatus')
+}
 const healthLabel = (t: Translator, value: string | null) => (value === null ? null : labelOrRaw(t, 'labels.health', value))
 
 /** Null in the payload means retention off; anything that is not a number is unknown. */

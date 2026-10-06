@@ -36,3 +36,16 @@ export const stockRulesSchema = z.object({
     .transform((value) => value.trim() || null)
     .pipe(unitsSchema.nullable()),
 })
+
+/** Empty means the phase's default status (no mapping). */
+const mappedStatusSchema = z
+  .union([z.literal(''), idSchema], { error: messageKey('validation.idInvalid') })
+  .transform((id) => (id === '' ? null : id))
+
+/** One select per phase a Channel reports; the core checks each status is an active one of that phase. */
+export const statusMappingSchema = z.object({
+  connectionId: idSchema,
+  new: mappedStatusSchema,
+  shipped: mappedStatusSchema,
+  cancelled: mappedStatusSchema,
+})
