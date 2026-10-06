@@ -2,8 +2,9 @@ import { isChannel } from '@hanza/connector-sdk'
 import { listConnectionsForTick } from '../connections/connections'
 import type { Context } from '../context'
 import { defineJob } from '../jobs'
+import { claimDueStatusPushes, STATUS_PUSH_SWEEP_LIMIT, STATUS_PUSH_SWEEP_LIMIT_FAILING } from '../orders/status-push'
 import { dueStreams, STREAM_CAPABILITIES, type ScheduledStream } from '../sync/schedule'
-import { coalesceKeys, offersPullRef, ordersPullRef, pricePushRef, stockPushRef, syncTickRef } from './refs'
+import { coalesceKeys, offersPullRef, ordersPullRef, ordersUpdateStatusRef, pricePushRef, stockPushRef, syncTickRef } from './refs'
 
 async function enqueueStream(ctx: Context, stream: ScheduledStream, organizationId: string, connectionId: string): Promise<void> {
   switch (stream) {
@@ -26,12 +27,16 @@ async function enqueueStream(ctx: Context, stream: ScheduledStream, organization
   }
 }
 
-/** One global scheduler: enqueues every due stream a Channel's connector implements, except for Connections waiting for sign-in. */
+/**
+ * One global scheduler: enqueues every due stream a Channel's connector implements, except for Connections waiting for sign-in,
+ * and sweeps the Channel's overdue Order status pushes when its connector has `orders.updateStatus` (ADR 0012).
+ */
 export const syncTickJob = defineJob({
   ...syncTickRef,
   async handler(ctx) {
     const now = new Date()
     let enqueued = 0
+    let statusPushes = 0
     for (const connection of await listConnectionsForTick(ctx)) {
       if (connection.health === 'auth_expired') continue
       const connector = ctx.connectors.get(connection.connectorId)
@@ -42,7 +47,17 @@ export const syncTickJob = defineJob({
         await enqueueStream(ctx, stream, connection.organizationId, connection.id)
         enqueued++
       }
+      if (!connector.capabilities['orders.updateStatus']) continue
+      const limit = connection.health === 'failing' ? STATUS_PUSH_SWEEP_LIMIT_FAILING : STATUS_PUSH_SWEEP_LIMIT
+      for (const orderId of await claimDueStatusPushes(ctx, connection.organizationId, connection.id, limit)) {
+        await ctx.queue.enqueue(
+          ordersUpdateStatusRef,
+          { organizationId: connection.organizationId, orderId },
+          { coalesceKey: coalesceKeys.ordersUpdateStatus(orderId) },
+        )
+        statusPushes++
+      }
     }
-    if (enqueued > 0) ctx.log.info('sync tick', { enqueued })
+    if (enqueued > 0 || statusPushes > 0) ctx.log.info('sync tick', { enqueued, statusPushes })
   },
 })

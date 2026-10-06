@@ -9,7 +9,7 @@ import { getAvailability } from './stock/availability'
 import { setStock } from './stock/set-stock'
 import { createTestOrganization, type TestContext } from './testing/context'
 import { databaseUrl, useTestContext } from './testing/db-test'
-import { buildOrder, createTestConnection, orderLine, user } from './testing/fixtures'
+import { buildOrder, createTestConnection, orderLine, testChannel, user } from './testing/fixtures'
 
 // The queue is down after commit: the change is durable, so the operation must
 // succeed anyway and only log what it could not enqueue (ids, no personal data).
@@ -30,7 +30,7 @@ function withBrokenQueue(ctx: TestContext) {
 }
 
 describe.skipIf(!databaseUrl)('post-commit enqueue failures', () => {
-  const context = useTestContext()
+  const context = useTestContext({ connectors: [testChannel] })
 
   async function setup() {
     const ctx = context()

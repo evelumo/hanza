@@ -4,12 +4,12 @@ import { createProduct } from '../catalog/products'
 import { getAvailability } from '../stock/availability'
 import { createTestOrganization } from '../testing/context'
 import { databaseUrl, useTestContext } from '../testing/db-test'
-import { buildOrder, createTestConnection, fact, orderLine, user } from '../testing/fixtures'
+import { buildOrder, createTestConnection, fact, orderLine, testChannel, user } from '../testing/fixtures'
 import { changeOrderStatus } from './change-status'
 import { importOrder } from './import'
 
 describe.skipIf(!databaseUrl)('importOrder', () => {
-  const context = useTestContext()
+  const context = useTestContext({ connectors: [testChannel] })
 
   async function setup(stock = 10) {
     const ctx = context()
@@ -222,5 +222,23 @@ describe.skipIf(!databaseUrl)('importOrder', () => {
     const { orderId } = await importOrder(ctx, org, connectionId, order)
     await importOrder(ctx, org, connectionId, { ...order, facts: [fact('s', 'shipped')] })
     expect(await ctx.db.order.findFirstOrThrow({ where: { id: orderId } })).toMatchObject({ status: 'shipped', attentionReasons: ['unmatched_line'] })
+  })
+
+  it('a fact that moves the status drops the status push still pending; one that does not keeps it', async () => {
+    const { ctx, org, connectionId } = await setup()
+    const pending = async (orderId: string) => (await ctx.db.order.findFirstOrThrow({ where: { id: orderId } })).statusPushDueAt !== null
+
+    const moved = buildOrder()
+    const { orderId: movedId } = await importOrder(ctx, org, connectionId, moved)
+    await changeOrderStatus(ctx, org, movedId, 'processing', user)
+    expect(await pending(movedId)).toBe(true)
+    await importOrder(ctx, org, connectionId, { ...moved, facts: [fact('c', 'cancelled')] })
+    expect(await pending(movedId)).toBe(false)
+
+    const kept = buildOrder()
+    const { orderId: keptId } = await importOrder(ctx, org, connectionId, kept)
+    await changeOrderStatus(ctx, org, keptId, 'cancelled', user)
+    await importOrder(ctx, org, connectionId, { ...kept, facts: [fact('s', 'shipped')] })
+    expect(await pending(keptId)).toBe(true)
   })
 })

@@ -3,7 +3,7 @@ import type { SyncStream } from '@hanza/db'
 
 export const TICK_EVERY_MS = 60_000
 
-/** How often `sync.tick` starts each stream per Channel. `order_status_push` only runs on demand. */
+/** How often `sync.tick` starts each stream per Channel. `order_status_push` runs per Order: on demand, and from the tick's sweep of pending pushes. */
 export const SYNC_INTERVALS_MS = { offers_pull: 3_600_000, orders_pull: 120_000, stock_push: 600_000, price_push: 600_000 } as const
 
 export type ScheduledStream = keyof typeof SYNC_INTERVALS_MS

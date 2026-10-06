@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto'
-import type { ChannelFact, Order, OrderLine } from '@hanza/connector-sdk'
+import { defineConnector, type ChannelFact, type Order, type OrderLine } from '@hanza/connector-sdk'
+import { z } from 'zod'
 import type { Actor } from '../actor'
 import { createConnection } from '../connections/connections'
 import type { TestContext } from './context'
@@ -7,6 +8,29 @@ import type { TestContext } from './context'
 // Fixtures for core's own DB tests; not exported from `@hanza/core/testing`.
 
 export const user: Actor = { type: 'user', userId: 'user-1' }
+
+/**
+ * A do-nothing Channel registered as `fake`, the connector id of `createTestConnection`. Register it
+ * (`useTestContext({ connectors: [testChannel] })`) where a test needs status changes to be pushable.
+ */
+export const testChannel = defineConnector({
+  id: 'fake',
+  name: 'Test channel',
+  kind: 'marketplace',
+  auth: { type: 'none' },
+  configSchema: z.object({}).passthrough(),
+  credentialsSchema: z.object({}).passthrough(),
+  capabilities: {
+    async 'offers.pull'() {
+      return { items: [], nextCursor: null, hasMore: false }
+    },
+    async 'orders.pull'() {
+      return { items: [], nextCursor: null, hasMore: false }
+    },
+    async 'stock.push'() {},
+    async 'orders.updateStatus'() {},
+  },
+})
 
 export async function createTestConnection(ctx: TestContext, organizationId: string, name = 'Test channel'): Promise<string> {
   const { connectionId } = await createConnection(

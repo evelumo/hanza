@@ -75,7 +75,7 @@ Something the Channel reports about an Order after it was placed, such as "cance
 _Avoid_: External status, remote status
 
 **Needs attention**:
-A mark on an Order that a person must look at, for example when the Buyer cancels while it is already being packed, or when an Order line could not be matched to a Product.
+A mark on an Order that a person must look at, for example when the Buyer cancels while it is already being packed, when an Order line could not be matched to a Product, or when the Channel refused the status Hanza sent it.
 _Avoid_: Flag, alert, warning
 
 **Unmatched line**:

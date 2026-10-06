@@ -21,6 +21,7 @@ enum AttentionReason {
   shortage
   cancelled_while_processing
   channel_fact_conflict
+  status_push_failed
 
   @@map("attention_reason")
 }
@@ -51,6 +52,10 @@ model Order {
   /// Canonical `Address` (zod-validated on write and read).
   shippingAddress  Json
   billingAddress   Json?
+  /// Incremented by every status change a person makes; a push clears `statusPushDueAt` only for the value it read.
+  statusPushSeq    Int               @default(0)
+  /// Non-null while the Channel has not been told the current status: when `sync.tick` may enqueue the push again (ADR 0012).
+  statusPushDueAt  DateTime?
   importedAt       DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
 
@@ -62,6 +67,7 @@ model Order {
   @@unique([connectionId, externalId])
   @@index([organizationId, placedAt(sort: Desc)])
   @@index([organizationId, status])
+  @@index([connectionId, statusPushDueAt])
   @@map("order")
 }
 

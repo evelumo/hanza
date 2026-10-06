@@ -5,7 +5,7 @@ import { createProduct } from '../catalog/products'
 import { getAvailability } from '../stock/availability'
 import { createTestOrganization } from '../testing/context'
 import { databaseUrl, useTestContext } from '../testing/db-test'
-import { buildOrder, createTestConnection, fact, orderLine, user } from '../testing/fixtures'
+import { buildOrder, createTestConnection, fact, orderLine, testChannel, user } from '../testing/fixtures'
 import { resolveAttention } from './attention'
 import { changeOrderStatus } from './change-status'
 import { importOrder } from './import'
@@ -14,7 +14,7 @@ import { getOrder, listOrders } from './queries'
 import { rematchUnmatchedLines } from './rematch'
 
 describe.skipIf(!databaseUrl)('orders', () => {
-  const context = useTestContext()
+  const context = useTestContext({ connectors: [testChannel] })
 
   async function setup(stock = 10) {
     const ctx = context()
