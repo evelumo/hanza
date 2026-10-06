@@ -4,10 +4,16 @@ export type DomainErrorCode =
   | 'not_found'
   | 'sku_taken'
   | 'invalid_transition'
+  | 'awaiting_payment'
   | 'unmatched_lines'
   | 'already_linked'
   | 'unknown_connector'
   | 'invalid_config'
+  | 'combination_taken'
+  | 'invalid_attributes'
+  | 'already_in_family'
+  | 'invalid_price'
+  | 'not_a_channel'
   | 'forbidden'
 
 /** Thrown by services for expected failures; the panel maps `code` to translated copy. */

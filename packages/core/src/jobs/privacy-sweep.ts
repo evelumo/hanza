@@ -2,7 +2,7 @@ import { defineJob } from '../jobs'
 import { sweepBuyerData } from '../privacy/sweep'
 import { coalesceKeys, privacySweepRef } from './refs'
 
-/** Seals legacy plaintext Buyer data, then applies the organization's retention period (ADR 0011). */
+/** Seals legacy plaintext Buyer data, then applies the organization's retention period (ADR 0016). */
 export const privacySweepJob = defineJob({
   ...privacySweepRef,
   async handler(ctx, { organizationId }) {

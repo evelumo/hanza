@@ -10,7 +10,7 @@ import { getPrivacySettings, retentionEligible } from './settings'
 export const SWEEP_BATCH_SIZE = 200
 export const SWEEP_MAX_BATCHES = 10
 
-/** Closed Orders closed by code older than ADR 0011 (e.g. during a deploy) get `closedAt` from their last change. */
+/** Closed Orders closed by code older than ADR 0016 (e.g. during a deploy) get `closedAt` from their last change. */
 export async function fillMissingClosedAt(ctx: Context, organizationId: string): Promise<number> {
   return ctx.db.$executeRaw`
     UPDATE "order" SET "closedAt" = "updatedAt"
@@ -18,7 +18,7 @@ export async function fillMissingClosedAt(ctx: Context, organizationId: string):
 }
 
 /**
- * Seals one batch of Orders still stored in the legacy plaintext shape (written before ADR 0011).
+ * Seals one batch of Orders still stored in the legacy plaintext shape (written before ADR 0016).
  * Each row is its own conditional update, so it is safe to re-run and beside imports and erasures.
  * A row that fails the schema is marked and skipped from then on (its id is logged), so it never blocks
  * the batches behind it; it keeps its plaintext until it is erased, which clears it like any other.

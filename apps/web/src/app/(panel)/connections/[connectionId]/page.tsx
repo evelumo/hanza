@@ -1,3 +1,4 @@
+import { isChannel } from '@hanza/connector-sdk'
 import { getConnection, listEvents } from '@hanza/core'
 import type { Metadata } from 'next'
 import Link from 'next/link'
@@ -15,6 +16,7 @@ import { requireTenant } from '@/lib/session'
 import { isSyncRunning } from '@/lib/sync-status'
 import { requestSyncAction } from '../actions'
 import { formatSyncResult } from '../sync-summary'
+import { StockRulesForm } from './stock-rules-form'
 
 export const dynamic = 'force-dynamic'
 
@@ -30,7 +32,8 @@ export default async function ConnectionPage({ params }: { params: Promise<{ con
   const ctx = getContext()
   const connection = await getConnection(ctx, organizationId, connectionId)
   if (!connection) notFound()
-  const connectorName = ctx.connectors.get(connection.connectorId)?.name ?? connection.connectorId
+  const connector = ctx.connectors.get(connection.connectorId)
+  const connectorName = connector?.name ?? connection.connectorId
   const events = await listEvents(ctx, organizationId, { type: 'connection', id: connection.id }, 20)
 
   return (
@@ -101,13 +104,25 @@ export default async function ConnectionPage({ params }: { params: Promise<{ con
         )}
       </Section>
 
+      {connector && isChannel(connector) ? (
+        <Section title={t('connections.stockRules.title')} description={t('connections.stockRules.description')}>
+          <div className="px-5 py-4">
+            <StockRulesForm
+              connectionId={connection.id}
+              safetyBuffer={connection.stockRules.safetyBuffer}
+              channelLimit={connection.stockRules.channelLimit}
+            />
+          </div>
+        </Section>
+      ) : null}
+
       <Section title={t('connections.detail.eventsTitle')}>
         {events.length === 0 ? (
           <EmptyState>{t('connections.detail.eventsEmpty')}</EmptyState>
         ) : (
           <ul className="divide-y divide-line">
             {events.map((event) => {
-              const { title, detail } = describeEvent(event.type, event.payload, t, format.number)
+              const { title, detail } = describeEvent(event.type, event.payload, t, format)
               return (
                 <li key={event.id} className="flex flex-wrap items-center justify-between gap-3 px-5 py-3 text-sm">
                   <span>

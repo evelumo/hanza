@@ -1,4 +1,4 @@
-// How an organization handles Buyer personal data (ADR 0011).
+// How an organization handles Buyer personal data (ADR 0016).
 
 model PrivacySettings {
   organizationId         String   @id

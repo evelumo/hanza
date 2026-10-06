@@ -22,7 +22,7 @@ async function rawRow(ctx: TestContext, orderId: string): Promise<string> {
   return JSON.stringify(row?.row)
 }
 
-/** Rewrites an Order into the shape written before ADR 0011; `shippingAddress` may be overridden with something invalid. */
+/** Rewrites an Order into the shape written before ADR 0016; `shippingAddress` may be overridden with something invalid. */
 async function makeLegacy(ctx: TestContext, orderId: string, order: Order, shippingAddress: unknown = order.shippingAddress): Promise<void> {
   await ctx.db.$executeRaw`
     UPDATE "order" SET "buyerData" = NULL, "buyerEmailIndex" = NULL, "shippingCountryCode" = NULL,
@@ -54,7 +54,8 @@ function buyer(email: string | null, name = 'Anna Nowak'): Pick<Order, 'buyer' |
 
 function withLogCapture(ctx: TestContext): { ctx: Context; logged: Array<Record<string, unknown>> } {
   const logged: Array<Record<string, unknown>> = []
-  const log = { info: (message: string, fields?: Record<string, unknown>) => logged.push({ message, ...fields }), error: (message: string, fields?: Record<string, unknown>) => logged.push({ message, ...fields }) }
+  const capture = (message: string, fields?: Record<string, unknown>) => void logged.push({ message, ...fields })
+  const log = { info: capture, warn: capture, error: capture }
   return { ctx: { ...ctx, log }, logged }
 }
 

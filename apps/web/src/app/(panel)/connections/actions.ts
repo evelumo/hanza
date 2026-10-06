@@ -1,6 +1,6 @@
 'use server'
 
-import { DomainError, addConnection, requestSync } from '@hanza/core'
+import { DomainError, addConnection, requestSync, updateChannelStockRules } from '@hanza/core'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { getT } from '@/i18n/server'
@@ -9,7 +9,7 @@ import { describeFields, fieldErrorsFromIssues, issuesOf, publicValues, readFiel
 import { getContext } from '@/lib/context'
 import { domainErrorMessage } from '@/lib/domain-errors'
 import { requireTenant } from '@/lib/session'
-import { addConnectionSchema, requestSyncSchema } from './schemas'
+import { addConnectionSchema, requestSyncSchema, stockRulesSchema } from './schemas'
 
 export async function addConnectionAction(_previous: ActionState, formData: FormData): Promise<ActionState> {
   const { user, organizationId } = await requireTenant()
@@ -60,5 +60,22 @@ export async function requestSyncAction(_previous: ActionState, formData: FormDa
   } catch (error) {
     return failure(error, t)
   }
+  return { ok: true }
+}
+
+export async function updateStockRulesAction(_previous: ActionState, formData: FormData): Promise<ActionState> {
+  const { user, organizationId } = await requireTenant()
+  const t = await getT()
+  const values = formText(formData)
+  const parsed = stockRulesSchema.safeParse(values)
+  if (!parsed.success) return invalidInput(parsed.error, t, values)
+
+  const { connectionId, safetyBuffer, channelLimit } = parsed.data
+  try {
+    await updateChannelStockRules(getContext(), organizationId, connectionId, { safetyBuffer, channelLimit }, { type: 'user', userId: user.id })
+  } catch (error) {
+    return failure(error, t, { values })
+  }
+  revalidatePath(`/connections/${connectionId}`)
   return { ok: true }
 }

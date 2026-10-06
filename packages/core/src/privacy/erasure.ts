@@ -14,7 +14,7 @@ const TRIM_PATTERN = `^[${JS_TRIM_WHITESPACE}]+|[${JS_TRIM_WHITESPACE}]+$`
 /**
  * Ids of legacy rows (not sealed yet, or marked unsealable) whose plaintext email equals `email` after
  * the same normalisation as the blind index. Plain `=`, never LIKE/ILIKE: `_` and `%` are common in emails.
- * `lower()` follows the database's LC_CTYPE, which agrees with JS for ASCII; see ADR 0011 for the limit.
+ * `lower()` follows the database's LC_CTYPE, which agrees with JS for ASCII; see ADR 0016 for the limit.
  */
 async function legacyMatches(db: Tx | Context['db'], organizationId: string, email: string): Promise<string[]> {
   const rows = await db.$queryRaw<Array<{ id: string }>>`

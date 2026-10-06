@@ -4,12 +4,12 @@ import { createProduct } from '../catalog/products'
 import { getAvailability } from '../stock/availability'
 import { createTestOrganization } from '../testing/context'
 import { databaseUrl, useTestContext } from '../testing/db-test'
-import { buildOrder, createTestConnection, fact, orderLine, user } from '../testing/fixtures'
+import { buildOrder, createTestConnection, fact, orderLine, testChannel, user } from '../testing/fixtures'
 import { changeOrderStatus } from './change-status'
 import { importOrder } from './import'
 
 describe.skipIf(!databaseUrl)('importOrder', () => {
-  const context = useTestContext()
+  const context = useTestContext({ connectors: [testChannel] })
 
   async function setup(stock = 10) {
     const ctx = context()
@@ -41,7 +41,7 @@ describe.skipIf(!databaseUrl)('importOrder', () => {
     expect(result).toMatchObject({ created: true, factsApplied: 0 })
     const stored = await ctx.db.order.findFirstOrThrow({ where: { id: result.orderId }, include: { lines: { include: { reservation: true } } } })
     expect(stored).toMatchObject({ status: 'new', attentionReasons: [], currency: 'PLN', shippingCountryCode: 'PL', closedAt: null })
-    // Buyer data is sealed (ADR 0011): no plaintext column is written.
+    // Buyer data is sealed (ADR 0016): no plaintext column is written.
     expect(stored).toMatchObject({ buyerName: null, buyerEmail: null, shippingAddress: null, billingAddress: null })
     expect(stored.buyerData).toMatch(/^v1:/)
     expect(stored.buyerEmailIndex).toMatch(/^v1:/)
@@ -55,6 +55,7 @@ describe.skipIf(!databaseUrl)('importOrder', () => {
     expect(events.find((event) => event.type === 'order.imported')?.payload).toEqual({
       connectionId,
       externalId: order.externalId,
+      awaitingPayment: false,
       lineCount: 1,
       unmatchedLines: 0,
       shortageLines: 0,
@@ -178,12 +179,71 @@ describe.skipIf(!databaseUrl)('importOrder', () => {
     })
   })
 
-  it('removes shortage when a fact cancels the Order', async () => {
+  it('removes shortage and unmatched_line when a fact cancels the Order', async () => {
     const { ctx, org, connectionId } = await setup(0)
     const order = buildOrder({ lines: [orderLine('l1', { sku: 'P' }), orderLine('l2', { sku: 'NOPE' })] })
     const { orderId } = await importOrder(ctx, org, connectionId, order)
     expect((await ctx.db.order.findFirstOrThrow({ where: { id: orderId } })).attentionReasons).toEqual(['unmatched_line', 'shortage'])
     await importOrder(ctx, org, connectionId, { ...order, facts: [fact('c', 'cancelled')] })
-    expect((await ctx.db.order.findFirstOrThrow({ where: { id: orderId } })).attentionReasons).toEqual(['unmatched_line'])
+    const stored = await ctx.db.order.findFirstOrThrow({ where: { id: orderId } })
+    expect(stored.status).toBe('cancelled')
+    expect(stored.attentionReasons).toEqual([])
+    // The line itself stays Unmatched: only the Order-level mark goes.
+    expect(await ctx.db.orderLine.count({ where: { orderId, productId: null } })).toBe(1)
+  })
+
+  it('keeps the reasons that still need a person when a fact cancels a processing Order with an Unmatched line', async () => {
+    const { ctx, org, connectionId } = await setup()
+    const order = buildOrder({ lines: [orderLine('l1', { sku: 'NOPE' })] })
+    const { orderId } = await importOrder(ctx, org, connectionId, order)
+    await changeOrderStatus(ctx, org, orderId, 'processing', user)
+    await importOrder(ctx, org, connectionId, { ...order, facts: [fact('c', 'cancelled')] })
+    expect((await ctx.db.order.findFirstOrThrow({ where: { id: orderId } })).attentionReasons).toEqual(['cancelled_while_processing'])
+  })
+
+  it('imports an Order that arrives already cancelled with an Unmatched line without Needs attention', async () => {
+    const { ctx, org, connectionId } = await setup()
+    const { orderId } = await importOrder(
+      ctx,
+      org,
+      connectionId,
+      buildOrder({ lines: [orderLine('l1', { sku: 'NOPE' })], facts: [fact('c', 'cancelled')] }),
+    )
+    const stored = await ctx.db.order.findFirstOrThrow({ where: { id: orderId } })
+    expect(stored).toMatchObject({ status: 'cancelled', attentionReasons: [] })
+    const events = await ctx.db.eventLog.findMany({ where: { subjectId: orderId }, orderBy: { id: 'asc' } })
+    expect(events.map((event) => event.type)).toEqual([
+      'order.imported',
+      'order.attention_raised',
+      'order.channel_fact_recorded',
+      'order.status_changed',
+    ])
+    expect(await ctx.db.order.count({ where: { organizationId: org, attentionReasons: { has: 'unmatched_line' } } })).toBe(0)
+  })
+
+  it('keeps unmatched_line on an Order a fact ships: its Stock was never consumed until the line is linked', async () => {
+    const { ctx, org, connectionId } = await setup()
+    const order = buildOrder({ lines: [orderLine('l1', { sku: 'NOPE' })] })
+    const { orderId } = await importOrder(ctx, org, connectionId, order)
+    await importOrder(ctx, org, connectionId, { ...order, facts: [fact('s', 'shipped')] })
+    expect(await ctx.db.order.findFirstOrThrow({ where: { id: orderId } })).toMatchObject({ status: 'shipped', attentionReasons: ['unmatched_line'] })
+  })
+
+  it('a fact that moves the status drops the status push still pending; one that does not keeps it', async () => {
+    const { ctx, org, connectionId } = await setup()
+    const pending = async (orderId: string) => (await ctx.db.order.findFirstOrThrow({ where: { id: orderId } })).statusPushDueAt !== null
+
+    const moved = buildOrder()
+    const { orderId: movedId } = await importOrder(ctx, org, connectionId, moved)
+    await changeOrderStatus(ctx, org, movedId, 'processing', user)
+    expect(await pending(movedId)).toBe(true)
+    await importOrder(ctx, org, connectionId, { ...moved, facts: [fact('c', 'cancelled')] })
+    expect(await pending(movedId)).toBe(false)
+
+    const kept = buildOrder()
+    const { orderId: keptId } = await importOrder(ctx, org, connectionId, kept)
+    await changeOrderStatus(ctx, org, keptId, 'cancelled', user)
+    await importOrder(ctx, org, connectionId, { ...kept, facts: [fact('s', 'shipped')] })
+    expect(await pending(keptId)).toBe(true)
   })
 })

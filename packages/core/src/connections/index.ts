@@ -8,3 +8,4 @@ export {
   type OpenedConnection,
 } from './connections'
 export { startSyncRun, saveSyncCursor, finishSyncRun, failSyncRun } from './sync-state'
+export { updateChannelStockRules } from './stock-rules'

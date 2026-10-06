@@ -2,7 +2,7 @@ export { createContext, closeContext, type Context, type CreateContextOptions } 
 export { loadEnv, loadWorkerEnv, type Env, type WorkerEnv } from './env'
 export { createLogger, type Logger } from './logger'
 export { defineJob, RetryLaterError, PermanentJobError, type JobDefinition, type JobRef, type JobRunInfo } from './jobs'
-export { jobs, findJob } from './registry'
+export { jobs, workflows, buildJobs, findJob } from './registry'
 export {
   createJobQueue,
   redisConnection,
@@ -19,6 +19,7 @@ export { syncTickJob } from './jobs/sync-tick'
 export { offersPullJob } from './jobs/offers-pull'
 export { ordersPullJob } from './jobs/orders-pull'
 export { stockPushJob } from './jobs/stock-push'
+export { pricePushJob } from './jobs/price-push'
 export { ordersUpdateStatusJob } from './jobs/orders-update-status'
 export { privacyTickJob, PRIVACY_TICK_EVERY_MS } from './jobs/privacy-tick'
 export { privacySweepJob } from './jobs/privacy-sweep'
@@ -27,6 +28,7 @@ export {
   offersPullRef,
   ordersPullRef,
   stockPushRef,
+  pricePushRef,
   ordersUpdateStatusRef,
   privacyTickRef,
   privacySweepRef,
@@ -39,7 +41,9 @@ export { describeFailure } from './describe-failure'
 export { appendEvent, listEvents, type EventRow, type EventSubject, type EventType } from './events'
 export * from './catalog/index'
 export * from './stock/index'
+export * from './prices/index'
 export * from './orders/index'
 export * from './connections/index'
 export * from './sync/index'
+export * from './workflows/index'
 export * from './privacy/index'

@@ -23,7 +23,7 @@ export function retentionCutoff(now: Date, retentionDays: number): Date {
 
 /**
  * Closed Orders past the Retention period whose Buyer data is still there. A Closed Order without
- * `closedAt` (closed by code older than ADR 0011) counts from `updatedAt`, which the sweep copies into it.
+ * `closedAt` (closed by code older than ADR 0016) counts from `updatedAt`, which the sweep copies into it.
  */
 export function retentionEligible(now: Date, retentionDays: number): Prisma.OrderWhereInput {
   const cutoff = retentionCutoff(now, retentionDays)

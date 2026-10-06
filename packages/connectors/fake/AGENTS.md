@@ -1,6 +1,6 @@
 # Fake connector (`@hanza/connector-fake`)
 
-A Channel that lives in memory. It exists to prove the whole path (pull Offers and Orders, push Available, push Order status) without a real marketplace, and to give tests and demos something to talk to.
+A Channel that lives in memory. It exists to prove the whole path (pull Offers and Orders, push Available and prices, push Order status) without a real marketplace, and to give tests and demos something to talk to.
 
 **Real connectors must never do what this one does:** it keeps data in module-level state (`fakeChannel`), reads nothing from the network, and ignores `ctx.fetch`. A real connector holds no state between calls; everything comes from the Channel's API and the cursor.
 
@@ -8,9 +8,10 @@ A Channel that lives in memory. It exists to prove the whole path (pull Offers a
 
 - Credentials `apiKey: 'expired'` make every call fail with `AuthExpiredError`. Config `failMode` makes every call fail with `RateLimitedError` (1 s), `TransientError` or `PermanentError`.
 - `offers.pull`: pages of 2, cursor = offset.
-- `orders.pull`: an append-only journal; cursor = last seen journal sequence number. `addFact` re-appends the Order, so it is pulled again with the new fact.
-- `stock.push` and `orders.updateStatus` only record their input (`stockPushes`, `statusUpdates`).
+- `orders.pull`: an append-only journal; cursor = last seen journal sequence number. `addFact` re-appends the Order, so it is pulled again with the new fact; a `paid` fact also sets `awaitingPayment` to false. The seed has no unpaid Order; tests add one with `addOrder({ ..., awaitingPayment: true })`.
+- `offers.pull` reports a PLN price on the seed Offers except `fake-offer-5`, which has none (its currency is unknown, so Hanza never pushes a price to it).
+- `stock.push` and `orders.updateStatus` only record their input (`stockPushes`, `statusUpdates`). `price.push` records its input (`pricePushes`) and sets the Offer's price, so the next `offers.pull` reports it.
 
 ## Using it in tests
 
-Create an isolated instance with `createFakeChannel()`; use `fakeChannel` (the instance the registry exposes) only when the registered connector itself is needed. `reset()` restores the seed and clears recorded calls. The seed data is documented in `src/seed.ts` (the code is the source of truth; the original design is GitHub issue #18).
+Create an isolated instance with `createFakeChannel()`; pass `{ id: 'fake-shop' }` (any id but `fake`) to register a second, independent fake Channel next to the first, for tests that need two Channels with their own recorded pushes; use `fakeChannel` (the instance the registry exposes) only when the registered connector itself is needed. `reset()` restores the seed and clears recorded calls. The seed data is documented in `src/seed.ts` (the code is the source of truth; the original design is GitHub issue #18).

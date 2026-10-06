@@ -2,7 +2,7 @@ import { addressSchema, buyerSchema } from '@hanza/connector-sdk'
 import { z } from 'zod'
 import type { SecretBox } from '../secrets'
 
-/** Everything personal an Order holds about its Buyer; sealed as one value (ADR 0011). */
+/** Everything personal an Order holds about its Buyer; sealed as one value (ADR 0016). */
 export const buyerDataSchema = z.object({
   buyer: buyerSchema,
   shippingAddress: addressSchema,

@@ -13,4 +13,5 @@ export const resolveAttentionSchema = z.object({ orderId: idSchema })
 export const orderListFiltersSchema = z.object({
   status: orderStatusSchema.optional().catch(undefined),
   attention: z.literal('1').optional().catch(undefined),
+  payment: z.literal('awaiting').optional().catch(undefined),
 })

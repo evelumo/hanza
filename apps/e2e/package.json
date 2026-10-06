@@ -1,0 +1,23 @@
+{
+  "name": "@hanza/e2e",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test:e2e": "node --import tsx src/run.ts",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@hanza/connector-fake": "workspace:*",
+    "@hanza/db": "workspace:*",
+    "@playwright/test": "^1.63.0",
+    "@types/node": "^24.0.0",
+    "@types/pg": "^8.23.1",
+    "ioredis": "^5.11.1",
+    "pg": "^8.23.1",
+    "tsx": "^4.23.15",
+    "typescript": "^6.0.3",
+    "vitest": "^5.0.3"
+  }
+}

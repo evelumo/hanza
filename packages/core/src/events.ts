@@ -1,20 +1,29 @@
 import type { Prisma, Tx } from '@hanza/db'
 import type { Context } from './context'
 
-export type EventSubject = { type: 'product' | 'offer' | 'order' | 'connection'; id: string }
+export type EventSubject = { type: 'product' | 'product_family' | 'offer' | 'order' | 'connection'; id: string }
 
 export type EventType =
   | 'system.ping'
   | 'product.created'
   | 'product.updated'
+  | 'family.created'
+  | 'family.renamed'
+  | 'family.deleted'
+  | 'family.product_added'
+  | 'family.product_updated'
+  | 'family.product_removed'
+  | 'product.price_changed'
   | 'stock.set'
   | 'stock.reserved'
   | 'stock.released'
   | 'stock.consumed'
   | 'offer.linked'
   | 'offer.unlinked'
+  | 'offer.price_changed'
   | 'order.imported'
   | 'order.channel_fact_recorded'
+  | 'order.payment_received'
   | 'order.status_changed'
   | 'order.line_linked'
   | 'order.attention_raised'
@@ -22,6 +31,7 @@ export type EventType =
   | 'order.buyer_data_erased'
   | 'connection.created'
   | 'connection.health_changed'
+  | 'connection.stock_rules_changed'
   | 'privacy.retention_changed'
   | 'privacy.erasure_requested'
 

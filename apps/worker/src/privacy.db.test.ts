@@ -71,9 +71,25 @@ describe.skipIf(!databaseUrl)('Buyer data privacy end to end (real Postgres, in-
     await ctx?.db.$disconnect()
   })
 
+  /** The test database is shared with other files: drop other organizations' jobs, which `privacy.tick` fans out to. */
+  function keepOwnJobs() {
+    const own = ctx.queue.waiting.filter((job) => {
+      const jobOrg = (job.payload as { organizationId?: string }).organizationId
+      return jobOrg === undefined || jobOrg === orgA || jobOrg === orgB
+    })
+    ctx.queue.waiting.splice(0, ctx.queue.waiting.length, ...own)
+  }
+
+  /** One job at a time, so the jobs a global tick enqueues for other organizations are dropped before they run. */
   async function drain() {
-    const result = await ctx.queue.drain(ctx, jobs)
+    const result: { ran: number; failed: unknown[] } = { ran: 0, failed: [] }
+    for (keepOwnJobs(); ctx.queue.waiting.length > 0 && result.ran < 500; keepOwnJobs()) {
+      const step = await ctx.queue.drain(ctx, jobs, { maxJobs: 1 })
+      result.ran += step.ran
+      result.failed.push(...step.failed)
+    }
     expect(result.failed).toEqual([])
+    expect(ctx.queue.waiting).toEqual([])
     return result
   }
 

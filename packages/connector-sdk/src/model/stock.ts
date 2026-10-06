@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-/** What Hanza tells a Channel about one Offer: max(0, Available) of its Product. */
+/** What Hanza tells a Channel about one Offer: the Channel Available of its Product (never below zero, never above Available). */
 export const stockLevelSchema = z.object({
   offerExternalId: z.string().min(1),
   sku: z.string().min(1).nullable(),

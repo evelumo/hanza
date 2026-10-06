@@ -22,7 +22,7 @@ export {
   TransientError,
   type ConnectorErrorKind,
 } from './errors'
-export { currencySchema, moneySchema, type Money } from './model/money'
+export { currencyMinorUnits, currencySchema, moneySchema, type Money } from './model/money'
 export {
   addressSchema,
   buyerSchema,
@@ -46,3 +46,4 @@ export {
 } from './model/order'
 export { offerSchema, type Offer } from './model/offer'
 export { stockLevelSchema, type StockLevel } from './model/stock'
+export { offerPriceSchema, type OfferPrice } from './model/price'

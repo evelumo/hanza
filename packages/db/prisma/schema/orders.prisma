@@ -21,6 +21,7 @@ enum AttentionReason {
   shortage
   cancelled_while_processing
   channel_fact_conflict
+  status_push_failed
 
   @@map("attention_reason")
 }
@@ -28,6 +29,7 @@ enum AttentionReason {
 enum ChannelFactType {
   cancelled
   shipped
+  paid
 
   @@map("channel_fact_type")
 }
@@ -41,9 +43,11 @@ model Order {
   attentionReasons      AttentionReason[] @default([])
   placedAt              DateTime
   payment               PaymentMethod
+  /// A prepaid Order the Buyer has not paid for yet; cleared by a `paid` Channel fact. Not fulfillable while true.
+  awaitingPayment       Boolean           @default(false)
   currency              String            @db.Char(3)
   totalAmount           Decimal           @db.Decimal(19, 4)
-  /// The Buyer snapshot `{ buyer, shippingAddress, billingAddress }`, sealed with HANZA_ENCRYPTION_KEY (ADR 0011). Null once erased.
+  /// The Buyer snapshot `{ buyer, shippingAddress, billingAddress }`, sealed with HANZA_ENCRYPTION_KEY (ADR 0016). Null once erased.
   buyerData             String?
   /// Keyed HMAC of the Buyer's normalised email, for exact-match erasure requests only.
   buyerEmailIndex       String?
@@ -54,13 +58,17 @@ model Order {
   buyerDataErasedAt     DateTime?
   /// Set when `privacy.sweep` could not seal this legacy row (it fails the schema); the sweep skips it from then on.
   buyerDataSealFailedAt DateTime?
-  // Legacy plaintext Buyer snapshot, written before ADR 0011; `privacy.sweep` seals and clears it.
+  // Legacy plaintext Buyer snapshot, written before ADR 0016; `privacy.sweep` seals and clears it.
   buyerName             String?
   buyerEmail            String?
   buyerPhone            String?
   buyerLogin            String?
   shippingAddress       Json?
   billingAddress        Json?
+  /// Incremented by every status change a person makes; a push clears `statusPushDueAt` only for the value it read.
+  statusPushSeq         Int               @default(0)
+  /// Non-null while the Channel has not been told the current status: when `sync.tick` may enqueue the push again (ADR 0012).
+  statusPushDueAt       DateTime?
   importedAt            DateTime          @default(now())
   updatedAt             DateTime          @updatedAt
 
@@ -74,6 +82,7 @@ model Order {
   @@index([organizationId, status])
   @@index([organizationId, buyerEmailIndex])
   @@index([organizationId, closedAt])
+  @@index([connectionId, statusPushDueAt])
   @@map("order")
 }
 

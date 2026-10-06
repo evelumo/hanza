@@ -5,8 +5,16 @@ The canonical vocabulary of Hanza. Every connector translates an external system
 ## Language
 
 **Product**:
-One sellable item, identified by its SKU within an organization. A T-shirt in three sizes is three Products.
+One sellable item, identified by its SKU within an organization. A T-shirt in three sizes is three Products, which can be grouped in a Product family.
 _Avoid_: Variant, item, article
+
+**Product family**:
+A named group of Products that are sizes, colours or other variations of one another (a T-shirt in three sizes is one family of three Products). A Product is in at most one family. A family only groups: Orders, Stock, Reservations and Offers keep pointing at the individual Products. Deleting a family ungroups its Products and never deletes them.
+_Avoid_: Variant group, product group, parent product, master product
+
+**Family attribute**:
+What tells the Products of one family apart, such as Size or Colour. A family lists its attributes (fixed once the family exists), and each Product in it has one value per attribute; no two Products of a family have the same values.
+_Avoid_: Variant attribute, option, property
 
 **Offer**:
 The presence of one Product on one Channel — the thing a Buyer actually sees and buys there. Linked to its Product by SKU, or by hand when the SKU does not match.
@@ -23,16 +31,46 @@ A place where Stock is kept. Every organization has at least one.
 _Avoid_: Location, storage, inventory
 
 **Reservation**:
-Units of Stock promised to an Order that has not shipped yet. Made when the Order arrives, released when it is cancelled, consumed when it ships.
+Units of Stock promised to an Order that has not shipped yet. Made when the Order arrives (also when it is Awaiting payment), released when it is cancelled, consumed when it ships.
 _Avoid_: Allocation, hold, booking
 
 **Available**:
-Stock minus Reservations — the number Hanza tells Channels. It can go below zero when the same last unit sells on two Channels at once.
+Stock minus Reservations. Each Channel is told its Channel Available, which is worked out from this number. It can go below zero when the same last unit sells on two Channels at once.
 _Avoid_: Free stock, sellable quantity
+
+**Channel Available**:
+The number Hanza tells one Channel for a Product: Available minus the Channel's Safety buffer, at most its Channel limit. Never below zero and never above Available. Orders still reserve against Available, not against this number (ADR 0013).
+_Avoid_: Channel stock, advertised stock, allocation
+
+**Safety buffer**:
+A number of units of Available that one Channel is never told about. It makes it less likely that the last units sell twice, or keeps them for other Channels.
+_Avoid_: Reserve, margin, allocation
+
+**Channel limit**:
+The most units Hanza tells one Channel for any Product, however large Available is. Empty means no limit.
+_Avoid_: Cap, quota, share, allocation
 
 **Shortage**:
 An Order line whose Reservation could not be covered by Stock. A person decides what happens next; Hanza never cancels the Order on its own.
 _Avoid_: Oversell, backorder
+
+### Prices
+
+**Base price**:
+The price a Product sells for on every Channel, unless an Offer has a Price override. Owned by Hanza; a Product may have none, and then nothing is pushed.
+_Avoid_: List price, default price, catalogue price
+
+**Price override**:
+A price set in Hanza for one Offer only (the panel calls it the offer price); while set, it wins over the Product's Base price. The way to sell an Offer in a currency other than the Base price's.
+_Avoid_: Special price, custom price, channel-specific price
+
+**Effective price**:
+The Price override if there is one, else the Base price. What Hanza pushes to the Channel, only when its currency is the Channel price's (ADR 0015).
+_Avoid_: Final price, current price
+
+**Channel price**:
+The price the Channel reported for an Offer at the last pull. Recorded to learn the Channel's currency, never adopted.
+_Avoid_: External price, remote price, marketplace price
 
 ### Orders
 
@@ -45,15 +83,19 @@ Where an Order is in fulfilment, from Hanza's point of view. One fixed list shar
 _Avoid_: State, stage, phase
 
 **Channel fact**:
-Something the Channel reports about an Order after it was placed, such as "cancelled by buyer". Always recorded as reported. It moves the Order status accordingly, except that an Order that is already shipped or cancelled stays as it is and is marked Needs attention instead (ADR 0003).
+Something the Channel reports about an Order after it was placed, such as "cancelled by buyer" or "paid". Always recorded as reported. It moves the Order status accordingly, except that an Order that is already shipped or cancelled stays as it is and is marked Needs attention instead (ADR 0003). "Paid" never moves the status; it ends Awaiting payment.
 _Avoid_: External status, remote status
 
+**Awaiting payment**:
+A mark on a prepaid Order the Buyer has not paid for yet; never on cash on delivery. The Order is shown and reserves Stock, but a person can only cancel it, not fulfil it, until the Channel reports it paid. A cancelled Order that was never paid is an abandoned checkout and is no longer shown as Awaiting payment. It is a payment state beside the Order status, not an Order status (ADR 0015).
+_Avoid_: Unpaid status, pending payment, not ready
+
 **Needs attention**:
-A mark on an Order that a person must look at, for example when the Buyer cancels while it is already being packed, or when an Order line could not be matched to a Product.
+A mark on an Order that a person must look at, for example when the Buyer cancels while it is already being packed, when an Order line could not be matched to a Product, or when the Channel refused the status Hanza sent it.
 _Avoid_: Flag, alert, warning
 
 **Unmatched line**:
-An Order line that could not be linked to any Product. The Order is still imported; the line reserves nothing until someone links it.
+An Order line that could not be linked to any Product. The Order is still imported; the line reserves nothing until someone links it. While the Order is open (or shipped, where linking corrects Stock) it is Needs attention; once the Order is cancelled it no longer is, since nothing can be fulfilled.
 _Avoid_: Unknown product, orphan line
 
 **Buyer**:

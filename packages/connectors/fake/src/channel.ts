@@ -1,4 +1,4 @@
-import type { ChannelFact, Offer, Order, OrderStatus, StockLevel } from '@hanza/connector-sdk'
+import type { ChannelFact, Offer, OfferPrice, Order, OrderStatus, StockLevel } from '@hanza/connector-sdk'
 import { createFakeConnector, type FakeConnector, type FakeState } from './connector'
 import { seedFacts, seedOffers, seedOrders } from './seed'
 
@@ -7,24 +7,30 @@ export interface FakeChannel {
   addOffer(offer: Offer): void
   /** Appends the Order to the journal. */
   addOrder(order: Order): void
-  /** Appends the fact to the Order and re-appends the Order to the journal. Throws for an unknown Order. */
+  /**
+   * Appends the fact to the Order and re-appends the Order to the journal; a `paid` fact also clears
+   * `awaitingPayment`. Throws for an unknown Order.
+   */
   addFact(orderExternalId: string, fact: ChannelFact): void
   /** Arguments of every stock.push call, in order. */
   readonly stockPushes: StockLevel[][]
+  /** Arguments of every price.push call, in order. A push also sets the Offer's price that offers.pull reports. */
+  readonly pricePushes: OfferPrice[][]
   readonly statusUpdates: Array<{ orderExternalId: string; status: OrderStatus }>
   /** Back to the seed, recorded calls cleared. */
   reset(): void
 }
 
-export function createFakeChannel(): FakeChannel {
-  const state: FakeState = { offers: [], orders: new Map(), journal: [], stockPushes: [], statusUpdates: [] }
+/** `id` other than "fake" lets a test register several independent fake Channels side by side. */
+export function createFakeChannel(options: { id?: string } = {}): FakeChannel {
+  const state: FakeState = { offers: [], orders: new Map(), journal: [], stockPushes: [], pricePushes: [], statusUpdates: [] }
 
   const appendToJournal = (orderExternalId: string) => {
     state.journal.push({ seq: state.journal.length + 1, orderExternalId })
   }
 
   const channel: FakeChannel = {
-    connector: createFakeConnector(state),
+    connector: createFakeConnector(state, options.id),
     addOffer(offer) {
       const copy = structuredClone(offer)
       const index = state.offers.findIndex((existing) => existing.externalId === offer.externalId)
@@ -39,18 +45,22 @@ export function createFakeChannel(): FakeChannel {
       const order = state.orders.get(orderExternalId)
       if (!order) throw new Error(`Unknown Order "${orderExternalId}"`)
       order.facts.push(structuredClone(fact))
+      // A real Channel reports a paid Order as no longer awaiting payment; the contract forbids both at once.
+      if (fact.type === 'paid' && order.awaitingPayment === true) order.awaitingPayment = false
       // The contract wants facts oldest-first; Array.sort is stable, so equal times keep insertion order.
       order.facts.sort((a, b) => Date.parse(a.occurredAt) - Date.parse(b.occurredAt))
       appendToJournal(orderExternalId)
     },
     // The arrays are emptied in place on reset so references held by a test stay valid.
     stockPushes: state.stockPushes,
+    pricePushes: state.pricePushes,
     statusUpdates: state.statusUpdates,
     reset() {
       state.offers.length = 0
       state.orders.clear()
       state.journal.length = 0
       state.stockPushes.length = 0
+      state.pricePushes.length = 0
       state.statusUpdates.length = 0
       seedOffers.forEach(channel.addOffer)
       seedOrders.forEach(channel.addOrder)

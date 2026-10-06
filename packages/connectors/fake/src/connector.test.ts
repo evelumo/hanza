@@ -39,11 +39,20 @@ describe('fake connector', () => {
     })
   })
 
-  it('is a marketplace with all four capabilities, registered as `fake`', () => {
+  it('is a marketplace with all five capabilities, registered as `fake`', () => {
     expect(fakeConnector).toBe(fakeChannel.connector)
     expect(fakeConnector.id).toBe('fake')
     expect(fakeConnector.kind).toBe('marketplace')
-    expect(listCapabilities(fakeConnector)).toEqual(['offers.pull', 'orders.pull', 'stock.push', 'orders.updateStatus'])
+    expect(listCapabilities(fakeConnector)).toEqual(['offers.pull', 'orders.pull', 'stock.push', 'price.push', 'orders.updateStatus'])
+  })
+
+  it('can run under another id, with its own state', async () => {
+    const shop = createFakeChannel({ id: 'fake-shop' })
+    const other = createFakeChannel()
+    expect(shop.connector.id).toBe('fake-shop')
+    await shop.connector.capabilities['stock.push']!(context(), [{ offerExternalId: 'fake-offer-1', sku: 'FAKE-SKU-1', available: 2 }])
+    expect(shop.stockPushes).toHaveLength(1)
+    expect(other.stockPushes).toEqual([])
   })
 
   it('has a seed that satisfies the canonical schemas', () => {
@@ -143,6 +152,17 @@ describe('orders.pull', () => {
     expect(items[0]?.facts.map((fact) => fact.id)).toEqual(['older', 'newer'])
   })
 
+  it('a paid fact clears awaitingPayment, so the Order it returns again is ready and still valid', async () => {
+    const { channel, pull } = pullOrders()
+    channel.addOrder({ ...structuredClone(seedOrders[0]!), externalId: 'fake-order-unpaid', awaitingPayment: true })
+    expect((await pull('5')).items[0]).toMatchObject({ externalId: 'fake-order-unpaid', awaitingPayment: true })
+
+    channel.addFact('fake-order-unpaid', { id: 'fake-order-unpaid:paid', type: 'paid', occurredAt: '2026-10-03T08:00:00Z', note: null })
+    const [again] = (await pull('6')).items
+    expect(again).toMatchObject({ externalId: 'fake-order-unpaid', awaitingPayment: false })
+    expect(orderSchema.safeParse(again).success).toBe(true)
+  })
+
   it('addFact throws for an unknown Order', () => {
     const channel = createFakeChannel()
     expect(() => channel.addFact('nope', { id: 'f', type: 'cancelled', occurredAt: '2026-10-03T08:00:00Z', note: null })).toThrow(
@@ -179,6 +199,21 @@ describe('recorded calls', () => {
     expect(channel.stockPushes).toEqual([[{ offerExternalId: 'fake-offer-1', sku: 'FAKE-SKU-1', available: 3 }], []])
   })
 
+  it('records price.push inputs in order and reports the new price on the next offers.pull', async () => {
+    const channel = createFakeChannel()
+    const push = channel.connector.capabilities['price.push']!
+    const price = { offerExternalId: 'fake-offer-1', sku: 'FAKE-SKU-1', price: { amount: '44.00', currency: 'PLN' } }
+    await push(context(), [price])
+    await push(context(), [])
+    expect(channel.pricePushes).toEqual([[price], []])
+    const { items } = await channel.connector.capabilities['offers.pull']!(context(), null)
+    expect(items[0]?.price).toEqual({ amount: '44.00', currency: 'PLN' })
+  })
+
+  it('seeds PLN prices, and no price on fake-offer-5', async () => {
+    expect(seedOffers.map((offer) => offer.price?.currency ?? null)).toEqual(['PLN', 'PLN', 'PLN', 'PLN', null])
+  })
+
   it('records orders.updateStatus inputs in order', async () => {
     const channel = createFakeChannel()
     const update = channel.connector.capabilities['orders.updateStatus']!
@@ -194,6 +229,9 @@ describe('recorded calls', () => {
     const channel = createFakeChannel()
     const stockPushes = channel.stockPushes
     await channel.connector.capabilities['stock.push']!(context(), [])
+    await channel.connector.capabilities['price.push']!(context(), [
+      { offerExternalId: 'fake-offer-1', sku: 'FAKE-SKU-1', price: { amount: '1.00', currency: 'PLN' } },
+    ])
     await channel.connector.capabilities['orders.updateStatus']!(context(), { orderExternalId: 'x', status: 'new' })
     channel.addOffer({ externalId: 'extra', sku: null, name: 'Extra', url: null })
     channel.addFact('fake-order-1', { id: 'f', type: 'shipped', occurredAt: '2026-10-03T08:00:00Z', note: null })
@@ -202,7 +240,9 @@ describe('recorded calls', () => {
 
     expect(channel.stockPushes).toBe(stockPushes)
     expect(stockPushes).toEqual([])
+    expect(channel.pricePushes).toEqual([])
     expect(channel.statusUpdates).toEqual([])
+    expect((await channel.connector.capabilities['offers.pull']!(context(), null)).items[0]?.price).toEqual({ amount: '39.99', currency: 'PLN' })
     const offers = await channel.connector.capabilities['offers.pull']!(context(), '4')
     expect(offers.items.map((offer) => offer.externalId)).toEqual(['fake-offer-5'])
     const last = await channel.connector.capabilities['orders.pull']!(context(), '4')
@@ -226,6 +266,7 @@ describe('failure modes', () => {
     ['offers.pull', (ctx) => capabilities['offers.pull']!(ctx, null)],
     ['orders.pull', (ctx) => capabilities['orders.pull']!(ctx, null)],
     ['stock.push', (ctx) => capabilities['stock.push']!(ctx, [])],
+    ['price.push', (ctx) => capabilities['price.push']!(ctx, [])],
     ['orders.updateStatus', (ctx) => capabilities['orders.updateStatus']!(ctx, { orderExternalId: 'fake-order-1', status: 'shipped' })],
   ]
 
@@ -249,7 +290,9 @@ describe('failure modes', () => {
 
   it('does not record a call that failed', async () => {
     await capabilities['stock.push']!(context({ failMode: 'transient' }), []).catch(() => {})
+    await capabilities['price.push']!(context({ failMode: 'transient' }), []).catch(() => {})
     expect(channel.stockPushes).toEqual([])
+    expect(channel.pricePushes).toEqual([])
   })
 
   it('defaults failMode to none and requires an API key', () => {
