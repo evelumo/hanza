@@ -85,6 +85,23 @@ export const orderSchema = z
     }
   })
 
+/**
+ * An Order update: what changed on the Channel for an Order Hanza may already have, when the Channel cannot (or no
+ * longer can) serve the whole Order. The core applies it only to an Order it already imported from this Connection
+ * and ignores it otherwise, so a connector sends it without knowing whether Hanza has the Order.
+ * - `facts`: Channel facts, recorded once per id like the facts of a full Order (ids stable per Order).
+ * - `shippingAddress` / `billingAddress`: replace the stored ones while the Order is in phase new, e.g. the delivery
+ *   address a Channel reveals only at payment. Absent = unchanged; `billingAddress: null` = no billing address.
+ * An Order that disappeared on the Channel (e.g. merged into another one) is an update with a `cancelled` fact.
+ */
+export const orderUpdateSchema = z.object({
+  kind: z.literal('update'),
+  externalId: z.string().min(1),
+  facts: z.array(channelFactSchema),
+  shippingAddress: addressSchema.optional(),
+  billingAddress: addressSchema.nullable().optional(),
+})
+
 export type OrderStatus = z.infer<typeof orderStatusSchema>
 export type ChannelFactType = z.infer<typeof channelFactTypeSchema>
 export type PaymentMethod = z.infer<typeof paymentMethodSchema>
@@ -93,3 +110,11 @@ export type Buyer = z.infer<typeof buyerSchema>
 export type ChannelFact = z.infer<typeof channelFactSchema>
 export type OrderLine = z.infer<typeof orderLineSchema>
 export type Order = z.infer<typeof orderSchema>
+export type OrderUpdate = z.infer<typeof orderUpdateSchema>
+/** One item of `orders.pull`: a full Order, or an Order update. */
+export type OrderFeedItem = Order | OrderUpdate
+
+/** Only an update carries `kind: 'update'`; a full Order has no `kind`. */
+export function isOrderUpdate(item: OrderFeedItem): item is OrderUpdate {
+  return (item as { kind?: unknown }).kind === 'update'
+}

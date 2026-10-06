@@ -98,6 +98,14 @@ function detail(t: Translator, format: EventFormatters, type: string, payload: P
       const lines = count(payload.lineCount)
       return lines ? t('events.lines', { count: lines }) : null
     }
+    case 'order.addresses_updated': {
+      const shipping = payload.shippingAddress === true
+      const billing = payload.billingAddress === true
+      if (!shipping && !billing) return null
+      return t('events.addresses', { which: shipping && billing ? 'both' : shipping ? 'shipping' : 'billing' })
+    }
+    case 'connection.order_feed_restarted':
+      return t('events.feedRestartGap')
     case 'connection.health_changed':
       return arrow(healthLabel(t, text(payload.from)), healthLabel(t, text(payload.to)))
     case 'order.buyer_data_erased': {

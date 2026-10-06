@@ -1,6 +1,6 @@
 import type { z } from 'zod'
 import type { Offer } from './model/offer'
-import type { Order, OrderStatus } from './model/order'
+import type { Order, OrderStatus, OrderUpdate } from './model/order'
 import type { OfferPrice } from './model/price'
 import type { StockLevel } from './model/stock'
 
@@ -37,8 +37,22 @@ export interface Capabilities<TConfig, TCredentials> {
    * Incremental feed of Orders (new ones and ones with new Channel facts). Same cursor → same page.
    * Ready-to-fulfil Orders only, unless the connector also reports unpaid ones with `awaitingPayment: true`
    * and a `paid` fact once they are paid.
+   *
+   * Cursor `null` (a new Connection, or a restart after `CursorExpiredError`) starts with the Orders open on the
+   * Channel now (not shipped or finished, not cancelled; unpaid ones only if the connector reports them), then
+   * follows the Channel's journal from a position taken *before* that listing began, so nothing placed meanwhile is
+   * lost (an Order seen twice is harmless: the import is idempotent). Orders closed before the Connection never
+   * arrive: their Stock was counted on the shelf already. The cursor is opaque, so a journal connector encodes its
+   * phase in it, e.g. `l1:<journal position>:<listing offset>` while listing, then `e1:<journal position>`.
+   *
+   * Items are full Orders, or Order updates (`kind: 'update'`) when the Channel cannot serve the whole Order: the
+   * address it reveals only at payment, or a `cancelled` fact for an Order that disappeared (merged into another).
+   * Send an update without knowing whether Hanza has the Order; the core ignores updates for Orders it does not have.
+   *
+   * Throw `CursorExpiredError` when the Channel no longer has the cursor's position (e.g. older than its retention):
+   * the core resets the feed to `null` and records the restart. Never restart silently on your own.
    */
-  'orders.pull'?(ctx: CapabilityContext<TConfig, TCredentials>, cursor: string | null): Promise<PullResult<Order>>
+  'orders.pull'?(ctx: CapabilityContext<TConfig, TCredentials>, cursor: string | null): Promise<PullResult<Order | OrderUpdate>>
   /** Set absolute availability for up to 100 Offers of this Connection. Must be repeatable. */
   'stock.push'?(ctx: CapabilityContext<TConfig, TCredentials>, levels: StockLevel[]): Promise<void>
   /**

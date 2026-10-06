@@ -50,6 +50,29 @@ export class PermanentError extends ConnectorError {
   }
 }
 
+/**
+ * `orders.pull` only: the Channel no longer has the position the cursor points at (e.g. a journal kept 60 days and
+ * Hanza was stopped longer). The core resets the Order feed to cursor null, which starts again with the Orders open
+ * now, and records the restart. A `PermanentError` on purpose: thrown anywhere else, for a null cursor, or twice in
+ * one run, it stops the run like any permanent failure.
+ */
+export class CursorExpiredError extends PermanentError {
+  readonly cursorExpired = true
+
+  constructor(message: string, options?: { cause?: unknown }) {
+    super(message, options)
+    this.name = 'CursorExpiredError'
+  }
+}
+
+// Duck-typed for the same reason as `connectorErrorKind`.
+export function isCursorExpiredError(error: unknown): boolean {
+  if (error instanceof CursorExpiredError) return true
+  if (typeof error !== 'object' || error === null) return false
+  const { name, kind, cursorExpired } = error as { name?: unknown; kind?: unknown; cursorExpired?: unknown }
+  return name === 'CursorExpiredError' && kind === 'permanent' && cursorExpired === true
+}
+
 function messageOf(error: unknown): string {
   if (typeof error === 'object' && error !== null && typeof (error as { message?: unknown }).message === 'string') {
     return (error as { message: string }).message

@@ -83,6 +83,27 @@ describe('describeEvent', () => {
     expect(describeEvent('order.payment_received', {}, translatorFor('pl'), formatPl).title).toBe(catalogues.pl.events.title.order_payment_received)
   })
 
+  it('describes new addresses from the Channel by which one changed, never what it says', () => {
+    expect(describeEvent('order.addresses_updated', { shippingAddress: true, billingAddress: false }, t, format)).toEqual({
+      title: 'The channel sent new addresses',
+      detail: 'shipping address',
+    })
+    expect(describeEvent('order.addresses_updated', { shippingAddress: false, billingAddress: true }, t, format).detail).toBe('billing address')
+    expect(describeEvent('order.addresses_updated', { shippingAddress: true, billingAddress: true }, t, format).detail).toBe('shipping and billing address')
+    expect(describeEvent('order.addresses_updated', { shippingAddress: 'yes' }, t, format).detail).toBeNull()
+    expect(describeEvent('order.addresses_updated', { shippingAddress: true }, translatorFor('pl'), formatPl).detail).toBe('adres dostawy')
+  })
+
+  it('describes a restarted Order feed with the gap it may leave', () => {
+    expect(describeEvent('connection.order_feed_restarted', {}, t, format)).toEqual({
+      title: 'Order feed restarted',
+      detail: 'orders placed and closed meanwhile may be missing',
+    })
+    expect(describeEvent('connection.order_feed_restarted', {}, translatorFor('pl'), formatPl).title).toBe(
+      catalogues.pl.events.title.connection_order_feed_restarted,
+    )
+  })
+
   it('describes a change of the stock settings, with an empty limit as none', () => {
     const payload = { from: { safetyBuffer: 0, channelLimit: null }, to: { safetyBuffer: 2, channelLimit: 1500 } }
     expect(describeEvent('connection.stock_rules_changed', payload, t, format)).toEqual({

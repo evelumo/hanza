@@ -543,7 +543,9 @@
       "pages": "pages",
       "pushed": "pushed",
       "truncated": "stopped at the page limit",
-      "skipped": "not sent"
+      "skipped": "not sent",
+      "updatesIgnored": "changes to orders not in Hanza",
+      "feedRestarts": "order feed restarted"
     }
   },
   "events": {
@@ -589,7 +591,9 @@
       "warehouse_updated": "Warehouse changed",
       "warehouse_deactivated": "Warehouse deactivated",
       "warehouse_activated": "Warehouse activated",
-      "warehouse_deleted": "Warehouse deleted"
+      "warehouse_deleted": "Warehouse deleted",
+      "order_addresses_updated": "The channel sent new addresses",
+      "connection_order_feed_restarted": "Order feed restarted"
     },
     "lines": "{count, plural, one {# line} other {# lines}}",
     "defaultStatus": "default status",
@@ -599,7 +603,9 @@
     "ordersErased": "{count, plural, one {# order erased} other {# orders erased}}",
     "allWarehouses": "all warehouses",
     "someWarehouses": "{count, plural, one {# chosen warehouse} other {# chosen warehouses}}",
-    "priority": "priority {change}"
+    "priority": "priority {change}",
+    "feedRestartGap": "orders placed and closed meanwhile may be missing",
+    "addresses": "{which, select, shipping {shipping address} billing {billing address} other {shipping and billing address}}"
   },
   "errors": {
     "domain": {

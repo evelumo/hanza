@@ -1,13 +1,18 @@
 import {
   AuthExpiredError,
+  CursorExpiredError,
   PermanentError,
   RateLimitedError,
   TransientError,
   classifyConnectorError,
+  isOrderUpdate,
   listCapabilities,
   offerSchema,
   orderSchema,
   type CapabilityContext,
+  type Order,
+  type OrderUpdate,
+  type PullResult,
 } from '@hanza/connector-sdk'
 import { assertConformance } from '@hanza/connector-sdk/testing'
 import { describe, expect, it } from 'vitest'
@@ -25,9 +30,20 @@ const context = (overrides: Partial<FakeContext['config']> = {}, apiKey = 'test'
   log: () => {},
 })
 
+/** A page that must hold full Orders only (the replay mode never returns an update unless a test adds one). */
+function fullOrders(page: PullResult<Order | OrderUpdate>): PullResult<Order> {
+  return {
+    ...page,
+    items: page.items.map((item) => {
+      if (isOrderUpdate(item)) throw new Error(`unexpected Order update for "${item.externalId}"`)
+      return item
+    }),
+  }
+}
+
 function pullOrders(channel = createFakeChannel()) {
   const pull = channel.connector.capabilities['orders.pull']!
-  return { channel, pull: (cursor: string | null) => pull(context(), cursor) }
+  return { channel, pull: async (cursor: string | null) => fullOrders(await pull(context(), cursor)) }
 }
 
 describe('fake connector', () => {
@@ -148,7 +164,7 @@ describe('orders.pull', () => {
     const channel = createFakeChannel()
     channel.addFact('fake-order-4', { id: 'newer', type: 'cancelled', occurredAt: '2026-10-03T10:00:00Z', note: null })
     channel.addFact('fake-order-4', { id: 'older', type: 'shipped', occurredAt: '2026-10-03T08:00:00Z', note: null })
-    const { items } = await channel.connector.capabilities['orders.pull']!(context(), '5')
+    const { items } = fullOrders(await channel.connector.capabilities['orders.pull']!(context(), '5'))
     expect(items[0]?.facts.map((fact) => fact.id)).toEqual(['older', 'newer'])
   })
 
@@ -187,6 +203,107 @@ describe('orders.pull', () => {
     const { pull } = pullOrders()
     ;(await pull(null)).items[0]!.lines.length = 0
     expect((await pull(null)).items[0]!.lines).toHaveLength(1)
+  })
+})
+
+describe('Order updates, removed Orders and a forgotten journal', () => {
+  const newAddress = { ...seedOrders[0]!.shippingAddress, street: '9 New Street' }
+
+  it('updateOrder changes the Order and appends exactly the change as an Order update', async () => {
+    const channel = createFakeChannel()
+    const pull = channel.connector.capabilities['orders.pull']!
+    channel.addOrder({ ...structuredClone(seedOrders[0]!), externalId: 'unpaid', awaitingPayment: true })
+    const paid = { id: 'unpaid:paid', type: 'paid' as const, occurredAt: '2026-10-03T08:00:00Z', note: null }
+    channel.updateOrder('unpaid', { facts: [paid], shippingAddress: newAddress })
+
+    const page = await pull(context(), '6')
+    expect(page.items).toEqual([{ kind: 'update', externalId: 'unpaid', facts: [paid], shippingAddress: newAddress }])
+    expect(page).toMatchObject({ nextCursor: '7', hasMore: false })
+    // The earlier entry now shows the Order as it is: paid, with the new address.
+    const [order] = (await pull(context(), '5')).items
+    expect(order).toMatchObject({ awaitingPayment: false, shippingAddress: newAddress, facts: [paid] })
+    expect(() => channel.updateOrder('nope', {})).toThrow(/Unknown Order "nope"/)
+  })
+
+  it('removeOrder deletes the Order: each of its entries is pulled as the removal update', async () => {
+    const channel = createFakeChannel()
+    const pull = channel.connector.capabilities['orders.pull']!
+    const removed = { id: 'fake-order-1:removed', type: 'cancelled' as const, occurredAt: '2026-10-03T08:00:00Z', note: 'Merged' }
+    channel.removeOrder('fake-order-1', removed)
+    const update = { kind: 'update', externalId: 'fake-order-1', facts: [removed] }
+    expect((await pull(context(), null)).items[0]).toEqual(update)
+    expect((await pull(context(), '5')).items).toEqual([update])
+    expect(() => channel.addFact('fake-order-1', removed)).toThrow(/Unknown Order/)
+  })
+
+  it('forgetJournal expires older cursors; the newest position and null still work', async () => {
+    const channel = createFakeChannel()
+    const pull = channel.connector.capabilities['orders.pull']!
+    channel.forgetJournal()
+    await expect(pull(context(), '4')).rejects.toBeInstanceOf(CursorExpiredError)
+    expect(await pull(context(), '5')).toEqual({ items: [], nextCursor: '5', hasMore: false })
+    expect(await pull(context(), null)).toEqual({ items: [], nextCursor: null, hasMore: false })
+    channel.addOrder({ ...structuredClone(seedOrders[0]!), externalId: 'later' })
+    expect(fullOrders(await pull(context(), '5')).items.map((order) => order.externalId)).toEqual(['later'])
+  })
+})
+
+describe('orders.pull starting with the open Orders (startWithOpenOrders)', () => {
+  const journalChannel = () => createFakeChannel({ startWithOpenOrders: true })
+
+  it('passes the conformance kit, with updates for an Order it never listed and an expired cursor', async () => {
+    const channel = journalChannel()
+    channel.forgetJournal()
+    // fake-order-2 was cancelled before the Connection: never listed, but an update for it still comes.
+    channel.updateOrder('fake-order-2', { facts: [{ id: 'fake-order-2:shipped', type: 'shipped', occurredAt: '2026-10-03T08:00:00Z', note: null }] })
+    channel.removeOrder('fake-order-3', { id: 'fake-order-3:removed', type: 'cancelled', occurredAt: '2026-10-03T09:00:00Z', note: null })
+    await assertConformance(channel.connector, {
+      config: { failMode: 'none' },
+      credentials: { apiKey: 'test' },
+      unauthorized: { credentials: { apiKey: 'expired' } },
+      expiredCursor: 'e:4',
+    })
+  })
+
+  it('lists the open seed Orders (not the cancelled fake-order-2), then follows the journal from before the listing', async () => {
+    const channel = journalChannel()
+    const pull = channel.connector.capabilities['orders.pull']!
+    const first = await pull(context(), null)
+    expect(first.items.map((item) => item.externalId)).toEqual(['fake-order-1', 'fake-order-3'])
+    expect(first).toMatchObject({ nextCursor: 'l:5:2', hasMore: true })
+
+    // Placed while the listing runs: not listed (the journal had it only after position 5), but in the journal.
+    channel.addOrder({ ...structuredClone(seedOrders[0]!), externalId: 'during-listing' })
+    const second = await pull(context(), 'l:5:2')
+    expect(second.items.map((item) => item.externalId)).toEqual(['fake-order-4'])
+    expect(second).toMatchObject({ nextCursor: 'e:5', hasMore: true })
+
+    const journal = await pull(context(), 'e:5')
+    expect(journal.items.map((item) => item.externalId)).toEqual(['during-listing'])
+    expect(journal).toMatchObject({ nextCursor: 'e:6', hasMore: false })
+    expect(await pull(context(), 'e:6')).toEqual({ items: [], nextCursor: 'e:6', hasMore: false })
+  })
+
+  it('ends the listing with hasMore false when the journal has nothing after its position', async () => {
+    const channel = journalChannel()
+    channel.addFact('fake-order-1', { id: 'fake-order-1:shipped', type: 'shipped', occurredAt: '2026-10-03T08:00:00Z', note: null })
+    const pull = channel.connector.capabilities['orders.pull']!
+    expect(await pull(context(), 'l:6:1')).toMatchObject({ nextCursor: 'e:6', hasMore: false })
+    expect((await pull(context(), 'l:6:1')).items.map((item) => item.externalId)).toEqual(['fake-order-4'])
+  })
+
+  it('expires listing and journal cursors older than the forgotten journal, and rejects malformed ones as permanent', async () => {
+    const channel = journalChannel()
+    const pull = channel.connector.capabilities['orders.pull']!
+    channel.forgetJournal()
+    await expect(pull(context(), 'e:4')).rejects.toBeInstanceOf(CursorExpiredError)
+    await expect(pull(context(), 'l:4:0')).rejects.toBeInstanceOf(CursorExpiredError)
+    expect(await pull(context(), 'e:5')).toEqual({ items: [], nextCursor: 'e:5', hasMore: false })
+    expect((await pull(context(), null)).nextCursor).toBe('l:5:2')
+    for (const cursor of ['5', 'e:', 'l:5', 'x:1', 'e:1:2']) {
+      await expect(pull(context(), cursor), `cursor "${cursor}"`).rejects.toBeInstanceOf(PermanentError)
+      await expect(pull(context(), cursor)).rejects.not.toBeInstanceOf(CursorExpiredError)
+    }
   })
 })
 
@@ -245,7 +362,7 @@ describe('recorded calls', () => {
     expect((await channel.connector.capabilities['offers.pull']!(context(), null)).items[0]?.price).toEqual({ amount: '39.99', currency: 'PLN' })
     const offers = await channel.connector.capabilities['offers.pull']!(context(), '4')
     expect(offers.items.map((offer) => offer.externalId)).toEqual(['fake-offer-5'])
-    const last = await channel.connector.capabilities['orders.pull']!(context(), '4')
+    const last = fullOrders(await channel.connector.capabilities['orders.pull']!(context(), '4'))
     expect(last).toMatchObject({ nextCursor: '5', hasMore: false })
     expect(last.items[0]?.facts).toHaveLength(1)
   })

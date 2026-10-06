@@ -15,8 +15,10 @@ export {
 export {
   classifyConnectorError,
   errorFromResponse,
+  isCursorExpiredError,
   AuthExpiredError,
   ConnectorError,
+  CursorExpiredError,
   PermanentError,
   RateLimitedError,
   TransientError,
@@ -29,8 +31,10 @@ export {
   channelFactSchema,
   channelFactTypeSchema,
   orderLineSchema,
+  isOrderUpdate,
   orderSchema,
   orderStatusSchema,
+  orderUpdateSchema,
   paymentMethodSchema,
   CHANNEL_FACT_TYPES,
   ORDER_STATUSES,
@@ -40,8 +44,10 @@ export {
   type ChannelFact,
   type ChannelFactType,
   type Order,
+  type OrderFeedItem,
   type OrderLine,
   type OrderStatus,
+  type OrderUpdate,
   type PaymentMethod,
 } from './model/order'
 export { offerSchema, type Offer } from './model/offer'

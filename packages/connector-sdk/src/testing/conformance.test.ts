@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import { z } from 'zod'
 import type { AnyConnectorDefinition } from '../connector'
-import { AuthExpiredError, PermanentError } from '../errors'
+import { AuthExpiredError, CursorExpiredError, PermanentError } from '../errors'
 import type { Offer } from '../model/offer'
 import type { OfferPrice } from '../model/price'
-import type { Order } from '../model/order'
+import type { ChannelFact, Order, OrderUpdate } from '../model/order'
 import { assertConformance, type ConformanceFixtures } from './index'
 
 const offers: Offer[] = [
@@ -44,6 +44,9 @@ const order = (externalId: string): Order => ({
 })
 
 const orders = [order('a'), order('b'), order('c')]
+
+const fact = (id: string, type: ChannelFact['type'] = 'cancelled'): ChannelFact => ({ id, type, occurredAt: '2026-10-02T10:00:00Z', note: null })
+const update = (externalId: string, facts: ChannelFact[], extra: Partial<OrderUpdate> = {}): OrderUpdate => ({ kind: 'update', externalId, facts, ...extra })
 
 // Pages of two, cursor = offset; the minimal connector that satisfies every check.
 function slice<T>(items: T[], cursor: string | null) {
@@ -160,6 +163,24 @@ const broken: Array<[id: string, connector: AnyConnectorDefinition, fixtures?: C
       },
     })
   })()],
+  ['C14', withCapabilities({ 'orders.pull': async (_ctx, cursor) => slice([...orders, { kind: 'update', externalId: 'a' } as never], cursor) })],
+  ['C14', withCapabilities({ 'orders.pull': async (_ctx, cursor) => slice([...orders, update('a', [fact('a:x'), fact('a:x')])], cursor) })],
+  ['C14', withCapabilities({
+    'orders.pull': async (_ctx, cursor) => slice([...orders, update('a', [fact('a:x', 'paid')]), update('a', [fact('a:x', 'cancelled')])], cursor),
+  })],
+  ['C14', withCapabilities({
+    'orders.pull': async (_ctx, cursor) => slice([{ ...order('a'), facts: [fact('a:1', 'shipped')] }, order('b'), update('a', [fact('a:1', 'cancelled')])], cursor),
+  })],
+  ['C7', (() => {
+    let run = 0
+    // The update's facts change between two pulls of the same cursor.
+    return withCapabilities({ 'orders.pull': async (_ctx, cursor) => slice([...orders, update('x', [fact(`x:${run++}`)])], cursor) })
+  })()],
+  ['C15', validConnector(), { ...fixtures, expiredCursor: '0' }],
+  ['C15', withCapabilities({ 'orders.pull': async (_ctx, cursor) => {
+    if (cursor === 'old') throw new PermanentError('gone')
+    return slice(orders, cursor)
+  } }), { ...fixtures, expiredCursor: 'old' }],
   ['C11', validConnector(), { ...fixtures, unauthorized: { credentials: { apiKey: 'also-fine' } } }],
   ['C11', withCapabilities({ 'orders.pull': async () => { throw new PermanentError('wrong kind') } })],
   ['C12', withCapabilities({ 'stock.push': async () => { throw new Error('plain error') } })],
@@ -184,6 +205,29 @@ describe('assertConformance', () => {
     const mixed = [{ ...order('a'), awaitingPayment: true }, { ...order('b'), awaitingPayment: true }, order('c'), paid, cancelled]
     const connector = withCapabilities({ 'orders.pull': async (_ctx, cursor) => slice(mixed, cursor) })
     await expect(assertConformance(connector, { config: { region: 'eu' }, credentials: { apiKey: 'test' } })).resolves.toBeUndefined()
+  })
+
+  it('passes for a connector that sends Order updates, also for Orders it never returned, and expires old cursors', async () => {
+    const feed = [
+      { ...order('a'), awaitingPayment: true },
+      order('b'),
+      // a is paid and its address arrives; z closed before the Connection, so Hanza never had it.
+      update('a', [fact('a:paid', 'paid')], { shippingAddress: order('a').shippingAddress, billingAddress: null }),
+      update('z', [fact('z:removed')]),
+      update('b', []),
+    ]
+    const connector = withCapabilities({
+      'orders.pull': async (_ctx, cursor) => {
+        if (cursor === 'expired') throw new CursorExpiredError('older than the journal')
+        return slice(feed, cursor)
+      },
+    })
+    await expect(assertConformance(connector, { config: { region: 'eu' }, credentials: { apiKey: 'test' }, expiredCursor: 'expired' })).resolves.toBeUndefined()
+  })
+
+  it('counts only full Orders for the "at least one Order" check', async () => {
+    const connector = withCapabilities({ 'orders.pull': async (_ctx, cursor) => slice([update('a', [fact('a:x')])], cursor) })
+    await expect(assertConformance(connector, fixtures)).rejects.toThrow(/\[C6\] orders.pull returned no Orders/)
   })
 
   it('passes for a connector without price.push whose Offers report no price', async () => {
