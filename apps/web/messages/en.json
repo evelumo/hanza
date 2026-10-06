@@ -16,7 +16,8 @@
     "dashboard": "Dashboard",
     "products": "Products",
     "orders": "Orders",
-    "connections": "Connections"
+    "connections": "Connections",
+    "families": "Families"
   },
   "pagination": {
     "label": "Pagination",
@@ -76,6 +77,11 @@
     "searchPlaceholder": "Search by SKU or name",
     "search": "Search",
     "clear": "Clear",
+    "familyFilter": {
+      "label": "Family",
+      "all": "All products",
+      "none": "Without a family"
+    },
     "emptySearch": "No product matches your search.",
     "empty": "There are no products yet. Add the first one, or create them from offers pulled from a channel.",
     "columns": {
@@ -84,7 +90,8 @@
       "stock": "Stock",
       "reserved": "Reserved",
       "available": "Available",
-      "offers": "Offers"
+      "offers": "Offers",
+      "family": "Family"
     },
     "shortageHint": "(shortage)",
     "detail": {
@@ -123,7 +130,8 @@
       "reservationsTitle": "Open reservations",
       "reservationsDescription": "Goods promised to orders that have not been shipped yet.",
       "reservationsEmpty": "No open reservations.",
-      "reservationOrder": "Order {id}"
+      "reservationOrder": "Order {id}",
+      "familyLine": "Family: {name}"
     },
     "new": {
       "title": "Add product",
@@ -133,6 +141,55 @@
       "initialStock": "Initial stock",
       "submit": "Add product",
       "submitting": "Adding…"
+    }
+  },
+  "families": {
+    "title": "Product families",
+    "intro": "A family groups the products that are sizes or colours of one another. Orders, stock and offers keep working on the individual products.",
+    "add": "Add family",
+    "empty": "There are no product families yet. Create one to group products such as sizes or colours.",
+    "columns": {
+      "name": "Name",
+      "attributes": "Attributes",
+      "products": "Products"
+    },
+    "productCount": "{count, plural, one {# product} other {# products}}",
+    "new": {
+      "title": "Add family",
+      "name": "Name",
+      "attributes": "Attributes",
+      "attributesHint": "What tells the products apart, separated by commas, for example: Size, Colour. At most 5; they cannot be changed later.",
+      "submit": "Add family",
+      "submitting": "Adding…"
+    },
+    "detail": {
+      "title": "Product family",
+      "attributesLine": "Attributes: {attributes}",
+      "renameTitle": "Name",
+      "renameDescription": "The name is only for you; channels do not see it.",
+      "name": "Name",
+      "saveName": "Save name",
+      "membersTitle": "Products in this family",
+      "membersDescription": "Each product has one value per attribute. No two products can have the same values.",
+      "membersEmpty": "No products in this family yet. Add the first one below.",
+      "availableLine": "Available: {count}",
+      "saveValues": "Save",
+      "saving": "Saving…",
+      "remove": "Remove",
+      "removing": "Removing…",
+      "removeConfirm": "Remove this product from the family? The product itself stays as it is.",
+      "valueLabel": "{attribute} of {sku}",
+      "addTitle": "Add a product",
+      "addDescription": "A product can be in one family at a time.",
+      "sku": "Product SKU",
+      "skuHint": "The SKU of an existing product that is in no family.",
+      "add": "Add to family",
+      "adding": "Adding…",
+      "deleteTitle": "Delete family",
+      "deleteDescription": "Its products are not deleted: they just stop being grouped. Orders, stock and offers are not affected.",
+      "delete": "Delete family",
+      "deleting": "Deleting…",
+      "deleteConfirm": "Delete this family? Its products stay, ungrouped."
     }
   },
   "offers": {
@@ -398,7 +455,13 @@
       "order_attention_raised": "Order needs attention",
       "order_attention_resolved": "Marked as reviewed",
       "connection_created": "Connection created",
-      "connection_health_changed": "Connection health changed"
+      "connection_health_changed": "Connection health changed",
+      "family_created": "Product family created",
+      "family_renamed": "Product family renamed",
+      "family_deleted": "Product family deleted",
+      "family_product_added": "Product added to a family",
+      "family_product_updated": "Product attributes in a family changed",
+      "family_product_removed": "Product removed from a family"
     },
     "lines": "{count, plural, one {# line} other {# lines}}"
   },
@@ -411,6 +474,9 @@
       "already_linked": "This line is already linked.",
       "unknown_connector": "Unknown connector.",
       "invalid_config": "Check the fields.",
+      "combination_taken": "Another product in this family already has these values.",
+      "invalid_attributes": "Fill in every attribute (at most 100 characters) and keep the attribute names distinct.",
+      "already_in_family": "This product is already in a family. Remove it from there first.",
       "invalid_price": "This price does not fit its currency: check the decimal places."
     },
     "unexpected": "Something went wrong. Please try again.",
@@ -441,6 +507,9 @@
     "offersTooMany": "Select at most 200 offers at a time.",
     "fieldRequired": "This field is required.",
     "fieldInvalid": "Invalid value.",
+    "familyNameTooLong": "The name can have at most 100 characters.",
+    "attributesInvalid": "Enter 1 to 5 different attribute names, each at most 50 characters, separated by commas.",
+    "attributeValueRequired": "Enter a value of at most 100 characters.",
     "priceInvalid": "Enter a price above 0, e.g. 49.99.",
     "priceAmbiguous": "Ambiguous: three digits after the separator. Write 1234 for a thousands amount, or use fewer decimal places.",
     "priceTooManyDecimals": "Too many decimal places for this currency (PLN has 2, JPY none).",

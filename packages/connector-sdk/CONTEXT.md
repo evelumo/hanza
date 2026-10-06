@@ -5,8 +5,16 @@ The canonical vocabulary of Hanza. Every connector translates an external system
 ## Language
 
 **Product**:
-One sellable item, identified by its SKU within an organization. A T-shirt in three sizes is three Products.
+One sellable item, identified by its SKU within an organization. A T-shirt in three sizes is three Products, which can be grouped in a Product family.
 _Avoid_: Variant, item, article
+
+**Product family**:
+A named group of Products that are sizes, colours or other variations of one another (a T-shirt in three sizes is one family of three Products). A Product is in at most one family. A family only groups: Orders, Stock, Reservations and Offers keep pointing at the individual Products. Deleting a family ungroups its Products and never deletes them.
+_Avoid_: Variant group, product group, parent product, master product
+
+**Family attribute**:
+What tells the Products of one family apart, such as Size or Colour. A family lists its attributes (fixed once the family exists), and each Product in it has one value per attribute; no two Products of a family have the same values.
+_Avoid_: Variant attribute, option, property
 
 **Offer**:
 The presence of one Product on one Channel — the thing a Buyer actually sees and buys there. Linked to its Product by SKU, or by hand when the SKU does not match.

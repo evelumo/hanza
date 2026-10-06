@@ -1,12 +1,18 @@
 import type { Prisma, Tx } from '@hanza/db'
 import type { Context } from './context'
 
-export type EventSubject = { type: 'product' | 'offer' | 'order' | 'connection'; id: string }
+export type EventSubject = { type: 'product' | 'product_family' | 'offer' | 'order' | 'connection'; id: string }
 
 export type EventType =
   | 'system.ping'
   | 'product.created'
   | 'product.updated'
+  | 'family.created'
+  | 'family.renamed'
+  | 'family.deleted'
+  | 'family.product_added'
+  | 'family.product_updated'
+  | 'family.product_removed'
   | 'product.price_changed'
   | 'stock.set'
   | 'stock.reserved'

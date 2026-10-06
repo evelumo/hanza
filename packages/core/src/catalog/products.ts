@@ -14,6 +14,16 @@ import { TX_OPTIONS } from '../transaction'
 import { autoLinkOffersBySku } from './auto-link'
 import { normalizeSku } from './sku'
 
+/** The family a Product is in and its value for each of the family's attributes, in the family's order. */
+export interface ProductFamilyRef {
+  id: string
+  name: string
+  attributes: Array<{ name: string; value: string }>
+}
+
+/** `none`: Products that are in no family; `{ id }`: the Products of one family. */
+export type ProductFamilyFilter = 'none' | { id: string }
+
 export interface ProductRow {
   id: string
   sku: string
@@ -22,6 +32,7 @@ export interface ProductRow {
   reserved: number
   available: number
   linkedOffers: number
+  family: ProductFamilyRef | null
 }
 
 export interface ProductDetail extends ProductRow {
@@ -42,6 +53,21 @@ export interface ProductDetail extends ProductRow {
 }
 
 export type CreateProductsSkipReason = 'not_found' | 'no_sku' | 'sku_taken' | 'already_linked'
+
+const familySelect = { select: { id: true, name: true, attributes: true } } as const
+
+function familyRef(
+  family: { id: string; name: string; attributes: string[] } | null,
+  values: unknown,
+): ProductFamilyRef | null {
+  if (!family) return null
+  const record = values && typeof values === 'object' && !Array.isArray(values) ? (values as Record<string, unknown>) : {}
+  return {
+    id: family.id,
+    name: family.name,
+    attributes: family.attributes.map((name) => ({ name, value: typeof record[name] === 'string' ? record[name] : '' })),
+  }
+}
 
 export async function createProduct(
   ctx: Context,
@@ -110,11 +136,12 @@ export async function findProductBySku(ctx: Context, organizationId: string, sku
 export async function listProducts(
   ctx: Context,
   organizationId: string,
-  query: { search?: string; skip: number; take: number },
+  query: { search?: string; family?: ProductFamilyFilter; skip: number; take: number },
 ): Promise<{ total: number; items: ProductRow[] }> {
   const search = query.search?.trim()
   const where = {
     organizationId,
+    ...(query.family === 'none' ? { familyId: null } : query.family ? { familyId: query.family.id } : {}),
     ...(search
       ? {
           OR: [
@@ -131,7 +158,7 @@ export async function listProducts(
       orderBy: { sku: 'asc' },
       skip: query.skip,
       take: query.take,
-      select: { id: true, sku: true, name: true, _count: { select: { offers: true } } },
+      select: { id: true, sku: true, name: true, attributeValues: true, family: familySelect, _count: { select: { offers: true } } },
     }),
   ])
   const availability = await getAvailability(ctx.db, organizationId, products.map((product) => product.id))
@@ -143,6 +170,7 @@ export async function listProducts(
       name: product.name,
       ...(availability.get(product.id) ?? { stock: 0, reserved: 0, available: 0 }),
       linkedOffers: product._count.offers,
+      family: familyRef(product.family, product.attributeValues),
     })),
   }
 }
@@ -154,6 +182,8 @@ export async function getProduct(ctx: Context, organizationId: string, productId
       id: true,
       sku: true,
       name: true,
+      attributeValues: true,
+      family: familySelect,
       basePriceAmount: true,
       basePriceCurrency: true,
       offers: {
@@ -190,6 +220,7 @@ export async function getProduct(ctx: Context, organizationId: string, productId
     name: product.name,
     ...(availability.get(product.id) ?? { stock: 0, reserved: 0, available: 0 }),
     linkedOffers: product.offers.length,
+    family: familyRef(product.family, product.attributeValues),
     basePrice,
     offers: product.offers.map((offer) => ({
       id: offer.id,
