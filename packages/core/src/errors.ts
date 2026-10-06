@@ -14,6 +14,7 @@ export type DomainErrorCode =
   | 'already_in_family'
   | 'invalid_price'
   | 'not_a_channel'
+  | 'forbidden'
 
 /** Thrown by services for expected failures; the panel maps `code` to translated copy. */
 export class DomainError extends Error {

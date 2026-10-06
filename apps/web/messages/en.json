@@ -17,7 +17,8 @@
     "products": "Products",
     "orders": "Orders",
     "connections": "Connections",
-    "families": "Families"
+    "families": "Families",
+    "privacy": "Privacy"
   },
   "pagination": {
     "label": "Pagination",
@@ -280,6 +281,8 @@
     },
     "needsAttention": "Needs attention",
     "awaitingPayment": "Awaiting payment",
+    "buyerErased": "Erased",
+    "buyerUnreadable": "Cannot be read",
     "detail": {
       "title": "Order",
       "summary": "Channel: {channel} · {date} · {payment} · {total}",
@@ -305,6 +308,9 @@
       "unmatched": "Unmatched",
       "shortage": "Shortage",
       "buyerTitle": "Buyer",
+      "buyerErased": "Buyer data was erased on {date}.",
+      "buyerUnreadable": "The buyer data of this order cannot be read: it does not decrypt with the current encryption key, or it is damaged.",
+      "shippingCountry": "Shipping country: {country}",
       "contact": "Contact details",
       "phone": "Phone: {phone}",
       "channelLogin": "Channel login: {login}",
@@ -382,6 +388,39 @@
       "saved": "Saved. The new numbers will be sent to this channel."
     }
   },
+  "privacy": {
+    "title": "Privacy",
+    "intro": "Buyer data on orders (names, contact details, addresses) is stored encrypted. Here you decide how long it is kept and handle a request to erase one person's data.",
+    "adminsOnly": "Only an owner or admin of the organization can change the retention period or erase a buyer's data.",
+    "retention": {
+      "title": "Buyer data retention",
+      "description": "Buyer data is erased this many days after an order was shipped or cancelled. Order lines, amounts and the shipping country are kept. Open orders are never affected.",
+      "label": "Days after the order closed",
+      "hint": "From 1 to 3650 days. Leave empty to keep buyer data until you erase it. Orders that were already closed before Hanza recorded closing times count from their last change.",
+      "save": "Save",
+      "saved": "Saved. The check runs every hour.",
+      "currentDays": "Now: buyer data is erased {count, plural, one {# day} other {# days}} after an order closed.",
+      "currentOff": "Now: buyer data is kept until you erase it.",
+      "confirmTitle": "Confirm the new retention period",
+      "confirmCount": "{count, plural, =0 {With {days, number} days, no order would have its buyer data erased at the next check.} one {With {days, number} days, # order will have its buyer data erased at the next check, within an hour. This cannot be undone.} other {With {days, number} days, # orders will have their buyer data erased at the next check, within an hour. This cannot be undone.}}",
+      "confirm": "Save and erase at the next check",
+      "confirmDialog": "Save the new retention period? Buyer data past it is erased within an hour and cannot be restored."
+    },
+    "erasure": {
+      "title": "Erase a buyer's data",
+      "description": "Finds this organization's orders placed with exactly this email address (letter case does not matter) and erases their buyer data. Orders for which the channel gave no email cannot be found this way.",
+      "emailLabel": "Buyer's email address",
+      "find": "Find orders",
+      "finding": "Searching…",
+      "noMatch": "No order of this organization has buyer data with this email address.",
+      "previewClosed": "{count, plural, =0 {No shipped or cancelled order to erase.} one {# shipped or cancelled order will have its buyer data erased.} other {# shipped or cancelled orders will have their buyer data erased.}}",
+      "openKept": "{count, plural, one {# order is still open and is kept: its address is needed to ship it. Ship or cancel it, then erase again.} other {# orders are still open and are kept: their address is needed to ship them. Ship or cancel them, then erase again.}}",
+      "confirm": "Erase the buyer data of these orders? This cannot be undone.",
+      "submit": "Erase buyer data",
+      "erasing": "Erasing…",
+      "done": "{count, plural, =0 {Nothing was erased.} one {Buyer data erased on # order.} other {Buyer data erased on # orders.}}"
+    }
+  },
   "labels": {
     "orderStatus": {
       "new": "New",
@@ -434,6 +473,10 @@
       "shop": "Shop",
       "courier": "Courier",
       "invoicing": "Invoicing"
+    },
+    "erasureCause": {
+      "retention": "retention period",
+      "erasure_request": "erasure request"
     }
   },
   "sync": {
@@ -479,10 +522,16 @@
       "family_product_added": "Product added to a family",
       "family_product_updated": "Product attributes in a family changed",
       "family_product_removed": "Product removed from a family",
-      "connection_stock_rules_changed": "Stock settings changed"
+      "connection_stock_rules_changed": "Stock settings changed",
+      "order_buyer_data_erased": "Buyer data erased",
+      "privacy_retention_changed": "Buyer data retention changed",
+      "privacy_erasure_requested": "Erasure request handled"
     },
     "lines": "{count, plural, one {# line} other {# lines}}",
-    "stockRules": "safety buffer {buffer}, channel limit {limit}"
+    "stockRules": "safety buffer {buffer}, channel limit {limit}",
+    "retentionDays": "{count, plural, one {# day} other {# days}}",
+    "retentionOff": "kept",
+    "ordersErased": "{count, plural, one {# order erased} other {# orders erased}}"
   },
   "errors": {
     "domain": {
@@ -498,7 +547,8 @@
       "invalid_attributes": "Fill in every attribute (at most 100 characters) and keep the attribute names distinct.",
       "already_in_family": "This product is already in a family. Remove it from there first.",
       "invalid_price": "This price does not fit its currency: check the decimal places.",
-      "not_a_channel": "This connection is not a sales channel, so it has no stock settings."
+      "not_a_channel": "This connection is not a sales channel, so it has no stock settings.",
+      "forbidden": "Only an owner or admin of the organization can do this."
     },
     "unexpected": "Something went wrong. Please try again.",
     "invalidInput": "Check the fields.",
@@ -534,6 +584,8 @@
     "priceInvalid": "Enter a price above 0, e.g. 49.99.",
     "priceAmbiguous": "Ambiguous: three digits after the separator. Write 1234 for a thousands amount, or use fewer decimal places.",
     "priceTooManyDecimals": "Too many decimal places for this currency (PLN has 2, JPY none).",
-    "currencyInvalid": "Enter a three-letter currency code, e.g. PLN."
+    "currencyInvalid": "Enter a three-letter currency code, e.g. PLN.",
+    "emailInvalid": "Enter an email address (with @, at most 320 characters).",
+    "retentionDaysInvalid": "Enter a whole number of days from 1 to 3650, or leave the field empty."
   }
 }

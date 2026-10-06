@@ -40,7 +40,11 @@ describe.skipIf(!databaseUrl)('importOrder', () => {
 
     expect(result).toMatchObject({ created: true, factsApplied: 0 })
     const stored = await ctx.db.order.findFirstOrThrow({ where: { id: result.orderId }, include: { lines: { include: { reservation: true } } } })
-    expect(stored).toMatchObject({ status: 'new', attentionReasons: [], currency: 'PLN', buyerName: 'John Test', billingAddress: null })
+    expect(stored).toMatchObject({ status: 'new', attentionReasons: [], currency: 'PLN', shippingCountryCode: 'PL', closedAt: null })
+    // Buyer data is sealed (ADR 0016): no plaintext column is written.
+    expect(stored).toMatchObject({ buyerName: null, buyerEmail: null, shippingAddress: null, billingAddress: null })
+    expect(stored.buyerData).toMatch(/^v1:/)
+    expect(stored.buyerEmailIndex).toMatch(/^v1:/)
     expect(stored.totalAmount.toFixed()).toBe('79.98')
     expect(stored.lines).toHaveLength(1)
     expect(stored.lines[0]).toMatchObject({ productId, shortage: false, reservation: { units: 2, status: 'open', productId } })

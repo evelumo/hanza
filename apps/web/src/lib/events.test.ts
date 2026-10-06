@@ -76,6 +76,21 @@ describe('describeEvent', () => {
     expect(describeEvent('family.deleted', { name: 5 }, translatorFor('pl'), formatPl)).toEqual({ title: catalogues.pl.events.title.family_deleted, detail: null })
   })
 
+  it('describes Buyer data erasure and retention changes without personal data', () => {
+    expect(describeEvent('order.buyer_data_erased', { cause: 'retention', retentionDays: 30 }, t, format)).toEqual({
+      title: 'Buyer data erased',
+      detail: 'retention period',
+    })
+    expect(describeEvent('order.buyer_data_erased', { cause: 'erasure_request' }, t, format).detail).toBe('erasure request')
+    expect(describeEvent('privacy.retention_changed', { from: null, to: 30 }, t, format).detail).toBe('kept → 30 days')
+    expect(describeEvent('privacy.retention_changed', { from: 1, to: null }, t, format).detail).toBe('1 day → kept')
+    expect(describeEvent('privacy.erasure_requested', { erased: 2, keptOpen: 1 }, t, format)).toEqual({
+      title: 'Erasure request handled',
+      detail: '2 orders erased',
+    })
+    expect(describeEvent('privacy.erasure_requested', { erased: 5 }, translatorFor('pl'), formatPl).detail).toBe('usunięto z 5 zamówień')
+  })
+
   it('shows a value this build does not know as it is', () => {
     expect(describeEvent('order.status_changed', { from: 'new', to: 'teleported' }, t, format).detail).toBe('New → teleported')
     expect(describeEvent('order.channel_fact_recorded', { type: 'exploded' }, t, format).detail).toBe('exploded')

@@ -1,8 +1,8 @@
 import type { Address, Buyer, Money, OrderStatus } from '@hanza/connector-sdk'
-import { addressSchema } from '@hanza/connector-sdk'
 import type { AttentionReason, ChannelFactType, PaymentMethod } from '@hanza/db'
 import type { Context } from '../context'
 import { listEvents, type EventRow } from '../events'
+import { storedBuyerDataSelect, viewBuyerData, type BuyerDataView, type StoredBuyerData } from '../privacy/buyer-data'
 import { allowedTransitions, OPEN_STATUSES } from './status-rules'
 
 export interface OrderRow {
@@ -11,7 +11,11 @@ export interface OrderRow {
   connectionId: string
   connectionName: string
   placedAt: Date
-  buyerName: string
+  /** Null unless `buyerDataState` is `present`. */
+  buyerName: string | null
+  /** `unreadable`: the stored value does not open or parse (wrong key, damaged value); the Order id is logged. */
+  buyerDataState: BuyerDataView['state']
+  buyerDataErasedAt: Date | null
   total: Money
   status: OrderStatus
   /** A prepaid Order the Buyer has not paid for yet; it cannot be fulfilled until the Channel reports the payment. */
@@ -21,9 +25,12 @@ export interface OrderRow {
 
 export interface OrderDetail extends OrderRow {
   payment: PaymentMethod
-  buyer: Buyer
-  shippingAddress: Address
+  /** `buyer` and `shippingAddress` are null unless `buyerDataState` is `present`. */
+  buyer: Buyer | null
+  shippingAddress: Address | null
   billingAddress: Address | null
+  /** Kept after erasure. */
+  shippingCountryCode: string | null
   lines: Array<{
     id: string
     externalId: string
@@ -45,10 +52,10 @@ export interface OrderDetail extends OrderRow {
 
 const rowSelect = {
   id: true,
-  externalId: true,
-  connectionId: true,
   placedAt: true,
-  buyerName: true,
+  // Includes externalId and connectionId, which the sealed value is bound to.
+  ...storedBuyerDataSelect,
+  buyerDataErasedAt: true,
   currency: true,
   totalAmount: true,
   status: true,
@@ -57,26 +64,29 @@ const rowSelect = {
   connection: { select: { name: true } },
 } as const
 
-function toRow(order: {
-  id: string
-  externalId: string
-  connectionId: string
-  placedAt: Date
-  buyerName: string
-  currency: string
-  totalAmount: { toFixed(): string }
-  status: OrderStatus
-  awaitingPayment: boolean
-  attentionReasons: AttentionReason[]
-  connection: { name: string }
-}): OrderRow {
+function toRow(
+  order: StoredBuyerData & {
+    id: string
+    placedAt: Date
+    buyerDataErasedAt: Date | null
+    currency: string
+    totalAmount: { toFixed(): string }
+    status: OrderStatus
+    awaitingPayment: boolean
+    attentionReasons: AttentionReason[]
+    connection: { name: string }
+  },
+  view: BuyerDataView,
+): OrderRow {
   return {
     id: order.id,
     externalId: order.externalId,
     connectionId: order.connectionId,
     connectionName: order.connection.name,
     placedAt: order.placedAt,
-    buyerName: order.buyerName,
+    buyerName: view.state === 'present' ? view.data.buyer.name : null,
+    buyerDataState: view.state,
+    buyerDataErasedAt: order.buyerDataErasedAt,
     total: { amount: order.totalAmount.toFixed(), currency: order.currency },
     status: order.status,
     awaitingPayment: order.awaitingPayment,
@@ -105,7 +115,15 @@ export async function listOrders(
     ctx.db.order.count({ where }),
     ctx.db.order.findMany({ where, orderBy: [{ placedAt: 'desc' }, { id: 'desc' }], skip: query.skip, take: query.take, select: rowSelect }),
   ])
-  return { total, items: orders.map(toRow) }
+  return { total, items: orders.map((order) => toRow(order, view(ctx, order))) }
+}
+
+function view(ctx: Context, order: StoredBuyerData & { id: string }): BuyerDataView {
+  const result = viewBuyerData(ctx.secrets, order)
+  if (result.state === 'unreadable') {
+    ctx.log.error('buyer data unreadable', { organizationId: order.organizationId, orderId: order.id })
+  }
+  return result
 }
 
 export async function getOrder(ctx: Context, organizationId: string, orderId: string): Promise<OrderDetail | null> {
@@ -114,11 +132,7 @@ export async function getOrder(ctx: Context, organizationId: string, orderId: st
     select: {
       ...rowSelect,
       payment: true,
-      buyerEmail: true,
-      buyerPhone: true,
-      buyerLogin: true,
-      shippingAddress: true,
-      billingAddress: true,
+      shippingCountryCode: true,
       lines: {
         where: { organizationId },
         orderBy: { externalId: 'asc' },
@@ -146,12 +160,15 @@ export async function getOrder(ctx: Context, organizationId: string, orderId: st
   if (!order) return null
 
   const events = await listEvents(ctx, organizationId, { type: 'order', id: order.id }, 50)
+  const buyerData = view(ctx, order)
+  const present = buyerData.state === 'present' ? buyerData.data : null
   return {
-    ...toRow(order),
+    ...toRow(order, buyerData),
     payment: order.payment,
-    buyer: { name: order.buyerName, email: order.buyerEmail, phone: order.buyerPhone, login: order.buyerLogin },
-    shippingAddress: addressSchema.parse(order.shippingAddress),
-    billingAddress: order.billingAddress === null ? null : addressSchema.parse(order.billingAddress),
+    buyer: present?.buyer ?? null,
+    shippingAddress: present?.shippingAddress ?? null,
+    billingAddress: present?.billingAddress ?? null,
+    shippingCountryCode: order.shippingCountryCode,
     lines: order.lines.map((line) => ({
       id: line.id,
       externalId: line.externalId,

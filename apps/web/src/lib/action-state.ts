@@ -1,3 +1,4 @@
+import { describeFailure } from '@hanza/core'
 import { z } from 'zod'
 import { getContext } from './context'
 import { errorMessage } from './domain-errors'
@@ -18,7 +19,8 @@ export interface ActionState {
 export function failure(error: unknown, t: Translator, extra?: Pick<ActionState, 'fieldErrors' | 'values'>): ActionState {
   const { message, expected } = errorMessage(error, t)
   if (!expected) {
-    getContext().log.error('panel action failed', { error: error instanceof Error ? `${error.name}: ${error.message}` : 'unknown' })
+    // Sanitised: a full Prisma message can quote the query's arguments, such as an email typed into an erasure request.
+    getContext().log.error('panel action failed', { error: describeFailure(error) })
   }
   return { error: message, ...extra }
 }

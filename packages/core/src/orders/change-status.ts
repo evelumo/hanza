@@ -10,7 +10,7 @@ import { markOffersForStockPush, requestStockPushAfterCommit } from '../stock/pu
 import { ensureDefaultWarehouse } from '../stock/warehouse'
 import { TX_OPTIONS } from '../transaction'
 import { reasonsAfterCancel } from './reasons'
-import { allowedTransitions } from './status-rules'
+import { allowedTransitions, isFinalStatus } from './status-rules'
 import { markStatusPushPending } from './status-push'
 import { applyStockEffect } from './stock-effect'
 
@@ -41,7 +41,10 @@ export async function changeOrderStatus(ctx: Context, organizationId: string, or
 
     const touched = await applyStockEffect(tx, organizationId, orderId, to)
     const reasons = to === 'cancelled' ? reasonsAfterCancel(order.attentionReasons) : order.attentionReasons
-    await tx.order.updateMany({ where: { id: orderId, organizationId }, data: { status: to, attentionReasons: reasons } })
+    await tx.order.updateMany({
+      where: { id: orderId, organizationId },
+      data: { status: to, attentionReasons: reasons, ...(isFinalStatus(to) ? { closedAt: new Date() } : {}) },
+    })
     const pushable = ctx.connectors.get(order.connection.connectorId)?.capabilities['orders.updateStatus'] !== undefined
     await markStatusPushPending(tx, organizationId, orderId, pushable)
     await appendEvent(tx, {

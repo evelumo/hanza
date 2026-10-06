@@ -92,6 +92,7 @@ model Organization {
   orderChannelFacts OrderChannelFact[]
   connections       Connection[]
   syncStates        SyncState[]
+  privacySettings   PrivacySettings?
   workflowRuns      WorkflowRun[]
   workflowSignals   WorkflowSignal[]
 
