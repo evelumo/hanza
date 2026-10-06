@@ -134,7 +134,7 @@ export async function updateWarehouse(
 /**
  * Deactivating is refused for the default Warehouse, while it holds Stock or open Reservations, or
  * while a Channel chose it explicitly; so an inactive Warehouse contributes 0 to every Available and
- * neither direction needs a push (ADR 0013).
+ * neither direction needs a push (ADR 0017).
  */
 export async function setWarehouseActive(
   ctx: Context,
@@ -182,7 +182,7 @@ interface LockedRow {
 }
 
 /**
- * The one Warehouse row, and no other lock afterwards (ADR 0013): every writer that could put Stock,
+ * The one Warehouse row, and no other lock afterwards (ADR 0017): every writer that could put Stock,
  * a Reservation or a Channel's choice into it holds it FOR SHARE first, and both modes conflict with
  * that, so the checks read after this lock are exact. An edit takes NO KEY UPDATE, which leaves
  * foreign-key checks (KEY SHARE) alone; a delete needs FOR UPDATE.

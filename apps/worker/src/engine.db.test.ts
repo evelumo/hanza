@@ -9,10 +9,13 @@ import {
   linkOffer,
   MAX_RATE_LIMIT_RETRIES,
   ordersPullRef,
+  ordersUpdateStatusRef,
   PermanentJobError,
   requestSync,
+  syncTickJob,
   syncTickRef,
   type Actor,
+  type Context,
 } from '@hanza/core'
 import { createTestContext, createTestOrganization, type TestContext } from '@hanza/core/testing'
 import { afterAll, beforeAll, describe, expect, inject, it } from 'vitest'
@@ -65,6 +68,43 @@ describe.skipIf(!databaseUrl)('sync engine end to end (real Postgres, in-memory 
 
   async function syncState(id: string, stream: 'offers_pull' | 'orders_pull' | 'stock_push' | 'order_status_push') {
     return ctx.db.syncState.findFirst({ where: { organizationId: org, connectionId: id, stream } })
+  }
+
+  /** The queue is down right after commit: every enqueue throws. */
+  function queueDown(): Context {
+    return {
+      ...ctx,
+      queue: {
+        ...ctx.queue,
+        enqueue: async () => {
+          throw new Error('Redis unavailable')
+        },
+      },
+    }
+  }
+
+  /** Every pending status push of the organization becomes overdue, as if the sweep's retry interval had passed. */
+  async function tenMinutesPass() {
+    await ctx.db.$executeRaw`
+      UPDATE "order" SET "statusPushDueAt" = now() - interval '1 second'
+      WHERE "organizationId" = ${org} AND "statusPushDueAt" IS NOT NULL`
+  }
+
+  /** The tick reads every Connection in the shared test database: keep only this organization's jobs. */
+  function keepOwnJobs() {
+    const own = ctx.queue.waiting.filter((job) => (job.payload as { organizationId?: string }).organizationId === org)
+    ctx.queue.waiting.splice(0, ctx.queue.waiting.length, ...own)
+  }
+
+  async function tick() {
+    await ctx.queue.enqueue(syncTickRef, {})
+    expect(await ctx.queue.drain(ctx, jobs, { maxJobs: 1 })).toEqual({ ran: 1, failed: [] })
+    keepOwnJobs()
+    await drain()
+  }
+
+  function statusUpdates(orderExternalId: string) {
+    return fake.statusUpdates.filter((update) => update.orderExternalId === orderExternalId).map((update) => update.status)
   }
 
   async function pullOrders() {
@@ -188,6 +228,69 @@ describe.skipIf(!databaseUrl)('sync engine end to end (real Postgres, in-memory 
     expect(await syncState(connectionId, 'orders_pull')).toMatchObject({ cursor: '6', lastResult: { pulled: 0, imported: 0 } })
   })
 
+  it("8. a status push lost because the queue was down after commit is sent once by the tick's sweep", async () => {
+    const third = await order('fake-order-3')
+    await changeOrderStatus(queueDown(), org, third.id, 'processing', user)
+    expect((await order('fake-order-3')).status).toBe('processing')
+    expect(ctx.queue.waiting).toEqual([])
+
+    // Within the grace period the sweep leaves it to the immediate job.
+    await tick()
+    expect(statusUpdates('fake-order-3')).toEqual([])
+    expect((await order('fake-order-3')).statusPushDueAt).not.toBeNull()
+
+    await tenMinutesPass()
+    await tick()
+    expect(statusUpdates('fake-order-3')).toEqual(['processing'])
+    expect((await order('fake-order-3')).statusPushDueAt).toBeNull()
+
+    await tenMinutesPass()
+    await tick()
+    expect(statusUpdates('fake-order-3')).toEqual(['processing'])
+  })
+
+  it('9. a status already pushed is not sent again by the sweep or by a repeated request', async () => {
+    const third = await order('fake-order-3')
+    await changeOrderStatus(ctx, org, third.id, 'new', user)
+    await drain()
+    expect(statusUpdates('fake-order-3')).toEqual(['processing', 'new'])
+
+    await ctx.queue.enqueue(ordersUpdateStatusRef, { organizationId: org, orderId: third.id }, { coalesceKey: coalesceKeys.ordersUpdateStatus(third.id) })
+    await tenMinutesPass()
+    await tick()
+    expect(statusUpdates('fake-order-3')).toEqual(['processing', 'new'])
+
+    // The immediate request and the sweep both fire before the push runs: they coalesce into one push.
+    await changeOrderStatus(ctx, org, third.id, 'processing', user)
+    await tenMinutesPass()
+    const before = ctx.queue.enqueued.length
+    await syncTickJob.handler(ctx, {}, { attempt: 1, maxAttempts: 5, retriedLater: 0 })
+    keepOwnJobs()
+    expect((await order('fake-order-3')).statusPushDueAt!.getTime()).toBeGreaterThan(Date.now())
+    const ownPush = (job: { name: string; payload: unknown }) => job.name === 'orders.updateStatus' && (job.payload as { organizationId: string }).organizationId === org
+    expect(ctx.queue.enqueued.slice(before).filter(ownPush)).toEqual([])
+    expect(ctx.queue.waiting.filter(ownPush)).toHaveLength(1)
+    await drain()
+    expect(statusUpdates('fake-order-3')).toEqual(['processing', 'new', 'processing'])
+    expect((await order('fake-order-3')).statusPushDueAt).toBeNull()
+  })
+
+  it('10. a status changed twice while the queue is down is pushed once, with the latest status', async () => {
+    const third = await order('fake-order-3')
+    await changeOrderStatus(queueDown(), org, third.id, 'new', user)
+    await changeOrderStatus(queueDown(), org, third.id, 'cancelled', user)
+    expect(ctx.queue.waiting).toEqual([])
+
+    await tenMinutesPass()
+    await tick()
+    expect(statusUpdates('fake-order-3')).toEqual(['processing', 'new', 'processing', 'cancelled'])
+    expect(await syncState(connectionId, 'order_status_push')).toMatchObject({ lastErrorKind: null })
+
+    await tenMinutesPass()
+    await tick()
+    expect(statusUpdates('fake-order-3')).toHaveLength(4)
+  })
+
   it('auth_expired: the run fails without retry, the Connection waits for sign-in and the tick skips it', async () => {
     const { connectionId: expired } = await addConnection(
       ctx,
@@ -208,9 +311,13 @@ describe.skipIf(!databaseUrl)('sync engine end to end (real Postgres, in-memory 
 
     const before = ctx.queue.enqueued.length
     await ctx.queue.enqueue(syncTickRef, {})
-    await ctx.queue.drain(ctx, jobs)
+    expect(await ctx.queue.drain(ctx, jobs, { maxJobs: 1 })).toEqual({ ran: 1, failed: [] })
     const fromTick = ctx.queue.enqueued.slice(before + 1)
     expect(fromTick.filter((job) => (job.payload as { connectionId: string }).connectionId === expired)).toEqual([])
+    // The tick reads every Connection in the shared test database: run only this organization's jobs.
+    const own = ctx.queue.waiting.filter((job) => (job.payload as { organizationId?: string }).organizationId === org)
+    ctx.queue.waiting.splice(0, ctx.queue.waiting.length, ...own)
+    await ctx.queue.drain(ctx, jobs)
 
     // "Synchronise now" still runs it; with the key still expired, nothing turns it back to ok.
     await requestSync(ctx, org, expired)
@@ -261,5 +368,115 @@ describe.skipIf(!databaseUrl)('sync engine end to end (real Postgres, in-memory 
     expect(result.failed).toHaveLength(1)
     expect(result.failed[0]).toMatchObject({ name: 'offers.pull', attempts: 5 })
     expect(await health(flaky)).toBe('failing')
+  })
+})
+
+const address = {
+  name: 'John Test',
+  company: null,
+  street: '1 Example Street',
+  postalCode: '00-001',
+  city: 'Warsaw',
+  countryCode: 'PL',
+  phone: null,
+  taxId: null,
+}
+const buyer = { name: 'John Test', email: 'john.test@example.com', phone: null, login: 'john_test' }
+
+describe.skipIf(!databaseUrl)('a cancelled Order leaves Needs attention (real Postgres, in-memory queue, fake Channel)', () => {
+  let ctx: TestContext
+  let fake: FakeChannel
+  let org: string
+  let connectionId: string
+
+  beforeAll(async () => {
+    fake = createFakeChannel()
+    ctx = createTestContext({ databaseUrl: databaseUrl!, connectors: [fake.connector] })
+    org = await createTestOrganization(ctx.db)
+  })
+
+  afterAll(async () => {
+    await ctx?.db.$disconnect()
+  })
+
+  const order = (externalId: string) =>
+    ctx.db.order.findFirstOrThrow({ where: { organizationId: org, connectionId, externalId }, include: { lines: true } })
+
+  const needsAttention = async () =>
+    (
+      await ctx.db.order.findMany({
+        where: { organizationId: org, attentionReasons: { isEmpty: false } },
+        select: { externalId: true },
+        orderBy: { externalId: 'asc' },
+      })
+    ).map((row) => row.externalId)
+
+  async function pullOrders() {
+    await ctx.queue.enqueue(
+      ordersPullRef,
+      { organizationId: org, connectionId, trigger: 'schedule' },
+      { coalesceKey: coalesceKeys.ordersPull(connectionId) },
+    )
+    const result = await ctx.queue.drain(ctx, jobs)
+    expect(result.failed).toEqual([])
+  }
+
+  it('fake-order-2 with Unmatched lines: imported open, then cancelled by the Channel, it is no longer Needs attention', async () => {
+    // No Product exists, so the lines of every Order are Unmatched (the smoke-test situation of issue #16).
+    // The seed already carries the cancellation of fake-order-2; replace the Order with the same one without it.
+    fake.addOrder({
+      externalId: 'fake-order-2',
+      placedAt: '2026-10-01T10:00:00Z',
+      payment: 'cash_on_delivery',
+      total: { amount: '84.00', currency: 'PLN' },
+      buyer,
+      shippingAddress: address,
+      billingAddress: null,
+      lines: [
+        { externalId: 'l1', offerExternalId: 'fake-offer-2', sku: 'FAKE-SKU-2', name: 'Cotton T-shirt M', quantity: 1, unitPrice: { amount: '59.00', currency: 'PLN' } },
+        { externalId: 'l2', offerExternalId: 'fake-offer-3', sku: 'FAKE-SKU-3', name: 'Poster A3', quantity: 1, unitPrice: { amount: '25.00', currency: 'PLN' } },
+      ],
+      facts: [],
+    })
+    connectionId = (
+      await addConnection(ctx, org, { connectorId: 'fake', name: 'Test channel', config: { failMode: 'none' }, credentials: { apiKey: 'test' } }, user)
+    ).connectionId
+    expect((await ctx.queue.drain(ctx, jobs)).failed).toEqual([])
+
+    const open = await order('fake-order-2')
+    expect(open.status).toBe('new')
+    expect(open.attentionReasons).toEqual(['unmatched_line'])
+    expect(open.lines.every((line) => line.productId === null)).toBe(true)
+    expect(await needsAttention()).toEqual(['fake-order-1', 'fake-order-2', 'fake-order-3', 'fake-order-4'])
+
+    fake.addFact('fake-order-2', { id: 'fake-order-2:cancelled', type: 'cancelled', occurredAt: '2026-10-02T10:00:00Z', note: 'Cancelled by the buyer' })
+    await pullOrders()
+
+    const cancelled = await order('fake-order-2')
+    expect(cancelled.status).toBe('cancelled')
+    expect(cancelled.attentionReasons).toEqual([])
+    // The lines are still Unmatched: only the Order-level mark is gone.
+    expect(cancelled.lines.every((line) => line.productId === null)).toBe(true)
+    expect(await needsAttention()).toEqual(['fake-order-1', 'fake-order-3', 'fake-order-4'])
+    // A Channel fact is never pushed back to the Channel.
+    expect(fake.statusUpdates).toEqual([])
+  })
+
+  it('an Order that arrives already cancelled with an Unmatched line is not Needs attention either', async () => {
+    fake.addOrder({
+      externalId: 'fake-order-5',
+      placedAt: '2026-10-03T10:00:00Z',
+      payment: 'prepaid',
+      total: { amount: '10.00', currency: 'PLN' },
+      buyer,
+      shippingAddress: address,
+      billingAddress: null,
+      lines: [{ externalId: 'l1', offerExternalId: null, sku: 'UNKNOWN-SKU', name: 'Unknown', quantity: 1, unitPrice: { amount: '10.00', currency: 'PLN' } }],
+      facts: [{ id: 'fake-order-5:cancelled', type: 'cancelled', occurredAt: '2026-10-03T11:00:00Z', note: null }],
+    })
+    await pullOrders()
+
+    expect(await order('fake-order-5')).toMatchObject({ status: 'cancelled', attentionReasons: [] })
+    expect(await needsAttention()).toEqual(['fake-order-1', 'fake-order-3', 'fake-order-4'])
   })
 })

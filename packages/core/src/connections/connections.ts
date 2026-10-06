@@ -113,7 +113,7 @@ export async function getConnection(
   | (ConnectionRow & {
       config: Record<string, unknown>
       stockRules: ChannelStockRules
-      /** `all`: every active Warehouse counts; otherwise only `warehouseIds` (ADR 0013). */
+      /** `all`: every active Warehouse counts; otherwise only `warehouseIds` (ADR 0017). */
       warehouses: { all: boolean; warehouseIds: string[] }
     })
   | null

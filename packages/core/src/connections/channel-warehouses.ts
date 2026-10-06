@@ -11,7 +11,7 @@ export type ChannelWarehouseChoice = { all: true } | { all: false; warehouseIds:
 
 /**
  * Sets which Warehouses count for a Channel Connection (any other Connection is `not_a_channel`). An
- * explicit choice needs at least one Warehouse, all of them active. Locks, in this order (ADR 0013):
+ * explicit choice needs at least one Warehouse, all of them active. Locks, in this order (ADR 0017):
  * the Connection row, the organization's Warehouse rows FOR SHARE by id (so none of them can be
  * deactivated or deleted meanwhile), its choice rows, then its linked Offers by id, whose push
  * sequence is bumped so the Channel is told its new number even if the enqueue is lost (ADR 0010).

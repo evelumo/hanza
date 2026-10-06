@@ -1,6 +1,6 @@
 # Channel Available is a view of Available, not a separate stock pool
 
-Status: amended by ADR 0013. The Available a Channel's number is based on, and that its Orders reserve against, is now that of the Warehouses the Channel counts, not the organization's.
+Status: amended by ADR 0017. The Available a Channel's number is based on, and that its Orders reserve against, is now that of the Warehouses the Channel counts, not the organization's.
 
 Sellers want a safety margin per Channel and want to keep part of the Stock away from some Channels (issue #7). We decided that each Channel Connection has a Safety buffer and a Channel limit, and that these are used only to work out the number pushed to that Channel. Channel Available is `max(0, min(Available − Safety buffer, Channel limit))`, defined once in `getChannelAvailability`, so it is never below zero and never above Available. Reservations and Shortages still use the organization-wide Available, and the ADR 0004 locks are unchanged. A settings change takes its own locks: the Connection row (`FOR NO KEY UPDATE`), then the Connection's linked Offers in id order. It touches no Stock or Reservation row, so it never joins the ADR 0004 order. Separate stock pools per Channel were rejected: they would change how a Reservation is checked and which rows it locks, and that code decides whether goods that do not exist get sold.
 

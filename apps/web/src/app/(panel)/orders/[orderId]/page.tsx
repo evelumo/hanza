@@ -232,7 +232,7 @@ export default async function OrderPage({ params }: { params: Promise<{ orderId:
         ) : (
           <ul className="divide-y divide-line">
             {order.events.map((event) => {
-              const { title, detail } = describeEvent(event.type, event.payload, t, format.number)
+              const { title, detail } = describeEvent(event.type, event.payload, t, format)
               return (
                 <li key={event.id} className="flex flex-wrap items-center justify-between gap-3 px-5 py-3 text-sm">
                   <span>

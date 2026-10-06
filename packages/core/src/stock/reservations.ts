@@ -8,7 +8,7 @@ import { channelWarehouseIds, defaultWarehouseId } from './warehouse'
 export interface ReserveLineInput {
   orderId: string
   orderLineId: string
-  /** The Order's Channel: its Warehouses are the candidates (ADR 0013). */
+  /** The Order's Channel: its Warehouses are the candidates (ADR 0017). */
   connectionId: string
   productId: string
   units: number
@@ -29,7 +29,7 @@ export async function reserveLine(
 ): Promise<{ shortage: boolean; warehouseId: string }> {
   const locked = await lockStock(tx, organizationId, [line.productId])
   const usable = new Set(locked.filter((warehouse) => warehouse.active).map((warehouse) => warehouse.id))
-  // The Channel's choice is read without a lock: one committed meanwhile applies to the next Order (ADR 0013).
+  // The Channel's choice is read without a lock: one committed meanwhile applies to the next Order (ADR 0017).
   const candidates = (await channelWarehouseIds(tx, organizationId, line.connectionId)).filter((id) => usable.has(id))
   const availability = await getWarehouseAvailability(tx, organizationId, line.productId, candidates)
   const { warehouseId, shortage } = chooseWarehouse(

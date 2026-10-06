@@ -1,11 +1,11 @@
 # A Channel counts a set of Warehouses, is told what one of them can cover, a Reservation sits in one, and Warehouse rows join the lock order
 
-Status: accepted. Amends ADR 0004 (lock order, Shortage) and ADR 0011 (what a Channel's number and its Reservations are based on).
+Status: accepted. Amends ADR 0004 (lock order, Shortage) and ADR 0013 (what a Channel's number and its Reservations are based on).
 
 Sellers keep stock in several Warehouses and want each Channel to sell only from some of them (issue #4). We decided:
 
 - **Channel Warehouses.** Each Channel counts either every active Warehouse (the default, including ones added later) or an explicit set of them. Available becomes per Warehouse: Stock minus open Reservations there.
-- **What a Channel is told.** For each Product, a Channel is told `channelAvailable(min(Σ Available, max Available))` over its Warehouses: the smaller of their total and the largest single one, then its Safety buffer and Channel limit (ADR 0011). This is still computed only in `getChannelAvailability`.
+- **What a Channel is told.** For each Product, a Channel is told `channelAvailable(min(Σ Available, max Available))` over its Warehouses: the smaller of their total and the largest single one, then its Safety buffer and Channel limit (ADR 0013). This is still computed only in `getChannelAvailability`.
 - **Placement.** A Reservation is placed whole in the first of the Order's Channel's Warehouses, in priority order (lower first, then id), whose Available covers the line. When none covers it, the line is a Shortage and goes to the one of them with the largest Available (the first such one in order).
 - **Moving.** A person may move an open Reservation to any active Warehouse that covers it.
 

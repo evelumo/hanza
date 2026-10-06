@@ -17,6 +17,7 @@
     "products": "Products",
     "orders": "Orders",
     "connections": "Connections",
+    "families": "Families",
     "warehouses": "Warehouses"
   },
   "pagination": {
@@ -77,6 +78,11 @@
     "searchPlaceholder": "Search by SKU or name",
     "search": "Search",
     "clear": "Clear",
+    "familyFilter": {
+      "label": "Family",
+      "all": "All products",
+      "none": "Without a family"
+    },
     "emptySearch": "No product matches your search.",
     "empty": "There are no products yet. Add the first one, or create them from offers pulled from a channel.",
     "columns": {
@@ -85,7 +91,8 @@
       "stock": "Stock",
       "reserved": "Reserved",
       "available": "Available",
-      "offers": "Offers"
+      "offers": "Offers",
+      "family": "Family"
     },
     "shortageHint": "(shortage)",
     "detail": {
@@ -100,6 +107,8 @@
       "stockDescription": "Hanza is the source of truth for stock. Set it per warehouse. A line of an order is never split between warehouses, so each channel is told the most that one of its warehouses can cover (and never more than all of them together), less its safety buffer, and at most its channel limit.",
       "stockSaved": "Saved. The new stock will be sent to the channels.",
       "saveStock": "Save stock",
+      "priceTitle": "Price",
+      "priceDescription": "Hanza owns prices. The base price goes to every linked offer without a price of its own, wherever the channel sells in the same currency. Without a base price, nothing is sent.",
       "offersTitle": "Offers",
       "offersDescription": "This product's offers in channels.",
       "offersEmpty": "This product has no linked offers yet. An offer is linked automatically by SKU, or manually in the list of offers without a product.",
@@ -108,11 +117,14 @@
         "offer": "Offer",
         "link": "Link",
         "lastPushed": "Last pushed",
+        "price": "Price",
         "actions": "Actions"
       },
       "linkedManually": "Manual",
       "linkedBySku": "By SKU",
       "notPushed": "not pushed yet",
+      "priceFromOffer": "offer price",
+      "priceFromBase": "base price",
       "unlink": "Unlink",
       "unlinking": "Unlinking…",
       "unlinkConfirm": "Unlink the offer from this product? The channel will no longer receive its stock.",
@@ -120,6 +132,7 @@
       "reservationsDescription": "Goods promised to orders that have not been shipped yet.",
       "reservationsEmpty": "No open reservations.",
       "reservationOrder": "Order {id}",
+      "familyLine": "Family: {name}",
       "warehouseColumns": {
         "warehouse": "Warehouse",
         "stock": "Stock",
@@ -140,11 +153,60 @@
       "submitting": "Adding…"
     }
   },
+  "families": {
+    "title": "Product families",
+    "intro": "A family groups the products that are sizes or colours of one another. Orders, stock and offers keep working on the individual products.",
+    "add": "Add family",
+    "empty": "There are no product families yet. Create one to group products such as sizes or colours.",
+    "columns": {
+      "name": "Name",
+      "attributes": "Attributes",
+      "products": "Products"
+    },
+    "productCount": "{count, plural, one {# product} other {# products}}",
+    "new": {
+      "title": "Add family",
+      "name": "Name",
+      "attributes": "Attributes",
+      "attributesHint": "What tells the products apart, separated by commas, for example: Size, Colour. At most 5; they cannot be changed later.",
+      "submit": "Add family",
+      "submitting": "Adding…"
+    },
+    "detail": {
+      "title": "Product family",
+      "attributesLine": "Attributes: {attributes}",
+      "renameTitle": "Name",
+      "renameDescription": "The name is only for you; channels do not see it.",
+      "name": "Name",
+      "saveName": "Save name",
+      "membersTitle": "Products in this family",
+      "membersDescription": "Each product has one value per attribute. No two products can have the same values.",
+      "membersEmpty": "No products in this family yet. Add the first one below.",
+      "availableLine": "Available: {count}",
+      "saveValues": "Save",
+      "saving": "Saving…",
+      "remove": "Remove",
+      "removing": "Removing…",
+      "removeConfirm": "Remove this product from the family? The product itself stays as it is.",
+      "valueLabel": "{attribute} of {sku}",
+      "addTitle": "Add a product",
+      "addDescription": "A product can be in one family at a time.",
+      "sku": "Product SKU",
+      "skuHint": "The SKU of an existing product that is in no family.",
+      "add": "Add to family",
+      "adding": "Adding…",
+      "deleteTitle": "Delete family",
+      "deleteDescription": "Its products are not deleted: they just stop being grouped. Orders, stock and offers are not affected.",
+      "delete": "Delete family",
+      "deleting": "Deleting…",
+      "deleteConfirm": "Delete this family? Its products stay, ungrouped."
+    }
+  },
   "offers": {
     "title": "Offers without a product",
     "description": "Offers pulled from channels whose SKU does not match any product.",
     "createTitle": "Create products from offers",
-    "createDescription": "Select the offers that have a SKU in the table. A product gets the offer's SKU and name and a stock of 0.",
+    "createDescription": "Select the offers that have a SKU in the table. A product gets the offer's SKU and name and a stock of 0. It gets no price: set one on the product, and only then is it sent to the channels.",
     "create": "Create products from selected",
     "creating": "Creating…",
     "created": "{count, plural, one {Created # product.} other {Created # products.}}",
@@ -169,6 +231,42 @@
     "skuPlaceholder": "Product SKU",
     "link": "Link to product",
     "linking": "Linking…"
+  },
+  "offerDetail": {
+    "title": "Offer",
+    "connectionLine": "Connection: {connection} · ID: {externalId}",
+    "backToProduct": "Product {sku}",
+    "channelPrice": "Price in the channel",
+    "channelPriceHint": "As reported at the last sync. Hanza does not take it over.",
+    "effectivePrice": "Price from Hanza",
+    "lastPushedPrice": "Last sent price",
+    "notSent": "not sent yet",
+    "productLine": "Linked to {name} (SKU {sku}). Base price: {price}.",
+    "overrideTitle": "Offer price",
+    "overrideDescription": "A price for this offer only. It wins over the product's base price; remove it to go back to the base price.",
+    "mismatchHint": "Set an offer price in {currency} to send one.",
+    "notLinked": "This offer is not linked to a product, so Hanza sends neither its stock nor its price. Link it on the list of offers without a product."
+  },
+  "prices": {
+    "none": "No price",
+    "form": {
+      "amount": "Price",
+      "currency": "Currency",
+      "currencyPlaceholder": "PLN",
+      "save": "Save price",
+      "clear": "Remove price",
+      "saved": "Saved. The channels will receive the new price shortly.",
+      "useChannelPrice": "Use the channel price ({price})"
+    },
+    "status": {
+      "not_linked": "Not sent: the offer is not linked to a product.",
+      "unsupported": "Not sent: this channel's connector cannot set prices.",
+      "no_price": "No price, so nothing is sent.",
+      "currency_unknown": "Not sent: the channel did not report the offer's currency.",
+      "currency_mismatch": "Not sent: the channel sells this offer in {channelCurrency} and the price is in {priceCurrency}.",
+      "pending": "Waiting to be sent.",
+      "pushed": "Sent {date}."
+    }
   },
   "orders": {
     "title": "Orders",
@@ -318,7 +416,8 @@
       "unmatched_line": "Unmatched line",
       "shortage": "Shortage",
       "cancelled_while_processing": "Cancelled while processing",
-      "channel_fact_conflict": "The channel reported a change after completion"
+      "channel_fact_conflict": "The channel reported a change after completion",
+      "status_push_failed": "The channel refused the new status"
     },
     "health": {
       "unknown": "Not checked",
@@ -330,7 +429,8 @@
       "offers_pull": "Offers",
       "orders_pull": "Orders",
       "stock_push": "Stock levels",
-      "order_status_push": "Order statuses"
+      "order_status_push": "Order statuses",
+      "price_push": "Prices"
     },
     "payment": {
       "prepaid": "Prepaid",
@@ -369,7 +469,8 @@
       "factsApplied": "channel changes",
       "pages": "pages",
       "pushed": "pushed",
-      "truncated": "stopped at the page limit"
+      "truncated": "stopped at the page limit",
+      "skipped": "not sent"
     }
   },
   "events": {
@@ -377,12 +478,14 @@
       "system_ping": "Test job",
       "product_created": "Product created",
       "product_updated": "Product name changed",
+      "product_price_changed": "Base price changed",
       "stock_set": "Stock set",
       "stock_reserved": "Goods reserved",
       "stock_released": "Reservation released",
       "stock_consumed": "Goods taken off stock",
       "offer_linked": "Offer linked to a product",
       "offer_unlinked": "Offer unlinked from a product",
+      "offer_price_changed": "Offer price changed",
       "order_imported": "Order imported",
       "order_channel_fact_recorded": "The channel reported a change",
       "order_status_changed": "Status changed",
@@ -391,6 +494,12 @@
       "order_attention_resolved": "Marked as reviewed",
       "connection_created": "Connection created",
       "connection_health_changed": "Connection health changed",
+      "family_created": "Product family created",
+      "family_renamed": "Product family renamed",
+      "family_deleted": "Product family deleted",
+      "family_product_added": "Product added to a family",
+      "family_product_updated": "Product attributes in a family changed",
+      "family_product_removed": "Product removed from a family",
       "connection_stock_rules_changed": "Stock settings changed",
       "order_reservation_moved": "Reservation moved to another warehouse",
       "connection_warehouses_changed": "Warehouses of the channel changed",
@@ -415,6 +524,10 @@
       "already_linked": "This line is already linked.",
       "unknown_connector": "Unknown connector.",
       "invalid_config": "Check the fields.",
+      "combination_taken": "Another product in this family already has these values.",
+      "invalid_attributes": "Fill in every attribute (at most 100 characters) and keep the attribute names distinct.",
+      "already_in_family": "This product is already in a family. Remove it from there first.",
+      "invalid_price": "This price does not fit its currency: check the decimal places.",
       "not_a_channel": "This connection is not a sales channel, so it has no stock settings.",
       "warehouse_inactive": "This warehouse is inactive.",
       "warehouse_is_default": "The default warehouse cannot be deactivated or deleted.",
@@ -452,6 +565,13 @@
     "offersTooMany": "Select at most 200 offers at a time.",
     "fieldRequired": "This field is required.",
     "fieldInvalid": "Invalid value.",
+    "familyNameTooLong": "The name can have at most 100 characters.",
+    "attributesInvalid": "Enter 1 to 5 different attribute names, each at most 50 characters, separated by commas.",
+    "attributeValueRequired": "Enter a value of at most 100 characters.",
+    "priceInvalid": "Enter a price above 0, e.g. 49.99.",
+    "priceAmbiguous": "Ambiguous: three digits after the separator. Write 1234 for a thousands amount, or use fewer decimal places.",
+    "priceTooManyDecimals": "Too many decimal places for this currency (PLN has 2, JPY none).",
+    "currencyInvalid": "Enter a three-letter currency code, e.g. PLN.",
     "warehouseNameTooLong": "The name can have at most 100 characters.",
     "warehousesRequired": "Choose at least one warehouse."
   },

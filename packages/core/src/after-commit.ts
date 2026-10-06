@@ -7,7 +7,7 @@ import type { Context } from './context'
  * `sku_taken` or `invalid_transition`. It is logged instead; every call site
  * names how the skipped work is recovered. `fields` must hold ids only.
  */
-export async function afterCommit(ctx: Context, fields: Record<string, string>, work: () => Promise<unknown>): Promise<void> {
+export async function afterCommit(ctx: Pick<Context, 'log'>, fields: Record<string, string>, work: () => Promise<unknown>): Promise<void> {
   try {
     await work()
   } catch (error) {

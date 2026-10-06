@@ -12,7 +12,7 @@ import { removeReasons } from './reasons'
  * A person moves the open Reservation of a line of a new or processing Order to another active
  * Warehouse, any of the organization's. Refused (`not_enough_stock`) unless the target's Available
  * covers the whole line, so a move never makes a Shortage; it clears the line's Shortage mark, and
- * the Order's `shortage` reason once no line is short. Locks: Order, Warehouses, Stock (ADR 0013).
+ * the Order's `shortage` reason once no line is short. Locks: Order, Warehouses, Stock (ADR 0017).
  * Every Channel of the Product is pushed: the Available of both Warehouses changed.
  */
 export async function moveReservation(

@@ -9,7 +9,7 @@ import { ensureDefaultWarehouse } from './warehouse'
 
 /**
  * Sets the absolute Stock of a Product in one Warehouse (the default Warehouse when none is given).
- * An inactive Warehouse is refused: it must stay empty (ADR 0013).
+ * An inactive Warehouse is refused: it must stay empty (ADR 0017).
  */
 export async function setStock(
   ctx: Context,

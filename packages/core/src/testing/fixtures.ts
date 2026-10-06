@@ -12,8 +12,9 @@ export const user: Actor = { type: 'user', userId: 'user-1' }
 const nothingToPull = async () => ({ items: [], nextCursor: null, hasMore: false })
 
 /**
- * A do-nothing Channel registered as `fake`, the connector id `createTestConnection` uses; pass it to
- * `useTestContext({ connectors: [testChannel] })` when a service checks that a Connection is a Channel.
+ * A do-nothing marketplace Channel registered as `fake`, the connector id `createTestConnection` uses.
+ * Register it (`useTestContext({ connectors: [testChannel] })`) where a service checks that a Connection
+ * is a Channel, or where a test needs status changes to be pushable.
  */
 export const testChannel = defineConnector({
   id: 'fake',
@@ -22,7 +23,12 @@ export const testChannel = defineConnector({
   auth: { type: 'none' },
   configSchema: z.looseObject({}),
   credentialsSchema: z.looseObject({}),
-  capabilities: { 'offers.pull': nothingToPull, 'orders.pull': nothingToPull, async 'stock.push'() {} },
+  capabilities: {
+    'offers.pull': nothingToPull,
+    'orders.pull': nothingToPull,
+    async 'stock.push'() {},
+    async 'orders.updateStatus'() {},
+  },
 })
 
 /** A connector that is not a Channel. */

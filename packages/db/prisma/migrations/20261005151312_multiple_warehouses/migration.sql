@@ -27,7 +27,7 @@ ALTER TABLE "connection_warehouse" ADD CONSTRAINT "connection_warehouse_connecti
 -- AddForeignKey
 ALTER TABLE "connection_warehouse" ADD CONSTRAINT "connection_warehouse_warehouseId_fkey" FOREIGN KEY ("warehouseId") REFERENCES "warehouse"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
--- Prisma does not model CHECK constraints; added by hand (ADR 0013): the placement order is a
+-- Prisma does not model CHECK constraints; added by hand (ADR 0017): the placement order is a
 -- whole number in the panel's range, and the default Warehouse can never be deactivated.
 ALTER TABLE "warehouse" ADD CONSTRAINT "warehouse_priority_check" CHECK ("priority" BETWEEN 0 AND 1000000);
 ALTER TABLE "warehouse" ADD CONSTRAINT "warehouse_default_active_check" CHECK ("code" <> 'default' OR "active");

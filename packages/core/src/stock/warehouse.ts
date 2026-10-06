@@ -26,7 +26,7 @@ export async function defaultWarehouseId(tx: Tx, organizationId: string): Promis
 /**
  * The Channel's Warehouses: the active Warehouses this Connection counts (every active one unless it
  * chose some), in placement order (priority, then id). Empty when the Connection does not exist. One
- * statement, so the choice and the active flags come from one snapshot (ADR 0013).
+ * statement, so the choice and the active flags come from one snapshot (ADR 0017).
  */
 export async function channelWarehouseIds(db: Db | Tx, organizationId: string, connectionId: string): Promise<string[]> {
   const client: Tx = db

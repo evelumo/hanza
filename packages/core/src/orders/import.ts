@@ -12,7 +12,7 @@ import { reserveLine } from '../stock/reservations'
 import { ensureDefaultWarehouse } from '../stock/warehouse'
 import { TX_OPTIONS } from '../transaction'
 import { matchLines } from './match'
-import { addReasons, removeReasons } from './reasons'
+import { addReasons, reasonsAfterCancel } from './reasons'
 import { factTransition } from './status-rules'
 import { applyStockEffect } from './stock-effect'
 
@@ -141,6 +141,7 @@ async function applyNewFacts(tx: Tx, organizationId: string, orderId: string, fa
   const order = await tx.order.findFirst({ where: { id: orderId, organizationId }, select: { status: true, attentionReasons: true } })
   if (!order) throw new DomainError('not_found')
   let { status, attentionReasons: reasons } = order
+  const before = status
   const subject = { type: 'order', id: orderId } as const
 
   for (const fact of fresh) {
@@ -164,7 +165,7 @@ async function applyNewFacts(tx: Tx, organizationId: string, orderId: string, fa
         payload: { from: status, to: transition.to, cause: 'channel_fact', factId: fact.id, actor: systemActor },
       })
       status = transition.to
-      if (status === 'cancelled') reasons = removeReasons(reasons, ['shortage'])
+      if (status === 'cancelled') reasons = reasonsAfterCancel(reasons)
     }
     if (transition.reason) {
       const next = addReasons(reasons, [transition.reason])
@@ -175,7 +176,9 @@ async function applyNewFacts(tx: Tx, organizationId: string, orderId: string, fa
     }
   }
 
-  await tx.order.updateMany({ where: { id: orderId, organizationId }, data: { status, attentionReasons: reasons } })
+  // The Channel's own fact is newer than any status still waiting to be pushed, and is never pushed back (ADR 0003).
+  const statusPush = status !== before ? { statusPushDueAt: null } : {}
+  await tx.order.updateMany({ where: { id: orderId, organizationId }, data: { status, attentionReasons: reasons, ...statusPush } })
   return fresh.length
 }
 

@@ -10,7 +10,7 @@ const BATCH_SIZE = 100
 const MAX_BATCHES = 10
 
 /**
- * Sends Channel Available (ADR 0011) for every linked Offer of the Connection whose push sequence
+ * Sends Channel Available (ADR 0013) for every linked Offer of the Connection whose push sequence
  * moved since its last push. The Offers are read before the rules and Available, so a change after
  * that read leaves its bump ahead of the sequence marked here.
  */

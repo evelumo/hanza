@@ -9,7 +9,7 @@ export interface LockedWarehouse {
 const lockedInTx = new WeakMap<Tx, LockedWarehouse[]>()
 
 /**
- * Locks for a writer of Stock or Reservations, in the fixed order of ADR 0004 and ADR 0013: (the
+ * Locks for a writer of Stock or Reservations, in the fixed order of ADR 0004 and ADR 0017: (the
  * caller's Order row first, then) the organization's Warehouse rows FOR SHARE in id order, then the
  * Stock rows of these Products in those Warehouses, sorted by Product then Warehouse, creating
  * missing rows first. Returns the share-locked Warehouses by id: only these may be written in this

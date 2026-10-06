@@ -39,6 +39,11 @@ function told(channel: FakeChannel): Record<Sku, number | undefined> {
   return Object.fromEntries(SKUS.map((sku) => [sku, last(offerFor[sku])])) as Record<Sku, number | undefined>
 }
 
+function keepOnlyJobsOf(context: TestContext, organizationId: string) {
+  const own = context.queue.waiting.filter((job) => (job.payload as { organizationId?: string }).organizationId === organizationId)
+  context.queue.waiting.splice(0, context.queue.waiting.length, ...own)
+}
+
 function newOrder(externalId: string, sku: Sku, quantity: number): Order {
   return {
     externalId,
@@ -66,7 +71,7 @@ function newOrder(externalId: string, sku: Sku, quantity: number): Order {
 // Connection and the fake's seed (fake-order-1 reserves 2 × FAKE-SKU-1; fake-order-2 with SKU-2 and
 // SKU-3 arrives cancelled). The marketplace counts both Warehouses and keeps a Safety buffer of 1
 // with a Channel limit of 6 (#28); the shop counts only north and has no rules. A Channel is told what
-// one of its Warehouses can cover: min(sum, largest) of their Available (ADR 0013), then its rules.
+// one of its Warehouses can cover: min(sum, largest) of their Available (ADR 0017), then its rules.
 describe.skipIf(!databaseUrl)('multiple Warehouses end to end (real Postgres, in-memory queue, two fake Channels)', () => {
   let ctx: TestContext
   let marketplace: FakeChannel
@@ -87,7 +92,9 @@ describe.skipIf(!databaseUrl)('multiple Warehouses end to end (real Postgres, in
     await ctx?.db.$disconnect()
   })
 
+  /** The test database is shared with other files: run only this organization's jobs. */
   async function drain() {
+    keepOnlyJobsOf(ctx, org)
     const result = await ctx.queue.drain(ctx, jobs)
     expect(result.failed).toEqual([])
     expect(ctx.queue.waiting).toEqual([])
@@ -308,6 +315,7 @@ describe.skipIf(!databaseUrl)('multiple Warehouses end to end (real Postgres, in
         { connectorId: 'fake', name: 'Only', config: { failMode: 'none' }, credentials: { apiKey: 'test' } },
         user,
       )
+      keepOnlyJobsOf(singleCtx, singleOrg)
       const result = await singleCtx.queue.drain(singleCtx, jobs)
       expect(result.failed).toEqual([])
 

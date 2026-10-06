@@ -1,5 +1,5 @@
 /**
- * The placement rule (ADR 0013): the first Warehouse, in the Channel's order, whose Available covers
+ * The placement rule (ADR 0017): the first Warehouse, in the Channel's order, whose Available covers
  * the whole line. When none does, the line is a Shortage and goes to the Warehouse with the largest
  * Available (the first such one in order), so the units it is owed are as few as they can be. A line
  * is never split. `candidates` are the Channel's Warehouses in placement order with their Available

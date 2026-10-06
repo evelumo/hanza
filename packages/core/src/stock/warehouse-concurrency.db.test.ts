@@ -18,7 +18,7 @@ import { setStock } from './set-stock'
 import { channelWarehouseIds } from './warehouse'
 
 // Real parallel transactions against Postgres, as in `stock-concurrency.db.test.ts`, with several
-// Warehouses: Warehouse rows join the lock order (ADR 0013) and must not deadlock with anything.
+// Warehouses: Warehouse rows join the lock order (ADR 0017) and must not deadlock with anything.
 
 const applicationName = uniqueApplicationName('hanza-warehouse-concurrency')
 

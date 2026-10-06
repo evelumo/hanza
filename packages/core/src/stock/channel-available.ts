@@ -19,7 +19,7 @@ const isUnits = (value: unknown): value is number => Number.isInteger(value) && 
 
 /**
  * Channel Available: Available less the Safety buffer, at most the Channel limit, never below zero.
- * The one definition of the number a Channel is told (ADR 0011). It fails closed: a setting or an
+ * The one definition of the number a Channel is told (ADR 0013). It fails closed: a setting or an
  * Available that is not a whole number in range (which the schema and the database CHECKs should
  * make impossible) tells the Channel 0 rather than guess, so the result stays within 0..max(0, Available).
  */
@@ -30,7 +30,7 @@ export function channelAvailable(available: number, rules: ChannelStockRules): n
 }
 
 /**
- * What the Channel's Warehouses can promise for one Product (ADR 0013): the smaller of the sum of
+ * What the Channel's Warehouses can promise for one Product (ADR 0017): the smaller of the sum of
  * their Available and the largest single one. Lines are never split, so the largest single Warehouse
  * caps what one line can get without a Shortage; the sum keeps units owed by an oversold Warehouse
  * counted. Any line of at most this many units fits in one of the Warehouses. With one Warehouse it
@@ -44,7 +44,7 @@ export function channelWarehousesAvailable(available: number[]): number {
 
 /**
  * Channel Available of these Products for one Connection: `channelAvailable` of
- * `channelWarehousesAvailable` over the Channel's Warehouses (ADR 0011, ADR 0013); Products not found
+ * `channelWarehousesAvailable` over the Channel's Warehouses (ADR 0013, ADR 0017); Products not found
  * count as Available 0 in every Warehouse, and a Channel with no Warehouse is told 0. Read the Offers'
  * push sequence before calling this: a rule, Warehouse choice or stock change after that read bumps
  * the sequence and keeps the Offer pending (ADR 0010).
