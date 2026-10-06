@@ -4,6 +4,7 @@ import { createDb, type Db } from '@hanza/db'
 import { createConnectorRegistry } from '../connectors/registry'
 import type { Context } from '../context'
 import type { Logger } from '../logger'
+import { createInMemoryRateLimiter, type RateLimiter } from '../rate-limit'
 import { createSecretBox } from '../secrets'
 import { createWorkflowEngine } from '../workflows/engine'
 import { createInMemoryJobQueue, type InMemoryJobQueue } from './queue'
@@ -12,8 +13,16 @@ export type TestContext = Context & { queue: InMemoryJobQueue }
 
 const silentLogger: Logger = { info() {}, warn() {}, error() {} }
 
-/** A real database, a random encryption key, a silent logger, an in-memory queue, the given connectors and the workflow engine on them. */
-export function createTestContext(options: { databaseUrl: string; connectors?: AnyConnectorDefinition[] }): TestContext {
+/**
+ * A real database, a random encryption key, a silent logger, an in-memory queue, the given connectors and the
+ * workflow engine on them, and an in-memory rate limiter unless `rateLimiter` is given (e.g. a Redis one shared by
+ * two contexts standing for two workers).
+ */
+export function createTestContext(options: {
+  databaseUrl: string
+  connectors?: AnyConnectorDefinition[]
+  rateLimiter?: RateLimiter
+}): TestContext {
   const key = randomBytes(32).toString('base64')
   const db = createDb(options.databaseUrl)
   const queue = createInMemoryJobQueue()
@@ -25,6 +34,7 @@ export function createTestContext(options: { databaseUrl: string; connectors?: A
     secrets: createSecretBox(key),
     connectors: createConnectorRegistry(options.connectors ?? []),
     workflows: createWorkflowEngine({ db, queue, log: silentLogger }),
+    rateLimiter: options.rateLimiter ?? createInMemoryRateLimiter(),
   }
 }
 

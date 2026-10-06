@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { z } from 'zod'
 import type { AnyConnectorDefinition } from '../connector'
-import { AuthExpiredError, PermanentError } from '../errors'
+import { AuthExpiredError, PermanentError, errorFromResponse } from '../errors'
 import type { Offer } from '../model/offer'
 import type { OfferPrice } from '../model/price'
 import type { Order } from '../model/order'
@@ -84,11 +84,26 @@ function withCapabilities(capabilities: AnyConnectorDefinition['capabilities']) 
   return validConnector({ capabilities: { ...validConnector().capabilities, ...capabilities } })
 }
 
+// Pulls Orders over ctx.fetch, so C14's 403 reaches it; `options` is how it reads error responses.
+function httpConnector(options: Parameters<typeof errorFromResponse>[1] = {}) {
+  return withCapabilities({
+    'orders.pull': async (ctx, cursor) => {
+      const response = await ctx.fetch('https://example.invalid/orders')
+      if (!response.ok) throw await errorFromResponse(response, options)
+      return slice(orders, cursor)
+    },
+  })
+}
+const forbiddenIsAuth = httpConnector({ isAuthFailure: (response) => response.status === 403 })
+const servingFetch = (async () => new Response('{}')) as typeof fetch
+
 const broken: Array<[id: string, connector: AnyConnectorDefinition, fixtures?: ConformanceFixtures]> = [
   ['C1', validConnector({ id: 'Not A Slug' })],
   ['C1', validConnector({ name: '' })],
   ['C1', validConnector({ kind: 'warehouse' as never })],
   ['C1', validConnector({ auth: { type: 'basic' } as never })],
+  ['C1', validConnector({ rateLimits: { application: { requests: 0, windowMs: 60_000 } } })],
+  ['C1', validConnector({ rateLimits: { connection: { concurrency: 1.5 } } })],
   ['C2', validConnector(), { ...fixtures, credentials: {} }],
   ['C2', validConnector({ configSchema: z.object({ nested: z.object({ a: z.string() }) }) }), { ...fixtures, config: { nested: { a: 'x' } } }],
   ['C2', validConnector({ credentialsSchema: z.object({ apiKey: z.string().nullable() }) })],
@@ -162,6 +177,7 @@ const broken: Array<[id: string, connector: AnyConnectorDefinition, fixtures?: C
   })()],
   ['C11', validConnector(), { ...fixtures, unauthorized: { credentials: { apiKey: 'also-fine' } } }],
   ['C11', withCapabilities({ 'orders.pull': async () => { throw new PermanentError('wrong kind') } })],
+  ['C14', forbiddenIsAuth, { ...fixtures, unauthorized: undefined, fetch: servingFetch }],
   ['C12', withCapabilities({ 'stock.push': async () => { throw new Error('plain error') } })],
   ['C12', withCapabilities({ 'orders.pull': async () => { throw new Error('plain error') } })],
   ['C12', withCapabilities({ 'price.push': async () => { throw new Error('plain error') } })],
@@ -254,6 +270,19 @@ describe('assertConformance', () => {
     }
     await expect(assertConformance(usesFetch, { ...fixtures, fetch: serving as typeof fetch })).resolves.toBeUndefined()
     expect(calls.length).toBeGreaterThan(0)
+  })
+
+  it('accepts a connector whose 403 is permanent, and one that opts out of C14 because its Channel signs out with 403', async () => {
+    const httpFixtures: ConformanceFixtures = { ...fixtures, unauthorized: undefined, fetch: servingFetch }
+    await expect(assertConformance(httpConnector(), httpFixtures)).resolves.toBeUndefined()
+    await expect(assertConformance(forbiddenIsAuth, { ...httpFixtures, forbidden: false })).resolves.toBeUndefined()
+  })
+
+  it('accepts valid rate limits', async () => {
+    const limited = validConnector({
+      rateLimits: { application: { requests: 6000, windowMs: 60_000 }, connection: { rate: { requests: 10, windowMs: 1000 }, concurrency: 3 } },
+    })
+    await expect(assertConformance(limited, fixtures)).resolves.toBeUndefined()
   })
 
   it('stops a pull loop that never ends after maxPages', async () => {

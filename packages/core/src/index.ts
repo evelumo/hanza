@@ -14,6 +14,14 @@ export {
   type QueueWorker,
 } from './queue'
 export { createConnectorRegistry, type ConnectorRegistry } from './connectors/registry'
+export {
+  createInMemoryRateLimiter,
+  createRedisRateLimiter,
+  RATE_LIMIT_MAX_WAIT_MS,
+  type Bucket,
+  type RateLimiter,
+  type Reservation,
+} from './rate-limit'
 export { systemPingJob } from './jobs/system-ping'
 export { syncTickJob } from './jobs/sync-tick'
 export { offersPullJob } from './jobs/offers-pull'

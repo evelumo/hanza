@@ -9,3 +9,5 @@ export {
   type RecordedJob,
   type RecordedSchedule,
 } from './queue'
+export { createInMemoryRateLimiter } from '../rate-limit'
+export { reachableTestRedis, testRedisPrefix } from './redis'
