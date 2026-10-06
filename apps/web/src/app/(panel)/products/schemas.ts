@@ -12,7 +12,7 @@ export const productNameSchema = z.string({ error: NAME_REQUIRED }).trim().min(1
 
 export const createProductSchema = z.object({ sku: skuSchema, name: productNameSchema, stock: unitsSchema })
 export const updateProductSchema = z.object({ productId: idSchema, name: productNameSchema })
-export const setStockSchema = z.object({ productId: idSchema, stock: unitsSchema })
+export const setStockSchema = z.object({ productId: idSchema, warehouseId: idSchema, stock: unitsSchema })
 export const unlinkOfferSchema = z.object({ offerId: idSchema })
 export const linkOfferSchema = z.object({ offerId: idSchema, sku: skuSchema })
 export const createProductsFromOffersSchema = z.object({

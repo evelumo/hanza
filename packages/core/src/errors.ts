@@ -14,6 +14,13 @@ export type DomainErrorCode =
   | 'already_in_family'
   | 'invalid_price'
   | 'not_a_channel'
+  | 'warehouse_inactive'
+  | 'warehouse_is_default'
+  | 'warehouse_not_empty'
+  | 'warehouse_in_use'
+  | 'no_warehouse_selected'
+  | 'reservation_not_open'
+  | 'not_enough_stock'
   | 'forbidden'
 
 /** Thrown by services for expected failures; the panel maps `code` to translated copy. */

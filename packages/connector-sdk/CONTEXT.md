@@ -27,19 +27,23 @@ How many units of a Product physically sit in a Warehouse. Hanza is the only sou
 _Avoid_: Inventory, quantity, on-hand
 
 **Warehouse**:
-A place where Stock is kept. Every organization has at least one.
+A place where Stock is kept. Every organization has at least one, the default Warehouse, which gets a new Product's initial Stock and is always active. An inactive Warehouse holds nothing and counts for no Channel. Warehouses have a priority: lower is used first when a Reservation is placed.
 _Avoid_: Location, storage, inventory
 
+**Channel Warehouses**:
+The Warehouses a Channel counts: every active one (the default, including ones added later), or the ones chosen for it. The Channel is told only their Available, and its Orders reserve only in them (ADR 0017).
+_Avoid_: Fulfilment set, warehouse scope, sources
+
 **Reservation**:
-Units of Stock promised to an Order that has not shipped yet. Made when the Order arrives (also when it is Awaiting payment), released when it is cancelled, consumed when it ships.
+Units of Stock promised to an Order that has not shipped yet, always in exactly one Warehouse. Made when the Order arrives (also when it is Awaiting payment), in the first of its Channel Warehouses (by priority) whose Available covers the whole line; released when the Order is cancelled, consumed when it ships, both in that Warehouse. A person can move it to another Warehouse that covers it.
 _Avoid_: Allocation, hold, booking
 
 **Available**:
-Stock minus Reservations. Each Channel is told its Channel Available, which is worked out from this number. It can go below zero when the same last unit sells on two Channels at once.
+Stock minus open Reservations, per Warehouse (for a Product's total, the sum over all Warehouses). Each Channel is told its Channel Available, which is worked out from the Available of its Channel Warehouses. It can go below zero when the same last unit sells on two Channels at once.
 _Avoid_: Free stock, sellable quantity
 
 **Channel Available**:
-The number Hanza tells one Channel for a Product: Available minus the Channel's Safety buffer, at most its Channel limit. Never below zero and never above Available. Orders still reserve against Available, not against this number (ADR 0013).
+The number Hanza tells one Channel for a Product: what one of its Channel Warehouses can cover (the largest single Available among them, and never more than their total), minus its Safety buffer, at most its Channel limit. Never below zero. A line is never split, so any line up to this number fits in one Warehouse. Orders reserve against Available, not against this number (ADR 0013, ADR 0017).
 _Avoid_: Channel stock, advertised stock, allocation
 
 **Safety buffer**:
@@ -51,7 +55,7 @@ The most units Hanza tells one Channel for any Product, however large Available 
 _Avoid_: Cap, quota, share, allocation
 
 **Shortage**:
-An Order line whose Reservation could not be covered by Stock. A person decides what happens next; Hanza never cancels the Order on its own.
+An Order line that, when it was reserved, no single one of its Order's Channel Warehouses had enough Available for, even if another Warehouse had. Its Reservation then sits in the one of those Warehouses with the most Available, so the fewest units are owed. A person decides what happens next (for example moving the Reservation); Hanza never cancels the Order on its own.
 _Avoid_: Oversell, backorder
 
 ### Prices

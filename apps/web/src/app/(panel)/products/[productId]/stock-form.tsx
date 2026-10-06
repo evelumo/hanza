@@ -1,21 +1,37 @@
 'use client'
 
 import { ActionForm } from '@/components/action-form'
-import { ActionButton, Field } from '@/components/form'
+import { ActionButton } from '@/components/form'
 import { useT } from '@/i18n/use-t'
 import { setStockAction } from './actions'
 
-export function StockForm({ productId, stock }: { productId: string; stock: number }) {
+/** Stock of the Product in one Warehouse, inline in the Warehouse table. */
+export function StockForm({
+  productId,
+  warehouseId,
+  warehouseName,
+  stock,
+}: {
+  productId: string
+  warehouseId: string
+  warehouseName: string
+  stock: number
+}) {
   const t = useT()
+  const inputId = `stock-${warehouseId}`
   return (
-    <ActionForm action={setStockAction} success={t('products.detail.stockSaved')} className="flex flex-wrap items-end gap-3">
+    <ActionForm action={setStockAction} success={t('products.detail.stockSaved')} className="space-y-1">
       {(state) => (
         <>
-          <input type="hidden" name="productId" value={productId} />
-          <div className="w-40">
-            <Field
+          <div className="flex flex-wrap items-center gap-2">
+            <input type="hidden" name="productId" value={productId} />
+            <input type="hidden" name="warehouseId" value={warehouseId} />
+            <label className="sr-only" htmlFor={inputId}>
+              {t('products.detail.stockIn', { warehouse: warehouseName })}
+            </label>
+            <input
+              id={inputId}
               name="stock"
-              label={t('products.columns.stock')}
               type="number"
               inputMode="numeric"
               min={0}
@@ -23,10 +39,12 @@ export function StockForm({ productId, stock }: { productId: string; stock: numb
               step={1}
               required
               defaultValue={state.values?.stock ?? stock}
-              error={state.fieldErrors?.stock}
+              aria-invalid={state.fieldErrors?.stock ? true : undefined}
+              className="w-28 rounded-md border border-line bg-white px-2 py-1.5 text-sm tabular-nums outline-none focus:border-accent focus:ring-2 focus:ring-accent/20"
             />
+            <ActionButton variant="secondary">{t('products.detail.saveStock')}</ActionButton>
           </div>
-          <ActionButton>{t('products.detail.saveStock')}</ActionButton>
+          {state.fieldErrors?.stock ? <p className="text-xs text-red-700">{state.fieldErrors.stock}</p> : null}
         </>
       )}
     </ActionForm>

@@ -7,9 +7,9 @@ import { rematchAfterCommit } from '../orders/rematch'
 import { describeOfferPrice, offerPriceColumns, type OfferPriceView } from '../prices/offer-price'
 import { moneyFromColumns } from '../prices/price'
 import { requestPricePushAfterCommit } from '../prices/push'
-import { getAvailability } from '../stock/availability'
+import { getAvailability, getWarehouseAvailability, type Availability } from '../stock/availability'
 import { requestStockPushAfterCommit } from '../stock/push'
-import { ensureDefaultWarehouse } from '../stock/warehouse'
+import { DEFAULT_WAREHOUSE_CODE, ensureDefaultWarehouse } from '../stock/warehouse'
 import { TX_OPTIONS } from '../transaction'
 import { autoLinkOffersBySku } from './auto-link'
 import { normalizeSku } from './sku'
@@ -49,7 +49,9 @@ export interface ProductDetail extends ProductRow {
       lastPushedAt: Date | null
     } & OfferPriceView
   >
-  openReservations: Array<{ orderId: string; orderExternalId: string; units: number; createdAt: Date }>
+  /** Active Warehouses in placement order, each with this Product's Stock, Reserved and Available there. */
+  warehouses: Array<{ id: string; name: string; isDefault: boolean } & Availability>
+  openReservations: Array<{ orderId: string; orderExternalId: string; units: number; createdAt: Date; warehouseName: string }>
 }
 
 export type CreateProductsSkipReason = 'not_found' | 'no_sku' | 'sku_taken' | 'already_linked'
@@ -206,12 +208,24 @@ export async function getProduct(ctx: Context, organizationId: string, productId
   if (!product) return null
   const basePrice = moneyFromColumns(product.basePriceAmount, product.basePriceCurrency)
 
-  const [availability, reservations] = await Promise.all([
+  await ensureDefaultWarehouse(ctx.db, organizationId)
+  const warehouses = await ctx.db.warehouse.findMany({
+    where: { organizationId, active: true },
+    orderBy: [{ priority: 'asc' }, { id: 'asc' }],
+    select: { id: true, name: true, code: true },
+  })
+  const [availability, byWarehouse, reservations] = await Promise.all([
     getAvailability(ctx.db, organizationId, [product.id]),
+    getWarehouseAvailability(ctx.db, organizationId, product.id, warehouses.map((warehouse) => warehouse.id)),
     ctx.db.reservation.findMany({
       where: { organizationId, productId: product.id, status: 'open' },
       orderBy: { createdAt: 'asc' },
-      select: { units: true, createdAt: true, orderLine: { select: { order: { select: { id: true, externalId: true } } } } },
+      select: {
+        units: true,
+        createdAt: true,
+        warehouse: { select: { name: true } },
+        orderLine: { select: { order: { select: { id: true, externalId: true } } } },
+      },
     }),
   ])
   return {
@@ -234,11 +248,18 @@ export async function getProduct(ctx: Context, organizationId: string, productId
       lastPushedAt: offer.lastPushedAt,
       ...describeOfferPrice(ctx, { ...offer, connectorId: offer.connection.connectorId }, { basePrice }),
     })),
+    warehouses: warehouses.map((warehouse) => ({
+      id: warehouse.id,
+      name: warehouse.name,
+      isDefault: warehouse.code === DEFAULT_WAREHOUSE_CODE,
+      ...(byWarehouse.get(warehouse.id) ?? { stock: 0, reserved: 0, available: 0 }),
+    })),
     openReservations: reservations.map((reservation) => ({
       orderId: reservation.orderLine.order.id,
       orderExternalId: reservation.orderLine.order.externalId,
       units: reservation.units,
       createdAt: reservation.createdAt,
+      warehouseName: reservation.warehouse.name,
     })),
   }
 }

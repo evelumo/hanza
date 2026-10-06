@@ -1,5 +1,28 @@
 import { describe, expect, it } from 'vitest'
-import { addConnectionSchema, requestSyncSchema, stockRulesSchema } from './schemas'
+import { addConnectionSchema, channelWarehousesSchema, requestSyncSchema, stockRulesSchema } from './schemas'
+
+describe('channelWarehousesSchema', () => {
+  it('reads "all" without Warehouses', () => {
+    expect(channelWarehousesSchema.parse({ connectionId: 'c', mode: 'all', warehouseIds: ['w'] })).toEqual({ connectionId: 'c', mode: 'all' })
+  })
+
+  it('reads "only" with at least one Warehouse', () => {
+    expect(channelWarehousesSchema.parse({ connectionId: 'c', mode: 'only', warehouseIds: ['a', 'b'] })).toEqual({
+      connectionId: 'c',
+      mode: 'only',
+      warehouseIds: ['a', 'b'],
+    })
+    const empty = channelWarehousesSchema.safeParse({ connectionId: 'c', mode: 'only', warehouseIds: [] })
+    expect(empty.success).toBe(false)
+    expect(empty.error?.issues[0]?.message).toBe('validation.warehousesRequired')
+  })
+
+  it('refuses an unknown mode, a missing connection or an empty id', () => {
+    expect(channelWarehousesSchema.safeParse({ connectionId: 'c', mode: 'some', warehouseIds: ['a'] }).success).toBe(false)
+    expect(channelWarehousesSchema.safeParse({ mode: 'all' }).success).toBe(false)
+    expect(channelWarehousesSchema.safeParse({ connectionId: 'c', mode: 'only', warehouseIds: [''] }).success).toBe(false)
+  })
+})
 
 describe('addConnectionSchema', () => {
   it('trims the name and limits it to 100 characters', () => {

@@ -10,6 +10,7 @@ const links: Array<{ href: string; label: MessageKey }> = [
   { href: '/products', label: 'nav.products' },
   { href: '/families', label: 'nav.families' },
   { href: '/orders', label: 'nav.orders' },
+  { href: '/warehouses', label: 'nav.warehouses' },
   { href: '/connections', label: 'nav.connections' },
   { href: '/privacy', label: 'nav.privacy' },
 ]

@@ -44,6 +44,8 @@ export interface OrderDetail extends OrderRow {
     productName: string | null
     shortage: boolean
     reservationStatus: 'open' | 'released' | 'consumed' | null
+    /** The Warehouse the line's Reservation sits in. */
+    reservationWarehouse: { id: string; name: string } | null
   }>
   facts: Array<{ externalId: string; type: ChannelFactType; occurredAt: Date; note: string | null; recordedAt: Date }>
   events: EventRow[]
@@ -147,7 +149,7 @@ export async function getOrder(ctx: Context, organizationId: string, orderId: st
           productId: true,
           shortage: true,
           product: { select: { sku: true, name: true } },
-          reservation: { select: { status: true } },
+          reservation: { select: { status: true, warehouse: { select: { id: true, name: true } } } },
         },
       },
       facts: {
@@ -182,6 +184,7 @@ export async function getOrder(ctx: Context, organizationId: string, orderId: st
       productName: line.product?.name ?? null,
       shortage: line.shortage,
       reservationStatus: line.reservation?.status ?? null,
+      reservationWarehouse: line.reservation?.warehouse ?? null,
     })),
     facts: order.facts,
     events,

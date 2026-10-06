@@ -1,5 +1,7 @@
 # Available is computed, never stored, and writers lock the Order before Stock
 
+Status: amended by ADR 0017. Available is now per Warehouse, the organization's Warehouse rows are share-locked between the Order and the Stock rows, and a Shortage is judged against the Order's Channel's Warehouses.
+
 Available is what Hanza tells Channels, so a wrong value sells goods that do not exist (ADR 0001). A stored counter would have to be kept equal to Stock minus open Reservations by every write path, forever. We decided Available is always computed in one statement (Stock over all Warehouses minus open Reservations), and that every transaction that changes Stock or Reservations takes row locks in a fixed order: the Order row first, then the Stock rows of the Products involved, sorted by Product. Available is read only after the locks are held, under Postgres' default READ COMMITTED, so the value a Reservation is checked against is exact. Serialisable transactions were rejected: they turn the same contention into retries scattered across the code.
 
 ## Consequences

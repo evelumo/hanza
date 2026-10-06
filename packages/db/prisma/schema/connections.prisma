@@ -44,16 +44,35 @@ model Connection {
   safetyBuffer    Int              @default(0)
   /// Channel limit: the most units this Channel is told; null means no limit. CHECK null or >= 0 (ADR 0013).
   channelLimit    Int?
+  /// True: this Channel counts every active Warehouse, including ones added later. False: only its `warehouses` rows (ADR 0017).
+  allWarehouses   Boolean          @default(true)
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
 
-  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organization Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   offers       Offer[]
   orders       Order[]
   syncStates   SyncState[]
+  warehouses   ConnectionWarehouse[]
 
   @@index([organizationId, connectorId])
   @@map("connection")
+}
+
+/// The Warehouses a Channel counts when its `allWarehouses` is false. Only active Warehouses are ever added (ADR 0017).
+model ConnectionWarehouse {
+  organizationId String
+  connectionId   String
+  warehouseId    String
+  createdAt      DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  connection   Connection   @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+  warehouse    Warehouse    @relation(fields: [warehouseId], references: [id], onDelete: Cascade)
+
+  @@id([connectionId, warehouseId])
+  @@index([organizationId, warehouseId])
+  @@map("connection_warehouse")
 }
 
 model SyncState {

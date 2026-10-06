@@ -7,7 +7,7 @@ model EventLog {
   type           String
   payload        Json     @default("{}")
   createdAt      DateTime @default(now())
-  /// "product" | "offer" | "order" | "connection"; null for system Events such as system.ping.
+  /// "product" | "offer" | "order" | "connection" | "warehouse"; null for system Events such as system.ping.
   subjectType    String?
   subjectId      String?
 

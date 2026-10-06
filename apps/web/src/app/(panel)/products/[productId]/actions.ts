@@ -32,7 +32,8 @@ export async function setStockAction(_previous: ActionState, formData: FormData)
   if (!parsed.success) return invalidInput(parsed.error, t, values)
 
   try {
-    await setStock(getContext(), organizationId, parsed.data.productId, parsed.data.stock, { type: 'user', userId: user.id })
+    const { productId, warehouseId, stock } = parsed.data
+    await setStock(getContext(), organizationId, productId, stock, { type: 'user', userId: user.id }, warehouseId)
   } catch (error) {
     return failure(error, t, { values })
   }

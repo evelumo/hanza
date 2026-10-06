@@ -18,7 +18,8 @@
     "orders": "Orders",
     "connections": "Connections",
     "families": "Families",
-    "privacy": "Privacy"
+    "privacy": "Privacy",
+    "warehouses": "Warehouses"
   },
   "pagination": {
     "label": "Pagination",
@@ -104,7 +105,7 @@
       "name": "Name",
       "saveName": "Save name",
       "stockTitle": "Stock",
-      "stockDescription": "Hanza is the source of truth for stock. Channels receive Available (Stock minus Reservations) less the safety buffer, and at most the channel limit, set on each connection.",
+      "stockDescription": "Hanza is the source of truth for stock. Set it per warehouse. A line of an order is never split between warehouses, so each channel is told the most that one of its warehouses can cover (and never more than all of them together), less its safety buffer, and at most its channel limit.",
       "stockSaved": "Saved. The new stock will be sent to the channels.",
       "saveStock": "Save stock",
       "priceTitle": "Price",
@@ -132,7 +133,16 @@
       "reservationsDescription": "Goods promised to orders that have not been shipped yet.",
       "reservationsEmpty": "No open reservations.",
       "reservationOrder": "Order {id}",
-      "familyLine": "Family: {name}"
+      "familyLine": "Family: {name}",
+      "warehouseColumns": {
+        "warehouse": "Warehouse",
+        "stock": "Stock",
+        "reserved": "Reserved",
+        "available": "Available"
+      },
+      "manageWarehouses": "Manage warehouses",
+      "reservationWarehouse": "in {warehouse}",
+      "stockIn": "Stock in {warehouse}"
     },
     "new": {
       "title": "Add product",
@@ -303,7 +313,8 @@
         "quantity": "Quantity",
         "price": "Price",
         "product": "Product",
-        "reservation": "Reservation"
+        "reservation": "Reservation",
+        "warehouse": "Warehouse"
       },
       "unmatched": "Unmatched",
       "shortage": "Shortage",
@@ -328,6 +339,12 @@
       "skuPlaceholder": "Product SKU",
       "submit": "Link",
       "submitting": "Linking…"
+    },
+    "moveReservation": {
+      "label": "Move the reservation to",
+      "submit": "Move",
+      "submitting": "Moving…",
+      "hint": "Only to a warehouse that has enough available for the whole line."
     }
   },
   "connections": {
@@ -379,12 +396,22 @@
     },
     "stockRules": {
       "title": "Stock sent to this channel",
-      "description": "The channel is told Available (Stock minus Reservations) less the safety buffer, and never more than the channel limit. Orders still reserve against the whole Available.",
+      "description": "The channel is told the most that one of the warehouses it counts (below) can cover, less the safety buffer, and never more than the channel limit. Orders reserve against Available, not against this number.",
       "safetyBuffer": "Safety buffer",
       "safetyBufferHint": "Units held back from this channel, for example to keep the last units for your shop.",
       "channelLimit": "Channel limit",
       "channelLimitHint": "The most units this channel is told. Leave empty for no limit.",
       "save": "Save stock settings",
+      "saved": "Saved. The new numbers will be sent to this channel."
+    },
+    "warehouses": {
+      "title": "Warehouses counted for this channel",
+      "description": "The channel is told what one of these warehouses can cover, since a line is never split: the largest Available among them, and never more than their total. Its orders reserve in them: in the first one, by priority, that can cover the whole line. A line none of them can cover is a shortage, even if another warehouse has the goods.",
+      "all": "All active warehouses",
+      "allHint": "Includes warehouses you add later.",
+      "only": "Only the chosen warehouses",
+      "legend": "Warehouses",
+      "save": "Save warehouses",
       "saved": "Saved. The new numbers will be sent to this channel."
     }
   },
@@ -525,13 +552,23 @@
       "connection_stock_rules_changed": "Stock settings changed",
       "order_buyer_data_erased": "Buyer data erased",
       "privacy_retention_changed": "Buyer data retention changed",
-      "privacy_erasure_requested": "Erasure request handled"
+      "privacy_erasure_requested": "Erasure request handled",
+      "order_reservation_moved": "Reservation moved to another warehouse",
+      "connection_warehouses_changed": "Warehouses of the channel changed",
+      "warehouse_created": "Warehouse added",
+      "warehouse_updated": "Warehouse changed",
+      "warehouse_deactivated": "Warehouse deactivated",
+      "warehouse_activated": "Warehouse activated",
+      "warehouse_deleted": "Warehouse deleted"
     },
     "lines": "{count, plural, one {# line} other {# lines}}",
     "stockRules": "safety buffer {buffer}, channel limit {limit}",
     "retentionDays": "{count, plural, one {# day} other {# days}}",
     "retentionOff": "kept",
-    "ordersErased": "{count, plural, one {# order erased} other {# orders erased}}"
+    "ordersErased": "{count, plural, one {# order erased} other {# orders erased}}",
+    "allWarehouses": "all warehouses",
+    "someWarehouses": "{count, plural, one {# chosen warehouse} other {# chosen warehouses}}",
+    "priority": "priority {change}"
   },
   "errors": {
     "domain": {
@@ -548,7 +585,14 @@
       "already_in_family": "This product is already in a family. Remove it from there first.",
       "invalid_price": "This price does not fit its currency: check the decimal places.",
       "not_a_channel": "This connection is not a sales channel, so it has no stock settings.",
-      "forbidden": "Only an owner or admin of the organization can do this."
+      "forbidden": "Only an owner or admin of the organization can do this.",
+      "warehouse_inactive": "This warehouse is inactive.",
+      "warehouse_is_default": "The default warehouse cannot be deactivated or deleted.",
+      "warehouse_not_empty": "The warehouse still holds stock or open reservations.",
+      "warehouse_in_use": "The warehouse is still in use: a channel chose it, or it has reservations in its history. Change the channel’s warehouses first, or deactivate it instead of deleting it.",
+      "no_warehouse_selected": "Choose at least one warehouse.",
+      "reservation_not_open": "Only an open reservation of a new or processing order can be moved.",
+      "not_enough_stock": "That warehouse does not have enough available for the whole line."
     },
     "unexpected": "Something went wrong. Please try again.",
     "invalidInput": "Check the fields.",
@@ -586,6 +630,50 @@
     "priceTooManyDecimals": "Too many decimal places for this currency (PLN has 2, JPY none).",
     "currencyInvalid": "Enter a three-letter currency code, e.g. PLN.",
     "emailInvalid": "Enter an email address (with @, at most 320 characters).",
-    "retentionDaysInvalid": "Enter a whole number of days from 1 to 3650, or leave the field empty."
+    "retentionDaysInvalid": "Enter a whole number of days from 1 to 3650, or leave the field empty.",
+    "warehouseNameTooLong": "The name can have at most 100 characters.",
+    "warehousesRequired": "Choose at least one warehouse."
+  },
+  "warehouses": {
+    "title": "Warehouses",
+    "description": "Places where your stock is kept. Each line of a new order is reserved in the first warehouse, by priority, that can cover it in full. On a connection page you can limit a channel to some warehouses.",
+    "listTitle": "Your warehouses",
+    "columns": {
+      "name": "Name",
+      "priority": "Priority",
+      "stock": "Stock",
+      "reserved": "Reserved",
+      "channels": "Chosen by channels"
+    },
+    "default": "Default",
+    "inactive": "Inactive",
+    "newTitle": "Add a warehouse",
+    "newDescription": "A new warehouse starts empty and active. Channels that count all warehouses count it at once.",
+    "name": "Name",
+    "priority": "Priority",
+    "priorityHint": "Lower numbers are used first. Leave empty to put it last.",
+    "priorityHintEdit": "Lower numbers are used first when an order is reserved.",
+    "create": "Add warehouse",
+    "created": "Warehouse added.",
+    "detail": {
+      "title": "Warehouse",
+      "summary": "Stock: {stock} · Reserved: {reserved}",
+      "dataTitle": "Warehouse details",
+      "save": "Save",
+      "saved": "Saved.",
+      "statusTitle": "Use",
+      "statusActive": "Active: it can hold stock and receive reservations.",
+      "statusInactive": "Inactive: it holds nothing and counts for no channel.",
+      "activate": "Activate",
+      "deactivate": "Deactivate",
+      "deactivateHint": "Only an empty warehouse can be deactivated: no stock, no open reservations, and no channel that chose it.",
+      "delete": "Delete warehouse",
+      "deleteConfirm": "Delete this warehouse? This cannot be undone.",
+      "deleteHint": "A warehouse that has ever had a reservation can only be deactivated.",
+      "defaultNote": "This is the default warehouse: new products get their initial stock here. It is always active and cannot be deleted.",
+      "channelsLine": "Chosen by: {channels}",
+      "historyTitle": "History",
+      "historyEmpty": "No events."
+    }
   }
 }
