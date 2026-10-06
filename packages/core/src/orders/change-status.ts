@@ -9,7 +9,7 @@ import { lockOrder } from '../stock/locks'
 import { markOffersForStockPush, requestStockPushAfterCommit } from '../stock/push'
 import { ensureDefaultWarehouse } from '../stock/warehouse'
 import { TX_OPTIONS } from '../transaction'
-import { removeReasons } from './reasons'
+import { reasonsAfterCancel } from './reasons'
 import { allowedTransitions } from './status-rules'
 import { applyStockEffect } from './stock-effect'
 
@@ -33,7 +33,7 @@ export async function changeOrderStatus(ctx: Context, organizationId: string, or
     }
 
     const touched = await applyStockEffect(tx, organizationId, orderId, to)
-    const reasons = to === 'cancelled' ? removeReasons(order.attentionReasons, ['shortage']) : order.attentionReasons
+    const reasons = to === 'cancelled' ? reasonsAfterCancel(order.attentionReasons) : order.attentionReasons
     await tx.order.updateMany({ where: { id: orderId, organizationId }, data: { status: to, attentionReasons: reasons } })
     await appendEvent(tx, {
       organizationId,

@@ -19,7 +19,7 @@ Items marked **planned** do not exist yet. Do not assume them.
 
 | Path | What it is |
 | --- | --- |
-| `apps/web` | `@hanza/web` — Next.js App Router: panel (Products, Orders, Connections, dashboard), Better Auth routes, `GET /api/health`. The panel speaks English (default) and Polish: the locale comes from the `hanza_locale` cookie, then `Accept-Language`, set with the switcher; copy lives in `apps/web/messages/{en,pl}.json` (`next-intl`, no locale in the URL). |
+| `apps/web` | `@hanza/web` — Next.js App Router: panel (Products, Product families, Orders, Connections, dashboard), Better Auth routes, `GET /api/health`. The panel speaks English (default) and Polish: the locale comes from the `hanza_locale` cookie, then `Accept-Language`, set with the switcher; copy lives in `apps/web/messages/{en,pl}.json` (`next-intl`, no locale in the URL). |
 | `apps/worker` | `@hanza/worker` — the worker process (run with `tsx`, no build step): `startWorker` with the jobs from the core registry and the connectors from `@hanza/connector-registry`; schedules `sync.tick`. Holds the end-to-end engine test (`src/engine.db.test.ts`). |
 | `apps/e2e` | `@hanza/e2e` — panel end-to-end tests: Playwright flows in `flows/*.spec.ts`, helpers in `src/fixtures.ts`, and the runner behind `pnpm test:e2e` (`src/run.ts`). See [Panel end-to-end flows](#panel-end-to-end-flows). |
 | `packages/core` | `@hanza/core` — `createContext()`, env validation, logger, `JobQueue` + BullMQ implementation (`startWorker`), `defineJob`, job registry, domain services, sync engine (`src/sync`, `src/jobs`). Test helpers at `@hanza/core/testing`. |

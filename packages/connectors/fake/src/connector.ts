@@ -7,6 +7,7 @@ import {
   type CapabilityContext,
   type ConnectorDefinition,
   type Offer,
+  type OfferPrice,
   type Order,
   type OrderStatus,
   type PullResult,
@@ -28,6 +29,7 @@ export interface FakeState {
   orders: Map<string, Order>
   journal: Array<{ seq: number; orderExternalId: string }>
   stockPushes: StockLevel[][]
+  pricePushes: OfferPrice[][]
   statusUpdates: Array<{ orderExternalId: string; status: OrderStatus }>
 }
 
@@ -86,6 +88,15 @@ export function createFakeConnector(state: FakeState): FakeConnector {
       async 'stock.push'(ctx, levels) {
         failIfRequested(ctx)
         state.stockPushes.push(structuredClone(levels))
+      },
+      async 'price.push'(ctx, prices) {
+        failIfRequested(ctx)
+        state.pricePushes.push(structuredClone(prices))
+        // Like a real Channel, the next offers.pull reports the price that was set.
+        for (const { offerExternalId, price } of prices) {
+          const offer = state.offers.find((candidate) => candidate.externalId === offerExternalId)
+          if (offer) offer.price = { ...price }
+        }
       },
       async 'orders.updateStatus'(ctx, input) {
         failIfRequested(ctx)
