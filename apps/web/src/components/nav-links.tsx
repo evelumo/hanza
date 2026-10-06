@@ -12,6 +12,7 @@ const links: Array<{ href: string; label: MessageKey }> = [
   { href: '/orders', label: 'nav.orders' },
   { href: '/warehouses', label: 'nav.warehouses' },
   { href: '/connections', label: 'nav.connections' },
+  { href: '/privacy', label: 'nav.privacy' },
 ]
 
 export function NavLinks() {

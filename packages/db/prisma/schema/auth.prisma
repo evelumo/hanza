@@ -93,6 +93,7 @@ model Organization {
   connections       Connection[]
   syncStates        SyncState[]
   channelWarehouses ConnectionWarehouse[]
+  privacySettings   PrivacySettings?
   workflowRuns      WorkflowRun[]
   workflowSignals   WorkflowSignal[]
 

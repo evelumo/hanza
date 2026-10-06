@@ -23,11 +23,13 @@ export type EventType =
   | 'offer.price_changed'
   | 'order.imported'
   | 'order.channel_fact_recorded'
+  | 'order.payment_received'
   | 'order.status_changed'
   | 'order.line_linked'
   | 'order.attention_raised'
   | 'order.attention_resolved'
   | 'order.reservation_moved'
+  | 'order.buyer_data_erased'
   | 'connection.created'
   | 'connection.health_changed'
   | 'connection.stock_rules_changed'
@@ -37,6 +39,8 @@ export type EventType =
   | 'warehouse.deactivated'
   | 'warehouse.activated'
   | 'warehouse.deleted'
+  | 'privacy.retention_changed'
+  | 'privacy.erasure_requested'
 
 export interface EventRow {
   id: string

@@ -33,7 +33,11 @@ export interface PullResult<T> {
 export interface Capabilities<TConfig, TCredentials> {
   /** Every Offer on the Channel, paged; the engine always starts from null. */
   'offers.pull'?(ctx: CapabilityContext<TConfig, TCredentials>, cursor: string | null): Promise<PullResult<Offer>>
-  /** Incremental feed of Orders ready to fulfil (new ones and ones with new Channel facts). Same cursor → same page. */
+  /**
+   * Incremental feed of Orders (new ones and ones with new Channel facts). Same cursor → same page.
+   * Ready-to-fulfil Orders only, unless the connector also reports unpaid ones with `awaitingPayment: true`
+   * and a `paid` fact once they are paid.
+   */
   'orders.pull'?(ctx: CapabilityContext<TConfig, TCredentials>, cursor: string | null): Promise<PullResult<Order>>
   /** Set absolute availability for up to 100 Offers of this Connection. Must be repeatable. */
   'stock.push'?(ctx: CapabilityContext<TConfig, TCredentials>, levels: StockLevel[]): Promise<void>

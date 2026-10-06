@@ -4,12 +4,14 @@ import { createProduct, getProduct } from '../catalog/products'
 import { getConnection } from '../connections/connections'
 import { updateChannelStockRules } from '../connections/stock-rules'
 import { updateChannelWarehouses } from '../connections/channel-warehouses'
+import { systemActor } from '../actor'
 import { DomainError } from '../errors'
 import { changeOrderStatus } from '../orders/change-status'
 import { importOrder } from '../orders/import'
 import { linkOrderLine } from '../orders/link-line'
 import { moveReservation } from '../orders/move-reservation'
 import { getOrder } from '../orders/queries'
+import { eraseBuyerData } from '../privacy/erasure'
 import { createTestOrganization } from '../testing/context'
 import { databaseUrl, useTestContext } from '../testing/db-test'
 import { buildOrder, createTestConnection, orderLine, testChannel, testCourier, uniqueSku, user } from '../testing/fixtures'
@@ -235,6 +237,36 @@ describe.skipIf(!databaseUrl)('multiple Warehouses', () => {
     await changeOrderStatus(ctx, org, orderId, 'shipped', user)
     await setStock(ctx, org, (await ctx.db.orderLine.findFirstOrThrow({ where: { id: lineId } })).productId!, 9, user, north)
     await expect(moveReservation(ctx, org, lineId, north, user).catch(code)).resolves.toBe('reservation_not_open')
+  })
+
+  it('an Order awaiting payment is placed by the same rule and its Reservation can move; erasing its Buyer data leaves Stock alone', async () => {
+    const { ctx, org, northOnly, main, north, sku, reservationOf, perWarehouse } = await setup({ main: 5, north: 3 })
+    const email = `${uniqueSku('buyer').toLowerCase()}@example.com`
+    const buyer = { name: 'Anna Test', email, phone: null, login: null }
+    const { orderId } = await importOrder(
+      ctx,
+      org,
+      northOnly,
+      buildOrder({ awaitingPayment: true, buyer, lines: [orderLine('l1', { sku, quantity: 2 })] }),
+    )
+    expect((await ctx.db.order.findFirstOrThrow({ where: { id: orderId } })).awaitingPayment).toBe(true)
+    expect(await reservationOf(orderId)).toMatchObject({ warehouseId: north, shortage: false, status: 'open' })
+
+    const { lineId } = await reservationOf(orderId)
+    await moveReservation(ctx, org, lineId, main, user)
+    expect(await reservationOf(orderId)).toMatchObject({ warehouseId: main, status: 'open' })
+    expect(await perWarehouse()).toEqual({ main: 3, north: 3 })
+
+    await changeOrderStatus(ctx, org, orderId, 'cancelled', user)
+    expect(await perWarehouse()).toEqual({ main: 5, north: 3 })
+    const stockState = async () => ({
+      reservations: await ctx.db.reservation.findMany({ where: { organizationId: org }, orderBy: { id: 'asc' } }),
+      stock: await ctx.db.stock.findMany({ where: { organizationId: org }, orderBy: { id: 'asc' } }),
+      warehouses: await ctx.db.warehouse.findMany({ where: { organizationId: org }, orderBy: { id: 'asc' } }),
+    })
+    const before = await stockState()
+    expect(await eraseBuyerData(ctx, org, email, systemActor)).toEqual({ erased: 1, keptOpen: 0 })
+    expect(await stockState()).toEqual(before)
   })
 
   it('a Channel\'s Warehouse choice: stored, validated, bumps only its Offers, and needs a Channel', async () => {

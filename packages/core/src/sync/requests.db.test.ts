@@ -82,7 +82,7 @@ describe.skipIf(!databaseUrl)('addConnection and requestSync', () => {
     const errors: Array<[string, Record<string, unknown> | undefined]> = []
     const ctx = {
       ...base,
-      log: { info() {}, error: (message: string, fields?: Record<string, unknown>) => void errors.push([message, fields]) },
+      log: { info() {}, warn() {}, error: (message: string, fields?: Record<string, unknown>) => void errors.push([message, fields]) },
       queue: {
         ...base.queue,
         enqueue: async () => {

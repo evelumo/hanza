@@ -152,6 +152,17 @@ describe('orders.pull', () => {
     expect(items[0]?.facts.map((fact) => fact.id)).toEqual(['older', 'newer'])
   })
 
+  it('a paid fact clears awaitingPayment, so the Order it returns again is ready and still valid', async () => {
+    const { channel, pull } = pullOrders()
+    channel.addOrder({ ...structuredClone(seedOrders[0]!), externalId: 'fake-order-unpaid', awaitingPayment: true })
+    expect((await pull('5')).items[0]).toMatchObject({ externalId: 'fake-order-unpaid', awaitingPayment: true })
+
+    channel.addFact('fake-order-unpaid', { id: 'fake-order-unpaid:paid', type: 'paid', occurredAt: '2026-10-03T08:00:00Z', note: null })
+    const [again] = (await pull('6')).items
+    expect(again).toMatchObject({ externalId: 'fake-order-unpaid', awaitingPayment: false })
+    expect(orderSchema.safeParse(again).success).toBe(true)
+  })
+
   it('addFact throws for an unknown Order', () => {
     const channel = createFakeChannel()
     expect(() => channel.addFact('nope', { id: 'f', type: 'cancelled', occurredAt: '2026-10-03T08:00:00Z', note: null })).toThrow(

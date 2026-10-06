@@ -95,3 +95,11 @@ export function buildOrder(overrides: Partial<Order> = {}): Order {
 export function uniqueSku(prefix = 'SKU'): string {
   return `${prefix}-${randomUUID().slice(0, 8)}`
 }
+
+/** A user who is a member of the organization with `role` (Better Auth's `member.role`); returns them as an Actor. */
+export async function addMember(ctx: TestContext, organizationId: string, role: string): Promise<Actor> {
+  const userId = randomUUID()
+  await ctx.db.user.create({ data: { id: userId, name: `User ${userId.slice(0, 8)}`, email: `${userId}@example.org` } })
+  await ctx.db.member.create({ data: { id: randomUUID(), organizationId, userId, role, createdAt: new Date() } })
+  return { type: 'user', userId }
+}

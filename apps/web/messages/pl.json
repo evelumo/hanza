@@ -18,6 +18,7 @@
     "orders": "Zamówienia",
     "connections": "Połączenia",
     "families": "Rodziny",
+    "privacy": "Prywatność",
     "warehouses": "Magazyny"
   },
   "pagination": {
@@ -274,6 +275,7 @@
       "status": "Status",
       "all": "Wszystkie",
       "attentionOnly": "Tylko wymagające uwagi",
+      "awaitingPaymentOnly": "Tylko oczekujące na płatność",
       "apply": "Filtruj",
       "clear": "Wyczyść"
     },
@@ -288,6 +290,9 @@
       "status": "Status"
     },
     "needsAttention": "Wymaga uwagi",
+    "awaitingPayment": "Oczekuje na płatność",
+    "buyerErased": "Usunięte",
+    "buyerUnreadable": "Nie można odczytać",
     "detail": {
       "title": "Zamówienie",
       "summary": "Kanał: {channel} · {date} · {payment} · {total}",
@@ -295,6 +300,8 @@
       "markReviewed": "Oznacz jako sprawdzone",
       "statusTitle": "Status",
       "statusDescription": "Postęp realizacji prowadzi Hanza; zmiana jest przekazywana do kanału, jeśli kanał to obsługuje.",
+      "awaitingPaymentHint": "Kupujący jeszcze nie zapłacił. Towar pozostaje zarezerwowany; zamówienie można realizować, gdy kanał zgłosi płatność, a do tego czasu można je tylko anulować.",
+      "awaitingPaymentShippedHint": "Wysłane, ale kanał nie zgłosił płatności za to zamówienie.",
       "finalStatus": "Zamówienie ma status końcowy ({status}), nie można go zmienić.",
       "changeTo": "Zmień na: {status}",
       "confirmShipped": "Oznaczyć zamówienie jako wysłane? Zarezerwowany towar zostanie zdjęty ze stanu.",
@@ -312,6 +319,9 @@
       "unmatched": "Niepołączona",
       "shortage": "Brak na stanie",
       "buyerTitle": "Kupujący",
+      "buyerErased": "Dane kupującego usunięto {date}.",
+      "buyerUnreadable": "Nie można odczytać danych kupującego tego zamówienia: nie dają się odszyfrować obecnym kluczem szyfrowania albo są uszkodzone.",
+      "shippingCountry": "Kraj dostawy: {country}",
       "contact": "Dane kontaktowe",
       "phone": "tel. {phone}",
       "channelLogin": "Login w kanale: {login}",
@@ -405,6 +415,39 @@
       "saved": "Zapisano. Nowe liczby zostaną wysłane do tego kanału."
     }
   },
+  "privacy": {
+    "title": "Prywatność",
+    "intro": "Dane kupujących w zamówieniach (imiona i nazwiska, dane kontaktowe, adresy) są przechowywane w postaci zaszyfrowanej. Tutaj decydujesz, jak długo są przechowywane, i obsługujesz prośbę o usunięcie danych jednej osoby.",
+    "adminsOnly": "Tylko właściciel lub administrator organizacji może zmienić okres przechowywania albo usunąć dane kupującego.",
+    "retention": {
+      "title": "Okres przechowywania danych kupujących",
+      "description": "Dane kupującego są usuwane po tylu dniach od wysłania lub anulowania zamówienia. Pozycje, kwoty i kraj dostawy zostają. Otwarte zamówienia nigdy nie są zmieniane.",
+      "label": "Dni od zamknięcia zamówienia",
+      "hint": "Od 1 do 3650 dni. Zostaw puste, aby przechowywać dane kupujących, dopóki ich nie usuniesz. Zamówienia zamknięte, zanim Hanza zaczęła zapisywać czas zamknięcia, liczą się od ostatniej zmiany.",
+      "save": "Zapisz",
+      "saved": "Zapisano. Sprawdzanie odbywa się co godzinę.",
+      "currentDays": "Teraz: dane kupującego są usuwane {count, plural, one {# dzień} few {# dni} many {# dni} other {# dnia}} po zamknięciu zamówienia.",
+      "currentOff": "Teraz: dane kupujących są przechowywane, dopóki ich nie usuniesz.",
+      "confirmTitle": "Potwierdź nowy okres przechowywania",
+      "confirmCount": "{count, plural, =0 {Przy {days, number} dniach przy najbliższym sprawdzeniu nie zostaną usunięte dane kupującego z żadnego zamówienia.} one {Przy {days, number} dniach przy najbliższym sprawdzeniu, w ciągu godziny, zostaną usunięte dane kupującego z # zamówienia. Tego nie można cofnąć.} few {Przy {days, number} dniach przy najbliższym sprawdzeniu, w ciągu godziny, zostaną usunięte dane kupującego z # zamówień. Tego nie można cofnąć.} many {Przy {days, number} dniach przy najbliższym sprawdzeniu, w ciągu godziny, zostaną usunięte dane kupującego z # zamówień. Tego nie można cofnąć.} other {Przy {days, number} dniach przy najbliższym sprawdzeniu, w ciągu godziny, zostaną usunięte dane kupującego z # zamówienia. Tego nie można cofnąć.}}",
+      "confirm": "Zapisz i usuń przy najbliższym sprawdzeniu",
+      "confirmDialog": "Zapisać nowy okres przechowywania? Dane kupujących starsze niż ten okres zostaną usunięte w ciągu godziny i nie da się ich przywrócić."
+    },
+    "erasure": {
+      "title": "Usuń dane kupującego",
+      "description": "Wyszukuje zamówienia tej organizacji złożone dokładnie z tym adresem e-mail (wielkość liter nie ma znaczenia) i usuwa z nich dane kupującego. Zamówień, dla których kanał nie podał adresu e-mail, nie da się w ten sposób znaleźć.",
+      "emailLabel": "Adres e-mail kupującego",
+      "find": "Znajdź zamówienia",
+      "finding": "Wyszukiwanie…",
+      "noMatch": "Żadne zamówienie tej organizacji nie ma danych kupującego z tym adresem e-mail.",
+      "previewClosed": "{count, plural, =0 {Brak wysłanych lub anulowanych zamówień, z których można usunąć dane.} one {Dane kupującego zostaną usunięte z # wysłanego lub anulowanego zamówienia.} few {Dane kupującego zostaną usunięte z # wysłanych lub anulowanych zamówień.} many {Dane kupującego zostaną usunięte z # wysłanych lub anulowanych zamówień.} other {Dane kupującego zostaną usunięte z # wysłanego lub anulowanego zamówienia.}}",
+      "openKept": "{count, plural, one {# zamówienie jest wciąż otwarte i zostaje: jego adres jest potrzebny do wysyłki. Wyślij je lub anuluj, a potem usuń dane ponownie.} few {# zamówienia są wciąż otwarte i zostają: ich adresy są potrzebne do wysyłki. Wyślij je lub anuluj, a potem usuń dane ponownie.} many {# zamówień jest wciąż otwartych i zostaje: ich adresy są potrzebne do wysyłki. Wyślij je lub anuluj, a potem usuń dane ponownie.} other {# zamówienia jest wciąż otwarte i zostaje: jego adres jest potrzebny do wysyłki. Wyślij je lub anuluj, a potem usuń dane ponownie.}}",
+      "confirm": "Usunąć dane kupującego z tych zamówień? Tego nie można cofnąć.",
+      "submit": "Usuń dane kupującego",
+      "erasing": "Usuwanie…",
+      "done": "{count, plural, =0 {Nic nie usunięto.} one {Usunięto dane kupującego z # zamówienia.} few {Usunięto dane kupującego z # zamówień.} many {Usunięto dane kupującego z # zamówień.} other {Usunięto dane kupującego z # zamówienia.}}"
+    }
+  },
   "labels": {
     "orderStatus": {
       "new": "Nowe",
@@ -433,12 +476,13 @@
       "price_push": "Ceny"
     },
     "payment": {
-      "prepaid": "Opłacone",
+      "prepaid": "Przedpłata",
       "cash_on_delivery": "Za pobraniem"
     },
     "channelFact": {
       "cancelled": "Anulowane w kanale",
-      "shipped": "Wysłane w kanale"
+      "shipped": "Wysłane w kanale",
+      "paid": "Opłacone w kanale"
     },
     "reservation": {
       "open": "Otwarta",
@@ -456,6 +500,10 @@
       "shop": "Sklep",
       "courier": "Kurier",
       "invoicing": "Fakturowanie"
+    },
+    "erasureCause": {
+      "retention": "okres przechowywania",
+      "erasure_request": "prośba o usunięcie"
     }
   },
   "sync": {
@@ -488,6 +536,7 @@
       "offer_price_changed": "Zmieniono cenę oferty",
       "order_imported": "Zaimportowano zamówienie",
       "order_channel_fact_recorded": "Kanał zgłosił zmianę",
+      "order_payment_received": "Płatność otrzymana",
       "order_status_changed": "Zmieniono status",
       "order_line_linked": "Połączono pozycję z produktem",
       "order_attention_raised": "Zamówienie wymaga uwagi",
@@ -501,6 +550,9 @@
       "family_product_updated": "Zmieniono atrybuty produktu w rodzinie",
       "family_product_removed": "Usunięto produkt z rodziny",
       "connection_stock_rules_changed": "Zmieniono ustawienia stanu",
+      "order_buyer_data_erased": "Usunięto dane kupującego",
+      "privacy_retention_changed": "Zmieniono okres przechowywania danych kupujących",
+      "privacy_erasure_requested": "Obsłużono prośbę o usunięcie danych",
       "order_reservation_moved": "Przeniesiono rezerwację do innego magazynu",
       "connection_warehouses_changed": "Zmieniono magazyny kanału",
       "warehouse_created": "Dodano magazyn",
@@ -511,6 +563,9 @@
     },
     "lines": "{count, plural, one {# pozycja} few {# pozycje} many {# pozycji} other {# pozycji}}",
     "stockRules": "bufor bezpieczeństwa {buffer}, limit kanału {limit}",
+    "retentionDays": "{count, plural, one {# dzień} few {# dni} many {# dni} other {# dnia}}",
+    "retentionOff": "bez limitu",
+    "ordersErased": "{count, plural, one {usunięto z # zamówienia} few {usunięto z # zamówień} many {usunięto z # zamówień} other {usunięto z # zamówienia}}",
     "allWarehouses": "wszystkie magazyny",
     "someWarehouses": "{count, plural, one {# wybrany magazyn} few {# wybrane magazyny} many {# wybranych magazynów} other {# wybranego magazynu}}",
     "priority": "priorytet {change}"
@@ -520,6 +575,7 @@
       "not_found": "Nie znaleziono.",
       "sku_taken": "Produkt z tym SKU już istnieje.",
       "invalid_transition": "Tej zmiany statusu nie można wykonać.",
+      "awaiting_payment": "Zamówienie nie jest jeszcze opłacone. Można je realizować, gdy kanał zgłosi płatność.",
       "unmatched_lines": "Najpierw połącz wszystkie pozycje z produktami.",
       "already_linked": "Ta pozycja jest już połączona.",
       "unknown_connector": "Nieznany konektor.",
@@ -529,6 +585,7 @@
       "already_in_family": "Ten produkt jest już w rodzinie. Najpierw usuń go z niej.",
       "invalid_price": "Ta cena nie pasuje do swojej waluty: sprawdź miejsca po przecinku.",
       "not_a_channel": "To połączenie nie jest kanałem sprzedaży, więc nie ma ustawień stanu.",
+      "forbidden": "Tylko właściciel lub administrator organizacji może to zrobić.",
       "warehouse_inactive": "Ten magazyn jest nieaktywny.",
       "warehouse_is_default": "Magazynu domyślnego nie można dezaktywować ani usunąć.",
       "warehouse_not_empty": "W magazynie nadal jest stan lub otwarte rezerwacje.",
@@ -572,6 +629,8 @@
     "priceAmbiguous": "Niejednoznaczne: trzy cyfry po separatorze. Wpisz 1234, jeśli chodzi o tysiące, albo podaj mniej miejsc po przecinku.",
     "priceTooManyDecimals": "Za dużo miejsc po przecinku dla tej waluty (PLN ma 2, JPY żadnego).",
     "currencyInvalid": "Podaj trzyliterowy kod waluty, np. PLN.",
+    "emailInvalid": "Podaj adres e-mail (z @, najwyżej 320 znaków).",
+    "retentionDaysInvalid": "Podaj liczbę całkowitą dni od 1 do 3650 albo zostaw pole puste.",
     "warehouseNameTooLong": "Nazwa może mieć najwyżej 100 znaków.",
     "warehousesRequired": "Wybierz co najmniej jeden magazyn."
   },

@@ -35,6 +35,11 @@ export function TagBadge({ label }: { label: string }) {
   return <span className={`${base} border-line bg-canvas text-muted`}>{label}</span>
 }
 
+export function AwaitingPaymentBadge() {
+  const t = useT()
+  return <span className={`${base} border-amber-300 bg-amber-50 text-amber-900`}>{t('orders.awaitingPayment')}</span>
+}
+
 export function AttentionBadge({ label }: { label?: string }) {
   const t = useT()
   return <span className={`${base} border-red-300 bg-red-50 text-red-900`}>{label ?? t('orders.needsAttention')}</span>

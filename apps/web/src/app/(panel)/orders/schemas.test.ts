@@ -29,8 +29,16 @@ describe('resolveAttentionSchema', () => {
 
 describe('orderListFiltersSchema', () => {
   it('ignores filter values it does not know instead of failing the page', () => {
-    expect(orderListFiltersSchema.parse({ status: 'bogus', attention: 'yes' })).toEqual({ status: undefined, attention: undefined })
-    expect(orderListFiltersSchema.parse({ status: 'shipped', attention: '1' })).toEqual({ status: 'shipped', attention: '1' })
+    expect(orderListFiltersSchema.parse({ status: 'bogus', attention: 'yes', payment: 'paid' })).toEqual({
+      status: undefined,
+      attention: undefined,
+      payment: undefined,
+    })
+    expect(orderListFiltersSchema.parse({ status: 'shipped', attention: '1', payment: 'awaiting' })).toEqual({
+      status: 'shipped',
+      attention: '1',
+      payment: 'awaiting',
+    })
     expect(orderListFiltersSchema.parse({})).toEqual({})
   })
 })

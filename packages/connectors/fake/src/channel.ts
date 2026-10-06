@@ -7,7 +7,10 @@ export interface FakeChannel {
   addOffer(offer: Offer): void
   /** Appends the Order to the journal. */
   addOrder(order: Order): void
-  /** Appends the fact to the Order and re-appends the Order to the journal. Throws for an unknown Order. */
+  /**
+   * Appends the fact to the Order and re-appends the Order to the journal; a `paid` fact also clears
+   * `awaitingPayment`. Throws for an unknown Order.
+   */
   addFact(orderExternalId: string, fact: ChannelFact): void
   /** Arguments of every stock.push call, in order. */
   readonly stockPushes: StockLevel[][]
@@ -42,6 +45,8 @@ export function createFakeChannel(options: { id?: string } = {}): FakeChannel {
       const order = state.orders.get(orderExternalId)
       if (!order) throw new Error(`Unknown Order "${orderExternalId}"`)
       order.facts.push(structuredClone(fact))
+      // A real Channel reports a paid Order as no longer awaiting payment; the contract forbids both at once.
+      if (fact.type === 'paid' && order.awaitingPayment === true) order.awaitingPayment = false
       // The contract wants facts oldest-first; Array.sort is stable, so equal times keep insertion order.
       order.facts.sort((a, b) => Date.parse(a.occurredAt) - Date.parse(b.occurredAt))
       appendToJournal(orderExternalId)

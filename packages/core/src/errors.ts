@@ -4,6 +4,7 @@ export type DomainErrorCode =
   | 'not_found'
   | 'sku_taken'
   | 'invalid_transition'
+  | 'awaiting_payment'
   | 'unmatched_lines'
   | 'already_linked'
   | 'unknown_connector'
@@ -20,6 +21,7 @@ export type DomainErrorCode =
   | 'no_warehouse_selected'
   | 'reservation_not_open'
   | 'not_enough_stock'
+  | 'forbidden'
 
 /** Thrown by services for expected failures; the panel maps `code` to translated copy. */
 export class DomainError extends Error {

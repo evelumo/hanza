@@ -5,4 +5,4 @@ Every Channel Connection needs its Offers, Orders and stock pushed on a timer. W
 ## Consequences
 
 - Timing is coarse (one-minute granularity, with half a tick of slack so a stream is not skipped when a run started just after its tick) and the intervals are the same for every Connection.
-- The tick reads every Connection of every organization (ids, connector id, health, timestamps): a cross-tenant read, like the workflow sweep it also enqueues (ADR 0014). It will need paging or sharding at a scale this design does not yet target.
+- The tick reads every Connection of every organization (ids, connector id, health, timestamps): a cross-tenant read, like the workflow sweep it also enqueues (ADR 0014) and `privacy.tick`, which lists organization ids the same way (ADR 0016). It will need paging or sharding at a scale this design does not yet target.

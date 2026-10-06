@@ -14,4 +14,5 @@ export const moveReservationSchema = z.object({ orderLineId: idSchema, warehouse
 export const orderListFiltersSchema = z.object({
   status: orderStatusSchema.optional().catch(undefined),
   attention: z.literal('1').optional().catch(undefined),
+  payment: z.literal('awaiting').optional().catch(undefined),
 })
