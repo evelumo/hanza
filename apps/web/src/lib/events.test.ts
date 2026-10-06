@@ -39,6 +39,15 @@ describe('describeEvent', () => {
     expect(describeEvent('offer.price_changed', { from: { amount: 45, currency: 'PLN' }, to: pln }, t, format).detail).toBeNull()
   })
 
+  it('describes a payment reported by the Channel', () => {
+    expect(describeEvent('order.channel_fact_recorded', { type: 'paid' }, t, format)).toEqual({
+      title: 'The channel reported a change',
+      detail: 'Paid in the channel',
+    })
+    expect(describeEvent('order.payment_received', { factId: 'f' }, t, format)).toEqual({ title: 'Payment received', detail: null })
+    expect(describeEvent('order.payment_received', {}, translatorFor('pl'), formatPl).title).toBe(catalogues.pl.events.title.order_payment_received)
+  })
+
   it('describes a change of the stock settings, with an empty limit as none', () => {
     const payload = { from: { safetyBuffer: 0, channelLimit: null }, to: { safetyBuffer: 2, channelLimit: 1500 } }
     expect(describeEvent('connection.stock_rules_changed', payload, t, format)).toEqual({

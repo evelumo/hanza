@@ -51,6 +51,7 @@ describe.skipIf(!databaseUrl)('importOrder', () => {
     expect(events.find((event) => event.type === 'order.imported')?.payload).toEqual({
       connectionId,
       externalId: order.externalId,
+      awaitingPayment: false,
       lineCount: 1,
       unmatchedLines: 0,
       shortageLines: 0,

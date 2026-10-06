@@ -23,6 +23,7 @@ export type EventType =
   | 'offer.price_changed'
   | 'order.imported'
   | 'order.channel_fact_recorded'
+  | 'order.payment_received'
   | 'order.status_changed'
   | 'order.line_linked'
   | 'order.attention_raised'

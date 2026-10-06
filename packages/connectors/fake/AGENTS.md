@@ -8,7 +8,7 @@ A Channel that lives in memory. It exists to prove the whole path (pull Offers a
 
 - Credentials `apiKey: 'expired'` make every call fail with `AuthExpiredError`. Config `failMode` makes every call fail with `RateLimitedError` (1 s), `TransientError` or `PermanentError`.
 - `offers.pull`: pages of 2, cursor = offset.
-- `orders.pull`: an append-only journal; cursor = last seen journal sequence number. `addFact` re-appends the Order, so it is pulled again with the new fact.
+- `orders.pull`: an append-only journal; cursor = last seen journal sequence number. `addFact` re-appends the Order, so it is pulled again with the new fact; a `paid` fact also sets `awaitingPayment` to false. The seed has no unpaid Order; tests add one with `addOrder({ ..., awaitingPayment: true })`.
 - `offers.pull` reports a PLN price on the seed Offers except `fake-offer-5`, which has none (its currency is unknown, so Hanza never pushes a price to it).
 - `stock.push` and `orders.updateStatus` only record their input (`stockPushes`, `statusUpdates`). `price.push` records its input (`pricePushes`) and sets the Offer's price, so the next `offers.pull` reports it.
 

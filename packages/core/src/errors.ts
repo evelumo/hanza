@@ -4,6 +4,7 @@ export type DomainErrorCode =
   | 'not_found'
   | 'sku_taken'
   | 'invalid_transition'
+  | 'awaiting_payment'
   | 'unmatched_lines'
   | 'already_linked'
   | 'unknown_connector'

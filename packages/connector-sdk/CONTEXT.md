@@ -31,7 +31,7 @@ A place where Stock is kept. Every organization has at least one.
 _Avoid_: Location, storage, inventory
 
 **Reservation**:
-Units of Stock promised to an Order that has not shipped yet. Made when the Order arrives, released when it is cancelled, consumed when it ships.
+Units of Stock promised to an Order that has not shipped yet. Made when the Order arrives (also when it is Awaiting payment), released when it is cancelled, consumed when it ships.
 _Avoid_: Allocation, hold, booking
 
 **Available**:
@@ -65,7 +65,7 @@ A price set in Hanza for one Offer only (the panel calls it the offer price); wh
 _Avoid_: Special price, custom price, channel-specific price
 
 **Effective price**:
-The Price override if there is one, else the Base price. What Hanza pushes to the Channel, only when its currency is the Channel price's (ADR 0011).
+The Price override if there is one, else the Base price. What Hanza pushes to the Channel, only when its currency is the Channel price's (ADR 0015).
 _Avoid_: Final price, current price
 
 **Channel price**:
@@ -83,8 +83,12 @@ Where an Order is in fulfilment, from Hanza's point of view. One fixed list shar
 _Avoid_: State, stage, phase
 
 **Channel fact**:
-Something the Channel reports about an Order after it was placed, such as "cancelled by buyer". Always recorded as reported. It moves the Order status accordingly, except that an Order that is already shipped or cancelled stays as it is and is marked Needs attention instead (ADR 0003).
+Something the Channel reports about an Order after it was placed, such as "cancelled by buyer" or "paid". Always recorded as reported. It moves the Order status accordingly, except that an Order that is already shipped or cancelled stays as it is and is marked Needs attention instead (ADR 0003). "Paid" never moves the status; it ends Awaiting payment.
 _Avoid_: External status, remote status
+
+**Awaiting payment**:
+A mark on a prepaid Order the Buyer has not paid for yet; never on cash on delivery. The Order is shown and reserves Stock, but a person can only cancel it, not fulfil it, until the Channel reports it paid. A cancelled Order that was never paid is an abandoned checkout and is no longer shown as Awaiting payment. It is a payment state beside the Order status, not an Order status (ADR 0015).
+_Avoid_: Unpaid status, pending payment, not ready
 
 **Needs attention**:
 A mark on an Order that a person must look at, for example when the Buyer cancels while it is already being packed, when an Order line could not be matched to a Product, or when the Channel refused the status Hanza sent it.

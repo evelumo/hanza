@@ -264,6 +264,7 @@
       "status": "Status",
       "all": "All",
       "attentionOnly": "Only those needing attention",
+      "awaitingPaymentOnly": "Only awaiting payment",
       "apply": "Filter",
       "clear": "Clear"
     },
@@ -278,6 +279,7 @@
       "status": "Status"
     },
     "needsAttention": "Needs attention",
+    "awaitingPayment": "Awaiting payment",
     "detail": {
       "title": "Order",
       "summary": "Channel: {channel} · {date} · {payment} · {total}",
@@ -285,6 +287,8 @@
       "markReviewed": "Mark as reviewed",
       "statusTitle": "Status",
       "statusDescription": "Hanza leads the fulfilment; a change is passed on to the channel if the channel supports it.",
+      "awaitingPaymentHint": "The buyer has not paid yet. The goods stay reserved; the order can be fulfilled once the channel reports the payment, and until then it can only be cancelled.",
+      "awaitingPaymentShippedHint": "Shipped, but the channel has not reported the payment for this order.",
       "finalStatus": "The order has a final status ({status}) and cannot be changed.",
       "changeTo": "Change to: {status}",
       "confirmShipped": "Mark the order as shipped? The reserved goods will be taken off stock.",
@@ -411,7 +415,8 @@
     },
     "channelFact": {
       "cancelled": "Cancelled in the channel",
-      "shipped": "Shipped in the channel"
+      "shipped": "Shipped in the channel",
+      "paid": "Paid in the channel"
     },
     "reservation": {
       "open": "Open",
@@ -461,6 +466,7 @@
       "offer_price_changed": "Offer price changed",
       "order_imported": "Order imported",
       "order_channel_fact_recorded": "The channel reported a change",
+      "order_payment_received": "Payment received",
       "order_status_changed": "Status changed",
       "order_line_linked": "Line linked to a product",
       "order_attention_raised": "Order needs attention",
@@ -483,6 +489,7 @@
       "not_found": "Not found.",
       "sku_taken": "A product with this SKU already exists.",
       "invalid_transition": "This status change is not allowed.",
+      "awaiting_payment": "The order is not paid yet. It can be fulfilled once the channel reports the payment.",
       "unmatched_lines": "Link all the lines to products first.",
       "already_linked": "This line is already linked.",
       "unknown_connector": "Unknown connector.",

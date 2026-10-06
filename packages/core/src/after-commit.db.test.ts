@@ -24,7 +24,7 @@ function withBrokenQueue(ctx: TestContext) {
         throw new Error('Redis unavailable')
       },
     },
-    log: { info() {}, error: (message, fields) => logged.push({ message, ...fields }) },
+    log: { info() {}, warn() {}, error: (message, fields) => logged.push({ message, ...fields }) },
   }
   return { broken, logged }
 }

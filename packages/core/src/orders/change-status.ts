@@ -15,7 +15,8 @@ import { markStatusPushPending } from './status-push'
 import { applyStockEffect } from './stock-effect'
 
 /**
- * A person moves an Order along `allowedTransitions`; shipped is refused while an Unmatched line exists.
+ * A person moves an Order along `allowedTransitions`; shipped is refused while an Unmatched line exists,
+ * and anything but cancelled while the Order is awaiting payment.
  * Cancelling releases its Reservations, shipping consumes them, and the new status is then pushed to the Channel:
  * at once if the enqueue works, otherwise by the tick's sweep of pending pushes (ADR 0012).
  */
@@ -26,10 +27,11 @@ export async function changeOrderStatus(ctx: Context, organizationId: string, or
     if (!(await lockOrder(tx, organizationId, orderId))) throw new DomainError('not_found')
     const order = await tx.order.findFirst({
       where: { id: orderId, organizationId },
-      select: { status: true, attentionReasons: true, connection: { select: { connectorId: true } } },
+      select: { status: true, attentionReasons: true, awaitingPayment: true, connection: { select: { connectorId: true } } },
     })
     if (!order) throw new DomainError('not_found')
-    if (!allowedTransitions(order.status).includes(to)) {
+    if (!allowedTransitions(order.status, order.awaitingPayment).includes(to)) {
+      if (allowedTransitions(order.status).includes(to)) throw new DomainError('awaiting_payment')
       throw new DomainError('invalid_transition', `Cannot change an Order from ${order.status} to ${to}`)
     }
     if (to === 'shipped') {
