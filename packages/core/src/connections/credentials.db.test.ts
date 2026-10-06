@@ -48,7 +48,7 @@ const unconfigured = { ...oauthChannel, id: 'oauth-unconfigured', name: 'Unconfi
 const inMinutes = (minutes: number) => new Date(Date.now() + minutes * 60_000).toISOString()
 const run: JobRunInfo = { attempt: 1, maxAttempts: 5, retriedLater: 0 }
 
-describe.skipIf(!databaseUrl)('credentials refresh (ADR 0019)', () => {
+describe.skipIf(!databaseUrl)('credentials refresh (ADR 0020)', () => {
   const context = useTestContext({
     connectors: [oauthChannel, unconfigured],
     connectorSettings: { HANZA_CONNECTOR_OAUTH_TEST_CLIENT_ID: 'client-1' },

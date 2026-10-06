@@ -9,12 +9,12 @@ A connector is a package that translates one external system into the canonical 
 
 **Reference implementation: `packages/connectors/fake`** (`@hanza/connector-fake`). Read `src/connector.ts` and `src/connector.test.ts` first. It keeps its data in memory, which a real connector must never do; copy its shape, not its state.
 
-**Not supported yet** (do not invent them): `pnpm create-connector`, `pnpm generate` auto-discovery, `pnpm test:connector <id>`, OAuth flows and token refresh in the core (stage 2, with Allegro), a recording tool for fixtures, capabilities beyond the five below (no shipments, invoices, webhooks, `offers.push`). Registering a connector in the app is a separate step (`@hanza/connector-registry`, owned by the core; see "Registering").
+**Not supported yet** (do not invent them): `pnpm create-connector`, `pnpm generate` auto-discovery, `pnpm test:connector <id>`, the OAuth authorization-code flow (only the device flow exists), a recording tool for fixtures, capabilities beyond the five below (no shipments, invoices, webhooks, `offers.push`). Registering a connector in the app is a separate step (`@hanza/connector-registry`, owned by the core; see "Registering").
 
 ## Rules
 
 - A connector depends **only** on `@hanza/connector-sdk` and `zod` (`pnpm check:boundaries` fails otherwise). Never import `@hanza/db`, `@hanza/core`, another connector, or `apps/*`.
-- No UI, no database access, no module-level state, no `process.env`. The panel draws the connection form from `configSchema`/`credentialsSchema`; the core owns persistence, cursors, retries, rate limits and secrets.
+- No UI, no database access, no module-level state, no `process.env`. The panel draws the connection form from `configSchema`/`credentialsSchema`; the core owns persistence, cursors, retries, rate limits, secrets and, for OAuth, when tokens are refreshed. Settings of the whole installation (an OAuth client id and secret) come from `appConfigSchema` as `ctx.app`, never from the environment directly.
 - External API JSON is parsed with zod and mapped by pure functions into the canonical `Offer` / `Order`. Money is a decimal string (`"129.99"`, at most 4 fraction digits) plus ISO currency, never a float.
 - Throw the SDK's error classes (below), never plain `Error`, and never put secrets, tokens, response bodies or Buyer data in an error message: the message is stored and shown in the panel.
 - Never log credentials or personal data.
@@ -28,7 +28,8 @@ defineConnector({
   id: 'allegro',                 // /^[a-z][a-z0-9-]*$/
   name: 'Allegro',
   kind: 'marketplace',           // 'marketplace' | 'shop' | 'courier' | 'invoicing'
-  auth: { type: 'oauth2' },      // | { type: 'apiKey' } | { type: 'none' }
+  auth: { type: 'oauth2', refresh, expiresAt, deviceFlow },  // | { type: 'apiKey' } | { type: 'none' }; the three hooks are optional
+  appConfigSchema,               // optional; installation settings from HANZA_CONNECTOR_<ID>_<FIELD>, passed as ctx.app
   configSchema,                  // z.object of string / number / boolean / enum fields (renders the panel form)
   credentialsSchema,             // same shape rules; stored encrypted; z.object({}) if none
   capabilities: { ... },
@@ -45,7 +46,7 @@ A **Channel** (`marketplace` or `shop`) must implement `offers.pull`, `orders.pu
 | `price.push(ctx, prices)` | Optional. Set the price of up to 100 Offers (`{ offerExternalId, sku, price: { amount, currency } }`). The currency is always the one your `offers.pull` reported for that Offer; Hanza never converts and never pushes to an Offer without a reported price. Must be repeatable. Implement it only if the Channel lets you set prices. |
 | `orders.updateStatus(ctx, { orderExternalId, status })` | Translate an Order phase (`new`, `processing`, `shipped`, `cancelled`; the SDK type is still called `OrderStatus`) to the Channel's own status and set it. Resolve without a call if the Channel has no equivalent. Must be repeatable. |
 
-`CapabilityContext` gives you `config` (parsed with `configSchema`), `credentials` (parsed with `credentialsSchema`), `fetch` (global fetch with a 30 s timeout; **you** add the authentication to your requests) and `log`.
+`CapabilityContext` gives you `app` (installation settings, parsed with `appConfigSchema`; `{}` without one), `config` (parsed with `configSchema`), `credentials` (parsed with `credentialsSchema`), `fetch` (global fetch with a 30 s timeout; **you** add the authentication to your requests) and `log`.
 
 Paging: `nextCursor` is the position to resume from; when `hasMore` is true it must be non-null and differ from the input cursor. In `orders.pull` the feed is a journal: a cursor past the last entry returns `{ items: [], hasMore: false }`.
 
@@ -57,6 +58,13 @@ Status translation is connector code. Inbound: the Channel's statuses and events
 - **Once a `paid` fact exists, never set `awaitingPayment` back to true** (a chargeback, a refund, a payment the Channel reverses). An Order with both breaks `orderSchema`, and one such Order turns the whole page into a `PermanentError` that stops the Connection's Order feed. Keep reporting it as paid; refunds are not modelled yet.
 
 Canonical schemas (all exported): `offerSchema`, `orderSchema` (with `buyerSchema`, `addressSchema`, `orderLineSchema`, `channelFactSchema`), `stockLevelSchema`, `offerPriceSchema`, `moneySchema`. Use the glossary in `packages/connector-sdk/CONTEXT.md` for names (Offer, Order, Buyer, Channel fact, Channel price; not "listing", "customer", "external status").
+
+### OAuth (optional, ADR 0020)
+
+- **Installation settings.** Allegro-like Channels forbid asking each user for a client id and secret: the operator registers one application per installation. Declare `appConfigSchema` (flat, like `configSchema`); field `clientId` of connector `allegro` is read from `HANZA_CONNECTOR_ALLEGRO_CLIENT_ID`. While a required field is missing the panel lists the connector as not set up, and runs of existing Connections fail `permanent` naming the variables.
+- **Refresh.** Put the access token's expiry in the credentials and return it from `auth.expiresAt(credentials)`. Implement `auth.refresh(ctx, credentials)` to return the new credentials, rotated refresh token included; throw `AuthExpiredError` when the Channel refuses the refresh token. Never refresh inside a capability: the core refreshes 15 minutes before expiry, and once after a capability throws `AuthExpiredError` (then it retries that call), serialised per Connection, and stores the result before it is used.
+- **Sign-in (device flow).** `auth.deviceFlow = { start, poll, verificationHosts }`: `start(ctx)` asks the Channel for a device code and returns `{ deviceCode, userCode, verificationUri, verificationUriComplete, expiresInSeconds, intervalSeconds }`; `poll(ctx, deviceCode)` returns `pending`, `slow_down`, `denied`, `expired`, or `approved` with the credentials and the Channel account `{ id, label }` (e.g. from a "who am I" call). "Sign in again" refuses another account id. `verificationHosts` lists the hosts the link may point to; the panel shows only `https:` links on them. With a device flow, credentials are never shown as form fields.
+- **Conformance.** With `auth.refresh`, pass `refresh: { fetch, refused }` (C14: the refreshed credentials match the schema, a refused one fails `auth_expired`); with `auth.deviceFlow`, pass `deviceFlow: { fetch }` (C15); with `appConfigSchema`, pass `app`.
 
 ### Errors
 

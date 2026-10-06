@@ -20,6 +20,18 @@ _Avoid_: Status translation, status map, channel statuses
 Whether Hanza can currently work with a Connection: not checked yet, working, failing, or waiting for the organization to sign in to the connector again.
 _Avoid_: Connection status, connection state
 
+**Installation settings**:
+A connector's settings that belong to the whole Hanza installation, not to one organization, such as the client id and secret of the OAuth application its operator registered with a marketplace. Set by whoever runs Hanza in `HANZA_CONNECTOR_<CONNECTOR>_<FIELD>`; a connector whose required ones are missing is "not set up" and cannot be connected.
+_Avoid_: App config, global config, connector credentials
+
+**Sign-in**:
+A person proving to a Channel that Hanza may act for their account there, so a Connection gets its credentials: Hanza shows a code, the person approves it on the Channel's page, and Hanza stores the result. "Sign in again" does the same for an existing Connection and must end with the same Channel account.
+_Avoid_: Authorization, OAuth flow, login, reconnect
+
+**Channel account**:
+The seller's account on the Channel that a Connection signed in as. One per Connection; an organization cannot connect the same Channel account twice.
+_Avoid_: Seller id, profile, user
+
 **Event**:
 A record that something happened to an organization's data, written together with the change it describes. Events are a trail and a trigger, never the source of truth.
 _Avoid_: Log entry, message, notification

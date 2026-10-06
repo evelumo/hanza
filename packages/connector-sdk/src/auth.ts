@@ -70,7 +70,7 @@ export interface OAuth2Auth<TConfig = unknown, TCredentials = unknown, TApp = un
   /**
    * Exchange the stored credentials for fresh ones (rotated refresh token included). The core decides
    * when, serialises refreshes per Connection and stores the result before any capability uses it
-   * (ADR 0019). Throw `AuthExpiredError` when the refresh itself is refused.
+   * (ADR 0020). Throw `AuthExpiredError` when the refresh itself is refused.
    */
   refresh?(ctx: AuthContext<TConfig, TApp>, credentials: TCredentials): Promise<TCredentials>
   /** ISO time the access token in these credentials expires, or null if unknown. */

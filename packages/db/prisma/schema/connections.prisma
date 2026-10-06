@@ -38,7 +38,7 @@ model Connection {
   config          Json
   /// Sealed with HANZA_ENCRYPTION_KEY, organization id as authenticated data (ADR 0006). Never selected by panel queries.
   credentials     String
-  /// Bumped on every write of `credentials` (refresh, sign-in); a refresh writes only if it is unchanged (ADR 0019).
+  /// Bumped on every write of `credentials` (refresh, sign-in); a refresh writes only if it is unchanged (ADR 0020).
   credentialsVersion  Int       @default(0)
   /// When the access token in `credentials` expires, as the connector reports it. Not secret.
   credentialsExpireAt DateTime?

@@ -32,7 +32,7 @@ export interface OpenedConnection {
   name: string
   config: unknown
   credentials: unknown
-  /** Bumped on every write of the credentials; a refresh compares it (ADR 0019). */
+  /** Bumped on every write of the credentials; a refresh compares it (ADR 0020). */
   credentialsVersion: number
   health: ConnectionHealth
 }

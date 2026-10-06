@@ -52,7 +52,7 @@ async function beginSyncRun(ctx: Context, input: SyncRunInput): Promise<SyncRun 
     },
   }
 
-  // Token lifetime is the core's (ADR 0019): refresh ahead of expiry, and once after the Channel refuses the token.
+  // Token lifetime is the core's (ADR 0020): refresh ahead of expiry, and once after the Channel refuses the token.
   let version = opened.credentialsVersion
   const renew = async (force: boolean) => {
     const current = await refreshCredentials(ctx, { organizationId, connectionId, connector, app: context.app, seenVersion: version, force })

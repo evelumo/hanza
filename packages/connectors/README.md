@@ -22,6 +22,15 @@ a `paid` Channel fact once they are paid (ADR 0015; details in the skill):
   refund): one Order that breaks `orderSchema` turns the whole page into a
   `PermanentError` and stops the Connection's Order feed.
 
+A connector that needs settings of the whole installation (an OAuth
+application's client id and secret) declares `appConfigSchema`; the core reads
+them from `HANZA_CONNECTOR_<ID>_<FIELD>` and passes them as `ctx.app`. A
+connector with `auth.type: 'oauth2'` may add `auth.refresh` and
+`auth.expiresAt` (the core decides when to refresh and stores the rotated
+credentials, ADR 0020) and `auth.deviceFlow` (the panel's "Connect" and "Sign
+in again" then go through a code the person approves on the Channel). Its
+credentials are never typed into a form.
+
 Every connector proves it follows the contract with the conformance kit
 (`assertConformance` from `@hanza/connector-sdk/testing`), called from its own
 `connector.test.ts` with recorded fixtures and no network.
@@ -41,5 +50,6 @@ not fit, report `price: null`.
 | Id | Package | Kind | What it is |
 | --- | --- | --- | --- |
 | `fake` | `@hanza/connector-fake` | marketplace | In-memory Channel for tests and demos, with every capability including `price.push`. The reference for how a connector looks. Not a real Channel. |
+| `fake-oauth` | `@hanza/connector-fake` | marketplace | The same in-memory data behind an OAuth sign-in (device flow, rotating tokens, installation settings). Only available where `HANZA_CONNECTOR_FAKE_OAUTH_CLIENT_ID` and `_CLIENT_SECRET` are set. Not a real Channel. |
 
 Allegro and WooCommerce come first among the real ones (stage 2 of the plan).

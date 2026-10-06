@@ -32,7 +32,7 @@ test('connects a Channel by signing in, then signs in again after the sign-in st
 
   // The person approves on the Channel's page; the sign-in page notices on its own and opens the new Connection.
   await fakeOAuth.approve(code)
-  await expect(page.getByRole('heading', { level: 1, name })).toBeVisible({ timeout: 20_000 })
+  await expect(page.getByRole('heading', { level: 1, name, exact: true })).toBeVisible({ timeout: 20_000 })
   await expect(page.getByText('Signed in as fake-seller')).toBeVisible()
   const connectionPath = new URL(page.url()).pathname
   await reloadUntil(page, connectionPath, async () => {
@@ -52,15 +52,15 @@ test('connects a Channel by signing in, then signs in again after the sign-in st
   await notice.getByRole('button', { name: 'Sign in again' }).click()
   await expect(page.getByRole('heading', { level: 1, name: `Sign in again to Test OAuth channel: ${name}` })).toBeVisible()
   await fakeOAuth.approve(await shownCode(page), { id: 'another-seller', label: 'another-seller' })
-  await expect(page.getByRole('alert')).toContainText('You signed in as another-seller, a different Test OAuth channel account', {
+  await expect(page.getByRole('alert').filter({ hasText: 'You signed in as another-seller, a different Test OAuth channel account' })).toBeVisible({
     timeout: 20_000,
   })
 
   // Same account: the credentials are replaced, no second Connection is made, and it syncs again.
   await page.getByRole('button', { name: 'Try again' }).click()
   await fakeOAuth.approve(await shownCode(page))
-  await expect(page.getByRole('heading', { level: 1, name })).toBeVisible({ timeout: 20_000 })
-  expect(new URL(page.url()).pathname).toBe(connectionPath)
+  await expect(page.getByRole('heading', { level: 1, name, exact: true })).toBeVisible({ timeout: 20_000 })
+  await expect(page).toHaveURL((url) => url.pathname === connectionPath)
   await reloadUntil(page, connectionPath, async () => {
     await expect(page.getByText('Working', { exact: true })).toBeVisible({ timeout: 1_000 })
     await expect(page.getByRole('region', { name: 'Sign-in required' })).toHaveCount(0)
@@ -72,12 +72,12 @@ test('connects a Channel by signing in, then signs in again after the sign-in st
 test('a refused sign-in can be tried again, and an open one cancelled', async ({ page, fakeOAuth }) => {
   await signUp(page)
   await fakeOAuth.deny(await startConnecting(page, 'Refused'))
-  await expect(page.getByRole('alert')).toHaveText('Access was refused on Test OAuth channel.', { timeout: 20_000 })
+  await expect(page.getByRole('alert').filter({ hasText: 'Access was refused on Test OAuth channel.' })).toBeVisible({ timeout: 20_000 })
 
   await page.getByRole('button', { name: 'Try again' }).click()
   await shownCode(page)
   await page.getByRole('button', { name: 'Cancel' }).click()
-  await expect(page.getByRole('alert')).toHaveText('The sign-in was cancelled.')
+  await expect(page.getByRole('alert').filter({ hasText: 'The sign-in was cancelled.' })).toBeVisible()
   await page.goto('/connections')
   await expect(page.getByText('There are no connections yet.', { exact: false })).toBeVisible()
 })

@@ -4,7 +4,7 @@ import type { z } from 'zod'
 import type { Context } from '../context'
 import { buildAuthContext } from '../sync/auth-context'
 
-/** Refresh when the access token expires within this (ADR 0019). */
+/** Refresh when the access token expires within this (ADR 0020). */
 export const REFRESH_MARGIN_MS = 15 * 60_000
 
 // The refresh request runs inside the transaction that holds the lock (bounded by the 30 s fetch timeout).
@@ -58,7 +58,7 @@ export function canRefresh(connector: AnyConnectorDefinition): boolean {
 
 /**
  * Serialises every write of a Connection's credentials (refresh, sign-in) for the transaction. An advisory
- * lock, not a row lock: `setHealth` locks the row, and must not wait on a token request (ADR 0019).
+ * lock, not a row lock: `setHealth` locks the row, and must not wait on a token request (ADR 0020).
  */
 export async function lockCredentials(tx: Tx, connectionId: string): Promise<void> {
   await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`hanza:connection-credentials:${connectionId}`}, 0))`
@@ -73,7 +73,7 @@ export interface CurrentCredentials {
 }
 
 /**
- * Refreshes a Connection's credentials, at most one refresh per Connection at a time (ADR 0019): under the lock it
+ * Refreshes a Connection's credentials, at most one refresh per Connection at a time (ADR 0020): under the lock it
  * re-reads them; if their version moved since the caller read `seenVersion`, another job refreshed them and they are
  * returned as they are (the loser re-reads). Otherwise, if they are still stale or `force` is set (the Channel just
  * refused them), the connector's `auth.refresh` is called and the result is sealed and written with the version

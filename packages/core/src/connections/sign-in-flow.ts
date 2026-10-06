@@ -242,7 +242,7 @@ type Outcome = { status: 'approved'; connectionId: string; created: boolean } | 
 /**
  * Stores the credentials of an approved sign-in, in one transaction with the sign-in row locked (a duplicate
  * poll finds it ended and does nothing): a new Connection is created, or an existing one gets its credentials
- * replaced under the credentials lock (ADR 0019) and health back to `unknown`, so the tick schedules it again.
+ * replaced under the credentials lock (ADR 0020) and health back to `unknown`, so the tick schedules it again.
  * A different Channel account than the Connection's, or one another Connection already uses, is refused.
  */
 async function completeSignIn(

@@ -6,3 +6,4 @@ Channels authenticate in incompatible ways (static keys, OAuth tokens that refre
 
 - Connector code sees secrets, so it must never log them or put them in an error message; that is a rule for connector authors and reviewers, not something the core can enforce.
 - Losing the key means signing in to every connector again. Key rotation is not built; the `v1:` prefix of the sealed format leaves room for it.
+- Amended by ADR 0020: connectors still authenticate their own requests, but the core decides when OAuth tokens are refreshed, serialises the refreshes and stores the rotated credentials.

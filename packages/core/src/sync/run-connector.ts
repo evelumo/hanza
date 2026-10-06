@@ -10,7 +10,7 @@ export interface RunScope {
   stream: SyncStream
   run: JobRunInfo
   /**
-   * Set for connectors that refresh credentials (ADR 0019): after an `auth_expired` from the call, renews the run's
+   * Set for connectors that refresh credentials (ADR 0020): after an `auth_expired` from the call, renews the run's
    * credentials (refreshing them, or re-reading them if another job already did) and resolves true when the call is
    * worth one retry with them.
    */
