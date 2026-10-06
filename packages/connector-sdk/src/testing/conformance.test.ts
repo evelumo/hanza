@@ -178,6 +178,8 @@ const broken: Array<[id: string, connector: AnyConnectorDefinition, fixtures?: C
   ['C11', validConnector(), { ...fixtures, unauthorized: { credentials: { apiKey: 'also-fine' } } }],
   ['C11', withCapabilities({ 'orders.pull': async () => { throw new PermanentError('wrong kind') } })],
   ['C14', forbiddenIsAuth, { ...fixtures, unauthorized: undefined, fetch: servingFetch }],
+  // Given recorded responses, but its pull never calls fetch: C14 would pass without seeing a 403.
+  ['C14', validConnector(), { ...fixtures, fetch: servingFetch }],
   ['C12', withCapabilities({ 'stock.push': async () => { throw new Error('plain error') } })],
   ['C12', withCapabilities({ 'orders.pull': async () => { throw new Error('plain error') } })],
   ['C12', withCapabilities({ 'price.push': async () => { throw new Error('plain error') } })],

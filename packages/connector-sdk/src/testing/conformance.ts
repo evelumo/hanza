@@ -24,8 +24,8 @@ export interface ConformanceFixtures {
   /** If given, orders.pull with these overrides must fail with kind 'auth_expired'. */
   unauthorized?: { credentials?: unknown; fetch?: typeof fetch }
   /**
-   * C14: a pull run against a Channel that answers every request `403 Forbidden` (no auth signal) must not fail
-   * `auth_expired`. Default: a fetch answering a bare 403. Pass `false` only if the Channel really uses 403 for
+   * C14: the pulls, run against a Channel that answers every request `403 Forbidden` (no auth signal), must not fail
+   * `auth_expired`, and must send a request when `fetch` is given. Default: a fetch answering a bare 403. Pass `false` only if the Channel really uses 403 for
    * rejected credentials, and say so in the connector's AGENTS.md.
    */
   forbidden?: false | { fetch?: typeof fetch }
@@ -337,20 +337,32 @@ export async function assertConformance(connector: AnyConnectorDefinition, fixtu
   }
 
   // C14
-  const forbiddenPull: ((ctx: CapabilityContext, cursor: string | null) => Promise<unknown>) | undefined = pullOrders ?? pullOffers
-  if (fixtures.forbidden !== false && forbiddenPull) {
+  const forbiddenPulls = (
+    [
+      ['orders.pull', pullOrders],
+      ['offers.pull', pullOffers],
+    ] as const
+  ).filter(([, pull]) => pull !== undefined)
+  if (fixtures.forbidden !== false && forbiddenPulls.length > 0) {
     await check('C14', async () => {
-      const name = pullOrders ? 'orders.pull' : 'offers.pull'
-      const forbiddenFetch: typeof fetch =
-        (fixtures.forbidden && fixtures.forbidden.fetch) || (async () => new Response(null, { status: 403, statusText: 'Forbidden' }))
-      try {
-        await call(name, () => forbiddenPull({ ...context, fetch: forbiddenFetch }, null))
-      } catch (error) {
-        const { kind } = classifyConnectorError(error)
-        if (kind === 'auth_expired') {
-          fail('C14', `${name} failed as 'auth_expired' on a 403 Forbidden; without an auth signal a 403 is 'permanent' (no sign-in prompt)`)
+      const answer = (fixtures.forbidden && fixtures.forbidden.fetch) || (async () => new Response(null, { status: 403, statusText: 'Forbidden' }))
+      let requests = 0
+      const forbiddenFetch: typeof fetch = (input, init) => {
+        requests++
+        return answer(input, init)
+      }
+      for (const [name, pull] of forbiddenPulls) {
+        try {
+          await call(name, () => (pull as (ctx: CapabilityContext, cursor: string | null) => Promise<unknown>)({ ...context, fetch: forbiddenFetch }, null))
+        } catch (error) {
+          const { kind } = classifyConnectorError(error)
+          if (kind === 'auth_expired') {
+            fail('C14', `${name} failed as 'auth_expired' on a 403 Forbidden; without an auth signal a 403 is 'permanent' (no sign-in prompt)`)
+          }
         }
       }
+      // A connector that talks HTTP (it was given recorded responses) must have met the 403, or the check proved nothing.
+      if (fixtures.fetch && requests === 0) fail('C14', 'no pull made a request, so the 403 was never seen')
     })
   }
 

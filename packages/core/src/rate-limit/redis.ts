@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import { Redis } from 'ioredis'
 import type { Logger } from '../logger'
-import type { Bucket, RateLimiter, Reservation } from './limiter'
+import type { Bucket, LeaseResult, RateLimiter, Reservation } from './limiter'
 
 // Every script reads Redis's clock, so workers on machines with skewed clocks share one timeline.
 const NOW = `
@@ -74,14 +74,28 @@ type Scripts = {
   hanzaRatePark(...args: Array<string | number>): Promise<number>
 }
 
-const FAIL_OPEN_LOG_EVERY_MS = 60_000
+const UNAVAILABLE_LOG_EVERY_MS = 60_000
+/** How long a request refused because Redis did not answer waits before its job tries again. */
+export const UNAVAILABLE_RETRY_AFTER_MS = 5_000
+
+export interface RedisRateLimiterOptions {
+  prefix: string
+  log: Logger
+  /**
+   * What to do when Redis cannot be reached or answers too slowly (2 s). `refuse` (default): refuse the request,
+   * so its job retries in `UNAVAILABLE_RETRY_AFTER_MS`; with Redis down the queue cannot finish a job either, and
+   * unbudgeted calls risk the whole application's block. `allow`: send it unlimited.
+   */
+  whenUnavailable?: 'refuse' | 'allow'
+}
 
 /**
  * The limiter every worker of an installation shares. Keys are `<prefix>:ratelimit:<bucket>:{log,parked,leases}`;
  * all of them expire when idle. Connects on first use, so a context that never limits a request opens nothing.
  * Assumes one Redis (not a cluster): a reservation's keys may live in different slots.
  */
-export function createRedisRateLimiter(redisUrl: string, options: { prefix: string; log: Logger }): RateLimiter {
+export function createRedisRateLimiter(redisUrl: string, options: RedisRateLimiterOptions): RateLimiter {
+  const allow = options.whenUnavailable === 'allow'
   let client: (Redis & Scripts) | undefined
   const redis = (): Redis & Scripts => {
     if (client) return client
@@ -96,14 +110,13 @@ export function createRedisRateLimiter(redisUrl: string, options: { prefix: stri
   const key = (bucket: string, suffix: 'log' | 'parked' | 'leases') => `${options.prefix}:ratelimit:${bucket}:${suffix}`
 
   let lastFailureLog = 0
-  // Fail open: with Redis down the queue is down too, and blocking every Channel call would only add an outage.
-  async function failOpen<T>(operation: string, run: () => Promise<T>, fallback: T): Promise<T> {
+  async function orElse<T>(operation: string, run: () => Promise<T>, fallback: T): Promise<T> {
     try {
       return await run()
     } catch (error) {
-      if (Date.now() - lastFailureLog >= FAIL_OPEN_LOG_EVERY_MS) {
+      if (Date.now() - lastFailureLog >= UNAVAILABLE_LOG_EVERY_MS) {
         lastFailureLog = Date.now()
-        options.log.warn('rate limiter unavailable, requests are not limited', {
+        options.log.warn(allow ? 'rate limiter unavailable, requests are not limited' : 'rate limiter unavailable, requests are refused', {
           operation,
           error: error instanceof Error ? error.message : String(error),
         })
@@ -114,7 +127,7 @@ export function createRedisRateLimiter(redisUrl: string, options: { prefix: stri
 
   return {
     reserve(buckets: Bucket[], maxWaitMs: number): Promise<Reservation> {
-      return failOpen(
+      return orElse<Reservation>(
         'reserve',
         async () => {
           const keys = buckets.flatMap((bucket) => [key(bucket.key, 'log'), key(bucket.key, 'parked')])
@@ -122,24 +135,24 @@ export function createRedisRateLimiter(redisUrl: string, options: { prefix: stri
           const [granted, ms] = await redis().hanzaRateReserve(keys.length, ...keys, maxWaitMs, randomUUID(), ...rates)
           return granted === 1 ? { granted: true, waitMs: ms } : { granted: false, retryAfterMs: ms }
         },
-        { granted: true, waitMs: 0 },
+        allow ? { granted: true, waitMs: 0 } : { granted: false, retryAfterMs: UNAVAILABLE_RETRY_AFTER_MS, unavailable: true },
       )
     },
-    acquireLease(bucket, limit, leaseMs) {
-      return failOpen(
+    acquireLease(bucket, limit, leaseMs): Promise<LeaseResult> {
+      return orElse<LeaseResult>(
         'acquireLease',
         async () => {
           const lease = randomUUID()
-          return (await redis().hanzaRateAcquire(key(bucket, 'leases'), limit, leaseMs, lease)) === 1 ? lease : null
+          return (await redis().hanzaRateAcquire(key(bucket, 'leases'), limit, leaseMs, lease)) === 1 ? { lease } : { lease: null }
         },
-        randomUUID(),
+        allow ? { lease: randomUUID() } : { lease: null, retryAfterMs: UNAVAILABLE_RETRY_AFTER_MS },
       )
     },
     releaseLease(bucket, lease) {
-      return failOpen('releaseLease', async () => void (await redis().zrem(key(bucket, 'leases'), lease)), undefined)
+      return orElse('releaseLease', async () => void (await redis().zrem(key(bucket, 'leases'), lease)), undefined)
     },
     park(buckets, ms) {
-      return failOpen(
+      return orElse(
         'park',
         async () => {
           if (buckets.length === 0 || ms <= 0) return

@@ -3,7 +3,7 @@ import type { Logger } from '../logger'
 import { reachableTestRedis, testRedisPrefix } from '../testing/redis'
 import type { RateLimiter } from './limiter'
 import { describeRateLimiter } from './limiter-contract'
-import { createRedisRateLimiter } from './redis'
+import { createRedisRateLimiter, UNAVAILABLE_RETRY_AFTER_MS } from './redis'
 
 const redisUrl = await reachableTestRedis()
 const silent: Logger = { info() {}, warn() {}, error() {} }
@@ -21,7 +21,7 @@ describe.skipIf(!redisUrl)('Redis limiter (REDIS_URL)', () => {
   describeRateLimiter('Redis limiter', () => {
     const limiter = createRedisRateLimiter(redisUrl!, { prefix, log: silent })
     limiters.push(limiter)
-    return { limiter, advance: sleep, key: (name) => `${name}-${counter++}`, slack: 60 }
+    return { limiter, advance: sleep, now: () => performance.now(), key: (name) => `${name}-${counter++}`, slack: 5 }
   })
 
   it('is shared by two instances, as by two workers', async () => {
@@ -59,16 +59,38 @@ describe.skipIf(!redisUrl)('Redis limiter (REDIS_URL)', () => {
 })
 
 describe('Redis limiter without Redis', () => {
-  it('fails open: grants, leases and parks without throwing, and warns once', async () => {
+  // Nothing listens on port 1.
+  const deadRedis = 'redis://127.0.0.1:1'
+  const recording = () => {
     const warnings: string[] = []
     const log: Logger = { info() {}, warn: (message) => void warnings.push(message), error() {} }
-    // Nothing listens on port 1.
-    const limiter = createRedisRateLimiter('redis://127.0.0.1:1', { prefix: 'unused', log })
+    return { warnings, log }
+  }
+
+  it('fails closed by default: refuses requests and leases for a few seconds, without throwing, and warns once', async () => {
+    const { warnings, log } = recording()
+    const limiter = createRedisRateLimiter(deadRedis, { prefix: 'unused', log })
     try {
-      expect(await limiter.reserve([{ key: 'k', rate: { requests: 1, windowMs: 1000 } }], 0)).toEqual({ granted: true, waitMs: 0 })
-      expect(await limiter.acquireLease('k', 1, 1000)).toEqual(expect.any(String))
+      expect(await limiter.reserve([{ key: 'k', rate: { requests: 1, windowMs: 1000 } }], 0)).toEqual({
+        granted: false,
+        retryAfterMs: UNAVAILABLE_RETRY_AFTER_MS,
+        unavailable: true,
+      })
+      expect(await limiter.acquireLease('k', 1, 1000)).toEqual({ lease: null, retryAfterMs: UNAVAILABLE_RETRY_AFTER_MS })
       await expect(limiter.releaseLease('k', 'lease')).resolves.toBeUndefined()
       await expect(limiter.park(['k'], 1000)).resolves.toBeUndefined()
+      expect(warnings).toEqual(['rate limiter unavailable, requests are refused'])
+    } finally {
+      await limiter.close()
+    }
+  })
+
+  it("fails open only when built with whenUnavailable: 'allow'", async () => {
+    const { warnings, log } = recording()
+    const limiter = createRedisRateLimiter(deadRedis, { prefix: 'unused', log, whenUnavailable: 'allow' })
+    try {
+      expect(await limiter.reserve([{ key: 'k', rate: { requests: 1, windowMs: 1000 } }], 0)).toEqual({ granted: true, waitMs: 0 })
+      expect(await limiter.acquireLease('k', 1, 1000)).toEqual({ lease: expect.any(String) })
       expect(warnings).toEqual(['rate limiter unavailable, requests are not limited'])
     } finally {
       await limiter.close()

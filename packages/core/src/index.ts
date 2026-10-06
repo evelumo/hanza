@@ -18,7 +18,11 @@ export {
   createInMemoryRateLimiter,
   createRedisRateLimiter,
   RATE_LIMIT_MAX_WAIT_MS,
+  RequestRefusedError,
+  UNAVAILABLE_RETRY_AFTER_MS,
   type Bucket,
+  type LeaseResult,
+  type RedisRateLimiterOptions,
   type RateLimiter,
   type Reservation,
 } from './rate-limit'

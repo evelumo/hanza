@@ -136,6 +136,14 @@ describe('createJobProcessor', () => {
     expect(second.updateData).toHaveBeenCalledWith({ organizationId: 'o', [RETRY_LATER_KEY]: { attempt: 3, count: 2 } })
   })
 
+  it('does not count a retry marked counted: false (Hanza throttling itself)', async () => {
+    handler.mockRejectedValueOnce(new RetryLaterError(1_000, 'refused before sending', { counted: false }))
+    const target = bullJob({ data: { organizationId: 'o', [RETRY_LATER_KEY]: { attempt: 3, count: 4 } } })
+    await expect(process(target)).rejects.toBeInstanceOf(DelayedError)
+    expect(target.updateData).toHaveBeenCalledWith({ organizationId: 'o', [RETRY_LATER_KEY]: { attempt: 3, count: 4 } })
+    expect(target.moveToDelayed).toHaveBeenCalled()
+  })
+
   it('starts the count again once an attempt was used since it was recorded', async () => {
     handler.mockResolvedValueOnce()
     await process(bullJob({ attemptsMade: 3, data: { organizationId: 'o', [RETRY_LATER_KEY]: { attempt: 3, count: 7 } } }))

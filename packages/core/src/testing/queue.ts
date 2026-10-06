@@ -107,7 +107,7 @@ export function createInMemoryJobQueue(): InMemoryJobQueue {
           })
         } catch (error) {
           if (error instanceof RetryLaterError) {
-            retriedLater.set(job, (retriedLater.get(job) ?? 0) + 1)
+            if (error.counted) retriedLater.set(job, (retriedLater.get(job) ?? 0) + 1)
             // At most one waiting job per coalesce key; payloads only identify the work, so either one will do.
             if (!isWaiting(job.options.coalesceKey)) waiting.push(job)
             continue

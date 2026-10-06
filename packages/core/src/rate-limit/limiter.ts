@@ -9,11 +9,16 @@ export interface Bucket {
   rate?: RequestRate
 }
 
-export type Reservation = { granted: true; waitMs: number } | { granted: false; retryAfterMs: number }
+/** `unavailable`: refused because the store could not be asked, not because a budget is used up. */
+export type Reservation = { granted: true; waitMs: number } | { granted: false; retryAfterMs: number; unavailable?: true }
+
+/** No lease: all are taken (poll again), or, with `retryAfterMs`, the store could not be asked (stop polling). */
+export type LeaseResult = { lease: string } | { lease: null; retryAfterMs?: number }
 
 /**
  * Shared request budgets (ADR 0019). Kept engine-neutral like `JobQueue`: Redis in the apps, in memory in tests.
- * Implementations never throw: a store that cannot be reached lets requests through (fail open).
+ * Implementations never throw: a store that cannot be reached refuses requests (fail closed) unless built to let
+ * them through.
  */
 export interface RateLimiter {
   /**
@@ -23,8 +28,8 @@ export interface RateLimiter {
    * says how far away it is.
    */
   reserve(buckets: Bucket[], maxWaitMs: number): Promise<Reservation>
-  /** Takes one of `limit` leases on `key` for at most `leaseMs`; null when all are taken. */
-  acquireLease(key: string, limit: number, leaseMs: number): Promise<string | null>
+  /** Takes one of `limit` leases on `key` for at most `leaseMs`. */
+  acquireLease(key: string, limit: number, leaseMs: number): Promise<LeaseResult>
   releaseLease(key: string, lease: string): Promise<void>
   /** No request is reserved on these keys for `ms` from now. Never shortens a longer park. */
   park(keys: string[], ms: number): Promise<void>

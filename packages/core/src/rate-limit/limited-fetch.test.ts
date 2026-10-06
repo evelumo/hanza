@@ -1,8 +1,9 @@
-import { RateLimitedError, defineConnector, type RateLimits } from '@hanza/connector-sdk'
+import { RateLimitedError, classifyConnectorError, defineConnector, type RateLimits } from '@hanza/connector-sdk'
 import { describe, expect, it } from 'vitest'
 import { z } from 'zod'
 import type { Logger } from '../logger'
-import { limitFetch, ratePlan, type Clock } from './limited-fetch'
+import { RequestRefusedError, isRefusedBeforeSending, limitFetch, ratePlan, type Clock } from './limited-fetch'
+import type { RateLimiter } from './limiter'
 import { createInMemoryRateLimiter } from './memory'
 
 function connector(rateLimits?: RateLimits, id = 'limited') {
@@ -144,7 +145,7 @@ describe('limitFetch', () => {
     expect(clock.slept.length).toBeLessThan(15)
     expect(sent).toEqual([])
 
-    await limiter.releaseLease('conn:c1', held!)
+    await limiter.releaseLease('conn:c1', held.lease!)
     expect((await fetchFor('c1')('https://channel.test/2')).status).toBe(204)
     // Another Connection has its own leases.
     await limiter.acquireLease('conn:c1', 1, 60_000)
@@ -158,7 +159,62 @@ describe('limitFetch', () => {
     }) as typeof fetch
     const fetch = limitFetch(failing, ratePlan(connector({ connection: { concurrency: 1 } }), 'c1')!, { limiter, log, clock })
     await expect(fetch('https://channel.test/1')).rejects.toThrow('fetch failed')
-    expect(await limiter.acquireLease('conn:c1', 1, 1_000)).not.toBeNull()
+    expect((await limiter.acquireLease('conn:c1', 1, 1_000)).lease).not.toBeNull()
+  })
+
+  it('marks its refusals as made before sending, so they do not count as the Channel limiting', async () => {
+    const { fetchFor } = setup({ application: { requests: 1, windowMs: 60_000 } })
+    await fetchFor('c1')('https://channel.test/1')
+    const error = await fetchFor('c1')('https://channel.test/2').catch((reason: unknown) => reason)
+    expect(error).toBeInstanceOf(RequestRefusedError)
+    expect(isRefusedBeforeSending(error)).toBe(true)
+    expect(classifyConnectorError(error)).toMatchObject({ kind: 'rate_limited', retryAfterMs: 60_000 })
+    expect(isRefusedBeforeSending(new RateLimitedError('429 Too Many Requests', { retryAfterMs: 1_000 }))).toBe(false)
+  })
+
+  it('refuses at once, without polling, when the limiter cannot be asked', async () => {
+    const clock = fakeClock()
+    const log = recordingLog()
+    const sent: string[] = []
+    const unavailable: RateLimiter = {
+      ...createInMemoryRateLimiter(),
+      reserve: async () => ({ granted: false, retryAfterMs: 5_000, unavailable: true }),
+      acquireLease: async () => ({ lease: null, retryAfterMs: 5_000 }),
+    }
+    const base = (async (input: Parameters<typeof fetch>[0]) => {
+      sent.push(String(input))
+      return ok()
+    }) as typeof fetch
+    for (const rateLimits of [{ connection: { concurrency: 2 } }, { application: { requests: 10, windowMs: 1_000 } }]) {
+      const fetch = limitFetch(base, ratePlan(connector(rateLimits), 'c1')!, { limiter: unavailable, log, clock })
+      const error = await fetch('https://channel.test/1').catch((reason: unknown) => reason)
+      expect(error).toBeInstanceOf(RequestRefusedError)
+      expect((error as RequestRefusedError).retryAfterMs).toBe(5_000)
+      expect((error as Error).message).toMatch(/rate limiter is unavailable/)
+    }
+    expect(clock.slept).toEqual([])
+    expect(sent).toEqual([])
+  })
+
+  it('stops waiting when the request is aborted, and sends nothing', async () => {
+    const limiter = createInMemoryRateLimiter()
+    const sent: string[] = []
+    const base = (async (input: Parameters<typeof fetch>[0]) => {
+      sent.push(String(input))
+      return ok()
+    }) as typeof fetch
+    const rateLimits = { connection: { rate: { requests: 1, windowMs: 1_500 }, concurrency: 1 } }
+    const fetch = limitFetch(base, ratePlan(connector(rateLimits), 'c1')!, { limiter, log: recordingLog() })
+    await fetch('https://channel.test/1')
+    const controller = new AbortController()
+    const started = Date.now()
+    setTimeout(() => controller.abort(new Error('stopped')), 20)
+    await expect(fetch('https://channel.test/2', { signal: controller.signal })).rejects.toThrow('stopped')
+    expect(Date.now() - started).toBeLessThan(1_000)
+    expect(sent).toEqual(['https://channel.test/1'])
+    // The lease was given back.
+    expect((await limiter.acquireLease('conn:c1', 1, 1_000)).lease).not.toBeNull()
+    await expect(fetch('https://channel.test/3', { signal: AbortSignal.abort(new Error('already')) })).rejects.toThrow('already')
   })
 
   it('never has more requests in flight per Connection than its concurrency (real clock)', async () => {

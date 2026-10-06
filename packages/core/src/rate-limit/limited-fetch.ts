@@ -34,20 +34,52 @@ export function ratePlan(connector: AnyConnectorDefinition, connectionId: string
   return { connectorId: connector.id, connectionId, buckets, concurrency }
 }
 
+/**
+ * Refused by Hanza's own limiter before anything was sent. Still a `RateLimitedError` to the connector and the
+ * engine (the job waits without using an attempt), but it does not count towards `MAX_RATE_LIMIT_RETRIES`: Hanza
+ * throttling itself says nothing about the Channel, and many jobs wake together after a long pause.
+ */
+export class RequestRefusedError extends RateLimitedError {
+  readonly refusedBeforeSending = true
+
+  constructor(message: string, options: { retryAfterMs: number }) {
+    super(message, options)
+    this.name = 'RequestRefusedError'
+  }
+}
+
+/** Duck-typed like `classifyConnectorError`, so a second copy of the module still counts. */
+export function isRefusedBeforeSending(error: unknown): boolean {
+  return typeof error === 'object' && error !== null && (error as { refusedBeforeSending?: unknown }).refusedBeforeSending === true
+}
+
 export interface Clock {
   now(): number
-  sleep(ms: number): Promise<void>
+  /** Resolves after `ms`, or rejects with the signal's reason once it aborts. */
+  sleep(ms: number, signal?: AbortSignal): Promise<void>
 }
 
 const realClock: Clock = {
   now: () => Date.now(),
-  sleep: (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
+  sleep: (ms, signal) =>
+    new Promise((resolve, reject) => {
+      if (signal?.aborted) return reject(signal.reason)
+      const onAbort = () => {
+        clearTimeout(timer)
+        reject(signal!.reason)
+      }
+      const timer = setTimeout(() => {
+        signal?.removeEventListener('abort', onAbort)
+        resolve()
+      }, ms)
+      signal?.addEventListener('abort', onAbort, { once: true })
+    }),
 }
 
 /**
- * Wraps `base` so every request fits the plan's budgets: it waits (at most `RATE_LIMIT_MAX_WAIT_MS`) for a
- * concurrency lease and a slot, or rejects with `RateLimitedError` before sending, which delays the job without
- * using an attempt. A 429 parks every bucket of the plan for the Channel's Retry-After (60 s when it gives none),
+ * Wraps `base` so every request fits the plan's budgets: it waits (at most `RATE_LIMIT_MAX_WAIT_MS`, cut short by
+ * `init.signal`) for a concurrency lease and a slot, or rejects with `RequestRefusedError` before sending, which
+ * delays the job without using an attempt. A 429 parks every bucket of the plan for the Channel's Retry-After (60 s when it gives none),
  * so other jobs and workers pause too; the response still reaches the connector, which reports the rate limit.
  */
 export function limitFetch(
@@ -60,33 +92,41 @@ export function limitFetch(
   const maxWaitMs = deps.maxWaitMs ?? RATE_LIMIT_MAX_WAIT_MS
   const fields = { connectorId: plan.connectorId, connectionId: plan.connectionId }
 
-  const exceeded = (reason: string, retryAfterMs: number) => {
+  const refused = (reason: string, retryAfterMs: number) => {
     log.warn('rate limit exceeded', { ...fields, reason, retryAfterMs })
-    return new RateLimitedError(`Request limit of connector "${plan.connectorId}" reached (${reason}); retrying later`, {
-      retryAfterMs,
-    })
+    const text =
+      reason === 'rate limiter unavailable'
+        ? `Request to connector "${plan.connectorId}" not sent: the rate limiter is unavailable; retrying later`
+        : `Request limit of connector "${plan.connectorId}" reached (${reason}); retrying later`
+    return new RequestRefusedError(text, { retryAfterMs })
   }
 
   // Polls with backoff: a lease frees when another request ends, which no script can promise ahead of time.
-  async function acquireLease(deadline: number): Promise<{ lease: string; waited: boolean }> {
+  async function acquireLease(deadline: number, signal: AbortSignal | undefined): Promise<{ lease: string; waited: boolean }> {
     const { key, limit } = plan.concurrency!
     for (let pause = POLL_FIRST_MS, waited = false; ; pause = Math.min(POLL_MAX_MS, pause * 2), waited = true) {
-      const lease = await limiter.acquireLease(key, limit, CONCURRENCY_LEASE_MS)
-      if (lease !== null) return { lease, waited }
+      const result = await limiter.acquireLease(key, limit, CONCURRENCY_LEASE_MS)
+      if (result.lease !== null) return { lease: result.lease, waited }
+      if (result.retryAfterMs !== undefined) throw refused('rate limiter unavailable', result.retryAfterMs)
       const left = deadline - clock.now()
-      if (left <= 0) throw exceeded('concurrent requests', CONCURRENCY_RETRY_AFTER_MS)
-      await clock.sleep(Math.min(pause, left))
+      if (left <= 0) throw refused('concurrent requests', CONCURRENCY_RETRY_AFTER_MS)
+      await clock.sleep(Math.min(pause, left), signal)
     }
   }
 
   return async (input, init) => {
+    const signal = init?.signal ?? undefined
+    signal?.throwIfAborted()
     const started = clock.now()
-    const acquired = plan.concurrency ? await acquireLease(started + maxWaitMs) : null
+    const acquired = plan.concurrency ? await acquireLease(started + maxWaitMs, signal) : null
     const lease = acquired?.lease ?? null
     try {
       const reservation = await limiter.reserve(plan.buckets, Math.max(0, started + maxWaitMs - clock.now()))
-      if (!reservation.granted) throw exceeded('requests per window', reservation.retryAfterMs)
-      if (reservation.waitMs > 0) await clock.sleep(reservation.waitMs)
+      if (!reservation.granted) {
+        throw refused(reservation.unavailable ? 'rate limiter unavailable' : 'requests per window', reservation.retryAfterMs)
+      }
+      // An abort here leaves the reserved slot unused: harmless, it only makes later requests a little slower.
+      if (reservation.waitMs > 0) await clock.sleep(reservation.waitMs, signal)
       if (acquired?.waited || reservation.waitMs > 0) log.info('rate limit wait', { ...fields, waitedMs: clock.now() - started })
 
       const response = await base(input, init)

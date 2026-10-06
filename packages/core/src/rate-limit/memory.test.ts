@@ -33,6 +33,7 @@ describeRateLimiter('in-memory limiter', () => {
     advance: async (ms) => {
       now += ms
     },
+    now: () => now,
     key: (name) => `${name}-${counter++}`,
     slack: 0,
   }

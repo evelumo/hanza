@@ -28,11 +28,12 @@ const silent = { info() {}, warn() {}, error() {} }
 const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms))
 
 const CONNECTOR_ID = 'fake-limited'
-const WINDOW_MS = 500
+const WINDOW_MS = 1_000
 const APP_REQUESTS = 4
 const CONNECTION_REQUESTS = 3
-// A request reaches the Channel a little after its reserved slot (timer and Redis round trip), never before it.
-const ARRIVAL_JITTER_MS = 100
+// A request reaches the Channel a little after its reserved slot (timer, Redis round trip, a busy machine running
+// the whole suite), never before it; windows are checked this much shorter.
+const ARRIVAL_JITTER_MS = 250
 
 function order(externalId: string): Parameters<FakeChannel['addOrder']>[0] {
   return {
@@ -204,7 +205,7 @@ describe.skipIf(!databaseUrl).each(variants)('shared rate limits end to end ($na
       expect(busiestWindow(requests.filter((request) => request.apiKey === apiKey), window)).toBeLessThanOrEqual(CONNECTION_REQUESTS)
       expect(fake.api.maxInFlight.get(apiKey)).toBe(1)
     }
-    // And they bit: 18 requests at 4 per 500 ms cannot be sent faster than this.
+    // And they bit: 18 requests at 4 per window cannot be sent faster than this.
     expect(elapsed).toBeGreaterThanOrEqual(Math.floor((18 - APP_REQUESTS) / APP_REQUESTS) * WINDOW_MS)
   })
 

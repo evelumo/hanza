@@ -158,11 +158,13 @@ describe('retryAfterFromHeaders', () => {
     expect(read({ 'Retry-After': 'Tue, 06 Oct 2026 11:59:00 GMT' })).toBe(0)
   })
 
-  it('falls back to RateLimit-Reset, then X-RateLimit-Reset, as a delay or a Unix time', () => {
+  it('falls back to RateLimit-Reset, then X-RateLimit-Reset, as a delay or a Unix time in seconds or milliseconds', () => {
     expect(read({ 'RateLimit-Reset': '12' })).toBe(12_000)
     expect(read({ 'Retry-After': 'soon', 'X-RateLimit-Reset': '0.25' })).toBe(250)
     expect(read({ 'X-RateLimit-Reset': String(now / 1000 + 45) })).toBe(45_000)
     expect(read({ 'X-RateLimit-Reset': String(now / 1000 - 45) })).toBe(0)
+    expect(read({ 'X-RateLimit-Reset': String(now + 45_000) })).toBe(45_000)
+    expect(read({ 'RateLimit-Reset': String(now - 1) })).toBe(0)
   })
 
   it('returns null when nothing is readable', () => {

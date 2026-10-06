@@ -101,15 +101,18 @@ export function classifyConnectorError(error: unknown): {
 
 const IMF_FIXDATE = /^[A-Z][a-z]{2}, \d{2} [A-Z][a-z]{2} \d{4} \d{2}:\d{2}:\d{2} GMT$/
 const DELTA_SECONDS = /^\d+(\.\d+)?$/
-// A reset header above this many seconds is read as a Unix time, not a delay (a delay of ~1 year never happens).
+// A reset header above this many seconds is read as a Unix time, not a delay (a delay of ~1 year never happens),
+// and above the next one as a Unix time in milliseconds (1e11 s is the year 5138; 1e11 ms is 1973).
 const EPOCH_SECONDS_THRESHOLD = 31_536_000
+const EPOCH_MILLISECONDS_THRESHOLD = 1e11
 
 function parseDelay(header: string | null, allowDate: boolean, now: number): number | null {
   if (header === null) return null
   const value = header.trim()
   if (DELTA_SECONDS.test(value)) {
     const seconds = Number(value)
-    if (seconds > EPOCH_SECONDS_THRESHOLD && !allowDate) return Math.max(0, seconds * 1000 - now)
+    if (seconds > EPOCH_MILLISECONDS_THRESHOLD && !allowDate) return Math.max(0, Math.round(seconds - now))
+    if (seconds > EPOCH_SECONDS_THRESHOLD && !allowDate) return Math.max(0, Math.round(seconds * 1000 - now))
     return Math.round(seconds * 1000)
   }
   // Date.parse is lenient ("-1" parses as a date), so check the IMF-fixdate shape first.
@@ -120,7 +123,7 @@ function parseDelay(header: string | null, allowDate: boolean, now: number): num
 
 /**
  * How long a Channel asked us to wait, from `Retry-After` (seconds, decimals allowed, or an HTTP date), else from
- * `RateLimit-Reset` / `X-RateLimit-Reset` (seconds, or a Unix time in seconds). Null when none of them is readable.
+ * `RateLimit-Reset` / `X-RateLimit-Reset` (seconds, or a Unix time in seconds or milliseconds). Null when none of them is readable.
  * Tolerant on purpose: many APIs (Allegro among them) do not document their 429 headers.
  */
 export function retryAfterFromHeaders(headers: Headers, now = Date.now()): number | null {

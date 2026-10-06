@@ -30,10 +30,10 @@ export function createInMemoryRateLimiter(options: { now?: () => number } = {}):
       const held = leases.get(key) ?? new Map<string, number>()
       for (const [lease, expiresAt] of held) if (expiresAt <= current) held.delete(lease)
       leases.set(key, held)
-      if (held.size >= limit) return null
+      if (held.size >= limit) return { lease: null }
       const lease = randomUUID()
       held.set(lease, current + leaseMs)
-      return lease
+      return { lease }
     },
     async releaseLease(key, lease) {
       leases.get(key)?.delete(lease)
