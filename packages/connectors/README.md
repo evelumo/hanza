@@ -11,10 +11,20 @@ Every connector proves it follows the contract with the conformance kit
 (`assertConformance` from `@hanza/connector-sdk/testing`), called from its own
 `connector.test.ts` with recorded fixtures and no network.
 
+A Channel must implement `offers.pull`, `orders.pull` and `stock.push`;
+`price.push` and `orders.updateStatus` are optional. Hanza owns prices
+(ADR 0011): `offers.pull` reports each Offer's current `price` so Hanza knows
+the Channel's currency, and `price.push` sets the price Hanza sends, always in
+that currency. Report that price as the canonical `Money`: a decimal string
+with at most 4 decimal places and an upper-case ISO 4217 currency (`PLN`, not
+`pln` or `zł`). Like any other field, a value that breaks the SDK schema fails
+the whole `offers.pull` page, not just that Offer; if the Channel's price does
+not fit, report `price: null`.
+
 ## Connectors
 
 | Id | Package | Kind | What it is |
 | --- | --- | --- | --- |
-| `fake` | `@hanza/connector-fake` | marketplace | In-memory Channel for tests and demos. The reference for how a connector looks. Not a real Channel. |
+| `fake` | `@hanza/connector-fake` | marketplace | In-memory Channel for tests and demos, with every capability including `price.push`. The reference for how a connector looks. Not a real Channel. |
 
 Allegro and WooCommerce come first among the real ones (stage 2 of the plan).

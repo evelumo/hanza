@@ -106,6 +106,8 @@
       "stockDescription": "Hanza is the source of truth for stock. Channels only receive Available (Stock minus Reservations).",
       "stockSaved": "Saved. The new stock will be sent to the channels.",
       "saveStock": "Save stock",
+      "priceTitle": "Price",
+      "priceDescription": "Hanza owns prices. The base price goes to every linked offer without a price of its own, wherever the channel sells in the same currency. Without a base price, nothing is sent.",
       "offersTitle": "Offers",
       "offersDescription": "This product's offers in channels.",
       "offersEmpty": "This product has no linked offers yet. An offer is linked automatically by SKU, or manually in the list of offers without a product.",
@@ -114,11 +116,14 @@
         "offer": "Offer",
         "link": "Link",
         "lastPushed": "Last pushed",
+        "price": "Price",
         "actions": "Actions"
       },
       "linkedManually": "Manual",
       "linkedBySku": "By SKU",
       "notPushed": "not pushed yet",
+      "priceFromOffer": "offer price",
+      "priceFromBase": "base price",
       "unlink": "Unlink",
       "unlinking": "Unlinking…",
       "unlinkConfirm": "Unlink the offer from this product? The channel will no longer receive its stock.",
@@ -191,7 +196,7 @@
     "title": "Offers without a product",
     "description": "Offers pulled from channels whose SKU does not match any product.",
     "createTitle": "Create products from offers",
-    "createDescription": "Select the offers that have a SKU in the table. A product gets the offer's SKU and name and a stock of 0.",
+    "createDescription": "Select the offers that have a SKU in the table. A product gets the offer's SKU and name and a stock of 0. It gets no price: set one on the product, and only then is it sent to the channels.",
     "create": "Create products from selected",
     "creating": "Creating…",
     "created": "{count, plural, one {Created # product.} other {Created # products.}}",
@@ -216,6 +221,42 @@
     "skuPlaceholder": "Product SKU",
     "link": "Link to product",
     "linking": "Linking…"
+  },
+  "offerDetail": {
+    "title": "Offer",
+    "connectionLine": "Connection: {connection} · ID: {externalId}",
+    "backToProduct": "Product {sku}",
+    "channelPrice": "Price in the channel",
+    "channelPriceHint": "As reported at the last sync. Hanza does not take it over.",
+    "effectivePrice": "Price from Hanza",
+    "lastPushedPrice": "Last sent price",
+    "notSent": "not sent yet",
+    "productLine": "Linked to {name} (SKU {sku}). Base price: {price}.",
+    "overrideTitle": "Offer price",
+    "overrideDescription": "A price for this offer only. It wins over the product's base price; remove it to go back to the base price.",
+    "mismatchHint": "Set an offer price in {currency} to send one.",
+    "notLinked": "This offer is not linked to a product, so Hanza sends neither its stock nor its price. Link it on the list of offers without a product."
+  },
+  "prices": {
+    "none": "No price",
+    "form": {
+      "amount": "Price",
+      "currency": "Currency",
+      "currencyPlaceholder": "PLN",
+      "save": "Save price",
+      "clear": "Remove price",
+      "saved": "Saved. The channels will receive the new price shortly.",
+      "useChannelPrice": "Use the channel price ({price})"
+    },
+    "status": {
+      "not_linked": "Not sent: the offer is not linked to a product.",
+      "unsupported": "Not sent: this channel's connector cannot set prices.",
+      "no_price": "No price, so nothing is sent.",
+      "currency_unknown": "Not sent: the channel did not report the offer's currency.",
+      "currency_mismatch": "Not sent: the channel sells this offer in {channelCurrency} and the price is in {priceCurrency}.",
+      "pending": "Waiting to be sent.",
+      "pushed": "Sent {date}."
+    }
   },
   "orders": {
     "title": "Orders",
@@ -350,7 +391,8 @@
       "offers_pull": "Offers",
       "orders_pull": "Orders",
       "stock_push": "Stock levels",
-      "order_status_push": "Order statuses"
+      "order_status_push": "Order statuses",
+      "price_push": "Prices"
     },
     "payment": {
       "prepaid": "Prepaid",
@@ -389,7 +431,8 @@
       "factsApplied": "channel changes",
       "pages": "pages",
       "pushed": "pushed",
-      "truncated": "stopped at the page limit"
+      "truncated": "stopped at the page limit",
+      "skipped": "not sent"
     }
   },
   "events": {
@@ -397,12 +440,14 @@
       "system_ping": "Test job",
       "product_created": "Product created",
       "product_updated": "Product name changed",
+      "product_price_changed": "Base price changed",
       "stock_set": "Stock set",
       "stock_reserved": "Goods reserved",
       "stock_released": "Reservation released",
       "stock_consumed": "Goods taken off stock",
       "offer_linked": "Offer linked to a product",
       "offer_unlinked": "Offer unlinked from a product",
+      "offer_price_changed": "Offer price changed",
       "order_imported": "Order imported",
       "order_channel_fact_recorded": "The channel reported a change",
       "order_status_changed": "Status changed",
@@ -431,7 +476,8 @@
       "invalid_config": "Check the fields.",
       "combination_taken": "Another product in this family already has these values.",
       "invalid_attributes": "Fill in every attribute (at most 100 characters) and keep the attribute names distinct.",
-      "already_in_family": "This product is already in a family. Remove it from there first."
+      "already_in_family": "This product is already in a family. Remove it from there first.",
+      "invalid_price": "This price does not fit its currency: check the decimal places."
     },
     "unexpected": "Something went wrong. Please try again.",
     "invalidInput": "Check the fields.",
@@ -463,6 +509,10 @@
     "fieldInvalid": "Invalid value.",
     "familyNameTooLong": "The name can have at most 100 characters.",
     "attributesInvalid": "Enter 1 to 5 different attribute names, each at most 50 characters, separated by commas.",
-    "attributeValueRequired": "Enter a value of at most 100 characters."
+    "attributeValueRequired": "Enter a value of at most 100 characters.",
+    "priceInvalid": "Enter a price above 0, e.g. 49.99.",
+    "priceAmbiguous": "Ambiguous: three digits after the separator. Write 1234 for a thousands amount, or use fewer decimal places.",
+    "priceTooManyDecimals": "Too many decimal places for this currency (PLN has 2, JPY none).",
+    "currencyInvalid": "Enter a three-letter currency code, e.g. PLN."
   }
 }

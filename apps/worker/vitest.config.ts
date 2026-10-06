@@ -8,8 +8,8 @@ if (existsSync(rootEnv)) process.loadEnvFile(rootEnv)
 export default defineConfig({
   test: {
     globalSetup: ['./vitest.global-setup.ts'],
-    // The files share one throwaway database, and `sync.tick` is global: a tick in one file enqueues the pulls and
-    // pushes of the other file's Connections, which then run against the wrong fake Channel.
+    // The test files share one database and sync.tick reads every Connection in it (ADR 0008): run them one at a
+    // time, so a tick in one file never runs jobs for another file's Connections while that file is asserting (#55).
     fileParallelism: false,
     testTimeout: 30_000,
     hookTimeout: 60_000,

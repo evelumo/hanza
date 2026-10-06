@@ -11,6 +11,7 @@ export type DomainErrorCode =
   | 'combination_taken'
   | 'invalid_attributes'
   | 'already_in_family'
+  | 'invalid_price'
 
 /** Thrown by services for expected failures; the panel maps `code` to translated copy. */
 export class DomainError extends Error {

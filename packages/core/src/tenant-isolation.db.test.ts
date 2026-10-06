@@ -3,6 +3,7 @@ import {
   createProduct,
   createProductsFromOffers,
   findProductBySku,
+  getOffer,
   getProduct,
   linkOffer,
   listOffers,
@@ -32,6 +33,7 @@ import {
   rematchUnmatchedLines,
   resolveAttention,
 } from './orders/index'
+import { listOffersAwaitingPricePush, markOffersPriceHandled, setBasePrice, setOfferPrice } from './prices/index'
 import { ensureDefaultWarehouse, getAvailability, setStock } from './stock/index'
 import { createTestOrganization } from './testing/context'
 import { databaseUrl, useTestContext } from './testing/db-test'
@@ -77,6 +79,14 @@ describe.skipIf(!databaseUrl)('tenant isolation: another organization\'s ids', (
     expect((await listOffers(ctx, b, { skip: 0, take: 50 })).total).toBe(0)
     expect(await listOffersAwaitingStockPush(ctx, b, connA, 100)).toEqual([])
     await markOffersPushed(ctx, b, [{ offerId: offerA, seq: 99, available: 99 }])
+    expect(await getOffer(ctx, b, offerA)).toBeNull()
+
+    // Prices
+    const price = { amount: '1', currency: 'PLN' }
+    await expect(setBasePrice(ctx, b, productA, price, user)).rejects.toMatchObject(notFound)
+    await expect(setOfferPrice(ctx, b, offerA, price, user)).rejects.toMatchObject(notFound)
+    expect(await listOffersAwaitingPricePush(ctx, b, connA, 100)).toEqual([])
+    await markOffersPriceHandled(ctx, b, [{ offerId: offerA, seq: 99, pushed: price }])
 
     // Stock
     await expect(setStock(ctx, b, productA, 0, user)).rejects.toMatchObject(notFound)
