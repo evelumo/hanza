@@ -39,6 +39,15 @@ describe('describeEvent', () => {
     expect(describeEvent('offer.price_changed', { from: { amount: 45, currency: 'PLN' }, to: pln }, t, format).detail).toBeNull()
   })
 
+  it('describes a change of the stock settings, with an empty limit as none', () => {
+    const payload = { from: { safetyBuffer: 0, channelLimit: null }, to: { safetyBuffer: 2, channelLimit: 1500 } }
+    expect(describeEvent('connection.stock_rules_changed', payload, t, format)).toEqual({
+      title: 'Stock settings changed',
+      detail: 'safety buffer 0 → 2, channel limit none → 1,500',
+    })
+    expect(describeEvent('connection.stock_rules_changed', { from: 1 }, t, format).detail).toBeNull()
+  })
+
   it('pluralises counts the way each language does', () => {
     expect(describeEvent('stock.reserved', { units: 1 }, t, format).detail).toBe('1 unit')
     expect(describeEvent('stock.reserved', { units: 5 }, t, format).detail).toBe('5 units')

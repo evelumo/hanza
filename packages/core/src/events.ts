@@ -29,6 +29,7 @@ export type EventType =
   | 'order.attention_resolved'
   | 'connection.created'
   | 'connection.health_changed'
+  | 'connection.stock_rules_changed'
 
 export interface EventRow {
   id: string

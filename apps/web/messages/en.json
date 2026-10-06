@@ -103,7 +103,7 @@
       "name": "Name",
       "saveName": "Save name",
       "stockTitle": "Stock",
-      "stockDescription": "Hanza is the source of truth for stock. Channels only receive Available (Stock minus Reservations).",
+      "stockDescription": "Hanza is the source of truth for stock. Channels receive Available (Stock minus Reservations) less the safety buffer, and at most the channel limit, set on each connection.",
       "stockSaved": "Saved. The new stock will be sent to the channels.",
       "saveStock": "Save stock",
       "priceTitle": "Price",
@@ -366,6 +366,16 @@
       "optionalField": "{label} (optional)",
       "submit": "Add connection",
       "submitting": "Adding…"
+    },
+    "stockRules": {
+      "title": "Stock sent to this channel",
+      "description": "The channel is told Available (Stock minus Reservations) less the safety buffer, and never more than the channel limit. Orders still reserve against the whole Available.",
+      "safetyBuffer": "Safety buffer",
+      "safetyBufferHint": "Units held back from this channel, for example to keep the last units for your shop.",
+      "channelLimit": "Channel limit",
+      "channelLimitHint": "The most units this channel is told. Leave empty for no limit.",
+      "save": "Save stock settings",
+      "saved": "Saved. The new numbers will be sent to this channel."
     }
   },
   "labels": {
@@ -462,9 +472,11 @@
       "family_deleted": "Product family deleted",
       "family_product_added": "Product added to a family",
       "family_product_updated": "Product attributes in a family changed",
-      "family_product_removed": "Product removed from a family"
+      "family_product_removed": "Product removed from a family",
+      "connection_stock_rules_changed": "Stock settings changed"
     },
-    "lines": "{count, plural, one {# line} other {# lines}}"
+    "lines": "{count, plural, one {# line} other {# lines}}",
+    "stockRules": "safety buffer {buffer}, channel limit {limit}"
   },
   "errors": {
     "domain": {
@@ -478,7 +490,8 @@
       "combination_taken": "Another product in this family already has these values.",
       "invalid_attributes": "Fill in every attribute (at most 100 characters) and keep the attribute names distinct.",
       "already_in_family": "This product is already in a family. Remove it from there first.",
-      "invalid_price": "This price does not fit its currency: check the decimal places."
+      "invalid_price": "This price does not fit its currency: check the decimal places.",
+      "not_a_channel": "This connection is not a sales channel, so it has no stock settings."
     },
     "unexpected": "Something went wrong. Please try again.",
     "invalidInput": "Check the fields.",

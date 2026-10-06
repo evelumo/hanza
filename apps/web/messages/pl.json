@@ -103,7 +103,7 @@
       "name": "Nazwa",
       "saveName": "Zapisz nazwę",
       "stockTitle": "Stan",
-      "stockDescription": "Hanza jest źródłem prawdy o stanie. Kanały dostają tylko Dostępne (Stan minus Rezerwacje).",
+      "stockDescription": "Hanza jest źródłem prawdy o stanie. Kanały dostają Dostępne (Stan minus Rezerwacje) pomniejszone o bufor bezpieczeństwa i najwyżej tyle, ile wynosi limit kanału ustawiony dla każdego połączenia.",
       "stockSaved": "Zapisano. Nowy stan zostanie wysłany do kanałów.",
       "saveStock": "Zapisz stan",
       "priceTitle": "Cena",
@@ -366,6 +366,16 @@
       "optionalField": "{label} (opcjonalnie)",
       "submit": "Dodaj połączenie",
       "submitting": "Dodawanie…"
+    },
+    "stockRules": {
+      "title": "Stan wysyłany do tego kanału",
+      "description": "Kanał dostaje Dostępne (Stan minus Rezerwacje) pomniejszone o bufor bezpieczeństwa i nigdy więcej niż limit kanału. Zamówienia nadal rezerwują z całego Dostępnego.",
+      "safetyBuffer": "Bufor bezpieczeństwa",
+      "safetyBufferHint": "Sztuki, których ten kanał nie widzi, na przykład ostatnie sztuki zostawione dla Twojego sklepu.",
+      "channelLimit": "Limit kanału",
+      "channelLimitHint": "Najwięcej sztuk, jakie zobaczy ten kanał. Zostaw puste, aby nie ograniczać.",
+      "save": "Zapisz ustawienia stanu",
+      "saved": "Zapisano. Nowe liczby zostaną wysłane do tego kanału."
     }
   },
   "labels": {
@@ -462,9 +472,11 @@
       "family_deleted": "Usunięto rodzinę produktów",
       "family_product_added": "Dodano produkt do rodziny",
       "family_product_updated": "Zmieniono atrybuty produktu w rodzinie",
-      "family_product_removed": "Usunięto produkt z rodziny"
+      "family_product_removed": "Usunięto produkt z rodziny",
+      "connection_stock_rules_changed": "Zmieniono ustawienia stanu"
     },
-    "lines": "{count, plural, one {# pozycja} few {# pozycje} many {# pozycji} other {# pozycji}}"
+    "lines": "{count, plural, one {# pozycja} few {# pozycje} many {# pozycji} other {# pozycji}}",
+    "stockRules": "bufor bezpieczeństwa {buffer}, limit kanału {limit}"
   },
   "errors": {
     "domain": {
@@ -478,7 +490,8 @@
       "combination_taken": "Inny produkt w tej rodzinie ma już takie wartości.",
       "invalid_attributes": "Wypełnij każdy atrybut (najwyżej 100 znaków) i zadbaj, by nazwy atrybutów się nie powtarzały.",
       "already_in_family": "Ten produkt jest już w rodzinie. Najpierw usuń go z niej.",
-      "invalid_price": "Ta cena nie pasuje do swojej waluty: sprawdź miejsca po przecinku."
+      "invalid_price": "Ta cena nie pasuje do swojej waluty: sprawdź miejsca po przecinku.",
+      "not_a_channel": "To połączenie nie jest kanałem sprzedaży, więc nie ma ustawień stanu."
     },
     "unexpected": "Coś poszło nie tak. Spróbuj ponownie.",
     "invalidInput": "Sprawdź poprawność pól.",

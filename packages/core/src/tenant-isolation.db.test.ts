@@ -22,6 +22,7 @@ import {
   openConnection,
   saveSyncCursor,
   startSyncRun,
+  updateChannelStockRules,
 } from './connections/index'
 import { listEvents } from './events'
 import {
@@ -34,7 +35,7 @@ import {
   resolveAttention,
 } from './orders/index'
 import { listOffersAwaitingPricePush, markOffersPriceHandled, setBasePrice, setOfferPrice } from './prices/index'
-import { ensureDefaultWarehouse, getAvailability, setStock } from './stock/index'
+import { ensureDefaultWarehouse, getAvailability, getChannelAvailability, setStock } from './stock/index'
 import { createTestOrganization } from './testing/context'
 import { databaseUrl, useTestContext } from './testing/db-test'
 import { buildOrder, createTestConnection, orderLine, user } from './testing/fixtures'
@@ -62,6 +63,7 @@ describe.skipIf(!databaseUrl)('tenant isolation: another organization\'s ids', (
       order: await ctx.db.order.findFirstOrThrow({ where: { id: orderA }, include: { lines: { include: { reservation: true } } } }),
       stock: await ctx.db.stock.findMany({ where: { organizationId: a } }),
       sync: await ctx.db.syncState.findMany({ where: { organizationId: a } }),
+      connection: await ctx.db.connection.findFirstOrThrow({ where: { id: connA } }),
     })
     const before = await snapshot()
     const notFound = { code: 'not_found' }
@@ -92,6 +94,7 @@ describe.skipIf(!databaseUrl)('tenant isolation: another organization\'s ids', (
     await expect(setStock(ctx, b, productA, 0, user)).rejects.toMatchObject(notFound)
     expect((await getAvailability(ctx.db, b, [productA])).get(productA)).toEqual({ stock: 0, reserved: 0, available: 0 })
     expect(await ensureDefaultWarehouse(ctx.db, b)).not.toBe(await ensureDefaultWarehouse(ctx.db, a))
+    expect(await getChannelAvailability(ctx.db, b, connA, [productA])).toEqual(new Map())
 
     // Orders
     await expect(importOrder(ctx, b, connA, buildOrder())).rejects.toMatchObject(notFound)
@@ -107,6 +110,7 @@ describe.skipIf(!databaseUrl)('tenant isolation: another organization\'s ids', (
     expect((await listConnections(ctx, b)).map((connection) => connection.id)).toEqual([connB])
     expect(await getConnection(ctx, b, connA)).toBeNull()
     expect(await openConnection(ctx, b, connA)).toBeNull()
+    await expect(updateChannelStockRules(ctx, b, connA, { safetyBuffer: 1, channelLimit: 1 }, user)).rejects.toMatchObject(notFound)
     await expect(startSyncRun(ctx, b, connA, 'orders_pull')).rejects.toMatchObject(notFound)
     await expect(saveSyncCursor(ctx, b, connA, 'orders_pull', '9')).rejects.toMatchObject(notFound)
     await expect(finishSyncRun(ctx, b, connA, 'orders_pull', {})).rejects.toMatchObject(notFound)

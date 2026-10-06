@@ -14,4 +14,4 @@ A Channel that lives in memory. It exists to prove the whole path (pull Offers a
 
 ## Using it in tests
 
-Create an isolated instance with `createFakeChannel()`; use `fakeChannel` (the instance the registry exposes) only when the registered connector itself is needed. `reset()` restores the seed and clears recorded calls. The seed data is documented in `src/seed.ts` (the code is the source of truth; the original design is GitHub issue #18).
+Create an isolated instance with `createFakeChannel()`; pass `{ id: 'fake-shop' }` (any id but `fake`) to register a second, independent fake Channel next to the first, for tests that need two Channels with their own recorded pushes; use `fakeChannel` (the instance the registry exposes) only when the registered connector itself is needed. `reset()` restores the seed and clears recorded calls. The seed data is documented in `src/seed.ts` (the code is the source of truth; the original design is GitHub issue #18).

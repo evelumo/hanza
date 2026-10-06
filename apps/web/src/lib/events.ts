@@ -76,6 +76,13 @@ function detail(t: Translator, format: EventFormatters, type: string, payload: P
     }
     case 'connection.health_changed':
       return arrow(healthLabel(t, text(payload.from)), healthLabel(t, text(payload.to)))
+    case 'connection.stock_rules_changed': {
+      const rule = (side: 'from' | 'to', key: string) => nested(nested(payload, side), key)
+      const limit = (value: unknown) => (value === null ? t('common.none') : formatted(value, number))
+      const buffer = arrow(formatted(rule('from', 'safetyBuffer'), number), formatted(rule('to', 'safetyBuffer'), number))
+      const cap = arrow(limit(rule('from', 'channelLimit')), limit(rule('to', 'channelLimit')))
+      return buffer && cap ? t('events.stockRules', { buffer, limit: cap }) : null
+    }
     default:
       return null
   }
