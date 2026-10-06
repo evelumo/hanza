@@ -56,7 +56,7 @@ async function beginSyncRun(ctx: Context, input: SyncRunInput): Promise<SyncRun 
  * Error name, Prisma code and the last line of the message: enough to tell what failed. A full
  * Prisma message can quote the query's arguments, which may hold Buyer data.
  */
-function describeFailure(error: unknown): string {
+export function describeFailure(error: unknown): string {
   if (!(error instanceof Error)) return 'Unexpected failure'
   const code = (error as { code?: unknown }).code
   const lines = error.message.split('\n').map((line) => line.trim()).filter(Boolean)

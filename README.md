@@ -12,6 +12,7 @@ Early stage (stage 1 of the roadmap). Working today:
 - Multi-tenant data model: every tenant-owned table carries `organizationId`.
 - The domain core: Products, Offers, Stock with Reservations (Hanza owns Stock), prices (a Product's base price and per-Offer overrides; Hanza owns them too), Orders with their own status, Connections with encrypted credentials, and an event log.
 - The sync engine in the worker: pulls Offers and Orders from a Channel, pushes each Channel its Channel Available (Available less the Connection's safety buffer, at most its channel limit), prices and Order status back, retries and tracks Connection health.
+- Durable multi-step workflows (`defineWorkflow`): steps run as jobs, state, timers and signals live in Postgres, so a run survives a worker crash or a lost Redis; shaped so Temporal can replace the engine later.
 - The panel (English by default, Polish as a second language; switch it in the header): Products (Stock, Available, prices, linking Offers to Products), Orders (status changes, Needs attention, linking Unmatched lines) and Connections (add, sync now, sync results, safety buffer and channel limit).
 - The final-for-now Connector SDK with a conformance test kit and an in-memory **fake connector** ("Test channel") that exercises the whole path without a real Channel.
 - `GET /api/health` (database + queue) and a dependency-boundary check for connectors.
@@ -57,7 +58,7 @@ apps/
   worker/              BullMQ worker process
   e2e/                 panel end-to-end flows (Playwright) and the `pnpm test:e2e` runner
 packages/
-  core/                context, domain services, sync engine, JobQueue, job registry
+  core/                context, domain services, sync engine, workflows, JobQueue, job registry
   db/                  Prisma schema (split per module), migrations, client
   connector-sdk/       Connector SDK + canonical model + conformance kit
   connector-registry/  the connectors this build knows (apps pass them to the core)
@@ -67,7 +68,7 @@ scripts/               check-boundaries.mjs
 docs/                  architecture plan (Polish), ADRs, agent docs
 ```
 
-Stack: Next.js, Prisma + PostgreSQL, pnpm workspaces + Turborepo, BullMQ + Redis, Better Auth, zod, Vitest, Playwright. No DI container; dependencies are composed in `createContext()`. Temporal is deliberately postponed.
+Stack: Next.js, Prisma + PostgreSQL, pnpm workspaces + Turborepo, BullMQ + Redis, Better Auth, zod, Vitest, Playwright. No DI container; dependencies are composed in `createContext()`. Temporal is deliberately postponed: workflows run on a small Postgres-backed engine behind an interface Temporal can implement (ADR 0014).
 
 ## Roadmap
 

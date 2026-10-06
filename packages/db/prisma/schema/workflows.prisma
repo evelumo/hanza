@@ -1,0 +1,86 @@
+// Durable state of workflow runs (ADR 0014). Steps run as jobs; these rows are the truth.
+
+enum WorkflowRunStatus {
+  /// A step is due or being run.
+  running
+  /// A durable timer: nothing happens before `wakeAt`.
+  sleeping
+  /// Waiting for the signal named in `waitingFor`; `wakeAt` is the timeout, if any.
+  waiting
+  completed
+  failed
+  cancelled
+
+  @@map("workflow_run_status")
+}
+
+model WorkflowRun {
+  id             String            @id @default(uuid(7))
+  organizationId String
+  /// Workflow name, e.g. "system.check".
+  workflow       String
+  /// The caller's id for the run, unique per organization and workflow; null when the caller gave none.
+  key            String?
+  status         WorkflowRunStatus
+  /// As the caller passed it (JSON), parsed with the workflow's input schema on every step; ids only, no
+  /// credentials or personal data.
+  input          Json
+  /// Step being run, slept in or waited in; null once finished.
+  currentStep    String?
+  /// "kind:name" of every step done so far, in order; a definition whose steps no longer start with
+  /// these fails the run instead of re-running or skipping a step.
+  completedSteps String[]          @default([])
+  /// { [stepName]: result } of the steps done so far.
+  results        Json              @default("{}")
+  /// Signal name while waiting, so the sweep only wakes a run for the signal it waits for.
+  waitingFor     String?
+  /// When the sweep enqueues the run: now when a step is due, the lease end while one runs, the wake-up time
+  /// while sleeping, the timeout while waiting; null when nothing is due.
+  wakeAt         DateTime?
+  /// When the sweep last enqueued the run; it takes the least recently swept first, so runs whose job finds
+  /// nothing to do cannot crowd out the others.
+  sweptAt        DateTime?
+  /// Executions of the current step started so far (claims), including ones whose worker died.
+  attempts       Int               @default(0)
+  /// Set by each claim of a step; an execution changes the run after an error only while it still holds it,
+  /// so one whose lease expired and was claimed again cannot release or fail the newer execution's claim.
+  claimToken     String?
+  /// Description of the last error of the current step or why the run failed: error name, code and a
+  /// truncated line, never the full message.
+  lastError      String?
+  /// Bumped when the run moves on (next step, failure, cancel), not by claims: the first execution of a
+  /// step to finish commits its result, a later one is discarded.
+  version        Int               @default(0)
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  finishedAt     DateTime?
+
+  organization Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  signals      WorkflowSignal[]
+
+  @@unique([organizationId, workflow, key])
+  // Target of the signals' composite foreign key, so a signal cannot point at another tenant's run.
+  @@unique([organizationId, id])
+  @@index([organizationId, createdAt(sort: Desc)])
+  @@index([status, wakeAt])
+  @@map("workflow_run")
+}
+
+/// A signal sent to a run; kept until a wait step for it consumes it, so a signal may arrive early.
+model WorkflowSignal {
+  id             String    @id @default(uuid(7))
+  organizationId String
+  runId          String
+  name           String
+  /// As the sender passed it (JSON), parsed with the signal's schema when consumed.
+  payload        Json
+  createdAt      DateTime  @default(now())
+  consumedAt     DateTime?
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  run          WorkflowRun  @relation(fields: [organizationId, runId], references: [organizationId, id], onDelete: Cascade)
+
+  @@index([organizationId, runId, name])
+  @@index([runId, consumedAt])
+  @@map("workflow_signal")
+}
