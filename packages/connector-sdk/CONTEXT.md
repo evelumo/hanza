@@ -71,7 +71,7 @@ A mark on an Order that a person must look at, for example when the Buyer cancel
 _Avoid_: Flag, alert, warning
 
 **Unmatched line**:
-An Order line that could not be linked to any Product. The Order is still imported; the line reserves nothing until someone links it.
+An Order line that could not be linked to any Product. The Order is still imported; the line reserves nothing until someone links it. While the Order is open (or shipped, where linking corrects Stock) it is Needs attention; once the Order is cancelled it no longer is, since nothing can be fulfilled.
 _Avoid_: Unknown product, orphan line
 
 **Buyer**:
