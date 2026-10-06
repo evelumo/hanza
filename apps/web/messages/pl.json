@@ -388,7 +388,12 @@
         "defaultOption": "Domyślny status fazy ({status})",
         "save": "Zapisz",
         "adminsOnly": "Tylko właściciel lub administrator organizacji może to zmienić."
-      }
+      },
+      "account": "Zalogowano jako {account}",
+      "signInAgain": "Zaloguj się ponownie",
+      "signInAgainStarting": "Rozpoczynanie…",
+      "authExpiredTitle": "Wymagane ponowne logowanie",
+      "authExpired": "{connector} nie akceptuje już logowania tego połączenia, więc nie jest ono synchronizowane. Zaloguj się ponownie, aby wznowić."
     },
     "new": {
       "title": "Dodaj połączenie",
@@ -402,7 +407,36 @@
       "credentialsNote": "Przechowujemy je zaszyfrowane i nie pokazujemy ich ponownie.",
       "optionalField": "{label} (opcjonalnie)",
       "submit": "Dodaj połączenie",
-      "submitting": "Dodawanie…"
+      "submitting": "Dodawanie…",
+      "notConfigured": "Nie skonfigurowano w tej instalacji",
+      "notConfiguredHint": "Osoba, która utrzymuje tę instalację Hanzy, ustawia te zmienne i uruchamia ją ponownie: {variables}",
+      "signInNote": "Następnie dostaniesz kod do potwierdzenia w serwisie {connector}. Hanza nigdy nie widzi tam Twojego hasła.",
+      "continueToSignIn": "Przejdź do logowania",
+      "startingSignIn": "Rozpoczynanie…"
+    },
+    "signIn": {
+      "title": "Zaloguj się do {connector}",
+      "titleAgain": "Zaloguj się ponownie do {connector}: {connection}",
+      "connectionName": "Nowe połączenie: {name}",
+      "starting": "Przygotowujemy Twój kod…",
+      "instructions": "Otwórz stronę logowania {connector}, wpisz ten kod i zezwól Hanzie na dostęp.",
+      "codeLabel": "Twój kod",
+      "open": "Otwórz stronę logowania {connector}",
+      "noLink": "Przejdź na stronę logowania {connector} i wpisz tam kod.",
+      "validUntil": "Kod jest ważny do {time}.",
+      "waiting": "Czekamy na Twoją zgodę. Ta strona odświeża się sama.",
+      "cancel": "Anuluj",
+      "cancelling": "Anulowanie…",
+      "tryAgain": "Spróbuj ponownie",
+      "retrying": "Rozpoczynanie…",
+      "approved": "Zalogowano. Otwieramy połączenie…",
+      "denied": "Odmówiono dostępu w {connector}.",
+      "expired": "Kod wygasł, zanim został zatwierdzony.",
+      "failed": "Logowanie się nie udało. Spróbuj ponownie za chwilę.",
+      "account_mismatch": "Zalogowano jako {account}, czyli na inne konto {connector} niż to, którego używa to połączenie. Zaloguj się na konto, z którym połączenie zostało utworzone, albo dodaj nowe połączenie.",
+      "account_in_use": "Konto {connector} {account} ma już tu połączenie. Użyj „Zaloguj się ponownie” na tamtym połączeniu.",
+      "cancelled": "Logowanie zostało anulowane.",
+      "back": "Wróć do połączeń"
     },
     "stockRules": {
       "title": "Stan wysyłany do tego kanału",
@@ -589,7 +623,8 @@
       "warehouse_updated": "Zmieniono magazyn",
       "warehouse_deactivated": "Dezaktywowano magazyn",
       "warehouse_activated": "Aktywowano magazyn",
-      "warehouse_deleted": "Usunięto magazyn"
+      "warehouse_deleted": "Usunięto magazyn",
+      "connection_signed_in": "Zalogowano do kanału"
     },
     "lines": "{count, plural, one {# pozycja} few {# pozycje} many {# pozycji} other {# pozycji}}",
     "defaultStatus": "status domyślny",
@@ -631,7 +666,10 @@
       "warehouse_in_use": "Magazyn jest nadal używany: wybrał go kanał albo ma rezerwacje w historii. Najpierw zmień magazyny kanału albo dezaktywuj magazyn zamiast go usuwać.",
       "no_warehouse_selected": "Wybierz co najmniej jeden magazyn.",
       "reservation_not_open": "Przenieść można tylko otwartą rezerwację nowego lub realizowanego zamówienia.",
-      "not_enough_stock": "Ten magazyn nie ma dość Dostępnego na całą pozycję."
+      "not_enough_stock": "Ten magazyn nie ma dość Dostępnego na całą pozycję.",
+      "connector_not_configured": "Ten konektor nie jest jeszcze skonfigurowany w tej instalacji. Zapytaj osobę, która utrzymuje Hanzę.",
+      "sign_in_required": "To połączenie dodaje się przez logowanie, a nie formularz.",
+      "no_sign_in": "Ten konektor nie ma logowania."
     },
     "unexpected": "Coś poszło nie tak. Spróbuj ponownie.",
     "invalidInput": "Sprawdź poprawność pól.",

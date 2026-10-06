@@ -11,6 +11,10 @@ export const addConnectionSchema = z.object({
 
 export const requestSyncSchema = z.object({ connectionId: idSchema })
 
+export const signInAgainSchema = z.object({ connectionId: idSchema })
+
+export const signInIdSchema = z.object({ signInId: idSchema })
+
 const WAREHOUSES_REQUIRED = messageKey('validation.warehousesRequired')
 
 /** `all`: every active Warehouse counts; `only`: just the ticked ones, at least one. */

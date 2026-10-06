@@ -22,6 +22,8 @@ export interface SignInView {
   connectionId: string | null
   /** Name of the new Connection; null when signing in again. */
   name: string | null
+  /** Config of the new Connection (not secret), so "Try again" can start the same sign-in. */
+  config: Record<string, unknown> | null
   /** True when this sign-in replaces the credentials of an existing Connection. */
   reconnect: boolean
   status: SignInStatus
@@ -40,6 +42,7 @@ const viewSelect = {
   connectorId: true,
   connectionId: true,
   name: true,
+  config: true,
   status: true,
   userCode: true,
   verificationUri: true,
@@ -121,7 +124,7 @@ export async function getSignIn(ctx: Context, organizationId: string, signInId: 
   if (!row) return null
   // A pending row past its expiry is shown as expired even before the tick marks it.
   const status = OPEN_SIGN_IN_STATUSES.includes(row.status as never) && row.expiresAt <= new Date() ? 'expired' : row.status
-  return { ...row, status, reconnect: row.name === null }
+  return { ...row, config: (row.config as Record<string, unknown> | null) ?? null, status, reconnect: row.name === null }
 }
 
 /** Ends a sign-in that has not finished; a finished one is left as it is. */

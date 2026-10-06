@@ -100,6 +100,8 @@ function detail(t: Translator, format: EventFormatters, type: string, payload: P
     }
     case 'connection.health_changed':
       return arrow(healthLabel(t, text(payload.from)), healthLabel(t, text(payload.to)))
+    case 'connection.signed_in':
+      return text(payload.account)
     case 'order.buyer_data_erased': {
       const cause = text(payload.cause)
       return cause === null ? null : labelOrRaw(t, 'labels.erasureCause', cause)

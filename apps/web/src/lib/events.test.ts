@@ -59,6 +59,10 @@ describe('describeEvent', () => {
     expect(describeEvent('stock.set', { from: 1000, to: 1200 }, t, format).detail).toBe('1,000 → 1,200')
     expect(describeEvent('stock.set', { from: 10000, to: 12500 }, translatorFor('pl'), formatPl)?.detail?.replace(/\s/g, ' ')).toBe('10 000 → 12 500')
     expect(describeEvent('connection.health_changed', { from: 'unknown', to: 'ok' }, t, format).detail).toBe('Not checked → Working')
+    expect(describeEvent('connection.signed_in', { connectorId: 'x', account: 'seller-1' }, t, format)).toEqual({
+      title: 'Signed in to the channel',
+      detail: 'seller-1',
+    })
     expect(describeEvent('order.attention_raised', { reasons: ['unmatched_line', 'shortage'] }, t, format).detail).toBe('Unmatched line, Shortage')
   })
 

@@ -5,20 +5,23 @@ import { ConnectorFields } from '@/components/connector-fields'
 import { ActionButton, Field } from '@/components/form'
 import { useT } from '@/i18n/use-t'
 import type { ConnectorField } from '@/lib/connector-form'
-import { addConnectionAction } from '../actions'
+import { addConnectionAction, startSignInAction } from '../actions'
 
 export function NewConnectionForm({
   connectorId,
   configFields,
   credentialsFields,
+  signIn,
 }: {
   connectorId: string
   configFields: ConnectorField[]
   credentialsFields: ConnectorField[]
+  /** Set for a connector with a device-flow sign-in: the form starts the sign-in instead of adding the Connection. */
+  signIn: { connector: string } | null
 }) {
   const t = useT()
   return (
-    <ActionForm action={addConnectionAction} className="space-y-4">
+    <ActionForm action={signIn ? startSignInAction : addConnectionAction} className="space-y-4">
       {(state) => (
         <>
           <input type="hidden" name="connectorId" value={connectorId} />
@@ -36,7 +39,14 @@ export function NewConnectionForm({
               <ConnectorFields fields={credentialsFields} errors={state.fieldErrors} />
             </fieldset>
           ) : null}
-          <ActionButton pendingLabel={t('connections.new.submitting')}>{t('connections.new.submit')}</ActionButton>
+          {signIn ? (
+            <>
+              <p className="text-sm text-muted">{t('connections.new.signInNote', { connector: signIn.connector })}</p>
+              <ActionButton pendingLabel={t('connections.new.startingSignIn')}>{t('connections.new.continueToSignIn')}</ActionButton>
+            </>
+          ) : (
+            <ActionButton pendingLabel={t('connections.new.submitting')}>{t('connections.new.submit')}</ActionButton>
+          )}
         </>
       )}
     </ActionForm>
