@@ -14,7 +14,9 @@ export {
   linkOffer,
   unlinkOffer,
   listOffers,
+  getOffer,
   listOffersAwaitingStockPush,
   markOffersPushed,
   type OfferRow,
+  type OfferDetail,
 } from './offers'
