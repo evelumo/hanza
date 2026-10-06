@@ -72,7 +72,9 @@ export async function openCassette(file: string | URL, options: CassetteOptions 
       },
     }
   }
-  const replay = createReplayFetch(await loadCassette(file), {
+  const cassette = await loadCassette(file)
+  await assertNoSecrets(cassette, { allow: options.allow, file: toPath(file) })
+  const replay = createReplayFetch(cassette, {
     match: options.match,
     scrub: options.scrub,
     secrets: options.secrets,

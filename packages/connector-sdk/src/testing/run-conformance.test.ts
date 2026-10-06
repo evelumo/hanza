@@ -182,6 +182,25 @@ describe('openCassette and withFetch', () => {
     }
   })
 
+  it('lints a scenario cassette on replay', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'hanza-scenario-'))
+    const file = join(dir, 'leaky.cassette.json')
+    try {
+      await writeCassette(file, {
+        version: 1,
+        interactions: [
+          {
+            request: { method: 'GET', url: `${API}/me`, headers: {}, body: null },
+            response: { status: 200, headers: { 'content-type': 'application/json' }, body: { json: { sessionToken: 'live-session-token-1' } } },
+          },
+        ],
+      })
+      await expect(openCassette(file)).rejects.toThrow(/leaky\.cassette\.json: interactions\.0\.response\.body\.json\.sessionToken \[secret-value\]/)
+    } finally {
+      await rm(dir, { recursive: true, force: true })
+    }
+  })
+
   it('reads the switch from the environment', () => {
     expect(isRecording({})).toBe(false)
     expect(isRecording({ HANZA_RECORD_FIXTURES: '1' })).toBe(true)

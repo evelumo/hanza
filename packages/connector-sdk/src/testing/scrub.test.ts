@@ -120,6 +120,45 @@ describe('bodies', () => {
   })
 })
 
+describe('secret names', () => {
+  it('covers the usual token, session and OAuth names, in any spelling', () => {
+    const scrubber = new Scrubber()
+    expect(
+      scrubber.json(
+        { auth_token: 'a-live-token-1', sessionToken: 'a-live-token-2', 'Bearer-Token': 'a-live-token-3', 'X-Auth-Token': 'a-live-token-4', code_verifier: 'a-live-verifier', user_code: 'ABCD-EFGH' },
+        [],
+      ),
+    ).toEqual({ auth_token: SCRUBBED, sessionToken: SCRUBBED, 'Bearer-Token': SCRUBBED, 'X-Auth-Token': SCRUBBED, code_verifier: SCRUBBED, user_code: SCRUBBED })
+  })
+
+  it('treats code and signature as secrets in URLs and forms only, not as JSON keys', () => {
+    const scrubber = new Scrubber()
+    const { request, response } = scrubber.interaction(
+      interaction({
+        request: {
+          method: 'POST',
+          url: 'https://api.example.test/files/1?signature=abcdef123456&expires=99',
+          headers: { 'content-type': 'application/x-www-form-urlencoded' },
+          body: { text: 'grant_type=authorization_code&code=live-auth-code-1&code_verifier=live-verifier-1' },
+        },
+        response: {
+          status: 302,
+          headers: { location: 'https://app.example.test/callback?code=live-auth-code-2&state=s1' },
+          body: { json: { error: { code: 'VALIDATION_ERROR' }, currency: { code: 'PLN' }, signature: 'SKU-1' } },
+        },
+      }),
+    )
+    expect(request.url).toBe('https://api.example.test/files/1?signature=%5Bscrubbed%5D&expires=99')
+    expect(request.body).toEqual({ text: 'grant_type=authorization_code&code=%5Bscrubbed%5D&code_verifier=%5Bscrubbed%5D' })
+    expect(response.headers.location).toBe(`https://app.example.test/callback?code=${SCRUBBED}&state=s1`)
+    expect(response.body).toEqual({ json: { error: { code: 'VALIDATION_ERROR' }, currency: { code: 'PLN' }, signature: 'SKU-1' } })
+  })
+
+  it('leaves cursors named like tokens alone', () => {
+    expect(new Scrubber().json({ nextPageToken: 'cursor-value-123456789012' }, [])).toEqual({ nextPageToken: 'cursor-value-123456789012' })
+  })
+})
+
 describe('URLs', () => {
   it('scrubs secret query parameters, credentials in the authority, the fragment and known secrets in the path', () => {
     const scrubber = new Scrubber({ queryParams: { buyerEmail: 'email' } }, ['live-webhook-secret'])

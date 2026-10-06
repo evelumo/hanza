@@ -76,12 +76,16 @@ it('passes the conformance kit', () =>
 It lints the directory, replays the cassettes and fails with every request
 they had no answer for, naming the nearest recorded requests and what differs.
 A request matches on method, URL (query parameters sorted) and the hash of its
-body; headers are ignored unless `match.headers` lists them. Identical
+body; headers are ignored unless `match.headers` lists them. A JSON body is
+compared by content (key order does not matter) only when it is sent with a
+JSON `content-type`; any other body, including JSON sent without one (`fetch`
+then labels a string `text/plain`), must match byte for byte. Identical
 requests get their recorded answers in order, then the last one again.
 Incoming requests are scrubbed like the recording first, so the test's
 credentials never have to equal the recorded ones (use values of at least 8
 characters, or declare the field). For other scenarios use
-`openCassette(file, { scrub, recording })`; `withFetch(connector, fetch)`
+`openCassette(file, { scrub, recording })`, which lints its cassette on every
+replay too; `withFetch(connector, fetch)`
 hands a cassette to the engine in a database test, without the connector
 knowing (see `apps/worker/src/recorded-fixtures.db.test.ts`).
 
@@ -122,10 +126,13 @@ the same data again gives the same file.
   written (more only through `keepRequestHeaders` / `keepResponseHeaders`);
   `authorization`, `proxy-authorization`, `cookie` and `set-cookie` never.
 - Values of secret-named JSON keys and URL or form parameters
-  (`access_token`, `refresh_token`, `id_token`, `client_id`, `client_secret`,
-  `device_code`, `password`, `api_key`, `token`, `secret`, … in any case, with
-  or without `_` or `-`), `Bearer` and `Basic` credentials and JWT-looking
-  strings become `[scrubbed]`. So does every occurrence (URL-encoded too) of
+  (`access_token`, `refresh_token`, `id_token`, `auth_token`,
+  `session_token`, `bearer_token`, `x-auth-token`, `client_id`,
+  `client_secret`, `device_code`, `user_code`, `code_verifier`, `password`,
+  `api_key`, `token`, `secret`, … in any case, with or without `_` or `-`;
+  `code` and `signature` as URL or form parameters only, since as JSON keys
+  they usually hold error codes or Offer signatures), `Bearer` and `Basic`
+  credentials and JWT-looking strings become `[scrubbed]`. So does every occurrence (URL-encoded too) of
   the recording credentials and of any value removed that way, in URLs,
   headers and bodies, earlier interactions included.
 - E-mails outside the reserved domains (`example.com`, `*.test`, …) become
@@ -139,9 +146,10 @@ the same data again gives the same file.
   The same lint runs on every replay, over every `.json` file in the fixtures
   directory, hand-written ones included. It flags `Bearer`/`Basic`
   credentials, JWT-looking strings, unscrubbed secret-named values, credential
-  headers, real-looking e-mails, phone numbers, and 11-digit numbers with a
-  valid PESEL date and checksum (outside id-like keys). List a known false
-  positive in `allow`.
+  headers, long token-shaped values under other `…token` or `…secret` keys
+  (`csrfToken`; not cursors such as `nextPageToken`), real-looking e-mails,
+  phone numbers, and 11-digit numbers with a valid PESEL date and checksum
+  (outside id-like keys). List a known false positive in `allow`.
 
 **What it does not guarantee:**
 
@@ -149,7 +157,14 @@ the same data again gives the same file.
   ids are personal data only the connector knows about: declare them in the
   scrub config. Neither the scrubber nor the lint recognises a name.
 - A secret without a telling key, prefix or shape, that is not one of the
-  recording credentials (an opaque token under an unusual key), passes both.
+  recording credentials (an opaque token under an unusual key, or in a URL
+  path segment), passes both. So does a known secret shorter than 8
+  characters: it is not replaced literally.
+- XML, HTML and plain-text bodies get only the pattern rules (no keys or
+  paths), and a value hidden inside an encoded payload (base64, a signed
+  blob, a nested URL-encoded string) is invisible to both.
+- Phone numbers without a leading `+` are found only under phone-like keys,
+  not in free text.
 - Binary bodies can be neither scrubbed nor linted: they are dropped unless
   `keepBinaryBodies` is set, and then checking them is up to you.
 - Requests that failed at the network level are not recorded.

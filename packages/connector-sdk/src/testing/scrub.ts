@@ -38,8 +38,11 @@ export const SECRET_NAMES: ReadonlySet<string> = new Set([
   'apikey',
   'apisecret',
   'authorization',
+  'authtoken',
+  'bearertoken',
   'clientid',
   'clientsecret',
+  'codeverifier',
   'devicecode',
   'idtoken',
   'password',
@@ -47,8 +50,17 @@ export const SECRET_NAMES: ReadonlySet<string> = new Set([
   'refreshtoken',
   'secret',
   'sessionid',
+  'sessiontoken',
   'token',
+  'usercode',
+  'xauthtoken',
 ])
+
+/**
+ * Secrets only as URL or form parameters (an OAuth `?code=`, a signed URL's `signature=`). As JSON keys they
+ * usually hold error codes, currency codes or Offer signatures, which fixtures need.
+ */
+export const SECRET_PARAM_NAMES: ReadonlySet<string> = new Set([...SECRET_NAMES, 'code', 'signature'])
 
 export function normalizeName(name: string): string {
   return name.toLowerCase().replace(/[-_\s]/g, '')
@@ -227,7 +239,7 @@ export class Scrubber {
 
   private paramKind(name: string): ScrubKind | undefined {
     const normalized = normalizeName(name)
-    return SECRET_NAMES.has(normalized) ? 'secret' : this.params.get(normalized)
+    return SECRET_PARAM_NAMES.has(normalized) ? 'secret' : this.params.get(normalized)
   }
 
   private pathKind(path: string[]): ScrubKind | undefined {

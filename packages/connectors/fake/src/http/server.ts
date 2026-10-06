@@ -9,9 +9,21 @@ import type { FakeContext } from '../connector'
 import { API_STATUSES, statusRequestSchema, stockRequestSchema, type ApiOrder } from './api'
 import { FAKE_HTTP_BASE_URL } from './connector'
 
-/** What the fake Channel's fixtures must lose: Buyer and address names, contact data, the PESEL-like id and the login. */
+/** What the fake Channel's fixtures must lose: names, the address, contact data, the PESEL-like id, the login and free-text notes. */
 export const fakeHttpScrub: ScrubConfig = {
-  keys: { firstName: 'text', lastName: 'text', street: 'text', email: 'email', phone: 'phone', login: 'text', pesel: 'text' },
+  keys: {
+    firstName: 'text',
+    lastName: 'text',
+    company: 'text',
+    street: 'text',
+    zipCode: 'text',
+    city: 'text',
+    email: 'email',
+    phone: 'phone',
+    login: 'text',
+    pesel: 'text',
+    note: 'text',
+  },
 }
 
 export interface FakeHttpServer {

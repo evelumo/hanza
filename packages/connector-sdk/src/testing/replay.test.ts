@@ -149,8 +149,9 @@ describe('createReplayFetch', () => {
     expect(replay.unused()).toEqual([`GET ${API}/never`])
   })
 
-  it('honours an aborted signal', async () => {
+  it('honours an aborted signal, also on a Request passed without init', async () => {
     const replay = createReplayFetch(cassette(entry('GET', '/offers')))
     await expect(replay.fetch(`${API}/offers`, { signal: AbortSignal.abort() })).rejects.toMatchObject({ name: 'AbortError' })
+    await expect(replay.fetch(new Request(`${API}/offers`, { signal: AbortSignal.abort() }))).rejects.toMatchObject({ name: 'AbortError' })
   })
 })

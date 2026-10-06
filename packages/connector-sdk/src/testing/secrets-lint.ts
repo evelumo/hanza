@@ -12,9 +12,10 @@ import {
   PHONE_PATTERN,
   SCRUBBED,
   SECRET_NAMES,
+  SECRET_PARAM_NAMES,
 } from './scrub'
 
-export type SecretRule = 'credential-header' | 'bearer' | 'basic' | 'jwt' | 'secret-value' | 'email' | 'phone' | 'pesel'
+export type SecretRule = 'credential-header' | 'bearer' | 'basic' | 'jwt' | 'secret-value' | 'token-like' | 'email' | 'phone' | 'pesel'
 
 export interface SecretFinding {
   file: string | null
@@ -56,6 +57,16 @@ function excerpt(value: string): string {
 // `offerId`, `order_id`, `ids`, `ID`; not `paid` or `valid`.
 const isIdKey = (key: string | undefined) =>
   key !== undefined && (/^ids?$/i.test(key) || /[a-z0-9](Ids?|ID)$/.test(key) || /[-_]ids?$/i.test(key))
+/**
+ * `csrfToken`, `webhookSecret`: names the scrubber cannot blanket-replace (`nextPageToken` is a cursor fixtures
+ * need), so the lint flags a long token-shaped value under them and the connector declares or allows it.
+ */
+function isTokenLike(key: string, value: unknown): boolean {
+  const name = normalizeName(key)
+  if (!/(token|secret)$/.test(name) || /page|cursor|next|type/.test(name) || typeof value !== 'string') return false
+  return value.length >= 20 && /^[A-Za-z0-9._~+/=-]+$/.test(value) && !isPlaceholder(value)
+}
+
 const isPhoneKey = (key: string | undefined) => key !== undefined && /phone|mobile|^tel(ephone)?$/.test(normalizeName(key))
 
 /** Everything in a JSON value that looks like a live credential or personal data. */
@@ -73,7 +84,7 @@ export function findSecrets(value: unknown, options: LintOptions & { file?: stri
     for (const match of text.matchAll(JWT_PATTERN)) report(path, 'jwt', match[0])
     for (const match of text.matchAll(SECRET_PARAM)) {
       const raw = match[2]!
-      if (SECRET_NAMES.has(normalizeName(match[1]!)) && raw !== SCRUBBED && raw !== encodeURIComponent(SCRUBBED)) {
+      if (SECRET_PARAM_NAMES.has(normalizeName(match[1]!)) && raw !== SCRUBBED && raw !== encodeURIComponent(SCRUBBED)) {
         report(path, 'secret-value', raw)
       }
     }
@@ -98,6 +109,8 @@ export function findSecrets(value: unknown, options: LintOptions & { file?: stri
           report(childPath, 'credential-header', typeof child === 'string' ? child : childKey)
         } else if (SECRET_NAMES.has(normalizeName(childKey)) && typeof child === 'string' && child !== '' && child !== SCRUBBED) {
           report(childPath, 'secret-value', child)
+        } else if (isTokenLike(childKey, child)) {
+          report(childPath, 'token-like', child as string)
         }
         walk(child, childPath, childKey)
       }
@@ -143,7 +156,7 @@ export function formatFindings(findings: SecretFinding[]): string {
  * Fails when fixtures contain anything that looks like a live token, secret, e-mail, phone number or PESEL.
  * Takes a file, a directory (every `.json` below it) or an in-memory value such as a cassette.
  */
-export async function assertNoSecrets(target: string | URL | object, options: LintOptions = {}): Promise<void> {
+export async function assertNoSecrets(target: string | URL | object, options: LintOptions & { file?: string } = {}): Promise<void> {
   const findings = typeof target === 'string' || target instanceof URL ? await lintFixtures(target, options) : findSecrets(target, options)
   if (findings.length > 0) {
     throw new Error(

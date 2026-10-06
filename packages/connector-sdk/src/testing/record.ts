@@ -24,16 +24,18 @@ export interface RecordingFetch {
 export function createRecordingFetch(options: RecordingOptions = {}): RecordingFetch {
   const transport = options.fetch ?? globalThis.fetch
   const secrets = [...(options.secrets ?? [])]
-  const raw: CassetteInteraction[] = []
+  // A slot is taken when the request starts, so parallel requests keep the order they were sent in.
+  const raw: Array<CassetteInteraction | null> = []
 
   const recordingFetch: typeof fetch = async (input, init) => {
     const request = new Request(input, init)
+    const slot = raw.push(null) - 1
     const requestBytes = new Uint8Array(await request.clone().arrayBuffer())
     const response = await transport(request)
     const responseBytes = new Uint8Array(await response.clone().arrayBuffer())
     const requestHeaders = headersToRecord(request.headers)
     const responseHeaders = headersToRecord(response.headers)
-    raw.push({
+    raw[slot] = {
       request: {
         method: request.method,
         url: request.url,
@@ -45,16 +47,24 @@ export function createRecordingFetch(options: RecordingOptions = {}): RecordingF
         headers: responseHeaders,
         body: encodeBody(responseBytes, responseHeaders['content-type'] ?? null),
       },
-    })
+    }
     return response
   }
 
-  const cassette = (): Cassette => ({ version: 1, interactions: scrubInteractions(raw, options.scrub, secrets) })
+  // A request that failed at the network level leaves an empty slot: there is nothing to replay.
+  const cassette = (): Cassette => ({
+    version: 1,
+    interactions: scrubInteractions(
+      raw.filter((interaction): interaction is CassetteInteraction => interaction !== null),
+      options.scrub,
+      secrets,
+    ),
+  })
 
   return {
     fetch: recordingFetch,
     get size() {
-      return raw.length
+      return raw.filter((interaction) => interaction !== null).length
     },
     cassette,
     async save(file) {

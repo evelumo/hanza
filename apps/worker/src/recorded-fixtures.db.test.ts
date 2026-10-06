@@ -22,6 +22,8 @@ describe.skipIf(!databaseUrl)('sync engine on recorded fixtures (real Postgres, 
   beforeAll(async () => {
     cassette = await openCassette(new URL('./fixtures/fake-http-engine.cassette.json', import.meta.url), {
       scrub: fakeHttpScrub,
+      // The engine must make exactly the recorded calls: a repeated push would be a bug, not a replay detail.
+      match: { exhausted: 'error' },
       secrets: Object.values(credentials),
       recording: async () => {
         const server = await startFakeHttpServer(credentials)
@@ -87,7 +89,7 @@ describe.skipIf(!databaseUrl)('sync engine on recorded fixtures (real Postgres, 
     const first = await order('fake-order-1')
     expect(first.lines.map((line) => [line.reservation?.status, line.reservation?.units])).toEqual([['open', 2]])
     // The cancellation fact came through the recorded journal.
-    expect((await order('fake-order-2')).status).toBe('cancelled')
+    expect((await order('fake-order-2')).phase).toBe('cancelled')
 
     expect([lastPushed('fake-offer-1'), lastPushed('fake-offer-2'), lastPushed('fake-offer-3')]).toEqual([3, 1, 0])
   })

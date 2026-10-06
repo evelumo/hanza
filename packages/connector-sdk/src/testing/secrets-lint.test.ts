@@ -64,6 +64,38 @@ describe('findSecrets', () => {
     ).toEqual([])
   })
 
+  it('flags the newer secret names, and long token-shaped values under other token or secret keys', () => {
+    expect(
+      rules({
+        auth_token: 'x',
+        sessionToken: 'y',
+        x_auth_token: 'z',
+        user_code: 'ABCD-EFGH',
+        location: 'https://app.example.test/cb?code=live-auth-code&state=1',
+        csrfToken: 'a1B2c3D4e5F6g7H8i9J0k1L2',
+        webhookSecret: 'whsec_a1B2c3D4e5F6g7H8i9J0',
+      }),
+    ).toEqual([
+      'auth_token secret-value',
+      'sessionToken secret-value',
+      'x_auth_token secret-value',
+      'user_code secret-value',
+      'location secret-value',
+      'csrfToken token-like',
+      'webhookSecret token-like',
+    ])
+    expect(
+      rules({
+        nextPageToken: 'a1B2c3D4e5F6g7H8i9J0k1L2',
+        token_type: 'Bearer',
+        csrfToken: '[scrubbed]',
+        shortToken: 'abc',
+        error: { code: 'VALIDATION_ERROR' },
+        signature: 'SKU-1',
+      }),
+    ).toEqual([])
+  })
+
   it('skips what is allowed, by exact text or regex', () => {
     expect(rules({ a: 'support@realshop.pl', b: 'sales@realshop.pl', c: 'x@other.pl' }, ['support@realshop.pl', /^sales@/])).toEqual(['c email'])
   })

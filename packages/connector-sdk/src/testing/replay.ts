@@ -136,8 +136,8 @@ export function createReplayFetch(cassette: Cassette, options: ReplayOptions = {
   }
 
   const replayFetch: typeof fetch = async (input, init) => {
-    init?.signal?.throwIfAborted()
     const request = new Request(input, init)
+    request.signal.throwIfAborted()
     const bytes = new Uint8Array(await request.arrayBuffer())
     const headers = headersToRecord(request.headers)
     const scrubbed = scrubber.interaction({
