@@ -1,18 +1,27 @@
-import { orderStatusSchema } from '@hanza/connector-sdk'
+import { ORDER_PHASES } from '@hanza/core'
 import { z } from 'zod'
-import { messageKey } from '@/i18n/keys'
 import { idSchema, skuSchema } from '@/lib/schemas'
 
-// The SDK's enum has zod's English messages; the form field is a select, so give it a catalogue key.
-const formStatusSchema = z.enum(orderStatusSchema.options, { error: messageKey('validation.statusInvalid') })
-
-export const changeOrderStatusSchema = z.object({ orderId: idSchema, status: formStatusSchema })
+/** The target is an Order status of the organization; the core checks it belongs to it and may be chosen. */
+export const changeOrderStatusSchema = z.object({ orderId: idSchema, statusId: idSchema })
 export const linkOrderLineSchema = z.object({ orderLineId: idSchema, sku: skuSchema })
 export const resolveAttentionSchema = z.object({ orderId: idSchema })
 export const moveReservationSchema = z.object({ orderLineId: idSchema, warehouseId: idSchema })
 
-export const orderListFiltersSchema = z.object({
-  status: orderStatusSchema.optional().catch(undefined),
-  attention: z.literal('1').optional().catch(undefined),
-  payment: z.literal('awaiting').optional().catch(undefined),
-})
+const phaseSchema = z.enum(ORDER_PHASES)
+
+/**
+ * `status` is a status id: one of another organization simply matches nothing, as the list is scoped by tenant. Links
+ * from before organizations had statuses carry a phase there (`?status=new`); it becomes the phase filter.
+ */
+export const orderListFiltersSchema = z
+  .object({
+    phase: phaseSchema.optional().catch(undefined),
+    status: idSchema.optional().catch(undefined),
+    attention: z.literal('1').optional().catch(undefined),
+    payment: z.literal('awaiting').optional().catch(undefined),
+  })
+  .transform((filters) => {
+    const legacyPhase = phaseSchema.safeParse(filters.status)
+    return legacyPhase.success ? { ...filters, phase: filters.phase ?? legacyPhase.data, status: undefined } : filters
+  })

@@ -132,9 +132,9 @@ const evolvingAppended = evolvingV1.step('d', async ({ runId }) => called(runId,
 const fulfil = defineWorkflow({ name: 'test.fulfil', input: z.object({ orderId: z.string() }) })
   .waitForSignal('label', 'label.created', z.object({ trackingNumber: z.string() }))
   .step('ship', async ({ ctx, organizationId, input, results }) => {
-    const order = await ctx.db.order.findFirstOrThrow({ where: { id: input.orderId, organizationId }, select: { status: true } })
+    const order = await ctx.db.order.findFirstOrThrow({ where: { id: input.orderId, organizationId }, select: { phase: true } })
     // At-least-once: a repeated run must not try the transition again.
-    if (order.status !== 'shipped') await changeOrderStatus(ctx, organizationId, input.orderId, 'shipped', systemActor)
+    if (order.phase !== 'shipped') await changeOrderStatus(ctx, organizationId, input.orderId, 'shipped', systemActor)
     return { trackingNumber: results.label.trackingNumber }
   })
 
@@ -656,7 +656,7 @@ describe.skipIf(!databaseUrl)('durable workflows end to end (real Postgres, in-m
     )
     await drain()
     const order = await ctx.db.order.findFirstOrThrow({ where: { organizationId: org, connectionId, externalId: 'fake-order-1' } })
-    expect(order.status).toBe('new')
+    expect(order.phase).toBe('new')
 
     const { runId } = await ctx.workflows.start(fulfil, org, { orderId: order.id }, { key: order.id })
     await drain()
@@ -666,7 +666,7 @@ describe.skipIf(!databaseUrl)('durable workflows end to end (real Postgres, in-m
     await ctx.workflows.signal(fulfil, org, { key: order.id }, 'label.created', { trackingNumber: 'TRACK-1' })
     await drain()
     expect(await ctx.workflows.get(org, runId)).toMatchObject({ status: 'completed', results: { ship: { trackingNumber: 'TRACK-1' } } })
-    expect((await ctx.db.order.findFirstOrThrow({ where: { id: order.id, organizationId: org } })).status).toBe('shipped')
+    expect((await ctx.db.order.findFirstOrThrow({ where: { id: order.id, organizationId: org } })).phase).toBe('shipped')
     expect(fake.statusUpdates).toContainEqual({ orderExternalId: 'fake-order-1', status: 'shipped' })
   })
 })

@@ -1,4 +1,6 @@
-import { readFile } from 'node:fs/promises'
+import { randomUUID } from 'node:crypto'
+import { createDb } from '@hanza/db'
+import { applyMigration, createTestDatabase, migrationNames } from '@hanza/db/testing'
 import { describe, expect, it } from 'vitest'
 import { upsertOffers } from '../catalog/offers'
 import { createProduct } from '../catalog/products'
@@ -68,7 +70,7 @@ describe.skipIf(!databaseUrl)('orders', () => {
       const { ctx, org, connectionId } = await setup()
       const { orderId } = await importOrder(ctx, org, connectionId, buildOrder({ lines: [orderLine('l1', { sku: 'NOPE' })] }))
       await expect(changeOrderStatus(ctx, org, orderId, 'shipped', user)).rejects.toMatchObject({ code: 'unmatched_lines' })
-      expect((await ctx.db.order.findFirstOrThrow({ where: { id: orderId } })).status).toBe('new')
+      expect((await ctx.db.order.findFirstOrThrow({ where: { id: orderId } })).phase).toBe('new')
     })
 
     it('removes shortage when cancelled by a person', async () => {
@@ -84,7 +86,7 @@ describe.skipIf(!databaseUrl)('orders', () => {
       const { orderId } = await importOrder(ctx, org, connectionId, order)
       expect((await ctx.db.order.findFirstOrThrow({ where: { id: orderId } })).attentionReasons).toEqual(['unmatched_line', 'shortage'])
       await changeOrderStatus(ctx, org, orderId, 'cancelled', user)
-      expect(await ctx.db.order.findFirstOrThrow({ where: { id: orderId } })).toMatchObject({ status: 'cancelled', attentionReasons: [] })
+      expect(await ctx.db.order.findFirstOrThrow({ where: { id: orderId } })).toMatchObject({ phase: 'cancelled', attentionReasons: [] })
     })
 
     it('leaves a cancelled Order that has Unmatched lines out of the Needs attention list', async () => {
@@ -96,35 +98,73 @@ describe.skipIf(!databaseUrl)('orders', () => {
     })
 
     it('migration 20261005112748 clears unmatched_line on cancelled Orders already stored that way, and only those', async () => {
-      const { ctx, org, connectionId } = await setup()
-      const build = async (status: 'new' | 'cancelled' | 'shipped', reasons: Array<'unmatched_line' | 'channel_fact_conflict'>) => {
-        const { orderId } = await importOrder(ctx, org, connectionId, buildOrder({ lines: [orderLine('l1', { sku: 'NOPE' })] }))
-        // Written directly: the state the rows had before the fix.
-        await ctx.db.order.update({ where: { id: orderId }, data: { status, attentionReasons: reasons } })
-        return orderId
+      // Run where it runs: on a database at that migration, whose Orders still have the `status` column the SQL names
+      // (the Order statuses migration renames it to `phase` later, ADR 0018). Rows are written in SQL for that reason.
+      const migration = '20261005112748_clear_unmatched_line_on_cancelled_orders'
+      const database = await createTestDatabase(databaseUrl!, { before: migration })
+      const db = createDb(database.url)
+      try {
+        const org = randomUUID()
+        const connectionId = randomUUID()
+        await db.$executeRaw`INSERT INTO "organization" ("id", "name", "slug", "createdAt") VALUES (${org}, 'Org', ${`org-${org}`}, now())`
+        await db.$executeRaw`
+          INSERT INTO "connection" ("id", "organizationId", "connectorId", "name", "config", "credentials", "updatedAt")
+          VALUES (${connectionId}, ${org}, 'fake', 'Channel', '{}', 'sealed', now())`
+        const build = async (status: 'new' | 'cancelled' | 'shipped', reasons: Array<'unmatched_line' | 'channel_fact_conflict'>) => {
+          const id = randomUUID()
+          // The state the rows had before the fix.
+          await db.$executeRawUnsafe(
+            `INSERT INTO "order" ("id", "organizationId", "connectionId", "externalId", "status", "attentionReasons", "placedAt", "payment",
+               "currency", "totalAmount", "buyerName", "shippingAddress", "updatedAt")
+             VALUES ($1, $2, $3, $1, $4::"order_status", $5::"attention_reason"[], now(), 'prepaid', 'PLN', 10, 'Buyer', '{}',
+               now() - interval '1 hour')`,
+            id,
+            org,
+            connectionId,
+            status,
+            reasons,
+          )
+          return id
+        }
+        const cancelled = await build('cancelled', ['unmatched_line', 'channel_fact_conflict'])
+        const cancelledOnly = await build('cancelled', ['unmatched_line'])
+        const open = await build('new', ['unmatched_line'])
+        const shipped = await build('shipped', ['unmatched_line'])
+
+        const updatedAt = async (id: string) =>
+          (await db.$queryRaw<Array<{ updatedAt: Date }>>`SELECT "updatedAt" FROM "order" WHERE "id" = ${id}`)[0]!.updatedAt.getTime()
+        const before = { cancelled: await updatedAt(cancelled), open: await updatedAt(open), shipped: await updatedAt(shipped) }
+        await applyMigration(database.url, migration)
+        const afterFirst = { cancelled: await updatedAt(cancelled), open: await updatedAt(open), shipped: await updatedAt(shipped) }
+        expect(afterFirst.cancelled).toBeGreaterThan(before.cancelled)
+        expect(afterFirst.open).toBe(before.open)
+        expect(afterFirst.shipped).toBe(before.shipped)
+        // A second run matches no row, so it changes nothing, not even updatedAt.
+        await applyMigration(database.url, migration)
+        expect(await updatedAt(cancelled)).toBe(afterFirst.cancelled)
+
+        const expected = [
+          [cancelled, 'cancelled', ['channel_fact_conflict']],
+          [cancelledOnly, 'cancelled', []],
+          [open, 'new', ['unmatched_line']],
+          [shipped, 'shipped', ['unmatched_line']],
+        ]
+        const rows = async (column: 'status' | 'phase') =>
+          db.$queryRawUnsafe<Array<{ id: string; value: string; attentionReasons: string[] }>>(
+            `SELECT "id", "${column}"::text AS "value", "attentionReasons"::text[] AS "attentionReasons" FROM "order" WHERE "organizationId" = $1`,
+            org,
+          )
+        const byId = (list: Array<{ id: string; value: string; attentionReasons: string[] }>) =>
+          expected.map(([id]) => list.find((row) => row.id === id)).map((row) => [row?.id, row?.value, row?.attentionReasons])
+        expect(byId(await rows('status'))).toEqual(expected)
+
+        // Every later migration keeps the result: the phase is the old status and the reasons stay as they are.
+        for (const later of (await migrationNames()).filter((name) => name > migration)) await applyMigration(database.url, later)
+        expect(byId(await rows('phase'))).toEqual(expected)
+      } finally {
+        await db.$disconnect()
+        await database.drop()
       }
-      const cancelled = await build('cancelled', ['unmatched_line', 'channel_fact_conflict'])
-      const cancelledOnly = await build('cancelled', ['unmatched_line'])
-      const open = await build('new', ['unmatched_line'])
-      const shipped = await build('shipped', ['unmatched_line'])
-
-      const sql = await readFile(new URL('../../../db/prisma/migrations/20261005112748_clear_unmatched_line_on_cancelled_orders/migration.sql', import.meta.url), 'utf8')
-      const updatedAt = async (id: string) => (await ctx.db.order.findFirstOrThrow({ where: { id } })).updatedAt.getTime()
-      const before = { cancelled: await updatedAt(cancelled), open: await updatedAt(open), shipped: await updatedAt(shipped) }
-      await ctx.db.$executeRawUnsafe(sql)
-      const afterFirst = { cancelled: await updatedAt(cancelled), open: await updatedAt(open), shipped: await updatedAt(shipped) }
-      expect(afterFirst.cancelled).toBeGreaterThan(before.cancelled)
-      expect(afterFirst.open).toBe(before.open)
-      expect(afterFirst.shipped).toBe(before.shipped)
-      // A second run matches no row, so it changes nothing, not even updatedAt.
-      await ctx.db.$executeRawUnsafe(sql)
-      expect(await updatedAt(cancelled)).toBe(afterFirst.cancelled)
-
-      const reasons = async (id: string) => (await ctx.db.order.findFirstOrThrow({ where: { id } })).attentionReasons
-      expect(await reasons(cancelled)).toEqual(['channel_fact_conflict'])
-      expect(await reasons(cancelledOnly)).toEqual([])
-      expect(await reasons(open)).toEqual(['unmatched_line'])
-      expect(await reasons(shipped)).toEqual(['unmatched_line'])
     })
   })
 
@@ -162,7 +202,7 @@ describe.skipIf(!databaseUrl)('orders', () => {
     it('on a shipped Order: consumed Reservation and Stock decreases', async () => {
       const env = await setup()
       const { orderId, lineId } = await unmatchedOrder(env, 2, [fact('s', 'shipped')])
-      expect((await env.ctx.db.order.findFirstOrThrow({ where: { id: orderId } })).status).toBe('shipped')
+      expect((await env.ctx.db.order.findFirstOrThrow({ where: { id: orderId } })).phase).toBe('shipped')
 
       await linkOrderLine(env.ctx, env.org, lineId, env.productId, user)
 
@@ -264,11 +304,12 @@ describe.skipIf(!databaseUrl)('orders', () => {
     expect(all.items[0]).toMatchObject({ connectionName: 'Test channel', buyerName: 'John Test', total: { amount: '84', currency: 'PLN' } })
     expect((await listOrders(ctx, org, { needsAttention: true, skip: 0, take: 10 })).items.map((row) => row.id)).toEqual([attention.orderId])
     expect((await listOrders(ctx, org, { needsAttention: false, skip: 0, take: 10 })).items.map((row) => row.id)).toEqual([ok.orderId])
-    expect((await listOrders(ctx, org, { status: 'cancelled', skip: 0, take: 10 })).total).toBe(0)
+    expect((await listOrders(ctx, org, { phase: 'cancelled', skip: 0, take: 10 })).total).toBe(0)
 
     const detail = await getOrder(ctx, org, ok.orderId)
     expect(detail).toMatchObject({
-      status: 'new',
+      phase: 'new',
+      status: { name: null, color: null, phase: 'new' },
       payment: 'prepaid',
       buyer: { name: 'John Test', email: 'john.test@example.com', phone: null, login: 'john_test' },
       shippingAddress: { city: 'Warsaw', countryCode: 'PL' },
@@ -277,6 +318,11 @@ describe.skipIf(!databaseUrl)('orders', () => {
       facts: [],
       allowedTransitions: ['processing', 'shipped', 'cancelled'],
     })
+    expect(detail?.allowedStatuses.map((status) => [status.phase, status.name])).toEqual([
+      ['processing', null],
+      ['shipped', null],
+      ['cancelled', null],
+    ])
     expect(detail?.events.map((event) => event.type)).toEqual(['order.imported'])
   })
 })

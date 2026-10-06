@@ -14,7 +14,7 @@ export const SWEEP_MAX_BATCHES = 10
 export async function fillMissingClosedAt(ctx: Context, organizationId: string): Promise<number> {
   return ctx.db.$executeRaw`
     UPDATE "order" SET "closedAt" = "updatedAt"
-    WHERE "organizationId" = ${organizationId} AND "status" IN ('shipped', 'cancelled') AND "closedAt" IS NULL`
+    WHERE "organizationId" = ${organizationId} AND "phase" IN ('shipped', 'cancelled') AND "closedAt" IS NULL`
 }
 
 /**

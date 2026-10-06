@@ -3,14 +3,15 @@ import { describe, expect, it } from 'vitest'
 import type { Actor } from '../actor'
 import type { Context } from '../context'
 import { DomainError } from '../errors'
+import { ensureDefaultOrderStatuses } from '../order-statuses/defaults'
 import { changeOrderStatus } from '../orders/change-status'
 import { importOrder } from '../orders/import'
 import { getOrder, listOrders } from '../orders/queries'
+import { canManageOrganization } from '../permissions'
 import { createTestOrganization, type TestContext } from '../testing/context'
 import { databaseUrl, useTestContext } from '../testing/db-test'
-import { addMember, buildOrder, createTestConnection, fact } from '../testing/fixtures'
+import { addMember, buildOrder, createTestConnection, defaultStatusId, fact } from '../testing/fixtures'
 import { eraseBuyerData, previewBuyerErasure } from './erasure'
-import { canManagePrivacy } from './permissions'
 import { getPrivacySettings, previewBuyerDataRetention, setBuyerDataRetention } from './settings'
 import { applyBuyerDataRetention, sealLegacyBuyerData, sweepBuyerData, SWEEP_BATCH_SIZE } from './sweep'
 
@@ -33,7 +34,9 @@ async function makeLegacy(ctx: TestContext, orderId: string, order: Order, shipp
 }
 
 async function closeDaysAgo(ctx: TestContext, orderId: string, days: number, now = new Date()): Promise<void> {
-  await ctx.db.order.update({ where: { id: orderId }, data: { status: 'shipped', closedAt: new Date(now.getTime() - days * DAY) } })
+  const { organizationId } = await ctx.db.order.findUniqueOrThrow({ where: { id: orderId }, select: { organizationId: true } })
+  const statusId = await defaultStatusId(ctx, organizationId, 'shipped')
+  await ctx.db.order.update({ where: { id: orderId }, data: { phase: 'shipped', statusId, closedAt: new Date(now.getTime() - days * DAY) } })
 }
 
 function buyer(email: string | null, name = 'Anna Nowak'): Pick<Order, 'buyer' | 'shippingAddress'> {
@@ -208,9 +211,11 @@ describe.skipIf(!databaseUrl)('Buyer data privacy', () => {
     const { ctx: base, org, connectionId } = await setup()
     const { ctx, logged } = withLogCapture(base)
     const count = SWEEP_BATCH_SIZE * 2 + 50
+    await ensureDefaultOrderStatuses(base.db, org)
+    const statusId = await defaultStatusId(base, org, 'new')
     await base.db.$executeRaw`
-      INSERT INTO "order" ("id", "organizationId", "connectionId", "externalId", "placedAt", "payment", "currency", "totalAmount", "buyerName", "updatedAt")
-      SELECT gen_random_uuid()::text, ${org}, ${connectionId}, 'partial-' || n, now(), 'prepaid', 'PLN', 10, 'Paula Partial', now()
+      INSERT INTO "order" ("id", "organizationId", "connectionId", "externalId", "statusId", "placedAt", "payment", "currency", "totalAmount", "buyerName", "updatedAt")
+      SELECT gen_random_uuid()::text, ${org}, ${connectionId}, 'partial-' || n, ${statusId}, now(), 'prepaid', 'PLN', 10, 'Paula Partial', now()
       FROM generate_series(1, ${count}::int) AS n`
 
     expect(await sweepBuyerData(ctx, org, new Date())).toEqual({ sealed: 0, sealFailed: count, erased: 0, more: false })
@@ -251,7 +256,7 @@ describe.skipIf(!databaseUrl)('Buyer data privacy', () => {
       buyerName: null,
       shippingAddress: null,
       shippingCountryCode: 'PL',
-      status: 'shipped',
+      phase: 'shipped',
     })
     expect(erased.buyerDataErasedAt).toEqual(now)
     expect(erased.totalAmount.toFixed()).toBe('10')
@@ -275,7 +280,11 @@ describe.skipIf(!databaseUrl)('Buyer data privacy', () => {
     const now = new Date()
     const closedByOldCode = await importOne()
     const longAgo = new Date(now.getTime() - 100 * DAY)
-    await ctx.db.$executeRaw`UPDATE "order" SET "status" = 'cancelled', "closedAt" = NULL, "updatedAt" = ${longAgo} WHERE "id" = ${closedByOldCode.orderId}`
+    // Phase and status move together (composite foreign key): the cancelled phase's default status.
+    await ctx.db.$executeRaw`
+      UPDATE "order" o SET "phase" = 'cancelled', "statusId" = s."id", "closedAt" = NULL, "updatedAt" = ${longAgo}
+      FROM "order_status" s
+      WHERE o."id" = ${closedByOldCode.orderId} AND s."organizationId" = o."organizationId" AND s."phase" = 'cancelled' AND s."isDefault"`
     expect(await previewBuyerDataRetention(ctx, org, 30, admin, now)).toEqual({ erasedAtNextCheck: 1 })
     await setBuyerDataRetention(ctx, org, 30, admin)
 
@@ -309,12 +318,12 @@ describe.skipIf(!databaseUrl)('Buyer data privacy', () => {
     expect(await ctx.db.eventLog.count({ where: { organizationId: org, type: { startsWith: 'privacy.' } } })).toBe(0)
 
     for (const actor of [admin, adminByRole, several]) {
-      expect(await canManagePrivacy(ctx, org, (actor as { userId: string }).userId)).toBe(true)
+      expect(await canManageOrganization(ctx, org, (actor as { userId: string }).userId)).toBe(true)
       await expect(previewBuyerErasure(ctx, org, 'anna@example.com', actor)).resolves.toEqual({ closed: 0, open: 0 })
     }
     await setBuyerDataRetention(ctx, org, 30, adminByRole)
     expect(await getPrivacySettings(ctx, org)).toEqual({ buyerDataRetentionDays: 30 })
-    expect(await canManagePrivacy(ctx, org, (member as { userId: string }).userId)).toBe(false)
+    expect(await canManageOrganization(ctx, org, (member as { userId: string }).userId)).toBe(false)
   })
 
   it('an erasure request erases exactly one person’s Closed Orders in one organization and keeps the open ones', async () => {

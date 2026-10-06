@@ -22,6 +22,14 @@ export type DomainErrorCode =
   | 'reservation_not_open'
   | 'not_enough_stock'
   | 'forbidden'
+  | 'status_is_default'
+  | 'status_in_use'
+  | 'invalid_replacement'
+  | 'status_name_taken'
+  | 'status_inactive'
+  | 'status_name_required'
+  | 'status_pending_deletion'
+  | 'status_is_replacement'
 
 /** Thrown by services for expected failures; the panel maps `code` to translated copy. */
 export class DomainError extends Error {

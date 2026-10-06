@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { z } from 'zod'
 import { changeOrderStatusSchema, linkOrderLineSchema } from '@/app/(panel)/orders/schemas'
-import { addConnectionSchema } from '@/app/(panel)/connections/schemas'
+import { addConnectionSchema, statusMappingSchema } from '@/app/(panel)/connections/schemas'
 import {
   createProductSchema,
   createProductsFromOffersSchema,
@@ -10,6 +10,13 @@ import {
   setOfferPriceSchema,
   setStockSchema,
 } from '@/app/(panel)/products/schemas'
+import {
+  createOrderStatusSchema,
+  deleteOrderStatusSchema,
+  moveOrderStatusSchema,
+  setOrderStatusActiveSchema,
+  updateOrderStatusSchema,
+} from '@/app/(panel)/settings/order-statuses/schemas'
 import { catalogues } from '@/i18n/catalogues'
 import { translatorFor } from '@/i18n/testing'
 import { isMessageKey } from '@/i18n/keys'
@@ -30,7 +37,25 @@ describe('validation messages', () => {
   const garbage = [
     {},
     { orderId: 'a'.repeat(99) },
-    { orderId: 1, productId: 1, offerId: 1, offerIds: 'x', status: 'zzz', sku: 1, stock: 1, name: 1, orderLineId: 1, connectorId: 1 },
+    {
+      orderId: 1,
+      productId: 1,
+      offerId: 1,
+      offerIds: 'x',
+      status: 'zzz',
+      statusId: 1,
+      phase: 'zzz',
+      color: 'pink',
+      direction: 'left',
+      active: 'yes',
+      replacementId: 1,
+      new: 1,
+      sku: 1,
+      stock: 1,
+      name: 1,
+      orderLineId: 1,
+      connectorId: 1,
+    },
     { intent: 'set', productId: 'p', offerId: 'o', amount: '0', currency: 'zł' },
     { intent: 'set', productId: 'p', offerId: 'o', amount: '1,234', currency: 'PLN' },
     { intent: 'set', productId: 'p', offerId: 'o', amount: '45.5', currency: 'JPY' },
@@ -51,6 +76,12 @@ describe('validation messages', () => {
     currencyCodeSchema,
     setBasePriceSchema,
     setOfferPriceSchema,
+    createOrderStatusSchema,
+    updateOrderStatusSchema,
+    moveOrderStatusSchema,
+    setOrderStatusActiveSchema,
+    deleteOrderStatusSchema,
+    statusMappingSchema,
   }
 
   // Field messages end up in the action state, and so possibly on screen, so each must be a catalogue key

@@ -2,9 +2,9 @@ import type { Prisma } from '@hanza/db'
 import type { Actor } from '../actor'
 import type { Context } from '../context'
 import { appendEvent } from '../events'
-import { FINAL_STATUSES } from '../orders/status-rules'
+import { FINAL_PHASES } from '../orders/status-rules'
 import { TX_OPTIONS } from '../transaction'
-import { assertCanManagePrivacy } from './permissions'
+import { assertCanManageOrganization } from '../permissions'
 
 /** About ten years; longer is the same as keeping the data. */
 export const MAX_RETENTION_DAYS = 3650
@@ -28,7 +28,7 @@ export function retentionCutoff(now: Date, retentionDays: number): Date {
 export function retentionEligible(now: Date, retentionDays: number): Prisma.OrderWhereInput {
   const cutoff = retentionCutoff(now, retentionDays)
   return {
-    status: { in: [...FINAL_STATUSES] },
+    phase: { in: [...FINAL_PHASES] },
     buyerDataErasedAt: null,
     OR: [{ closedAt: { lte: cutoff } }, { closedAt: null, updatedAt: { lte: cutoff } }],
   }
@@ -57,7 +57,7 @@ export async function previewBuyerDataRetention(
   now = new Date(),
 ): Promise<{ erasedAtNextCheck: number }> {
   if (!isValidRetentionDays(days)) throw new RangeError(`Retention must be 1-${MAX_RETENTION_DAYS} days`)
-  await assertCanManagePrivacy(ctx, organizationId, actor)
+  await assertCanManageOrganization(ctx, organizationId, actor)
   const erasedAtNextCheck = await ctx.db.order.count({ where: { ...retentionEligible(now, days), organizationId } })
   return { erasedAtNextCheck }
 }
@@ -65,7 +65,7 @@ export async function previewBuyerDataRetention(
 /** The next `privacy.sweep` applies it; Orders already erased stay erased when it is lengthened or turned off. */
 export async function setBuyerDataRetention(ctx: Context, organizationId: string, days: number | null, actor: Actor): Promise<void> {
   if (!isValidRetentionDays(days)) throw new RangeError(`Retention must be null or 1-${MAX_RETENTION_DAYS} days`)
-  await assertCanManagePrivacy(ctx, organizationId, actor)
+  await assertCanManageOrganization(ctx, organizationId, actor)
   await ctx.db.$transaction(async (tx) => {
     const before = await tx.privacySettings.findUnique({ where: { organizationId }, select: { buyerDataRetentionDays: true } })
     const from = before?.buyerDataRetentionDays ?? null

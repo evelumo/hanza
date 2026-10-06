@@ -17,6 +17,7 @@
     "products": "Produkty",
     "orders": "Zamówienia",
     "connections": "Połączenia",
+    "settings": "Ustawienia",
     "families": "Rodziny",
     "privacy": "Prywatność",
     "warehouses": "Magazyny"
@@ -277,7 +278,8 @@
       "attentionOnly": "Tylko wymagające uwagi",
       "awaitingPaymentOnly": "Tylko oczekujące na płatność",
       "apply": "Filtruj",
-      "clear": "Wyczyść"
+      "clear": "Wyczyść",
+      "phase": "Faza"
     },
     "emptyFiltered": "Żadne zamówienie nie pasuje do filtrów.",
     "empty": "Nie ma jeszcze zamówień. Pojawią się po synchronizacji połączenia z kanałem.",
@@ -299,10 +301,10 @@
       "attentionHint": "Połącz niepołączone pozycje z produktami poniżej, a to oznaczenie zniknie samo.",
       "markReviewed": "Oznacz jako sprawdzone",
       "statusTitle": "Status",
-      "statusDescription": "Postęp realizacji prowadzi Hanza; zmiana jest przekazywana do kanału, jeśli kanał to obsługuje.",
-      "awaitingPaymentHint": "Kupujący jeszcze nie zapłacił. Towar pozostaje zarezerwowany; zamówienie można realizować, gdy kanał zgłosi płatność, a do tego czasu można je tylko anulować.",
+      "statusDescription": "Postęp realizacji prowadzi Hanza. Przejście do innej fazy jest przekazywane do kanału, jeśli kanał to obsługuje; statusy w ramach jednej fazy są Twoimi etykietami i zostają w Hanzie.",
+      "awaitingPaymentHint": "Kupujący jeszcze nie zapłacił. Towar pozostaje zarezerwowany; zamówienie można realizować, gdy kanał zgłosi płatność, a do tego czasu można je tylko anulować albo zmienić mu status w fazie Nowe.",
       "awaitingPaymentShippedHint": "Wysłane, ale kanał nie zgłosił płatności za to zamówienie.",
-      "finalStatus": "Zamówienie ma status końcowy ({status}), nie można go zmienić.",
+      "finalStatus": "Zamówienie jest w fazie końcowej ({status}) i nie ma innego statusu, na który można je przenieść.",
       "changeTo": "Zmień na: {status}",
       "confirmShipped": "Oznaczyć zamówienie jako wysłane? Zarezerwowany towar zostanie zdjęty ze stanu.",
       "confirmCancelled": "Anulować zamówienie? Rezerwacje zostaną zwolnione, a tej zmiany nie można cofnąć.",
@@ -332,7 +334,8 @@
       "factsTitle": "Zmiany zgłoszone przez kanał",
       "factsEmpty": "Kanał nie zgłosił żadnych zmian.",
       "historyTitle": "Historia",
-      "historyEmpty": "Brak zdarzeń."
+      "historyEmpty": "Brak zdarzeń.",
+      "phaseLine": "Faza: {phase}"
     },
     "linkLine": {
       "skuLabel": "SKU produktu, z którym połączyć pozycję",
@@ -378,7 +381,14 @@
         "error": "Błąd"
       },
       "eventsTitle": "Ostatnie zdarzenia",
-      "eventsEmpty": "Brak zdarzeń."
+      "eventsEmpty": "Brak zdarzeń.",
+      "statusMapping": {
+        "title": "Statusy zamówień z tego kanału",
+        "description": "Który z Twoich statusów dostaje zamówienie z tego kanału, gdy kanał je zgłasza. Zamówienia już zaimportowane zachowują swój status.",
+        "defaultOption": "Domyślny status fazy ({status})",
+        "save": "Zapisz",
+        "adminsOnly": "Tylko właściciel lub administrator organizacji może to zmienić."
+      }
     },
     "new": {
       "title": "Dodaj połączenie",
@@ -449,7 +459,7 @@
     }
   },
   "labels": {
-    "orderStatus": {
+    "orderPhase": {
       "new": "Nowe",
       "processing": "W realizacji",
       "shipped": "Wysłane",
@@ -501,6 +511,21 @@
       "courier": "Kurier",
       "invoicing": "Fakturowanie"
     },
+    "statusColor": {
+      "gray": "Szary",
+      "blue": "Niebieski",
+      "teal": "Morski",
+      "green": "Zielony",
+      "amber": "Bursztynowy",
+      "orange": "Pomarańczowy",
+      "red": "Czerwony",
+      "violet": "Fioletowy"
+    },
+    "reportedPhase": {
+      "new": "Przychodzi nowe zamówienie",
+      "shipped": "Kanał zgłasza wysłanie",
+      "cancelled": "Kanał zgłasza anulowanie"
+    },
     "erasureCause": {
       "retention": "okres przechowywania",
       "erasure_request": "prośba o usunięcie"
@@ -543,6 +568,11 @@
       "order_attention_resolved": "Oznaczono jako sprawdzone",
       "connection_created": "Utworzono połączenie",
       "connection_health_changed": "Zmienił się stan połączenia",
+      "order_status_created": "Dodano status",
+      "order_status_updated": "Zmieniono ustawienia statusu",
+      "order_status_deleted": "Usunięto status",
+      "connection_status_mapping_changed": "Zmieniono statusy zamówień z kanału",
+      "order_status_deletion_requested": "Rozpoczęto usuwanie statusu",
       "family_created": "Utworzono rodzinę produktów",
       "family_renamed": "Zmieniono nazwę rodziny produktów",
       "family_deleted": "Usunięto rodzinę produktów",
@@ -562,6 +592,7 @@
       "warehouse_deleted": "Usunięto magazyn"
     },
     "lines": "{count, plural, one {# pozycja} few {# pozycje} many {# pozycji} other {# pozycji}}",
+    "defaultStatus": "status domyślny",
     "stockRules": "bufor bezpieczeństwa {buffer}, limit kanału {limit}",
     "retentionDays": "{count, plural, one {# dzień} few {# dni} many {# dni} other {# dnia}}",
     "retentionOff": "bez limitu",
@@ -586,6 +617,14 @@
       "invalid_price": "Ta cena nie pasuje do swojej waluty: sprawdź miejsca po przecinku.",
       "not_a_channel": "To połączenie nie jest kanałem sprzedaży, więc nie ma ustawień stanu.",
       "forbidden": "Tylko właściciel lub administrator organizacji może to zrobić.",
+      "status_is_default": "Statusu domyślnego nie można wyłączyć ani usunąć. Najpierw ustaw inny status jako domyślny.",
+      "status_in_use": "Ten status jest nadal używany. Wybierz status, do którego przenieść jego zamówienia.",
+      "invalid_replacement": "Wybierz inny aktywny status z tej samej fazy.",
+      "status_name_taken": "Aktywny status o tej nazwie już istnieje.",
+      "status_inactive": "Ten status jest wyłączony. Najpierw go włącz.",
+      "status_name_required": "Wpisz nazwę. Tylko status domyślny może jej nie mieć.",
+      "status_pending_deletion": "Ten status jest właśnie usuwany.",
+      "status_is_replacement": "Do tego statusu są przenoszone zamówienia z usuwanego statusu. Spróbuj ponownie, gdy usuwanie się skończy.",
       "warehouse_inactive": "Ten magazyn jest nieaktywny.",
       "warehouse_is_default": "Magazynu domyślnego nie można dezaktywować ani usunąć.",
       "warehouse_not_empty": "W magazynie nadal jest stan lub otwarte rezerwacje.",
@@ -617,11 +656,15 @@
     "nameRequired": "Podaj nazwę.",
     "productNameTooLong": "Nazwa może mieć najwyżej 200 znaków.",
     "connectionNameTooLong": "Nazwa może mieć najwyżej 100 znaków.",
-    "statusInvalid": "Wybierz poprawny status.",
     "offersRequired": "Zaznacz co najmniej jedną ofertę.",
     "offersTooMany": "Zaznacz najwyżej 200 ofert naraz.",
     "fieldRequired": "To pole jest wymagane.",
     "fieldInvalid": "Nieprawidłowa wartość.",
+    "statusNameRequired": "Wpisz nazwę.",
+    "statusNameTooLong": "Nazwa może mieć najwyżej 60 znaków.",
+    "colorInvalid": "Wybierz kolor z listy.",
+    "phaseInvalid": "Wybierz poprawną fazę.",
+    "statusNameReserved": "To nazwa fazy. Żeby jej użyć, zostaw pustą nazwę statusu domyślnego.",
     "familyNameTooLong": "Nazwa może mieć najwyżej 100 znaków.",
     "attributesInvalid": "Podaj od 1 do 5 różnych nazw atrybutów, każda do 50 znaków, po przecinku.",
     "attributeValueRequired": "Podaj wartość o długości do 100 znaków.",
@@ -633,6 +676,56 @@
     "retentionDaysInvalid": "Podaj liczbę całkowitą dni od 1 do 3650 albo zostaw pole puste.",
     "warehouseNameTooLong": "Nazwa może mieć najwyżej 100 znaków.",
     "warehousesRequired": "Wybierz co najmniej jeden magazyn."
+  },
+  "settings": {
+    "title": "Ustawienia",
+    "orderStatuses": {
+      "title": "Statusy zamówień",
+      "description": "Twoje własne statusy realizacji zamówień. Każdy należy do jednej fazy: Hanza uzgadnia stany magazynowe i kanały według fazy, a status jest Twoją dokładniejszą etykietą w jej ramach.",
+      "adminsOnly": "Tylko właściciel lub administrator organizacji może zmieniać statusy zamówień.",
+      "phaseHint": {
+        "new": "Tu trafiają zamówienia z kanałów. Towar jest zarezerwowany.",
+        "processing": "W przygotowaniu. Towar pozostaje zarezerwowany.",
+        "shipped": "Faza końcowa: zarezerwowany towar został zdjęty ze stanu.",
+        "cancelled": "Faza końcowa: rezerwacje zostały zwolnione."
+      },
+      "columns": {
+        "status": "Status",
+        "orders": "Zamówienia",
+        "edit": "Nazwa i kolor",
+        "actions": "Akcje"
+      },
+      "default": "Domyślny",
+      "inactive": "Wyłączony",
+      "phaseName": "Używa nazwy fazy",
+      "name": "Nazwa",
+      "nameFor": "Nazwa statusu {status}",
+      "namePlaceholder": "np. Czeka na pakowanie",
+      "nameHint": "Puste pole (tylko status domyślny): nazwa fazy, w języku każdej osoby.",
+      "color": "Kolor",
+      "colorFor": "Kolor statusu {status}",
+      "colorNone": "Kolor fazy",
+      "save": "Zapisz",
+      "addTitle": "Dodaj status",
+      "add": "Dodaj",
+      "adding": "Dodawanie…",
+      "moveUp": "Przesuń {status} wyżej",
+      "moveDown": "Przesuń {status} niżej",
+      "makeDefault": "Ustaw jako domyślny",
+      "deactivate": "Wyłącz",
+      "activate": "Włącz",
+      "delete": "Usuń",
+      "deleting": "Usuwanie…",
+      "replacementFor": "Status, do którego trafią zamówienia ze statusu {status}",
+      "confirmDelete": "Usunąć status {status}?",
+      "confirmDeleteMoving": "Usunąć status {status} i przenieść jego zamówienia do wybranego statusu?",
+      "orderCount": "{count, plural, one {# zamówienie} few {# zamówienia} many {# zamówień} other {# zamówienia}}",
+      "usedByChannels": "{count, plural, one {Używany przez # kanał} few {Używany przez # kanały} many {Używany przez # kanałów} other {Używany przez # kanału}}",
+      "defaultHint": "Status, który zamówienie dostaje po wejściu w tę fazę, chyba że kanał mówi inaczej. Nie można go wyłączyć ani usunąć.",
+      "deleteScheduled": "Usuwanie: zamówienia są przenoszone do wybranego statusu. Status zniknie, gdy to się skończy.",
+      "deleteFor": "Usuń status {status}",
+      "deletionInProgress": "Usuwany: jego zamówienia są przenoszone do statusu {status}."
+    }
   },
   "warehouses": {
     "title": "Magazyny",

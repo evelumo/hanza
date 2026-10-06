@@ -140,12 +140,12 @@ describe.skipIf(!databaseUrl)('sync engine end to end (real Postgres, in-memory 
     expect(await ctx.db.order.count({ where: { organizationId: org } })).toBe(4)
 
     const first = await order('fake-order-1')
-    expect(first.status).toBe('new')
+    expect(first.phase).toBe('new')
     expect(first.attentionReasons).toEqual([])
     expect(first.lines.map((line) => [line.reservation?.status, line.reservation?.units])).toEqual([['open', 2]])
 
     const second = await order('fake-order-2')
-    expect(second.status).toBe('cancelled')
+    expect(second.phase).toBe('cancelled')
     expect(second.attentionReasons).toEqual([])
     expect(second.lines.map((line) => [line.sku, line.shortage, line.reservation?.status])).toEqual([
       ['FAKE-SKU-2', false, 'released'],
@@ -205,7 +205,7 @@ describe.skipIf(!databaseUrl)('sync engine end to end (real Postgres, in-memory 
     await pullOrders()
 
     const fourth = await order('fake-order-4')
-    expect(fourth.status).toBe('cancelled')
+    expect(fourth.phase).toBe('cancelled')
     expect(fourth.lines[0]?.reservation?.status).toBe('released')
     expect(lastPushed('fake-offer-4')).toBe(10)
     // A Channel fact is never pushed back to the Channel.
@@ -231,7 +231,7 @@ describe.skipIf(!databaseUrl)('sync engine end to end (real Postgres, in-memory 
   it("8. a status push lost because the queue was down after commit is sent once by the tick's sweep", async () => {
     const third = await order('fake-order-3')
     await changeOrderStatus(queueDown(), org, third.id, 'processing', user)
-    expect((await order('fake-order-3')).status).toBe('processing')
+    expect((await order('fake-order-3')).phase).toBe('processing')
     expect(ctx.queue.waiting).toEqual([])
 
     // Within the grace period the sweep leaves it to the immediate job.
@@ -444,7 +444,7 @@ describe.skipIf(!databaseUrl)('a cancelled Order leaves Needs attention (real Po
     expect((await ctx.queue.drain(ctx, jobs)).failed).toEqual([])
 
     const open = await order('fake-order-2')
-    expect(open.status).toBe('new')
+    expect(open.phase).toBe('new')
     expect(open.attentionReasons).toEqual(['unmatched_line'])
     expect(open.lines.every((line) => line.productId === null)).toBe(true)
     expect(await needsAttention()).toEqual(['fake-order-1', 'fake-order-2', 'fake-order-3', 'fake-order-4'])
@@ -453,7 +453,7 @@ describe.skipIf(!databaseUrl)('a cancelled Order leaves Needs attention (real Po
     await pullOrders()
 
     const cancelled = await order('fake-order-2')
-    expect(cancelled.status).toBe('cancelled')
+    expect(cancelled.phase).toBe('cancelled')
     expect(cancelled.attentionReasons).toEqual([])
     // The lines are still Unmatched: only the Order-level mark is gone.
     expect(cancelled.lines.every((line) => line.productId === null)).toBe(true)
@@ -476,7 +476,7 @@ describe.skipIf(!databaseUrl)('a cancelled Order leaves Needs attention (real Po
     })
     await pullOrders()
 
-    expect(await order('fake-order-5')).toMatchObject({ status: 'cancelled', attentionReasons: [] })
+    expect(await order('fake-order-5')).toMatchObject({ phase: 'cancelled', attentionReasons: [] })
     expect(await needsAttention()).toEqual(['fake-order-1', 'fake-order-3', 'fake-order-4'])
   })
 })

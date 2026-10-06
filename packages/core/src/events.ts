@@ -1,7 +1,10 @@
 import type { Prisma, Tx } from '@hanza/db'
 import type { Context } from './context'
 
-export type EventSubject = { type: 'product' | 'product_family' | 'offer' | 'order' | 'connection' | 'warehouse'; id: string }
+export type EventSubject = {
+  type: 'product' | 'product_family' | 'offer' | 'order' | 'connection' | 'warehouse' | 'order_status'
+  id: string
+}
 
 export type EventType =
   | 'system.ping'
@@ -30,10 +33,15 @@ export type EventType =
   | 'order.attention_resolved'
   | 'order.reservation_moved'
   | 'order.buyer_data_erased'
+  | 'order_status.created'
+  | 'order_status.updated'
+  | 'order_status.deletion_requested'
+  | 'order_status.deleted'
   | 'connection.created'
   | 'connection.health_changed'
   | 'connection.stock_rules_changed'
   | 'connection.warehouses_changed'
+  | 'connection.status_mapping_changed'
   | 'warehouse.created'
   | 'warehouse.updated'
   | 'warehouse.deactivated'
