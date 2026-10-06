@@ -18,6 +18,22 @@ const codes: DomainErrorCode[] = [
   'already_in_family',
   'invalid_price',
   'not_a_channel',
+  'warehouse_inactive',
+  'warehouse_is_default',
+  'warehouse_not_empty',
+  'warehouse_in_use',
+  'no_warehouse_selected',
+  'reservation_not_open',
+  'not_enough_stock',
+  'forbidden',
+  'status_is_default',
+  'status_in_use',
+  'invalid_replacement',
+  'status_name_taken',
+  'status_inactive',
+  'status_name_required',
+  'status_pending_deletion',
+  'status_is_replacement',
 ]
 const t = translatorFor('en')
 

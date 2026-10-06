@@ -5,6 +5,7 @@ import { normalizeSku } from '../catalog/sku'
 import type { Context } from '../context'
 import { DomainError } from '../errors'
 import { appendEvent } from '../events'
+import { ensureDefaultOrderStatuses, resolveStatusForPhase } from '../order-statuses/defaults'
 import { sealBuyerData } from '../privacy/buyer-data'
 import type { SecretBox } from '../secrets'
 import { lockStock } from '../stock/locks'
@@ -14,7 +15,7 @@ import { ensureDefaultWarehouse } from '../stock/warehouse'
 import { TX_OPTIONS } from '../transaction'
 import { matchLines } from './match'
 import { addReasons, reasonsAfterCancel } from './reasons'
-import { factTransition, isFinalStatus } from './status-rules'
+import { factTransition, isFinalPhase } from './status-rules'
 import { applyStockEffect } from './stock-effect'
 
 /**
@@ -30,6 +31,7 @@ export async function importOrder(
   order: Order,
 ): Promise<{ orderId: string; created: boolean; factsApplied: number }> {
   await ensureDefaultWarehouse(ctx.db, organizationId)
+  await ensureDefaultOrderStatuses(ctx.db, organizationId)
 
   const result = await ctx.db.$transaction(async (tx) => {
     const connection = await tx.connection.findFirst({ where: { id: connectionId, organizationId }, select: { id: true } })
@@ -41,7 +43,7 @@ export async function importOrder(
       FOR NO KEY UPDATE`
     const touched = new Set<string>()
     const orderId = existing[0]?.id ?? (await insertOrder(tx, ctx.secrets, organizationId, connectionId, order, touched))
-    const factsApplied = await applyNewFacts(tx, organizationId, orderId, order.facts, touched)
+    const factsApplied = await applyNewFacts(tx, organizationId, connectionId, orderId, order.facts, touched)
     const connectionIds = await markOffersForStockPush(tx, organizationId, [...touched])
     return { orderId, created: existing.length === 0, wasAwaitingPayment: existing[0]?.awaitingPayment === true, factsApplied, connectionIds }
   }, TX_OPTIONS)
@@ -66,11 +68,14 @@ async function insertOrder(
   touched: Set<string>,
 ): Promise<string> {
   const productIds = await matchLines(tx, organizationId, connectionId, order.lines)
+  const status = await resolveStatusForPhase(tx, organizationId, connectionId, 'new')
   const created = await tx.order.create({
     data: {
       organizationId,
       connectionId,
       externalId: order.externalId,
+      phase: 'new',
+      statusId: status.id,
       placedAt: new Date(order.placedAt),
       payment: order.payment,
       awaitingPayment: order.awaitingPayment === true,
@@ -146,8 +151,18 @@ async function insertOrder(
   return created.id
 }
 
-/** Records Channel facts not seen before, in (occurredAt, id) order, applying each through `factTransition`. Caller holds the Order lock. */
-async function applyNewFacts(tx: Tx, organizationId: string, orderId: string, facts: ChannelFact[], touched: Set<string>): Promise<number> {
+/**
+ * Records Channel facts not seen before, in (occurredAt, id) order, applying each through `factTransition`. A fact that
+ * moves the phase puts the Order in the Connection's mapped status for that phase, else its default. Caller holds the Order lock.
+ */
+async function applyNewFacts(
+  tx: Tx,
+  organizationId: string,
+  connectionId: string,
+  orderId: string,
+  facts: ChannelFact[],
+  touched: Set<string>,
+): Promise<number> {
   if (facts.length === 0) return 0
   const recorded = await tx.orderChannelFact.findMany({ where: { organizationId, orderId }, select: { externalId: true } })
   const seen = new Set(recorded.map((fact) => fact.externalId))
@@ -158,11 +173,17 @@ async function applyNewFacts(tx: Tx, organizationId: string, orderId: string, fa
 
   const order = await tx.order.findFirst({
     where: { id: orderId, organizationId },
-    select: { status: true, attentionReasons: true, awaitingPayment: true, buyerDataErasedAt: true },
+    select: {
+      phase: true,
+      attentionReasons: true,
+      awaitingPayment: true,
+      buyerDataErasedAt: true,
+      status: { select: { id: true, name: true, phase: true } },
+    },
   })
   if (!order) throw new DomainError('not_found')
-  let { status, attentionReasons: reasons, awaitingPayment } = order
-  const before = status
+  let { phase, status, attentionReasons: reasons, awaitingPayment } = order
+  const before = phase
   const subject = { type: 'order', id: orderId } as const
 
   for (const fact of fresh) {
@@ -184,7 +205,7 @@ async function applyNewFacts(tx: Tx, organizationId: string, orderId: string, fa
       payload: { factId: fact.id, type: fact.type, occurredAt: fact.occurredAt },
     })
 
-    const transition = factTransition(status, fact.type, awaitingPayment)
+    const transition = factTransition(phase, fact.type, awaitingPayment)
     if (transition.paid) {
       // Its Reservations were made at import, so payment touches no Stock: from here on it is a ready Order.
       awaitingPayment = false
@@ -192,14 +213,16 @@ async function applyNewFacts(tx: Tx, organizationId: string, orderId: string, fa
     }
     if (transition.to) {
       for (const productId of await applyStockEffect(tx, organizationId, orderId, transition.to)) touched.add(productId)
+      const next = await resolveStatusForPhase(tx, organizationId, connectionId, transition.to)
       await appendEvent(tx, {
         organizationId,
         type: 'order.status_changed',
         subject,
-        payload: { from: status, to: transition.to, cause: 'channel_fact', factId: fact.id, actor: systemActor },
+        payload: { from: phase, to: transition.to, fromStatus: status, toStatus: next, cause: 'channel_fact', factId: fact.id, actor: systemActor },
       })
-      status = transition.to
-      if (status === 'cancelled') reasons = reasonsAfterCancel(reasons)
+      phase = transition.to
+      status = next
+      if (phase === 'cancelled') reasons = reasonsAfterCancel(reasons)
     }
     if (transition.reason) {
       const next = addReasons(reasons, [transition.reason])
@@ -211,12 +234,21 @@ async function applyNewFacts(tx: Tx, organizationId: string, orderId: string, fa
   }
 
   // The Channel's own fact is newer than any status still waiting to be pushed, and is never pushed back (ADR 0003).
-  // A `paid` fact changes no status, so it leaves a pending push alone.
-  const statusPush = status !== before ? { statusPushDueAt: null } : {}
-  const closed = status !== before && isFinalStatus(status)
+  // A `paid` fact changes no phase, so it leaves a pending push alone. Only a change of phase starts the retention
+  // clock: facts never move an Order within a phase, and a final phase is never left.
+  const phaseChanged = phase !== before
+  const statusPush = phaseChanged ? { statusPushDueAt: null } : {}
+  const closed = phaseChanged && isFinalPhase(phase)
   await tx.order.updateMany({
     where: { id: orderId, organizationId },
-    data: { status, attentionReasons: reasons, awaitingPayment, ...statusPush, ...(closed ? { closedAt: new Date() } : {}) },
+    data: {
+      phase,
+      statusId: status.id,
+      attentionReasons: reasons,
+      awaitingPayment,
+      ...statusPush,
+      ...(closed ? { closedAt: new Date() } : {}),
+    },
   })
   return fresh.length
 }

@@ -2,6 +2,7 @@ import type { JobDefinition } from './jobs'
 import { offersPullJob } from './jobs/offers-pull'
 import { ordersPullJob } from './jobs/orders-pull'
 import { ordersUpdateStatusJob } from './jobs/orders-update-status'
+import { orderStatusesDeleteJob } from './jobs/order-statuses-delete'
 import { pricePushJob } from './jobs/price-push'
 import { privacySweepJob } from './jobs/privacy-sweep'
 import { privacyTickJob } from './jobs/privacy-tick'
@@ -25,6 +26,7 @@ export function buildJobs(workflowDefinitions: readonly AnyWorkflowDefinition[] 
     stockPushJob,
     pricePushJob,
     ordersUpdateStatusJob,
+    orderStatusesDeleteJob,
     privacyTickJob,
     privacySweepJob,
     ...createWorkflowJobs(workflowDefinitions),

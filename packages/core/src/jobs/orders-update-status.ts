@@ -16,7 +16,7 @@ export const ordersUpdateStatusJob = defineJob({
     const { organizationId, orderId } = payload
     const order = await ctx.db.order.findFirst({
       where: { id: orderId, organizationId },
-      select: { externalId: true, status: true, connectionId: true, statusPushSeq: true, statusPushDueAt: true },
+      select: { externalId: true, phase: true, connectionId: true, statusPushSeq: true, statusPushDueAt: true },
     })
     if (!order) {
       ctx.log.info('status push skipped: no such Order', { organizationId, orderId })
@@ -30,7 +30,7 @@ export const ordersUpdateStatusJob = defineJob({
       try {
         await runConnectorCall(ctx, scope, async () => {
           try {
-            return await connector.capabilities['orders.updateStatus']!(context, { orderExternalId: order.externalId, status: order.status })
+            return await connector.capabilities['orders.updateStatus']!(context, { orderExternalId: order.externalId, status: order.phase })
           } catch (error) {
             refused = classifyConnectorError(error).kind === 'permanent'
             throw error

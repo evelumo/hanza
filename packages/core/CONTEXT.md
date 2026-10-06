@@ -12,6 +12,10 @@ _Avoid_: Integration, account, link
 A Connection the organization sells through, i.e. a marketplace or a shop. Orders always come from a Channel; a courier or invoicing Connection is not a Channel.
 _Avoid_: Sales channel, marketplace, store, source
 
+**Status mapping**:
+Per Channel, which Order status an Order gets when that Channel reports an Order phase: new on import, shipped or cancelled through a Channel fact. Without one, the phase's default status applies. It never changes what is sent to the Channel, which is always the phase.
+_Avoid_: Status translation, status map, channel statuses
+
 **Connection health**:
 Whether Hanza can currently work with a Connection: not checked yet, working, failing, or waiting for the organization to sign in to the connector again. It waits for sign-in only when the Channel no longer accepts the credentials; a Channel refusing one request (a 403) makes it failing.
 _Avoid_: Connection status, connection state
@@ -42,7 +46,7 @@ Everything personal an Order holds about its Buyer: name, email, phone, Channel 
 _Avoid_: Customer data, PII, personal info
 
 **Closed Order**:
-An Order that reached shipped or cancelled. Its `closedAt` is when that happened; nothing changes its status afterwards.
+An Order that reached the Order phase shipped or cancelled. Its `closedAt` is when that happened; nothing changes its phase afterwards, and moving it to another Order status of that phase (shipped → "Delivered") leaves `closedAt` alone.
 _Avoid_: Completed, finished, terminal Order
 
 **Erasure**:

@@ -24,7 +24,7 @@ export async function rematchUnmatchedLines(ctx: Context, organizationId: string
       AND f."externalId" = l."offerExternalId" AND f."productId" IS NOT NULL
     LEFT JOIN "product" p ON p."organizationId" = ${organizationId} AND p."sku" = l."sku"
     WHERE l."organizationId" = ${organizationId} AND l."productId" IS NULL
-      AND o."status" IN ('new', 'processing')
+      AND o."phase" IN ('new', 'processing')
       AND COALESCE(f."productId", p."id") IS NOT NULL
     ORDER BY l."orderId", l."id"
     LIMIT ${MAX_LINES}`

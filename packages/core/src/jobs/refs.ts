@@ -37,6 +37,14 @@ export const ordersUpdateStatusRef = {
   schema: z.object({ organizationId: id, orderId: id }),
 } satisfies JobRef
 
+const actor = z.discriminatedUnion('type', [z.object({ type: z.literal('user'), userId: id }), z.object({ type: z.literal('system') })])
+
+/** Finishes deleting an Order status: moves its Orders to the replacement recorded on it, then deletes it (ADR 0018). */
+export const orderStatusesDeleteRef = {
+  name: 'orderStatuses.delete',
+  schema: z.object({ organizationId: id, statusId: id, actor }),
+} satisfies JobRef
+
 export const privacyTickRef = {
   name: 'privacy.tick',
   schema: z.object({}),
@@ -53,5 +61,6 @@ export const coalesceKeys = {
   stockPush: (connectionId: string) => `stock.push:${connectionId}`,
   pricePush: (connectionId: string) => `price.push:${connectionId}`,
   ordersUpdateStatus: (orderId: string) => `orders.updateStatus:${orderId}`,
+  orderStatusesDelete: (statusId: string) => `orderStatuses.delete:${statusId}`,
   privacySweep: (organizationId: string) => `privacy.sweep:${organizationId}`,
 }

@@ -3,6 +3,7 @@ import { defineConnector, type ChannelFact, type Order, type OrderLine } from '@
 import { z } from 'zod'
 import type { Actor } from '../actor'
 import { createConnection } from '../connections/connections'
+import type { OrderPhase } from '../orders/phases'
 import type { TestContext } from './context'
 
 // Fixtures for core's own DB tests; not exported from `@hanza/core/testing`.
@@ -102,4 +103,12 @@ export async function addMember(ctx: TestContext, organizationId: string, role: 
   await ctx.db.user.create({ data: { id: userId, name: `User ${userId.slice(0, 8)}`, email: `${userId}@example.org` } })
   await ctx.db.member.create({ data: { id: randomUUID(), organizationId, userId, role, createdAt: new Date() } })
   return { type: 'user', userId }
+}
+
+/**
+ * The organization's default status of `phase`, for a test that writes an Order's phase directly (a state older code
+ * left behind): the composite foreign key needs the phase and a status of it together. The defaults must exist.
+ */
+export async function defaultStatusId(ctx: TestContext, organizationId: string, phase: OrderPhase): Promise<string> {
+  return (await ctx.db.orderStatus.findFirstOrThrow({ where: { organizationId, phase, isDefault: true }, select: { id: true } })).id
 }

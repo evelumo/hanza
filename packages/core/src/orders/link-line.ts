@@ -46,7 +46,7 @@ export async function linkLineInTx(
       productId: true,
       quantity: true,
       offerExternalId: true,
-      order: { select: { id: true, status: true, connectionId: true, attentionReasons: true } },
+      order: { select: { id: true, phase: true, connectionId: true, attentionReasons: true } },
     },
   })
   if (!line) throw new DomainError('not_found')
@@ -54,7 +54,7 @@ export async function linkLineInTx(
   const product = await tx.product.findFirst({ where: { id: productId, organizationId }, select: { id: true } })
   if (!product) throw new DomainError('not_found')
   const { order } = line
-  if (options.openOrdersOnly && order.status !== 'new' && order.status !== 'processing') return null
+  if (options.openOrdersOnly && order.phase !== 'new' && order.phase !== 'processing') return null
 
   await tx.orderLine.updateMany({ where: { id: orderLineId, organizationId }, data: { productId } })
   await appendEvent(tx, {
@@ -66,8 +66,8 @@ export async function linkLineInTx(
 
   let availableChanged = false
   let shortage = false
-  if (order.status !== 'cancelled') {
-    const mode = order.status === 'shipped' ? 'consumed' : 'open'
+  if (order.phase !== 'cancelled') {
+    const mode = order.phase === 'shipped' ? 'consumed' : 'open'
     ;({ shortage } = await reserveLine(
       tx,
       organizationId,

@@ -1,6 +1,5 @@
 export { normalizeEmail, type BuyerData, type BuyerDataView } from './buyer-data'
 export { previewBuyerErasure, eraseBuyerData, type ErasurePreview } from './erasure'
-export { canManagePrivacy } from './permissions'
 export {
   getPrivacySettings,
   setBuyerDataRetention,

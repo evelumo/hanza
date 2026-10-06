@@ -143,7 +143,7 @@ describe.skipIf(!databaseUrl)('Orders awaiting payment end to end (real Postgres
     await pullOrders()
 
     const unpaid = await order('unpaid-1')
-    expect(unpaid).toMatchObject({ status: 'new', awaitingPayment: true, attentionReasons: [] })
+    expect(unpaid).toMatchObject({ phase: 'new', awaitingPayment: true, attentionReasons: [] })
     expect(unpaid.lines.map((line) => [line.productId, line.reservation?.status, line.reservation?.units])).toEqual([[tote, 'open', 2]])
     expect(await available()).toEqual({ stock: 3, reserved: 2, available: 1 })
     expect(lastPushedTote()).toBe(1)
@@ -155,7 +155,7 @@ describe.skipIf(!databaseUrl)('Orders awaiting payment end to end (real Postgres
     for (const to of ['processing', 'shipped'] as const) {
       await expect(changeOrderStatus(ctx, org, unpaid.id, to, user)).rejects.toMatchObject({ code: 'awaiting_payment' })
     }
-    expect((await order('unpaid-1')).status).toBe('new')
+    expect((await order('unpaid-1')).phase).toBe('new')
   })
 
   it('3. the payment reported by the Channel makes it a ready Order exactly once, with no second Reservation', async () => {
@@ -164,7 +164,7 @@ describe.skipIf(!databaseUrl)('Orders awaiting payment end to end (real Postgres
     await pullOrders()
 
     const paid = await order('unpaid-1')
-    expect(paid).toMatchObject({ status: 'new', awaitingPayment: false, attentionReasons: [] })
+    expect(paid).toMatchObject({ phase: 'new', awaitingPayment: false, attentionReasons: [] })
     expect(await ctx.db.reservation.count({ where: { organizationId: org, orderLine: { orderId: paid.id } } })).toBe(1)
     expect(await available()).toEqual({ stock: 3, reserved: 2, available: 1 })
     // Available did not change, so nothing is pushed again.
@@ -196,7 +196,7 @@ describe.skipIf(!databaseUrl)('Orders awaiting payment end to end (real Postgres
     await pullOrders()
 
     const cancelled = await order('unpaid-2')
-    expect(cancelled).toMatchObject({ status: 'cancelled', awaitingPayment: true, attentionReasons: [] })
+    expect(cancelled).toMatchObject({ phase: 'cancelled', awaitingPayment: true, attentionReasons: [] })
     expect(cancelled.lines[0]?.reservation?.status).toBe('released')
     expect(await available()).toEqual({ stock: 1, reserved: 0, available: 1 })
     expect(lastPushedTote()).toBe(1)
@@ -216,7 +216,7 @@ describe.skipIf(!databaseUrl)('Orders awaiting payment end to end (real Postgres
     await pullOrders()
 
     const unpaid = await order('unpaid-3')
-    expect(unpaid).toMatchObject({ status: 'new', awaitingPayment: true, attentionReasons: ['unmatched_line', 'shortage'] })
+    expect(unpaid).toMatchObject({ phase: 'new', awaitingPayment: true, attentionReasons: ['unmatched_line', 'shortage'] })
     expect(unpaid.lines.map((line) => [line.externalId, line.shortage, line.reservation?.status ?? null])).toEqual([
       ['l1', true, 'open'],
       ['l2', false, null],

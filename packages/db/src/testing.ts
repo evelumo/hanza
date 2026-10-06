@@ -22,6 +22,22 @@ async function withClient<T>(url: string, fn: (client: pg.Client) => Promise<T>)
   }
 }
 
+/** Every migration, in the order they are applied. */
+export async function migrationNames(): Promise<string[]> {
+  return (await readdir(MIGRATIONS_DIR, { withFileTypes: true }))
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => entry.name)
+    .sort()
+}
+
+/** Applies one migration to the database `url` points to, as `createTestDatabase` does. */
+export async function applyMigration(url: string, migration: string): Promise<void> {
+  if (!(await migrationNames()).includes(migration)) throw new Error(`Unknown migration ${migration}`)
+  await withClient(url, async (client) => {
+    await client.query(await readFile(join(MIGRATIONS_DIR, migration, 'migration.sql'), 'utf8'))
+  })
+}
+
 const TEST_DATABASE_NAME = /^hanza_(test|e2e)_[a-z0-9_]{1,40}$/
 
 /** Ends its sessions and drops it; only a name of the throwaway-database form is accepted. */
@@ -34,10 +50,14 @@ export async function dropTestDatabase(adminUrl: string, name: string): Promise<
 }
 
 /**
- * A throwaway database with every migration applied, created on the server `adminUrl` points to.
+ * A throwaway database with every migration applied (or only those before `options.before`, to test a data
+ * migration against rows shaped like the previous schema), created on the server `adminUrl` points to.
  * `name` (default `hanza_test_<pid>_<random>`) lets a caller record it before it exists.
  */
-export async function createTestDatabase(adminUrl: string, options: { name?: string } = {}): Promise<{ url: string; drop(): Promise<void> }> {
+export async function createTestDatabase(
+  adminUrl: string,
+  options: { name?: string; before?: string } = {},
+): Promise<{ url: string; drop(): Promise<void> }> {
   const name = options.name ?? `hanza_test_${process.pid}_${randomBytes(4).toString('hex')}`
   if (!TEST_DATABASE_NAME.test(name)) throw new Error(`"${name}" is not a throwaway test database name`)
   await withClient(adminUrl, (client) => client.query(`CREATE DATABASE "${name}"`))
@@ -46,10 +66,9 @@ export async function createTestDatabase(adminUrl: string, options: { name?: str
   const drop = () => dropTestDatabase(adminUrl, name)
 
   try {
-    const migrations = (await readdir(MIGRATIONS_DIR, { withFileTypes: true }))
-      .filter((entry) => entry.isDirectory())
-      .map((entry) => entry.name)
-      .sort()
+    const all = await migrationNames()
+    if (options.before && !all.includes(options.before)) throw new Error(`Unknown migration ${options.before}`)
+    const migrations = options.before ? all.filter((name) => name < options.before!) : all
     await withClient(url, async (client) => {
       for (const migration of migrations) {
         await client.query(await readFile(join(MIGRATIONS_DIR, migration, 'migration.sql'), 'utf8'))

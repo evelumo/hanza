@@ -1,32 +1,58 @@
-import type { ChannelFactType, OrderStatus } from '@hanza/connector-sdk'
+import type { ChannelFactType } from '@hanza/connector-sdk'
 import type { AttentionReason } from '@hanza/db'
+import type { OrderPhase } from './phases'
 
-/** Orders still in fulfilment; shipped and cancelled are final. */
-export const OPEN_STATUSES: OrderStatus[] = ['new', 'processing']
+/** Phases still in fulfilment; shipped and cancelled are final. */
+export const OPEN_PHASES: OrderPhase[] = ['new', 'processing']
 
-const MANUAL: Record<OrderStatus, OrderStatus[]> = {
+/** No phase follows these; an Order's `closedAt` is when it reached one. */
+export const FINAL_PHASES = ['shipped', 'cancelled'] as const satisfies readonly OrderPhase[]
+
+export function isFinalPhase(phase: OrderPhase): boolean {
+  return (FINAL_PHASES as readonly OrderPhase[]).includes(phase)
+}
+
+const MANUAL: Record<OrderPhase, OrderPhase[]> = {
   new: ['processing', 'shipped', 'cancelled'],
   processing: ['new', 'shipped', 'cancelled'],
   shipped: [],
   cancelled: [],
 }
 
-/** No status follows these; an Order's `closedAt` is when it reached one. */
-export const FINAL_STATUSES = ['shipped', 'cancelled'] as const satisfies readonly OrderStatus[]
-
-export function isFinalStatus(status: OrderStatus): boolean {
-  return (FINAL_STATUSES as readonly OrderStatus[]).includes(status)
+/**
+ * To which other phase a person may move an Order in `phase`; shipped and cancelled are final. An Order awaiting
+ * payment can only be cancelled.
+ */
+export function allowedTransitions(phase: OrderPhase, awaitingPayment = false): OrderPhase[] {
+  return MANUAL[phase].filter((to) => !awaitingPayment || to === 'cancelled')
 }
 
-/** Where a person may move an Order from `status`; shipped and cancelled are final. An Order awaiting payment can only be cancelled. */
-export function allowedTransitions(status: OrderStatus, awaitingPayment = false): OrderStatus[] {
-  return MANUAL[status].filter((to) => !awaitingPayment || to === 'cancelled')
+/** What `canMoveToStatus` needs to know about the Order. */
+export type StatusMoveFrom = { phase: OrderPhase; statusId: string; awaitingPayment?: boolean }
+
+/**
+ * Whether a person may move an Order from its status to `to` (ADR 0018): any other active status of the same phase,
+ * in every phase (it changes nothing the core relies on), or of a phase `allowedTransitions` reaches. Every phase
+ * rule goes through `allowedTransitions`, so an unpaid Order may change its label within phase new but leave new only
+ * to cancelled.
+ */
+export function canMoveToStatus(current: StatusMoveFrom, to: { id: string; phase: OrderPhase; active: boolean }): boolean {
+  if (!to.active || to.id === current.statusId) return false
+  return to.phase === current.phase || allowedTransitions(current.phase, current.awaitingPayment).includes(to.phase)
 }
 
-type FactEffect = { to: OrderStatus | null; reason: AttentionReason | null }
+/** The statuses a person may move the Order to, in the order given. */
+export function allowedStatuses<T extends { id: string; phase: OrderPhase; active: boolean }>(
+  current: StatusMoveFrom,
+  statuses: T[],
+): T[] {
+  return statuses.filter((status) => canMoveToStatus(current, status))
+}
 
-// `paid` never moves the status; its effect on the payment state is decided in `factTransition`.
-const FACTS: Record<OrderStatus, Record<ChannelFactType, FactEffect>> = {
+type FactEffect = { to: OrderPhase | null; reason: AttentionReason | null }
+
+// `paid` never moves the phase; its effect on the payment state is decided in `factTransition`.
+const FACTS: Record<OrderPhase, Record<ChannelFactType, FactEffect>> = {
   new: {
     cancelled: { to: 'cancelled', reason: null },
     shipped: { to: 'shipped', reason: null },
@@ -50,15 +76,15 @@ const FACTS: Record<OrderStatus, Record<ChannelFactType, FactEffect>> = {
 }
 
 /**
- * What a Channel fact does to an Order in `status` (ADR 0003); `to` null = status unchanged.
+ * What a Channel fact does to an Order in `phase` (ADR 0003); `to` null = phase (and status) unchanged.
  * `paid` is true when the fact ends the wait for payment; money for an Order already cancelled needs a person.
  */
 export function factTransition(
-  status: OrderStatus,
+  phase: OrderPhase,
   fact: ChannelFactType,
   awaitingPayment = false,
 ): FactEffect & { paid: boolean } {
   const paid = fact === 'paid' && awaitingPayment
-  if (paid && status === 'cancelled') return { to: null, reason: 'channel_fact_conflict', paid }
-  return { ...FACTS[status][fact], paid }
+  if (paid && phase === 'cancelled') return { to: null, reason: 'channel_fact_conflict', paid }
+  return { ...FACTS[phase][fact], paid }
 }

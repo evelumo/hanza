@@ -38,7 +38,7 @@ describe.skipIf(!databaseUrl)('Orders awaiting payment', () => {
     const { orderId } = await importOrder(ctx, org, connectionId, unpaid())
 
     const order = await stored(orderId)
-    expect(order).toMatchObject({ status: 'new', awaitingPayment: true, attentionReasons: [] })
+    expect(order).toMatchObject({ phase: 'new', awaitingPayment: true, attentionReasons: [] })
     expect(order.lines[0]?.reservation).toMatchObject({ productId, units: 2, status: 'open' })
     expect(await available()).toEqual({ stock: 10, reserved: 2, available: 8 })
     const imported = await ctx.db.eventLog.findFirstOrThrow({ where: { subjectId: orderId, type: 'order.imported' } })
@@ -54,7 +54,7 @@ describe.skipIf(!databaseUrl)('Orders awaiting payment', () => {
     const paid = { ...order, awaitingPayment: false, facts: [paidFact()] }
     expect(await importOrder(ctx, org, connectionId, paid)).toMatchObject({ created: false, factsApplied: 1 })
 
-    expect(await stored(orderId)).toMatchObject({ status: 'new', awaitingPayment: false, attentionReasons: [] })
+    expect(await stored(orderId)).toMatchObject({ phase: 'new', awaitingPayment: false, attentionReasons: [] })
     expect(await available()).toEqual({ stock: 10, reserved: 2, available: 8 })
     expect(await counts()).toEqual({ ...before, facts: before.facts + 1, events: before.events + 2 })
     expect(await events(orderId)).toEqual(['order.imported', 'order.channel_fact_recorded', 'order.payment_received'])
@@ -125,7 +125,7 @@ describe.skipIf(!databaseUrl)('Orders awaiting payment', () => {
       await expect(changeOrderStatus(ctx, org, orderId, to, user)).rejects.toMatchObject({ code: 'awaiting_payment' })
     }
     await expect(changeOrderStatus(ctx, org, orderId, 'new', user)).rejects.toMatchObject({ code: 'invalid_transition' })
-    expect((await stored(orderId)).status).toBe('new')
+    expect((await stored(orderId)).phase).toBe('new')
     expect(statusPushes()).toEqual([])
 
     await changeOrderStatus(ctx, org, orderId, 'cancelled', user)
@@ -146,7 +146,7 @@ describe.skipIf(!databaseUrl)('Orders awaiting payment', () => {
 
     await importOrder(ctx, org, connectionId, { ...order, awaitingPayment: false, facts: [paidFact()] })
     expect(await stored(orderId)).toMatchObject({
-      status: 'cancelled',
+      phase: 'cancelled',
       awaitingPayment: false,
       attentionReasons: ['channel_fact_conflict'],
       statusPushSeq,
@@ -162,7 +162,7 @@ describe.skipIf(!databaseUrl)('Orders awaiting payment', () => {
 
     await importOrder(ctx, org, connectionId, { ...order, facts: [fact('c', 'cancelled')] })
     const cancelled = await stored(orderId)
-    expect(cancelled).toMatchObject({ status: 'cancelled', awaitingPayment: true, attentionReasons: [], statusPushDueAt: null })
+    expect(cancelled).toMatchObject({ phase: 'cancelled', awaitingPayment: true, attentionReasons: [], statusPushDueAt: null })
     expect(cancelled.lines.find((line) => line.externalId === 'l1')?.reservation?.status).toBe('released')
     expect(await available()).toEqual({ stock: 1, reserved: 0, available: 1 })
   })
@@ -173,12 +173,12 @@ describe.skipIf(!databaseUrl)('Orders awaiting payment', () => {
     const { orderId } = await importOrder(ctx, org, connectionId, order)
 
     await importOrder(ctx, org, connectionId, { ...order, facts: [fact('cancelled', 'cancelled')] })
-    expect(await stored(orderId)).toMatchObject({ status: 'cancelled', awaitingPayment: true, attentionReasons: [] })
+    expect(await stored(orderId)).toMatchObject({ phase: 'cancelled', awaitingPayment: true, attentionReasons: [] })
     expect(await available()).toEqual({ stock: 10, reserved: 0, available: 10 })
 
     const late = { ...order, awaitingPayment: false, facts: [fact('cancelled', 'cancelled'), paidFact('paid', '2026-10-03T10:00:00Z')] }
     await importOrder(ctx, org, connectionId, late)
-    expect(await stored(orderId)).toMatchObject({ status: 'cancelled', awaitingPayment: false, attentionReasons: ['channel_fact_conflict'] })
+    expect(await stored(orderId)).toMatchObject({ phase: 'cancelled', awaitingPayment: false, attentionReasons: ['channel_fact_conflict'] })
     expect(await available()).toEqual({ stock: 10, reserved: 0, available: 10 })
     expect(await events(orderId)).toContain('order.attention_raised')
   })
@@ -188,11 +188,11 @@ describe.skipIf(!databaseUrl)('Orders awaiting payment', () => {
     const order = unpaid()
     const { orderId } = await importOrder(ctx, org, connectionId, order)
     await importOrder(ctx, org, connectionId, { ...order, facts: [fact('shipped', 'shipped')] })
-    expect(await stored(orderId)).toMatchObject({ status: 'shipped', awaitingPayment: true, attentionReasons: [] })
+    expect(await stored(orderId)).toMatchObject({ phase: 'shipped', awaitingPayment: true, attentionReasons: [] })
     expect(await available()).toEqual({ stock: 8, reserved: 0, available: 8 })
 
     await importOrder(ctx, org, connectionId, { ...order, awaitingPayment: false, facts: [fact('shipped', 'shipped'), paidFact('paid', '2026-10-03T10:00:00Z')] })
-    expect(await stored(orderId)).toMatchObject({ status: 'shipped', awaitingPayment: false, attentionReasons: [] })
+    expect(await stored(orderId)).toMatchObject({ phase: 'shipped', awaitingPayment: false, attentionReasons: [] })
   })
 
   it('an unpaid Order with an Unmatched line and a Shortage is marked like any Order', async () => {
@@ -223,15 +223,15 @@ describe.skipIf(!databaseUrl)('Orders awaiting payment', () => {
     await importOrder(ctx, org, connectionId, { ...shippedOrder, facts: [fact('s', 'shipped')] })
 
     const all = await listOrders(ctx, org, { skip: 0, take: 10 })
-    expect(all.items.map((row) => [row.id, row.status, row.awaitingPayment])).toEqual([
+    expect(all.items.map((row) => [row.id, row.phase, row.awaitingPayment])).toEqual([
       [ready.orderId, 'new', false],
       [waiting.orderId, 'new', true],
       [abandoned.orderId, 'cancelled', true],
       [shipped.orderId, 'shipped', true],
     ])
     expect((await listOrders(ctx, org, { awaitingPayment: true, skip: 0, take: 10 })).items.map((row) => row.id)).toEqual([waiting.orderId])
-    expect((await listOrders(ctx, org, { awaitingPayment: true, status: 'cancelled', skip: 0, take: 10 })).total).toBe(0)
-    expect((await listOrders(ctx, org, { awaitingPayment: true, status: 'new', skip: 0, take: 10 })).total).toBe(1)
+    expect((await listOrders(ctx, org, { awaitingPayment: true, phase: 'cancelled', skip: 0, take: 10 })).total).toBe(0)
+    expect((await listOrders(ctx, org, { awaitingPayment: true, phase: 'new', skip: 0, take: 10 })).total).toBe(1)
     expect((await listOrders(ctx, org, { awaitingPayment: false, skip: 0, take: 10 })).items.map((row) => row.id)).toEqual([
       ready.orderId,
       abandoned.orderId,
