@@ -1,10 +1,11 @@
+import { readFile } from 'node:fs/promises'
 import { describe, expect, it } from 'vitest'
 import { upsertOffers } from '../catalog/offers'
 import { createProduct } from '../catalog/products'
 import { getAvailability } from '../stock/availability'
 import { createTestOrganization } from '../testing/context'
 import { databaseUrl, useTestContext } from '../testing/db-test'
-import { buildOrder, createTestConnection, fact, orderLine, user } from '../testing/fixtures'
+import { buildOrder, createTestConnection, fact, orderLine, testChannel, user } from '../testing/fixtures'
 import { resolveAttention } from './attention'
 import { changeOrderStatus } from './change-status'
 import { importOrder } from './import'
@@ -13,7 +14,7 @@ import { getOrder, listOrders } from './queries'
 import { rematchUnmatchedLines } from './rematch'
 
 describe.skipIf(!databaseUrl)('orders', () => {
-  const context = useTestContext()
+  const context = useTestContext({ connectors: [testChannel] })
 
   async function setup(stock = 10) {
     const ctx = context()
@@ -75,6 +76,55 @@ describe.skipIf(!databaseUrl)('orders', () => {
       const { orderId } = await importOrder(ctx, org, connectionId, buildOrder({ lines: [orderLine('l1', { sku: 'P' })] }))
       await changeOrderStatus(ctx, org, orderId, 'cancelled', user)
       expect((await ctx.db.order.findFirstOrThrow({ where: { id: orderId } })).attentionReasons).toEqual([])
+    })
+
+    it('removes unmatched_line and shortage when cancelled by a person', async () => {
+      const { ctx, org, connectionId } = await setup(0)
+      const order = buildOrder({ lines: [orderLine('l1', { sku: 'P' }), orderLine('l2', { sku: 'NOPE' })] })
+      const { orderId } = await importOrder(ctx, org, connectionId, order)
+      expect((await ctx.db.order.findFirstOrThrow({ where: { id: orderId } })).attentionReasons).toEqual(['unmatched_line', 'shortage'])
+      await changeOrderStatus(ctx, org, orderId, 'cancelled', user)
+      expect(await ctx.db.order.findFirstOrThrow({ where: { id: orderId } })).toMatchObject({ status: 'cancelled', attentionReasons: [] })
+    })
+
+    it('leaves a cancelled Order that has Unmatched lines out of the Needs attention list', async () => {
+      const { ctx, org, connectionId } = await setup()
+      const { orderId } = await importOrder(ctx, org, connectionId, buildOrder({ lines: [orderLine('l1', { sku: 'NOPE' })] }))
+      expect((await listOrders(ctx, org, { needsAttention: true, skip: 0, take: 10 })).items.map((row) => row.id)).toEqual([orderId])
+      await changeOrderStatus(ctx, org, orderId, 'cancelled', user)
+      expect((await listOrders(ctx, org, { needsAttention: true, skip: 0, take: 10 })).total).toBe(0)
+    })
+
+    it('migration 20261005112748 clears unmatched_line on cancelled Orders already stored that way, and only those', async () => {
+      const { ctx, org, connectionId } = await setup()
+      const build = async (status: 'new' | 'cancelled' | 'shipped', reasons: Array<'unmatched_line' | 'channel_fact_conflict'>) => {
+        const { orderId } = await importOrder(ctx, org, connectionId, buildOrder({ lines: [orderLine('l1', { sku: 'NOPE' })] }))
+        // Written directly: the state the rows had before the fix.
+        await ctx.db.order.update({ where: { id: orderId }, data: { status, attentionReasons: reasons } })
+        return orderId
+      }
+      const cancelled = await build('cancelled', ['unmatched_line', 'channel_fact_conflict'])
+      const cancelledOnly = await build('cancelled', ['unmatched_line'])
+      const open = await build('new', ['unmatched_line'])
+      const shipped = await build('shipped', ['unmatched_line'])
+
+      const sql = await readFile(new URL('../../../db/prisma/migrations/20261005112748_clear_unmatched_line_on_cancelled_orders/migration.sql', import.meta.url), 'utf8')
+      const updatedAt = async (id: string) => (await ctx.db.order.findFirstOrThrow({ where: { id } })).updatedAt.getTime()
+      const before = { cancelled: await updatedAt(cancelled), open: await updatedAt(open), shipped: await updatedAt(shipped) }
+      await ctx.db.$executeRawUnsafe(sql)
+      const afterFirst = { cancelled: await updatedAt(cancelled), open: await updatedAt(open), shipped: await updatedAt(shipped) }
+      expect(afterFirst.cancelled).toBeGreaterThan(before.cancelled)
+      expect(afterFirst.open).toBe(before.open)
+      expect(afterFirst.shipped).toBe(before.shipped)
+      // A second run matches no row, so it changes nothing, not even updatedAt.
+      await ctx.db.$executeRawUnsafe(sql)
+      expect(await updatedAt(cancelled)).toBe(afterFirst.cancelled)
+
+      const reasons = async (id: string) => (await ctx.db.order.findFirstOrThrow({ where: { id } })).attentionReasons
+      expect(await reasons(cancelled)).toEqual(['channel_fact_conflict'])
+      expect(await reasons(cancelledOnly)).toEqual([])
+      expect(await reasons(open)).toEqual(['unmatched_line'])
+      expect(await reasons(shipped)).toEqual(['unmatched_line'])
     })
   })
 

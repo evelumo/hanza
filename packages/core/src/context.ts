@@ -30,7 +30,7 @@ export interface CreateContextOptions {
 export function createContext(scope: string, options: CreateContextOptions = {}): Context {
   const env = options.env ?? loadEnv()
   const db = createDb(env.DATABASE_URL)
-  const queue = createJobQueue(env.REDIS_URL)
+  const queue = createJobQueue(env.REDIS_URL, { prefix: env.HANZA_QUEUE_PREFIX })
   const log = createLogger(scope)
   return {
     env,

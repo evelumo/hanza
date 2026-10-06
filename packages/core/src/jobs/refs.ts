@@ -27,6 +27,11 @@ export const stockPushRef = {
   schema: z.object({ organizationId: id, connectionId: id }),
 } satisfies JobRef
 
+export const pricePushRef = {
+  name: 'price.push',
+  schema: z.object({ organizationId: id, connectionId: id }),
+} satisfies JobRef
+
 export const ordersUpdateStatusRef = {
   name: 'orders.updateStatus',
   schema: z.object({ organizationId: id, orderId: id }),
@@ -36,5 +41,6 @@ export const coalesceKeys = {
   offersPull: (connectionId: string) => `offers.pull:${connectionId}`,
   ordersPull: (connectionId: string) => `orders.pull:${connectionId}`,
   stockPush: (connectionId: string) => `stock.push:${connectionId}`,
+  pricePush: (connectionId: string) => `price.push:${connectionId}`,
   ordersUpdateStatus: (orderId: string) => `orders.updateStatus:${orderId}`,
 }

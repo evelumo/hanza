@@ -14,6 +14,7 @@ enum SyncStream {
   orders_pull
   stock_push
   order_status_push
+  price_push
 
   @@map("sync_stream")
 }

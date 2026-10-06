@@ -54,12 +54,13 @@ export function bullJobOptions(options: EnqueueOptions = {}): JobsOptions {
   return jobOptions
 }
 
-export function createJobQueue(redisUrl: string): JobQueue {
+export function createJobQueue(redisUrl: string, options: { prefix?: string } = {}): JobQueue {
   // Created on first use, so importing the context never opens a connection.
   let instance: Queue | undefined
   const queue = () =>
     (instance ??= new Queue(QUEUE_NAME, {
       connection: redisConnection(redisUrl),
+      prefix: options.prefix,
       defaultJobOptions: {
         attempts: 5,
         backoff: { type: 'exponential', delay: 2_000 },
@@ -132,6 +133,7 @@ export function createJobProcessor(ctx: Context, jobs: JobDefinition[]): (job: P
 export function startWorker(ctx: Context, jobs: JobDefinition[], options: { concurrency: number }): QueueWorker {
   const worker = new Worker(QUEUE_NAME, createJobProcessor(ctx, jobs), {
     connection: redisConnection(ctx.env.REDIS_URL),
+    prefix: ctx.env.HANZA_QUEUE_PREFIX,
     concurrency: options.concurrency,
   })
   worker.on('ready', () => ctx.log.info('worker ready', { jobs: jobs.map((job) => job.name), concurrency: options.concurrency }))

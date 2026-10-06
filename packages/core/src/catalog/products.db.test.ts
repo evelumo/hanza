@@ -156,7 +156,7 @@ describe.skipIf(!databaseUrl)('products', () => {
     const list = await listProducts(ctx, org, { search: 'new name', skip: 0, take: 10 })
     expect(list).toEqual({
       total: 1,
-      items: [{ id: productId, sku, name: 'New name', stock: 4, reserved: 0, available: 4, linkedOffers: 0 }],
+      items: [{ id: productId, sku, name: 'New name', stock: 4, reserved: 0, available: 4, linkedOffers: 0, family: null }],
     })
     expect((await listProducts(ctx, org, { skip: 0, take: 10 })).total).toBe(2)
 

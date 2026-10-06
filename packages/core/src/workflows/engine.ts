@@ -37,7 +37,7 @@ export interface WorkflowRunView {
 
 /**
  * The only workflow API callers see. The stage-1 engine keeps runs in Postgres and runs steps as jobs
- * (ADR 0012); a Temporal-backed engine can implement the same interface. Every method is scoped to
+ * (ADR 0014); a Temporal-backed engine can implement the same interface. Every method is scoped to
  * `organizationId`.
  */
 export interface WorkflowEngine {

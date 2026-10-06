@@ -5,6 +5,7 @@ import { messageKey } from '@/i18n/keys'
 const ID_MESSAGE = messageKey('validation.idInvalid')
 const SKU_REQUIRED = messageKey('validation.skuRequired')
 const UNITS_MESSAGE = messageKey('validation.unitsInvalid')
+const CURRENCY_MESSAGE = messageKey('validation.currencyInvalid')
 
 /** Ids come from hidden fields, so the message is for the logs more than for the user. */
 export const idSchema = z.string({ error: ID_MESSAGE }).min(1, ID_MESSAGE).max(64, ID_MESSAGE)
@@ -18,3 +19,6 @@ export const unitsSchema = z
   .regex(/^\d{1,7}$/, UNITS_MESSAGE)
   .transform(Number)
   .pipe(z.number().max(1_000_000, UNITS_MESSAGE))
+
+/** ISO 4217 code, upper-cased: "pln" is read as "PLN". */
+export const currencyCodeSchema = z.string({ error: CURRENCY_MESSAGE }).trim().toUpperCase().regex(/^[A-Z]{3}$/, CURRENCY_MESSAGE)

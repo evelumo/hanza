@@ -284,7 +284,7 @@ export async function advanceRun(
  * The `workflow.sweep` job: enqueues every run that is due, i.e. a step not yet run or whose lease expired,
  * a timer or timeout that passed, or a waiting run with an unconsumed signal of the name it waits for.
  * Least recently swept first, so runs whose job finds nothing to do cannot starve the others. Reads across
- * organizations (ids only), like `sync.tick` (ADR 0012).
+ * organizations (ids only), like `sync.tick` (ADR 0014).
  */
 export async function sweepRuns(ctx: Context): Promise<number> {
   const now = new Date()

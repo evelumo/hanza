@@ -2,6 +2,7 @@ import type { JobDefinition } from './jobs'
 import { offersPullJob } from './jobs/offers-pull'
 import { ordersPullJob } from './jobs/orders-pull'
 import { ordersUpdateStatusJob } from './jobs/orders-update-status'
+import { pricePushJob } from './jobs/price-push'
 import { stockPushJob } from './jobs/stock-push'
 import { syncTickJob } from './jobs/sync-tick'
 import { systemPingJob } from './jobs/system-ping'
@@ -20,6 +21,7 @@ export function buildJobs(workflowDefinitions: readonly AnyWorkflowDefinition[] 
     offersPullJob,
     ordersPullJob,
     stockPushJob,
+    pricePushJob,
     ordersUpdateStatusJob,
     ...createWorkflowJobs(workflowDefinitions),
   ] as JobDefinition[]

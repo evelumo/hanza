@@ -1,4 +1,4 @@
-// Durable state of workflow runs (ADR 0012). Steps run as jobs; these rows are the truth.
+// Durable state of workflow runs (ADR 0014). Steps run as jobs; these rows are the truth.
 
 enum WorkflowRunStatus {
   /// A step is due or being run.

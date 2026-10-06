@@ -6,7 +6,7 @@ describe('dueStreams', () => {
   const ago = (ms: number) => new Date(now.getTime() - ms)
 
   it('every stream is due when none ever started', () => {
-    expect(dueStreams({}, now)).toEqual(['offers_pull', 'orders_pull', 'stock_push'])
+    expect(dueStreams({}, now)).toEqual(['offers_pull', 'orders_pull', 'stock_push', 'price_push'])
   })
 
   it('a stream is due once its interval, less half a tick, has passed since its last start', () => {
@@ -16,6 +16,7 @@ describe('dueStreams', () => {
           offers_pull: ago(SYNC_INTERVALS_MS.offers_pull - TICK_EVERY_MS / 2 - 1),
           orders_pull: ago(SYNC_INTERVALS_MS.orders_pull - TICK_EVERY_MS / 2),
           stock_push: ago(60_000),
+          price_push: ago(SYNC_INTERVALS_MS.price_push - TICK_EVERY_MS),
           order_status_push: ago(10 * SYNC_INTERVALS_MS.offers_pull),
         },
         now,
