@@ -5,7 +5,7 @@ import { lockOrder } from '../stock/locks'
 import { TX_OPTIONS } from '../transaction'
 import { addReasons } from './reasons'
 
-// The outbox of Order status pushes (ADR 0011): `statusPushDueAt` is non-null while the Channel has not been
+// The outbox of Order status pushes (ADR 0012): `statusPushDueAt` is non-null while the Channel has not been
 // told the current status. All times come from the database clock, so the web and worker clocks never mix.
 
 /** How long the sweep leaves a pending push alone: the grace for the immediate job, then the retry interval. */
@@ -21,7 +21,7 @@ export const STATUS_PUSH_SWEEP_LIMIT = 100
 export const STATUS_PUSH_SWEEP_LIMIT_FAILING = 1
 
 /**
- * Whether a push still has to tell the Channel. Every status change made since ADR 0011 bumps the seq, so
+ * Whether a push still has to tell the Channel. Every status change made since ADR 0012 bumps the seq, so
  * seq 0 can only belong to a job enqueued before the change was deployed: it must still be pushed.
  */
 export function isStatusPushPending(order: { statusPushSeq: number; statusPushDueAt: Date | null }): boolean {

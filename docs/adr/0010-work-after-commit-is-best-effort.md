@@ -4,5 +4,5 @@ A service commits a change and then enqueues follow-up work (a stock push, an Or
 
 ## Consequences
 
-- An Order status push whose enqueue failed is recovered by the tick's sweep of pushes marked pending on the Order (ADR 0011, which amends this one; before it, issue #13).
+- An Order status push whose enqueue failed is recovered by the tick's sweep of pushes marked pending on the Order (ADR 0012, which amends this one; before it, issue #13).
 - A new post-commit step must say how its skipped work is recovered, or accept that it is not.

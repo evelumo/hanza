@@ -36,6 +36,12 @@ const statusChannel = defineConnector({
   capabilities: { ...channel.capabilities, async 'orders.updateStatus'() {} },
 })
 
+const pricedChannel = defineConnector({
+  ...channel,
+  id: 'tick-priced-channel',
+  capabilities: { ...channel.capabilities, async 'price.push'() {} },
+})
+
 const courier = defineConnector({
   id: 'tick-courier',
   name: 'Tick courier',
@@ -47,7 +53,7 @@ const courier = defineConnector({
 })
 
 describe.skipIf(!databaseUrl)('sync.tick', () => {
-  const context = useTestContext({ connectors: [channel, statusChannel, courier] })
+  const context = useTestContext({ connectors: [channel, statusChannel, pricedChannel, courier] })
 
   async function connection(organizationId: string, connectorId: string) {
     const { connectionId } = await createConnection(context(), organizationId, { connectorId, name: connectorId, config: {}, credentials: {} }, user)
@@ -77,6 +83,14 @@ describe.skipIf(!databaseUrl)('sync.tick', () => {
       { name: 'orders.pull', payload: { organizationId: org, connectionId: id, trigger: 'schedule' }, options: { coalesceKey: `orders.pull:${id}` } },
       { name: 'stock.push', payload: { organizationId: org, connectionId: id }, options: { coalesceKey: `stock.push:${id}` } },
     ])
+  })
+
+  it('enqueues price.push only for a connector that implements it', async () => {
+    const org = await createTestOrganization(context().db)
+    const id = await connection(org, 'tick-priced-channel')
+    const jobs = await tick([id])
+    expect(jobs.map((job) => job.name)).toEqual(['offers.pull', 'orders.pull', 'stock.push', 'price.push'])
+    expect(jobs.at(-1)).toEqual({ name: 'price.push', payload: { organizationId: org, connectionId: id }, options: { coalesceKey: `price.push:${id}` } })
   })
 
   it('enqueues only the streams whose interval has passed', async () => {

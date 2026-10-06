@@ -4,7 +4,7 @@ import { appendEvent } from '../events'
 
 /**
  * Links every never-linked Offer (`linkedBy` null) whose SKU equals the new
- * Product's, bumping its push sequence. Returns the Connections to push to.
+ * Product's, bumping its stock and price push sequences. Returns the Connections to push to.
  */
 export async function autoLinkOffersBySku(
   tx: Tx,
@@ -14,7 +14,8 @@ export async function autoLinkOffersBySku(
 ): Promise<{ linked: number; connectionIds: string[] }> {
   const rows = await tx.$queryRaw<Array<{ id: string; connectionId: string }>>`
     UPDATE "offer"
-    SET "productId" = ${product.id}, "linkedBy" = 'sku', "stockPushSeq" = "stockPushSeq" + 1, "updatedAt" = now()
+    SET "productId" = ${product.id}, "linkedBy" = 'sku', "stockPushSeq" = "stockPushSeq" + 1, "pricePushSeq" = "pricePushSeq" + 1,
+      "updatedAt" = now()
     WHERE "id" IN (
       SELECT "id" FROM "offer"
       WHERE "organizationId" = ${organizationId} AND "sku" = ${product.sku} AND "linkedBy" IS NULL

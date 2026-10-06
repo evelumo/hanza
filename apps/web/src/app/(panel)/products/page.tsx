@@ -1,4 +1,4 @@
-import { listProducts } from '@hanza/core'
+import { listFamilyOptions, listProducts } from '@hanza/core'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
@@ -22,9 +22,19 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
   const [t, format] = await Promise.all([getT(), getFormatters()])
   const params = await searchParams
   const search = firstParam(params.q)?.trim().slice(0, 100) || undefined
+  const familyParam = firstParam(params.family)?.trim().slice(0, 64) || undefined
   const page = parsePage(params.page)
-  const { total, items } = await listProducts(getContext(), organizationId, { search, ...pageWindow(page) })
-  const outOfRange = outOfRangeRedirect(page, total, '/products', { q: search })
+  const ctx = getContext()
+  const [{ total, items }, families] = await Promise.all([
+    listProducts(ctx, organizationId, {
+      search,
+      family: familyParam === 'none' ? 'none' : familyParam ? { id: familyParam } : undefined,
+      ...pageWindow(page),
+    }),
+    listFamilyOptions(ctx, organizationId),
+  ])
+  const filters = { q: search, family: familyParam }
+  const outOfRange = outOfRangeRedirect(page, total, '/products', filters)
   if (outOfRange) redirect(outOfRange)
 
   return (
@@ -53,10 +63,27 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
           placeholder={t('products.searchPlaceholder')}
           className="w-full max-w-sm rounded-md border border-line bg-white px-3 py-1.5 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-accent/20"
         />
+        <label className="sr-only" htmlFor="family">
+          {t('products.familyFilter.label')}
+        </label>
+        <select
+          id="family"
+          name="family"
+          defaultValue={familyParam ?? ''}
+          className="rounded-md border border-line bg-white px-3 py-1.5 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-accent/20"
+        >
+          <option value="">{t('products.familyFilter.all')}</option>
+          <option value="none">{t('products.familyFilter.none')}</option>
+          {families.map((family) => (
+            <option key={family.id} value={family.id}>
+              {family.name}
+            </option>
+          ))}
+        </select>
         <button type="submit" className={buttonClass('secondary')}>
           {t('products.search')}
         </button>
-        {search ? (
+        {search || familyParam ? (
           <Link href="/products" className={buttonClass('secondary')}>
             {t('products.clear')}
           </Link>
@@ -66,7 +93,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
       <div className="rounded-lg border border-line bg-white">
         {total === 0 ? (
           <EmptyState>
-            {search ? t('products.emptySearch') : t('products.empty')}
+            {search || familyParam ? t('products.emptySearch') : t('products.empty')}
           </EmptyState>
         ) : (
           <div className="overflow-x-auto">
@@ -75,6 +102,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
                 <tr>
                   <th scope="col" className={thClass}>{t('products.columns.sku')}</th>
                   <th scope="col" className={thClass}>{t('products.columns.name')}</th>
+                  <th scope="col" className={thClass}>{t('products.columns.family')}</th>
                   <th scope="col" className={`${thClass} text-right`}>{t('products.columns.stock')}</th>
                   <th scope="col" className={`${thClass} text-right`}>{t('products.columns.reserved')}</th>
                   <th scope="col" className={`${thClass} text-right`}>{t('products.columns.available')}</th>
@@ -90,6 +118,16 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
                       </Link>
                     </td>
                     <td className={tdClass}>{product.name}</td>
+                    <td className={tdClass}>
+                      {product.family ? (
+                        <>
+                          <Link href={`/families/${product.family.id}`} className={linkClass}>
+                            {product.family.name}
+                          </Link>
+                          <span className="block text-xs text-muted">{product.family.attributes.map((attribute) => `${attribute.name}: ${attribute.value}`).join(' · ')}</span>
+                        </>
+                      ) : null}
+                    </td>
                     <td className={`${tdClass} text-right tabular-nums`}>{format.number(product.stock)}</td>
                     <td className={`${tdClass} text-right tabular-nums`}>{format.number(product.reserved)}</td>
                     <td className={`${tdClass} text-right tabular-nums ${product.available < 0 ? 'font-semibold text-red-700' : ''}`}>
@@ -105,7 +143,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
         )}
       </div>
 
-      <Pagination page={page} total={total} basePath="/products" params={{ q: search }} />
+      <Pagination page={page} total={total} basePath="/products" params={filters} />
     </div>
   )
 }

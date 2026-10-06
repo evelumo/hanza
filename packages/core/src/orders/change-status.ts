@@ -9,7 +9,7 @@ import { lockOrder } from '../stock/locks'
 import { markOffersForStockPush, requestStockPushAfterCommit } from '../stock/push'
 import { ensureDefaultWarehouse } from '../stock/warehouse'
 import { TX_OPTIONS } from '../transaction'
-import { removeReasons } from './reasons'
+import { reasonsAfterCancel } from './reasons'
 import { allowedTransitions } from './status-rules'
 import { markStatusPushPending } from './status-push'
 import { applyStockEffect } from './stock-effect'
@@ -17,7 +17,7 @@ import { applyStockEffect } from './stock-effect'
 /**
  * A person moves an Order along `allowedTransitions`; shipped is refused while an Unmatched line exists.
  * Cancelling releases its Reservations, shipping consumes them, and the new status is then pushed to the Channel:
- * at once if the enqueue works, otherwise by the tick's sweep of pending pushes (ADR 0011).
+ * at once if the enqueue works, otherwise by the tick's sweep of pending pushes (ADR 0012).
  */
 export async function changeOrderStatus(ctx: Context, organizationId: string, orderId: string, to: OrderStatus, actor: Actor): Promise<void> {
   await ensureDefaultWarehouse(ctx.db, organizationId)
@@ -38,7 +38,7 @@ export async function changeOrderStatus(ctx: Context, organizationId: string, or
     }
 
     const touched = await applyStockEffect(tx, organizationId, orderId, to)
-    const reasons = to === 'cancelled' ? removeReasons(order.attentionReasons, ['shortage']) : order.attentionReasons
+    const reasons = to === 'cancelled' ? reasonsAfterCancel(order.attentionReasons) : order.attentionReasons
     await tx.order.updateMany({ where: { id: orderId, organizationId }, data: { status: to, attentionReasons: reasons } })
     const pushable = ctx.connectors.get(order.connection.connectorId)?.capabilities['orders.updateStatus'] !== undefined
     await markStatusPushPending(tx, organizationId, orderId, pushable)

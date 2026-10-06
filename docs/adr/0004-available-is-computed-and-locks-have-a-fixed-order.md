@@ -6,3 +6,4 @@ Available is what Hanza tells Channels, so a wrong value sells goods that do not
 
 - Any new code that touches Stock or Reservations must take the locks in this order (`lockOrder`, then `lockStock`), or it can deadlock with the existing write paths or reserve against a stale value.
 - Available can go below zero when two Channels sell the last unit at once; the Order line becomes a Shortage and a person decides. The value pushed to a Channel is never below zero.
+- Columns that services update on `product` must not be part of a non-partial unique index: Postgres then takes `FOR UPDATE` on the row instead of `FOR NO KEY UPDATE`, which blocks or deadlocks the `FOR KEY SHARE` taken by the foreign-key checks of Order import (see `families-locking.db.test.ts`; the Product family index is partial for this reason).

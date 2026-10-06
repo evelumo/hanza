@@ -16,11 +16,12 @@ const shippingAddress: Address = {
 const pln = (amount: string) => ({ amount, currency: 'PLN' })
 
 export const seedOffers: Offer[] = [
-  { externalId: 'fake-offer-1', sku: 'FAKE-SKU-1', name: 'Ceramic mug', url: null },
-  { externalId: 'fake-offer-2', sku: 'FAKE-SKU-2', name: 'Cotton T-shirt M', url: null },
-  { externalId: 'fake-offer-3', sku: 'FAKE-SKU-3', name: 'Poster A3', url: null },
-  { externalId: 'fake-offer-4', sku: null, name: 'Sticker set', url: null },
-  { externalId: 'fake-offer-5', sku: 'FAKE-SKU-5', name: 'Linen tote bag', url: null },
+  { externalId: 'fake-offer-1', sku: 'FAKE-SKU-1', name: 'Ceramic mug', url: null, price: pln('39.99') },
+  { externalId: 'fake-offer-2', sku: 'FAKE-SKU-2', name: 'Cotton T-shirt M', url: null, price: pln('59.00') },
+  { externalId: 'fake-offer-3', sku: 'FAKE-SKU-3', name: 'Poster A3', url: null, price: pln('25.00') },
+  { externalId: 'fake-offer-4', sku: null, name: 'Sticker set', url: null, price: pln('5.50') },
+  // No price reported: the Channel's currency for this Offer is unknown, so Hanza never pushes a price to it.
+  { externalId: 'fake-offer-5', sku: 'FAKE-SKU-5', name: 'Linen tote bag', url: null, price: null },
 ]
 
 function order(

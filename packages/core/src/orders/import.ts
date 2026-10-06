@@ -12,7 +12,7 @@ import { reserveLine } from '../stock/reservations'
 import { ensureDefaultWarehouse } from '../stock/warehouse'
 import { TX_OPTIONS } from '../transaction'
 import { matchLines } from './match'
-import { addReasons, removeReasons } from './reasons'
+import { addReasons, reasonsAfterCancel } from './reasons'
 import { factTransition } from './status-rules'
 import { applyStockEffect } from './stock-effect'
 
@@ -165,7 +165,7 @@ async function applyNewFacts(tx: Tx, organizationId: string, orderId: string, fa
         payload: { from: status, to: transition.to, cause: 'channel_fact', factId: fact.id, actor: systemActor },
       })
       status = transition.to
-      if (status === 'cancelled') reasons = removeReasons(reasons, ['shortage'])
+      if (status === 'cancelled') reasons = reasonsAfterCancel(reasons)
     }
     if (transition.reason) {
       const next = addReasons(reasons, [transition.reason])

@@ -19,3 +19,11 @@ export function addReasons(current: AttentionReason[], add: AttentionReason[]): 
 export function removeReasons(current: AttentionReason[], remove: AttentionReason[]): AttentionReason[] {
   return current.filter((reason) => !remove.includes(reason))
 }
+
+/**
+ * A cancelled Order has nothing left to reserve or ship, so `shortage` and `unmatched_line` stop mattering.
+ * Shipped Orders keep `unmatched_line`: an Unmatched line consumed no Stock, and linking it later corrects that.
+ */
+export function reasonsAfterCancel(current: AttentionReason[]): AttentionReason[] {
+  return removeReasons(current, ['shortage', 'unmatched_line'])
+}

@@ -1,3 +1,4 @@
+import { moneySchema, type Money } from '@hanza/connector-sdk'
 import { hasLabel, labelOrRaw } from './labels'
 import type { Translator } from '@/i18n/types'
 
@@ -10,11 +11,24 @@ function arrow(from: string | null, to: string | null): string | null {
   return from !== null && to !== null ? `${from} → ${to}` : null
 }
 
-function nested(value: unknown, key: 'from' | 'to'): unknown {
+function nested(value: unknown, key: string): unknown {
   return typeof value === 'object' && value !== null ? (value as Payload)[key] : undefined
 }
 
 type NumberFormat = (value: number) => string
+type MoneyFormat = (money: Money) => string
+
+export interface EventFormatters {
+  number: NumberFormat
+  money: MoneyFormat
+}
+
+// The payload is untrusted, so only a well-formed price is shown; null means "no price".
+function priceText(t: Translator, money: MoneyFormat, value: unknown): string | null {
+  if (value === null) return t('prices.none')
+  const parsed = moneySchema.safeParse(value)
+  return parsed.success ? money(parsed.data) : null
+}
 
 const formatted = (value: unknown, number: NumberFormat): string | null => {
   const n = count(value)
@@ -22,7 +36,8 @@ const formatted = (value: unknown, number: NumberFormat): string | null => {
 }
 
 // Payloads are untrusted JSON, and a status or reason this build does not know yet is shown as it is.
-function detail(t: Translator, number: NumberFormat, type: string, payload: Payload): string | null {
+function detail(t: Translator, format: EventFormatters, type: string, payload: Payload): string | null {
+  const { number } = format
   switch (type) {
     case 'stock.set':
       return arrow(formatted(payload.from, number), formatted(payload.to, number))
@@ -32,8 +47,20 @@ function detail(t: Translator, number: NumberFormat, type: string, payload: Payl
       const units = count(payload.units)
       return units ? t('common.units', { count: units }) : null
     }
+    case 'family.created':
+    case 'family.deleted':
+      return text(payload.name)
+    case 'family.renamed':
+      return arrow(text(nested(payload.name, 'from')), text(nested(payload.name, 'to')))
+    case 'family.product_added':
+    case 'family.product_updated':
+    case 'family.product_removed':
+      return text(payload.sku)
     case 'product.updated':
       return arrow(text(nested(payload.name, 'from')), text(nested(payload.name, 'to')))
+    case 'product.price_changed':
+    case 'offer.price_changed':
+      return arrow(priceText(t, format.money, payload.from), priceText(t, format.money, payload.to))
     case 'order.status_changed':
       return arrow(statusLabel(t, text(payload.from)), statusLabel(t, text(payload.to)))
     case 'order.channel_fact_recorded':
@@ -62,15 +89,15 @@ const titleKey = (type: string) => type.replaceAll('.', '_')
 
 /**
  * One-liner for an Event in the request's language; payloads are untrusted JSON, so every field is type-checked.
- * `number` is the locale's number formatter (`getFormatters().number`).
+ * `format` holds the locale's number and money formatters (`getFormatters()`).
  */
 export function describeEvent(
   type: string,
   payload: Payload,
   t: Translator,
-  number: NumberFormat,
+  format: EventFormatters,
 ): { title: string; detail: string | null } {
-  const result = detail(t, number, type, payload)
+  const result = detail(t, format, type, payload)
   const title = hasLabel('events.title', titleKey(type)) ? labelOrRaw(t, 'events.title', titleKey(type)) : type
   return { title, detail: result && result.trim() !== '' ? result : null }
 }

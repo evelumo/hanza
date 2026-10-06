@@ -54,7 +54,7 @@ model Order {
   billingAddress   Json?
   /// Incremented by every status change a person makes; a push clears `statusPushDueAt` only for the value it read.
   statusPushSeq    Int               @default(0)
-  /// Non-null while the Channel has not been told the current status: when `sync.tick` may enqueue the push again (ADR 0011).
+  /// Non-null while the Channel has not been told the current status: when `sync.tick` may enqueue the push again (ADR 0012).
   statusPushDueAt  DateTime?
   importedAt       DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
