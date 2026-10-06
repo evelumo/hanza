@@ -21,7 +21,8 @@ export interface FakeChannel {
   reset(): void
 }
 
-export function createFakeChannel(): FakeChannel {
+/** `id` other than "fake" lets a test register several independent fake Channels side by side. */
+export function createFakeChannel(options: { id?: string } = {}): FakeChannel {
   const state: FakeState = { offers: [], orders: new Map(), journal: [], stockPushes: [], pricePushes: [], statusUpdates: [] }
 
   const appendToJournal = (orderExternalId: string) => {
@@ -29,7 +30,7 @@ export function createFakeChannel(): FakeChannel {
   }
 
   const channel: FakeChannel = {
-    connector: createFakeConnector(state),
+    connector: createFakeConnector(state, options.id),
     addOffer(offer) {
       const copy = structuredClone(offer)
       const index = state.offers.findIndex((existing) => existing.externalId === offer.externalId)

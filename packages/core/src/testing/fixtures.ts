@@ -9,27 +9,37 @@ import type { TestContext } from './context'
 
 export const user: Actor = { type: 'user', userId: 'user-1' }
 
+const nothingToPull = async () => ({ items: [], nextCursor: null, hasMore: false })
+
 /**
- * A do-nothing Channel registered as `fake`, the connector id of `createTestConnection`. Register it
- * (`useTestContext({ connectors: [testChannel] })`) where a test needs status changes to be pushable.
+ * A do-nothing marketplace Channel registered as `fake`, the connector id `createTestConnection` uses.
+ * Register it (`useTestContext({ connectors: [testChannel] })`) where a service checks that a Connection
+ * is a Channel, or where a test needs status changes to be pushable.
  */
 export const testChannel = defineConnector({
   id: 'fake',
   name: 'Test channel',
   kind: 'marketplace',
   auth: { type: 'none' },
-  configSchema: z.object({}).passthrough(),
-  credentialsSchema: z.object({}).passthrough(),
+  configSchema: z.looseObject({}),
+  credentialsSchema: z.looseObject({}),
   capabilities: {
-    async 'offers.pull'() {
-      return { items: [], nextCursor: null, hasMore: false }
-    },
-    async 'orders.pull'() {
-      return { items: [], nextCursor: null, hasMore: false }
-    },
+    'offers.pull': nothingToPull,
+    'orders.pull': nothingToPull,
     async 'stock.push'() {},
     async 'orders.updateStatus'() {},
   },
+})
+
+/** A connector that is not a Channel. */
+export const testCourier = defineConnector({
+  id: 'test-courier',
+  name: 'Test courier',
+  kind: 'courier',
+  auth: { type: 'none' },
+  configSchema: z.object({}),
+  credentialsSchema: z.object({}),
+  capabilities: {},
 })
 
 export async function createTestConnection(ctx: TestContext, organizationId: string, name = 'Test channel'): Promise<string> {

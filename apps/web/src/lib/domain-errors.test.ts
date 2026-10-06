@@ -17,6 +17,7 @@ const codes: DomainErrorCode[] = [
   'invalid_attributes',
   'already_in_family',
   'invalid_price',
+  'not_a_channel',
 ]
 const t = translatorFor('en')
 

@@ -35,8 +35,20 @@ Units of Stock promised to an Order that has not shipped yet. Made when the Orde
 _Avoid_: Allocation, hold, booking
 
 **Available**:
-Stock minus Reservations — the number Hanza tells Channels. It can go below zero when the same last unit sells on two Channels at once.
+Stock minus Reservations. Each Channel is told its Channel Available, which is worked out from this number. It can go below zero when the same last unit sells on two Channels at once.
 _Avoid_: Free stock, sellable quantity
+
+**Channel Available**:
+The number Hanza tells one Channel for a Product: Available minus the Channel's Safety buffer, at most its Channel limit. Never below zero and never above Available. Orders still reserve against Available, not against this number (ADR 0013).
+_Avoid_: Channel stock, advertised stock, allocation
+
+**Safety buffer**:
+A number of units of Available that one Channel is never told about. It makes it less likely that the last units sell twice, or keeps them for other Channels.
+_Avoid_: Reserve, margin, allocation
+
+**Channel limit**:
+The most units Hanza tells one Channel for any Product, however large Available is. Empty means no limit.
+_Avoid_: Cap, quota, share, allocation
 
 **Shortage**:
 An Order line whose Reservation could not be covered by Stock. A person decides what happens next; Hanza never cancels the Order on its own.
