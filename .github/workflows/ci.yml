@@ -38,6 +38,10 @@ jobs:
       HANZA_ENCRYPTION_KEY: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
       # Database-backed tests create and drop their own database on the service above.
       HANZA_TEST_DATABASE_URL: postgresql://hanza:hanza@localhost:5432/hanza
+      # Installation settings of connectors (HANZA_CONNECTOR_<ID>_<FIELD>, let through by turbo.json's
+      # "HANZA_CONNECTOR_*"). Only the test connector `fake-oauth` reads these; tests pass their own.
+      HANZA_CONNECTOR_FAKE_OAUTH_CLIENT_ID: ci-dummy-client-id
+      HANZA_CONNECTOR_FAKE_OAUTH_CLIENT_SECRET: ci-dummy-client-secret
     steps:
       - uses: actions/checkout@v4
 

@@ -1,7 +1,7 @@
 {
   "$schema": "https://turbo.build/schema.json",
   "globalDependencies": [".env", "tsconfig.base.json"],
-  "globalEnv": ["DATABASE_URL", "REDIS_URL", "BETTER_AUTH_SECRET", "BETTER_AUTH_URL", "HANZA_ENCRYPTION_KEY"],
+  "globalEnv": ["DATABASE_URL", "REDIS_URL", "BETTER_AUTH_SECRET", "BETTER_AUTH_URL", "HANZA_ENCRYPTION_KEY", "HANZA_CONNECTOR_*"],
   "tasks": {
     "generate": {
       "inputs": ["prisma/**"],
