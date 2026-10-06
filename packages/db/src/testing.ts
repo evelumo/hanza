@@ -22,18 +22,28 @@ async function withClient<T>(url: string, fn: (client: pg.Client) => Promise<T>)
   }
 }
 
-/** A throwaway database with every migration applied, created on the server `adminUrl` points to. */
-export async function createTestDatabase(adminUrl: string): Promise<{ url: string; drop(): Promise<void> }> {
-  const name = `hanza_test_${process.pid}_${randomBytes(4).toString('hex')}`
+const TEST_DATABASE_NAME = /^hanza_(test|e2e)_[a-z0-9_]{1,40}$/
+
+/** Ends its sessions and drops it; only a name of the throwaway-database form is accepted. */
+export async function dropTestDatabase(adminUrl: string, name: string): Promise<void> {
+  if (!TEST_DATABASE_NAME.test(name)) throw new Error(`Refusing to drop "${name}": not a throwaway test database name`)
+  await withClient(adminUrl, async (client) => {
+    await client.query('SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = $1 AND pid <> pg_backend_pid()', [name])
+    await client.query(`DROP DATABASE IF EXISTS "${name}"`)
+  })
+}
+
+/**
+ * A throwaway database with every migration applied, created on the server `adminUrl` points to.
+ * `name` (default `hanza_test_<pid>_<random>`) lets a caller record it before it exists.
+ */
+export async function createTestDatabase(adminUrl: string, options: { name?: string } = {}): Promise<{ url: string; drop(): Promise<void> }> {
+  const name = options.name ?? `hanza_test_${process.pid}_${randomBytes(4).toString('hex')}`
+  if (!TEST_DATABASE_NAME.test(name)) throw new Error(`"${name}" is not a throwaway test database name`)
   await withClient(adminUrl, (client) => client.query(`CREATE DATABASE "${name}"`))
   const url = withDatabase(adminUrl, name)
 
-  const drop = async () => {
-    await withClient(adminUrl, async (client) => {
-      await client.query('SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = $1 AND pid <> pg_backend_pid()', [name])
-      await client.query(`DROP DATABASE IF EXISTS "${name}"`)
-    })
-  }
+  const drop = () => dropTestDatabase(adminUrl, name)
 
   try {
     const migrations = (await readdir(MIGRATIONS_DIR, { withFileTypes: true }))

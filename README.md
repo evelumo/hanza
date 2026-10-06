@@ -10,13 +10,13 @@ Early stage (stage 1 of the roadmap). Working today:
 
 - Email/password sign-up and login (Better Auth); an organization is the tenant, created during onboarding.
 - Multi-tenant data model: every tenant-owned table carries `organizationId`.
-- The domain core: Products, Offers, Stock with Reservations (Hanza owns Stock), Orders with their own status, Connections with encrypted credentials, and an event log.
-- The sync engine in the worker: pulls Offers and Orders from a Channel, pushes each Channel its Channel Available (Available less the Connection's safety buffer, at most its channel limit) and Order status back, retries and tracks Connection health.
-- The panel (English by default, Polish as a second language; switch it in the header): Products (Stock, Available, linking Offers to Products), Orders (status changes, Needs attention, linking Unmatched lines) and Connections (add, sync now, sync results, safety buffer and channel limit).
+- The domain core: Products, Offers, Stock with Reservations (Hanza owns Stock), prices (a Product's base price and per-Offer overrides; Hanza owns them too), Orders with their own status, Connections with encrypted credentials, and an event log.
+- The sync engine in the worker: pulls Offers and Orders from a Channel, pushes each Channel its Channel Available (Available less the Connection's safety buffer, at most its channel limit), prices and Order status back, retries and tracks Connection health.
+- The panel (English by default, Polish as a second language; switch it in the header): Products (Stock, Available, prices, linking Offers to Products), Orders (status changes, Needs attention, linking Unmatched lines) and Connections (add, sync now, sync results, safety buffer and channel limit).
 - The final-for-now Connector SDK with a conformance test kit and an in-memory **fake connector** ("Test channel") that exercises the whole path without a real Channel.
 - `GET /api/health` (database + queue) and a dependency-boundary check for connectors.
 
-Not there yet: **no real connectors** (Allegro first, then WooCommerce), no REST API or MCP server, no panel E2E tests.
+Not there yet: **no real connectors** (Allegro first, then WooCommerce), no REST API or MCP server; the panel end-to-end tests (`pnpm test:e2e`, Playwright) run locally only, not in CI yet.
 
 ## Quick start
 
@@ -34,7 +34,7 @@ Open http://localhost:3000, register and create your company. Then try the whole
 
 1. **Connections** > "Add connection" > "Test channel": any API key works (the key `expired` simulates a Connection that must sign in again). The worker pulls 5 Offers and 4 Orders within seconds; refresh the Connection page to see the results.
 2. **Products** > "Offers without a product": select the Offers and "Create products from selected", then set Stock on a Product.
-3. **Orders**: four Orders need attention (a Shortage until Stock is set; Unmatched lines to link, one of them on an Order the buyer cancelled). Link a line, then change an Order to "Shipped": Stock goes down and the new Available is pushed to the Channel.
+3. **Orders**: three Orders need attention (a Shortage until Stock is set; Unmatched lines to link). The fourth Order was cancelled by the buyer, so it needs nothing even though its lines are Unmatched. Link a line, then change an Order to "Shipped": Stock goes down and the new Available is pushed to the Channel.
 
 The dashboard still has a test job that goes through the queue and worker. Stop the infrastructure with `pnpm infra:down`.
 
@@ -46,6 +46,7 @@ pnpm check:boundaries   # connector dependency rules
 pnpm typecheck
 pnpm test
 pnpm build
+pnpm test:e2e           # panel flows in a browser (once: pnpm --filter @hanza/e2e exec playwright install chromium)
 ```
 
 ## Repo layout
@@ -54,6 +55,7 @@ pnpm build
 apps/
   web/                 Next.js panel + API (Products, Orders, Connections, Better Auth routes, /api/health)
   worker/              BullMQ worker process
+  e2e/                 panel end-to-end flows (Playwright) and the `pnpm test:e2e` runner
 packages/
   core/                context, domain services, sync engine, JobQueue, job registry
   db/                  Prisma schema (split per module), migrations, client
@@ -65,7 +67,7 @@ scripts/               check-boundaries.mjs
 docs/                  architecture plan (Polish), ADRs, agent docs
 ```
 
-Stack: Next.js, Prisma + PostgreSQL, pnpm workspaces + Turborepo, BullMQ + Redis, Better Auth, zod, Vitest. No DI container; dependencies are composed in `createContext()`. Temporal is deliberately postponed.
+Stack: Next.js, Prisma + PostgreSQL, pnpm workspaces + Turborepo, BullMQ + Redis, Better Auth, zod, Vitest, Playwright. No DI container; dependencies are composed in `createContext()`. Temporal is deliberately postponed.
 
 ## Roadmap
 

@@ -18,7 +18,7 @@ const isUnits = (value: unknown): value is number => Number.isInteger(value) && 
 
 /**
  * Channel Available: Available less the Safety buffer, at most the Channel limit, never below zero.
- * The one definition of the number a Channel is told (ADR 0011). It fails closed: a setting or an
+ * The one definition of the number a Channel is told (ADR 0013). It fails closed: a setting or an
  * Available that is not a whole number in range (which the schema and the database CHECKs should
  * make impossible) tells the Channel 0 rather than guess, so the result stays within 0..max(0, Available).
  */

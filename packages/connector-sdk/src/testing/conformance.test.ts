@@ -3,12 +3,13 @@ import { z } from 'zod'
 import type { AnyConnectorDefinition } from '../connector'
 import { AuthExpiredError, PermanentError } from '../errors'
 import type { Offer } from '../model/offer'
+import type { OfferPrice } from '../model/price'
 import type { Order } from '../model/order'
 import { assertConformance, type ConformanceFixtures } from './index'
 
 const offers: Offer[] = [
-  { externalId: 'o1', sku: 'SKU-1', name: 'Mug', url: null },
-  { externalId: 'o2', sku: null, name: 'Poster', url: null },
+  { externalId: 'o1', sku: 'SKU-1', name: 'Mug', url: null, price: { amount: '39.99', currency: 'PLN' } },
+  { externalId: 'o2', sku: null, name: 'Poster', url: null, price: null },
   { externalId: 'o3', sku: 'SKU-3', name: 'Tote bag', url: null },
 ]
 
@@ -67,6 +68,7 @@ function validConnector(overrides: Partial<AnyConnectorDefinition> = {}): AnyCon
       },
       'stock.push': async () => {},
       'orders.updateStatus': async () => {},
+      'price.push': async () => {},
     },
     ...overrides,
   }
@@ -131,10 +133,23 @@ const broken: Array<[id: string, connector: AnyConnectorDefinition, fixtures?: C
   ['C9', withCapabilities({ 'stock.push': async (_ctx, levels) => { if (levels.length === 0) throw new PermanentError('empty') } })],
   ['C9', withCapabilities({ 'stock.push': async (_ctx, levels) => { if (levels[0]?.available === 5) throw new PermanentError('five') } })],
   ['C10', withCapabilities({ 'orders.updateStatus': async (_ctx, input) => { if (input.status === 'cancelled') throw new PermanentError('no') } })],
+  ['C13', withCapabilities({ 'offers.pull': async (_ctx, cursor) => slice(offers.map((offer) => ({ ...offer, price: null })), cursor) })],
+  ['C13', withCapabilities({ 'price.push': async (_ctx, prices) => { if (prices.length === 0) throw new PermanentError('empty') } })],
+  ['C13', (() => {
+    const seen = new Set<string>()
+    return withCapabilities({
+      'price.push': async (_ctx, prices) => {
+        const key = JSON.stringify(prices)
+        if (seen.has(key)) throw new PermanentError('not repeatable')
+        seen.add(key)
+      },
+    })
+  })()],
   ['C11', validConnector(), { ...fixtures, unauthorized: { credentials: { apiKey: 'also-fine' } } }],
   ['C11', withCapabilities({ 'orders.pull': async () => { throw new PermanentError('wrong kind') } })],
   ['C12', withCapabilities({ 'stock.push': async () => { throw new Error('plain error') } })],
   ['C12', withCapabilities({ 'orders.pull': async () => { throw new Error('plain error') } })],
+  ['C12', withCapabilities({ 'price.push': async () => { throw new Error('plain error') } })],
 ]
 
 describe('assertConformance', () => {
@@ -145,6 +160,23 @@ describe('assertConformance', () => {
   it('passes for a connector without orders.updateStatus and without an unauthorized fixture', async () => {
     const connector = validConnector({ capabilities: { ...validConnector().capabilities, 'orders.updateStatus': undefined } })
     await expect(assertConformance(connector, { config: { region: 'eu' }, credentials: { apiKey: 'test' } })).resolves.toBeUndefined()
+  })
+
+  it('passes for a connector without price.push whose Offers report no price', async () => {
+    const connector = withCapabilities({
+      'price.push': undefined,
+      'offers.pull': async (_ctx, cursor) => slice(offers.map(({ price: _price, ...offer }) => offer), cursor),
+    })
+    await expect(assertConformance(connector, fixtures)).resolves.toBeUndefined()
+  })
+
+  it('pushes prices in the currency each Offer reports', async () => {
+    const pushed: OfferPrice[][] = []
+    const connector = withCapabilities({ 'price.push': async (_ctx, prices) => void pushed.push(prices) })
+    await assertConformance(connector, fixtures)
+    expect(pushed[0]).toEqual([])
+    expect(pushed.slice(1).flat().every((price) => price.offerExternalId === 'o1' && price.price.currency === 'PLN')).toBe(true)
+    expect(pushed.slice(1).map((prices) => prices[0]?.price.amount)).toEqual(['19.99', '19.99', '25', '25'])
   })
 
   it('skips Channel checks for a connector that is not a Channel', async () => {
