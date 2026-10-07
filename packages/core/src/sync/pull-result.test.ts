@@ -42,6 +42,23 @@ describe('parseOrdersPage', () => {
     expect(() => parseOrdersPage({ items: [max], nextCursor: '1', hasMore: false }, null)).not.toThrow()
   })
 
+  it('accepts Order updates next to Orders, and checks each item by its kind', () => {
+    const fact = { id: 'a:paid', type: 'paid', occurredAt: '2026-10-02T10:00:00Z', note: null }
+    const update = { kind: 'update', externalId: 'a', facts: [fact], billingAddress: null }
+    const page = { items: [buildOrder({ externalId: 'a' }), update], nextCursor: '2', hasMore: false }
+    expect(parseOrdersPage(page, null)).toEqual(page)
+
+    const broken = { kind: 'update', externalId: 'u-1', facts: [{ ...fact, type: 'refunded' }], shippingAddress: { name: 'Jane Secret' } }
+    const error = failure(() => parseOrdersPage({ items: [buildOrder(), broken], nextCursor: '2', hasMore: false }, null))
+    expect(error.message).toContain('Order update "u-1": facts.0.type')
+    expect(error.message).toContain('Order update "u-1": shippingAddress.street')
+    expect(error.message).not.toContain('Jane Secret')
+    // Without the kind it is a full Order, and is checked as one.
+    expect(failure(() => parseOrdersPage({ items: [{ externalId: 'u-2', facts: [] }], nextCursor: '1', hasMore: false }, null)).message).toContain(
+      'Order "u-2": placedAt',
+    )
+  })
+
   it('rejects hasMore without a new cursor; an empty last page may keep the cursor', () => {
     expect(failure(() => parseOrdersPage({ items: [], nextCursor: null, hasMore: true }, null)).message).toContain('paging contract')
     expect(failure(() => parseOrdersPage({ items: [], nextCursor: '4', hasMore: true }, '4')).message).toContain('paging contract')

@@ -7,6 +7,6 @@ export {
   type ConnectionRow,
   type OpenedConnection,
 } from './connections'
-export { startSyncRun, saveSyncCursor, finishSyncRun, failSyncRun } from './sync-state'
+export { startSyncRun, saveSyncCursor, finishSyncRun, failSyncRun, restartOrderFeed } from './sync-state'
 export { updateChannelStockRules } from './stock-rules'
 export { updateChannelWarehouses, type ChannelWarehouseChoice } from './channel-warehouses'

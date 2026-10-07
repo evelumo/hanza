@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { offerSchema } from './offer'
 import { currencyMinorUnits, moneySchema } from './money'
-import { orderSchema } from './order'
+import { isOrderUpdate, orderSchema, orderUpdateSchema } from './order'
 import { offerPriceSchema } from './price'
 import { pricePushResultSchema, stockPushResultSchema } from './push-result'
 import { stockLevelSchema } from './stock'
@@ -137,6 +137,29 @@ describe('orderSchema', () => {
 
   it('rejects a lowercase country code', () => {
     expect(orderSchema.safeParse({ ...order, shippingAddress: { ...address, countryCode: 'pl' } }).success).toBe(false)
+  })
+})
+
+describe('orderUpdateSchema', () => {
+  const removed = { id: 'o-1:removed', type: 'cancelled', occurredAt: '2026-10-02T10:00:00Z', note: 'Merged into another order on the Channel' }
+
+  it('accepts facts alone, addresses alone, and a billing address cleared with null', () => {
+    expect(orderUpdateSchema.parse({ kind: 'update', externalId: 'o-1', facts: [removed] })).toEqual({ kind: 'update', externalId: 'o-1', facts: [removed] })
+    expect(orderUpdateSchema.safeParse({ kind: 'update', externalId: 'o-1', facts: [], shippingAddress: address }).success).toBe(true)
+    expect(orderUpdateSchema.safeParse({ kind: 'update', externalId: 'o-1', facts: [], billingAddress: null }).success).toBe(true)
+  })
+
+  it('needs the kind, an external id, the facts array and valid addresses', () => {
+    expect(orderUpdateSchema.safeParse({ externalId: 'o-1', facts: [] }).success).toBe(false)
+    expect(orderUpdateSchema.safeParse({ kind: 'update', externalId: '', facts: [] }).success).toBe(false)
+    expect(orderUpdateSchema.safeParse({ kind: 'update', externalId: 'o-1' }).success).toBe(false)
+    expect(orderUpdateSchema.safeParse({ kind: 'update', externalId: 'o-1', facts: [], shippingAddress: null }).success).toBe(false)
+    expect(orderUpdateSchema.safeParse({ kind: 'update', externalId: 'o-1', facts: [], shippingAddress: { ...address, countryCode: 'pl' } }).success).toBe(false)
+  })
+
+  it('isOrderUpdate tells an update from a full Order', () => {
+    expect(isOrderUpdate({ kind: 'update', externalId: 'o-1', facts: [] })).toBe(true)
+    expect(isOrderUpdate(orderSchema.parse(order))).toBe(false)
   })
 })
 

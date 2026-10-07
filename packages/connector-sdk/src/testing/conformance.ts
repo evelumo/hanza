@@ -10,9 +10,9 @@ import {
   type CapabilityContext,
   type PullResult,
 } from '../connector'
-import { classifyConnectorError, isConnectorError } from '../errors'
+import { classifyConnectorError, isConnectorError, isCursorExpiredError } from '../errors'
 import { offerSchema, type Offer } from '../model/offer'
-import { ORDER_STATUSES, orderSchema, type Order } from '../model/order'
+import { ORDER_STATUSES, orderSchema, orderUpdateSchema, type Order } from '../model/order'
 import { offerPriceSchema, type OfferPrice } from '../model/price'
 import { pricePushResultSchema, stockPushResultSchema } from '../model/push-result'
 import { stockLevelSchema, type StockLevel } from '../model/stock'
@@ -30,6 +30,14 @@ export interface ConformanceFixtures {
    * rejected credentials, and say so in the connector's AGENTS.md.
    */
   forbidden?: false | { fetch?: typeof fetch }
+  /** C18: if given, orders.pull with this cursor (one the recorded Channel no longer has) must fail with `CursorExpiredError`. */
+  expiredCursor?: string
+  /**
+   * The connector follows a Channel journal (ADR 0021): C18 then requires `expiredCursor`. Order updates cannot be
+   * required here: a run from cursor null starts the journal at the newest position, so a recording has no later
+   * changes in it. Cover them with a scenario cassette that pulls from an older journal cursor (see the skill).
+   */
+  journal?: boolean
   /** Page limit per pull loop. Default 100. */
   maxPages?: number
 }
@@ -46,6 +54,11 @@ interface Page<T> {
   cursorIn: string | null
   items: T[]
   nextCursor: string | null
+}
+
+/** An Order update carries `kind: 'update'`; anything else in an orders.pull page is checked as a full Order. */
+function isUpdateItem(item: unknown): item is { kind: 'update'; externalId?: unknown; facts?: unknown } {
+  return typeof item === 'object' && item !== null && (item as { kind?: unknown }).kind === 'update'
 }
 
 function describeError(error: unknown): string {
@@ -200,13 +213,15 @@ export async function assertConformance(connector: AnyConnectorDefinition, fixtu
     })
   }
 
-  // C6, C7, C8
+  // C6, C7, C8, C17
   let orders: Order[] = []
+  let feed: unknown[] = []
   const pullOrders = capabilities['orders.pull']
   if (pullOrders) {
     await check('C6', async () => {
       const pages = await pullAll('C6', 'orders.pull', (cursor) => pullOrders(context, cursor), true)
-      orders = pages.flatMap((page) => page.items as Order[])
+      feed = pages.flatMap((page) => page.items as unknown[])
+      orders = feed.filter((item) => !isUpdateItem(item)) as Order[]
       if (orders.length === 0) fail('C6', 'orders.pull returned no Orders; the fixtures must contain at least one')
       orders.forEach((order, index) => {
         const parsedOrder = orderSchema.safeParse(order)
@@ -227,21 +242,34 @@ export async function assertConformance(connector: AnyConnectorDefinition, fixtu
       })
 
       // Hanza reads awaitingPayment only on the first import: only a paid fact (or a cancellation) ends the wait (ADR 0015).
+      const endsWait = (facts: Order['facts']) => facts.some((fact) => fact.type === 'paid' || fact.type === 'cancelled')
       const waiting = new Set<string>()
-      for (const order of orders) {
-        if (!orderSchema.safeParse(order).success) continue
-        if (order.awaitingPayment === true) {
-          waiting.add(order.externalId)
-        } else if (waiting.delete(order.externalId) && !order.facts.some((fact) => fact.type === 'paid' || fact.type === 'cancelled')) {
-          fail('C6', `Order "${order.externalId}" was awaiting payment and is returned again without awaitingPayment but with no paid fact`)
+      for (const item of feed) {
+        if (isUpdateItem(item)) {
+          const update = orderUpdateSchema.safeParse(item)
+          if (update.success && endsWait(update.data.facts)) waiting.delete(update.data.externalId)
+          continue
+        }
+        const order = orderSchema.safeParse(item)
+        if (!order.success) continue
+        if (order.data.awaitingPayment === true) {
+          waiting.add(order.data.externalId)
+        } else if (waiting.delete(order.data.externalId) && !endsWait(order.data.facts)) {
+          fail('C6', `Order "${order.data.externalId}" was awaiting payment and is returned again without awaitingPayment but with no paid fact`)
         }
       }
 
-      const ids = (items: Order[]) => JSON.stringify(items.map((item) => item?.externalId))
+      // An update is identified by its Order and its fact ids, so a replay that reports other facts differs.
+      const identity = (item: unknown) => {
+        if (!isUpdateItem(item)) return (item as { externalId?: unknown } | null)?.externalId
+        const facts = Array.isArray(item.facts) ? item.facts.map((fact) => (fact as { id?: unknown } | null)?.id) : null
+        return ['update', item.externalId, facts]
+      }
+      const ids = (items: unknown[]) => JSON.stringify(items.map(identity))
       await check('C7', async () => {
         for (const page of pages) {
           const replay = await call('orders.pull', () => pullOrders(context, page.cursorIn))
-          if (ids(replay.items) !== ids(page.items as Order[])) {
+          if (ids(replay.items) !== ids(page.items)) {
             fail('C7', `orders.pull with cursor ${JSON.stringify(page.cursorIn)} returned different Orders the second time`)
           }
         }
@@ -253,6 +281,57 @@ export async function assertConformance(connector: AnyConnectorDefinition, fixtu
           fail('C8', `orders.pull with the final cursor ${JSON.stringify(finalCursor)} must return no items and hasMore: false`)
         }
       })
+    })
+
+    // Updates for Orders this run never returned in full are fine: the Order may have closed before the Connection,
+    // and the core ignores updates for Orders it does not have. What must hold is that fact ids are stable.
+    await check('C17', async () => {
+      const typeOf = new Map<string, string>()
+      const remember = (externalId: string, fact: { id: string; type: string }) => {
+        const key = JSON.stringify([externalId, fact.id])
+        const known = typeOf.get(key)
+        if (known === undefined) typeOf.set(key, fact.type)
+        else if (known !== fact.type) {
+          fail('C17', `fact "${fact.id}" of Order "${externalId}" is reported as ${known} and as ${fact.type}; a fact id must keep its meaning`)
+        }
+      }
+      feed.forEach((item, index) => {
+        if (!isUpdateItem(item)) {
+          const order = orderSchema.safeParse(item)
+          if (order.success) order.data.facts.forEach((fact) => remember(order.data.externalId, fact))
+          return
+        }
+        const update = orderUpdateSchema.safeParse(item)
+        if (!update.success) {
+          fail('C17', `Order update #${index} fails orderUpdateSchema: ${z.prettifyError(update.error)}`)
+          return
+        }
+        const { externalId, facts } = update.data
+        if (new Set(facts.map((fact) => fact.id)).size !== facts.length) {
+          fail('C17', `Order update for "${externalId}" has duplicate fact ids`)
+        }
+        facts.forEach((fact) => remember(externalId, fact))
+      })
+    })
+  }
+
+  // C18
+  if (fixtures.expiredCursor === undefined && fixtures.journal === true) {
+    fail('C18', 'a journal connector must give the expiredCursor fixture: a cursor the recorded Channel no longer has')
+  }
+  if (fixtures.expiredCursor !== undefined) {
+    await check('C18', async () => {
+      if (!pullOrders) {
+        fail('C18', 'orders.pull is missing, so the expired cursor fixture cannot be exercised')
+        return
+      }
+      try {
+        await call('orders.pull', () => pullOrders(context, fixtures.expiredCursor!))
+      } catch (error) {
+        if (!isCursorExpiredError(error)) fail('C18', `orders.pull with the expired cursor failed with ${describeError(error)}, expected CursorExpiredError`)
+        return
+      }
+      fail('C18', 'orders.pull with the expired cursor resolved; it must reject with CursorExpiredError')
     })
   }
 

@@ -4,7 +4,7 @@ import { join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { z } from 'zod'
 import { defineConnector, type CapabilityContext } from '../connector'
-import { errorFromResponse, TransientError, type ErrorFromResponseOptions } from '../errors'
+import { CursorExpiredError, errorFromResponse, TransientError, type ErrorFromResponseOptions } from '../errors'
 import type { Offer } from '../model/offer'
 import type { Order } from '../model/order'
 import { loadCassette, writeCassette } from './cassette'
@@ -45,6 +45,8 @@ const channel: typeof fetch = async (input, init) => {
   const url = new URL(request.url)
   const cursor = url.searchParams.get('cursor')
   if (url.pathname === '/offers') return Response.json(page(offers, cursor))
+  // A journal position the API no longer keeps.
+  if (url.pathname === '/orders' && cursor === 'gone') return Response.json({ error: 'cursor expired' }, { status: 410 })
   if (url.pathname === '/orders') return Response.json(page(orders, cursor))
   if (url.pathname === '/stock' && request.method === 'PUT') return new Response(null, { status: 204 })
   return Response.json({ error: 'not found' }, { status: 404 })
@@ -124,6 +126,34 @@ describe('runConformance', () => {
     expect(unauthorized.interactions.map((interaction) => interaction.response.status)).toEqual([401])
 
     await runConformance(connector, { ...replayOptions(dir), recording: () => ({ fetch: () => Promise.reject(new Error('no network in replay')) }) })
+  })
+
+  it('records and replays the expired-cursor check (C18) in the main cassette', async () => {
+    const expiring = defineConnector({
+      ...connector,
+      capabilities: {
+        ...connector.capabilities,
+        async 'orders.pull'(ctx, cursor) {
+          try {
+            return await connector.capabilities['orders.pull']!(ctx, cursor)
+          } catch (error) {
+            if ((error as Error).message.startsWith('410')) throw new CursorExpiredError('cursor expired', { cause: error })
+            throw error
+          }
+        },
+      },
+    })
+    vi.stubEnv('CI', '')
+    vi.stubEnv('HANZA_RECORD_FIXTURES', '1')
+    await runConformance(expiring, { ...replayOptions(dir), expiredCursor: 'gone' })
+    vi.unstubAllEnvs()
+    vi.stubEnv('HANZA_RECORD_FIXTURES', '')
+    const main = await loadCassette(join(dir, CONFORMANCE_CASSETTE))
+    expect(main.interactions.filter((interaction) => interaction.response.status === 410)).toHaveLength(1)
+
+    await runConformance(expiring, { ...replayOptions(dir), expiredCursor: 'gone' })
+    // The plain connector reports the 410 as permanent, which C18 refuses.
+    await expect(runConformance(connector, { ...replayOptions(dir), expiredCursor: 'gone' })).rejects.toThrow('[C18]')
   })
 
   it('refuses to record in CI', async () => {

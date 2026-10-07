@@ -33,6 +33,22 @@ application, per Connection, concurrency); the core enforces them in `ctx.fetch`
 across every worker (ADR 0019). `ctx.fetch` may then reject with
 `RateLimitedError` before sending: let it through unchanged.
 
+Where `orders.pull` starts and what it may return (ADR 0021; details in the skill):
+
+- Cursor `null` takes the feed's start (journal position and a boundary
+  between Orders placed before and after it), returns the Orders open on the
+  Channel now, paged by keyset (never a plain offset), then follows the journal
+  from that position. In the journal a full Order is sent only for an Order
+  placed after the boundary; any other Order goes as an Order update, so Orders
+  closed before the Connection never arrive. The cursor is opaque: encode the
+  phase, position and boundary in it, for ever.
+- When the Channel no longer has the cursor's position, throw
+  `CursorExpiredError`: the core restarts from `null` and records it.
+- An item is a full Order or an Order update (`kind: 'update'`: facts and
+  addresses), for what the Channel cannot serve as a whole Order (an address
+  revealed at payment, an Order that disappeared). The core ignores updates
+  for Orders it does not have.
+
 Every connector proves it follows the contract with the conformance kit,
 called from its own `connector.test.ts` with recorded fixtures and no network
 (see "Recorded fixtures" below).

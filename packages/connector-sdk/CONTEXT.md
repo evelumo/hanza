@@ -106,6 +106,14 @@ _Avoid_: External status, remote status
 A mark on a prepaid Order the Buyer has not paid for yet; never on cash on delivery. The Order is shown and reserves Stock, but a person can only cancel it (or give it another Order status of phase new), not fulfil it, until the Channel reports it paid. A cancelled Order that was never paid is an abandoned checkout and is no longer shown as Awaiting payment. It is a payment state beside the Order phase and status, neither of them (ADR 0015).
 _Avoid_: Unpaid status, pending payment, not ready
 
+**Order update**:
+What a Channel reports about an Order it cannot (or can no longer) serve whole: new Channel facts and, sometimes, new addresses, such as the delivery address revealed at payment, or a cancellation for an Order merged into another one. It changes only an Order Hanza already has, and its addresses only while the Order is in phase new.
+_Avoid_: Patch, delta, Order event
+
+**Order feed**:
+The stream of Orders and Order updates Hanza pulls from one Channel. It starts with the Orders open on the Channel when the Connection is made, never with history; when the Channel forgets where Hanza was, it starts again that way and the restart is recorded.
+_Avoid_: Order sync, order import, journal (the Channel's own term)
+
 **Needs attention**:
 A mark on an Order that a person must look at, for example when the Buyer cancels while it is already being packed, when an Order line could not be matched to a Product, or when the Channel refused the status Hanza sent it.
 _Avoid_: Flag, alert, warning

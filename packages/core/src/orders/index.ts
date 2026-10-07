@@ -1,6 +1,7 @@
 export { allowedTransitions, allowedStatuses, canMoveToStatus, factTransition } from './status-rules'
 export { ORDER_PHASES, orderPhaseSchema, CHANNEL_REPORTED_PHASES, type OrderPhase, type ChannelReportedPhase } from './phases'
 export { importOrder } from './import'
+export { applyOrderUpdate, type OrderUpdateResult } from './update'
 export { changeOrderStatus, type StatusTarget } from './change-status'
 export { linkOrderLine } from './link-line'
 export { rematchUnmatchedLines } from './rematch'
