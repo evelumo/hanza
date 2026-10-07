@@ -11,7 +11,7 @@ export interface JobRef<TSchema extends z.ZodType = z.ZodType> {
 export interface JobRunInfo {
   attempt: number
   maxAttempts: number
-  /** `RetryLaterError` retries of this attempt so far (they use no attempt); 0 on the first run of each attempt. */
+  /** Counted `RetryLaterError` retries of this attempt so far (they use no attempt); 0 on the first run of each attempt. */
   retriedLater: number
 }
 
@@ -23,15 +23,21 @@ export function defineJob<TSchema extends z.ZodType>(job: JobDefinition<TSchema>
   return job
 }
 
-/** Retry after `delayMs` without consuming an attempt (rate limits). */
+/**
+ * Retry after `delayMs` without consuming an attempt (rate limits). `counted: false` keeps the retry out of
+ * `JobRunInfo.retriedLater`, for waits that say nothing about the outside world (Hanza throttling itself).
+ */
 export class RetryLaterError extends Error {
   override readonly name = 'RetryLaterError'
+  readonly counted: boolean
 
   constructor(
     readonly delayMs: number,
     message: string,
+    options: { counted?: boolean } = {},
   ) {
     super(message)
+    this.counted = options.counted ?? true
   }
 }
 

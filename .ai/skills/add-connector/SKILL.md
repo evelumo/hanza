@@ -62,12 +62,21 @@ Canonical schemas (all exported): `offerSchema`, `orderSchema` (with `buyerSchem
 
 | Class | Use it when | The engine |
 | --- | --- | --- |
-| `AuthExpiredError` | credentials rejected (401/403), token expired | stops retrying, marks the Connection as needing sign-in |
+| `AuthExpiredError` | the credentials are no longer accepted: 401, `WWW-Authenticate: Bearer error="invalid_token"`, or the Channel's own signal (a refused refresh token) | stops retrying, marks the Connection as needing sign-in |
 | `RateLimitedError(msg, { retryAfterMs })` | 429 or an explicit limit | retries after the delay without using an attempt |
 | `TransientError` | network failure, timeout, 5xx | retries with backoff |
-| `PermanentError` | 4xx other than the above, unexpected response shape, unsupported request | stops retrying, marks the Connection as failing |
+| `PermanentError` | 4xx other than the above, including a 403 (no right to this resource: another seller's Offer, a missing scope), unexpected response shape, unsupported request | stops retrying, marks the Connection as failing (not signed out) |
 
-`errorFromResponse(response)` maps an HTTP status to the right class (never including the body); use it for every non-2xx response. A `ZodError` from parsing is classified as permanent, a `TypeError` from `fetch` or a timeout as transient. Wrap anything else you can recognise.
+`errorFromResponse(response, options?)` maps an HTTP status to the right class (never including the body); use it for every non-2xx response. A 403 is `PermanentError` unless it carries an auth signal: if your Channel has its own (an OAuth body `{"error":"invalid_grant"}`, or a 403 that really means "signed out"), pass `{ isAuthFailure: (response) => ... }`, which may read the body; document it in the connector's `AGENTS.md`. A `ZodError` from parsing is classified as permanent, a `TypeError` from `fetch` or a timeout as transient. Wrap anything else you can recognise, but let a `ConnectorError` that `ctx.fetch` rejects with through unchanged: the core's rate limiter rejects with `RateLimitedError` before sending when the budget is used up.
+
+### Rate limits
+
+Declare the Channel's limits in `defineConnector({ rateLimits })`, set below the published ones for headroom; the core enforces them in `ctx.fetch` across every worker (ADR 0019), so never count requests yourself:
+
+- `application: { requests, windowMs }`: one budget for every Connection of this connector on the installation (the API application's limit, e.g. per Client ID);
+- `connection: { rate?: { requests, windowMs }, concurrency? }`: per Connection (one account on the Channel).
+
+A request waits up to 2 s for its slot, or `ctx.fetch` rejects with `RateLimitedError`. A 429 parks every budget of that request for its `Retry-After` (60 s when absent). Write the Channel's limits and what you declared in the connector's `AGENTS.md`.
 
 ## Procedure
 
@@ -102,7 +111,7 @@ Canonical schemas (all exported): `offerSchema`, `orderSchema` (with `buyerSchem
     - Cover edge cases with scenario cassettes (`openCassette`): empty page, last page, cancelled Order, multi-line Order, an unpaid Order (returned with `awaitingPayment: true` and later with a `paid` fact, or not returned at all if you do not report unpaid Orders), an unknown status, error statuses.
     - Without a sandbox, hand-write cassettes from the official docs (same format) and say so in the connector's `AGENTS.md`; the lint checks them too.
 11. **Write `connector.test.ts`** (Vitest, no network):
-    - call `runConformance(connector, { fixtures, config, credentials, unauthorized, scrub, recording })` from `@hanza/connector-sdk/testing`: it lints the fixtures, replays `conformance.cassette.json` (and `conformance-unauthorized.cassette.json`, where the API answers 401) and runs `assertConformance`. Test credentials stand in for the recorded ones (8+ characters). It checks the schemas, paging and cursors, idempotent re-pulls, repeatable pushes and error classes (checks C1 to C13, see `packages/connector-sdk/src/testing/conformance.ts`; with `price.push`, C13 needs at least one fixture Offer that reports a `price`), and reports every request the cassettes could not answer;
+    - call `runConformance(connector, { fixtures, config, credentials, unauthorized, scrub, recording })` from `@hanza/connector-sdk/testing`: it lints the fixtures, replays `conformance.cassette.json` (and `conformance-unauthorized.cassette.json`, where the API answers 401) and runs `assertConformance`. Test credentials stand in for the recorded ones (8+ characters). It checks the schemas, paging and cursors, idempotent re-pulls, repeatable pushes and error classes, including that a bare `403 Forbidden` does not ask for sign-in (C14; pass `forbidden: false` only if your Channel signs out with 403, and say why in `AGENTS.md`) (checks C1 to C14, see `packages/connector-sdk/src/testing/conformance.ts`; with `price.push`, C13 needs at least one fixture Offer that reports a `price`), and reports every request the cassettes could not answer;
     - add tests for what the kit cannot know: the mapper output for every fixture (amounts, currency, facts), the status mapping in both directions, the request bodies of `stock.push`, `price.push` and `orders.updateStatus`, and each error class from the matching HTTP status.
 12. **Validate** (run what you can; report what you could not):
 

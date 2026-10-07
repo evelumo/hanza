@@ -2,6 +2,7 @@ import { PermanentError, type AnyConnectorDefinition, type CapabilityContext } f
 import type { z } from 'zod'
 import type { OpenedConnection } from '../connections/connections'
 import type { Context } from '../context'
+import { limitFetch, ratePlan } from '../rate-limit'
 
 const FETCH_TIMEOUT_MS = 30_000
 
@@ -25,10 +26,12 @@ export function buildCapabilityContext(ctx: Context, opened: OpenedConnection, c
     throw new PermanentError(`The Connection's settings do not match connector "${connector.id}": ${paths.join(', ')}`)
   }
   const fields = { connectionId: opened.id, connectorId: connector.id }
+  const timed: typeof fetch = (input, init) => fetch(input, { ...init, signal: init?.signal ?? AbortSignal.timeout(FETCH_TIMEOUT_MS) })
+  const plan = ratePlan(connector, opened.id)
   return {
     config: config.data,
     credentials: credentials.data,
-    fetch: (input, init) => fetch(input, { ...init, signal: init?.signal ?? AbortSignal.timeout(FETCH_TIMEOUT_MS) }),
+    fetch: plan ? limitFetch(timed, plan, { limiter: ctx.rateLimiter, log: ctx.log }) : timed,
     log: (message, extra) => ctx.log.info(message, { ...extra, ...fields }),
   }
 }

@@ -4,6 +4,7 @@ import { createConnectorRegistry, type ConnectorRegistry } from './connectors/re
 import { loadEnv, type Env } from './env'
 import { createLogger, type Logger } from './logger'
 import { createJobQueue, type JobQueue } from './queue'
+import { createRedisRateLimiter, type RateLimiter } from './rate-limit'
 import { createSecretBox, type SecretBox } from './secrets'
 import { createWorkflowEngine, type WorkflowEngine } from './workflows/engine'
 
@@ -19,6 +20,8 @@ export interface Context {
   secrets: SecretBox
   connectors: ConnectorRegistry
   workflows: WorkflowEngine
+  /** Request budgets the connectors declare, shared by every worker (ADR 0019). */
+  rateLimiter: RateLimiter
 }
 
 export interface CreateContextOptions {
@@ -40,10 +43,14 @@ export function createContext(scope: string, options: CreateContextOptions = {})
     secrets: createSecretBox(env.HANZA_ENCRYPTION_KEY),
     connectors: createConnectorRegistry(options.connectors ?? []),
     workflows: createWorkflowEngine({ db, queue, log }),
+    // With HANZA_QUEUE_PREFIX set (e2e runs) the queue's prefix, so a run that deletes `<prefix>:*` also deletes its
+    // budgets; otherwise "hanza" (BullMQ's own default is "bull"). Refuses requests while Redis is unreachable.
+    rateLimiter: createRedisRateLimiter(env.REDIS_URL, { prefix: env.HANZA_QUEUE_PREFIX ?? 'hanza', log }),
   }
 }
 
 export async function closeContext(ctx: Context): Promise<void> {
   await ctx.queue.close()
+  await ctx.rateLimiter.close()
   await ctx.db.$disconnect()
 }

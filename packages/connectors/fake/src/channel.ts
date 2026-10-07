@@ -1,4 +1,5 @@
-import type { ChannelFact, Offer, OfferPrice, Order, OrderStatus, StockLevel } from '@hanza/connector-sdk'
+import type { ChannelFact, Offer, OfferPrice, Order, OrderStatus, RateLimits, StockLevel } from '@hanza/connector-sdk'
+import { createFakeApi, type FakeApi } from './api'
 import { createFakeConnector, type FakeConnector, type FakeState } from './connector'
 import { seedFacts, seedOffers, seedOrders } from './seed'
 
@@ -17,20 +18,35 @@ export interface FakeChannel {
   /** Arguments of every price.push call, in order. A push also sets the Offer's price that offers.pull reports. */
   readonly pricePushes: OfferPrice[][]
   readonly statusUpdates: Array<{ orderExternalId: string; status: OrderStatus }>
+  /** The Channel's HTTP side; the connector calls it only with `http: true`. */
+  readonly api: FakeApi
   /** Back to the seed, recorded calls cleared. */
   reset(): void
 }
 
-/** `id` other than "fake" lets a test register several independent fake Channels side by side. */
-export function createFakeChannel(options: { id?: string } = {}): FakeChannel {
+export interface FakeChannelOptions {
+  /** Other than "fake" lets a test register several independent fake Channels side by side. */
+  id?: string
+  /**
+   * Every capability call also sends one request through `ctx.fetch`, answered by `api.fetch` (route the global
+   * fetch there in tests), and maps a failed answer with `errorFromResponse`. Off by default: no network.
+   */
+  http?: boolean
+  /** Declared on the connector, for tests of the core's limiter. */
+  rateLimits?: RateLimits
+}
+
+export function createFakeChannel(options: FakeChannelOptions = {}): FakeChannel {
   const state: FakeState = { offers: [], orders: new Map(), journal: [], stockPushes: [], pricePushes: [], statusUpdates: [] }
+  const api = createFakeApi()
 
   const appendToJournal = (orderExternalId: string) => {
     state.journal.push({ seq: state.journal.length + 1, orderExternalId })
   }
 
   const channel: FakeChannel = {
-    connector: createFakeConnector(state, options.id),
+    connector: createFakeConnector(state, options),
+    api,
     addOffer(offer) {
       const copy = structuredClone(offer)
       const index = state.offers.findIndex((existing) => existing.externalId === offer.externalId)
@@ -62,6 +78,7 @@ export function createFakeChannel(options: { id?: string } = {}): FakeChannel {
       state.stockPushes.length = 0
       state.pricePushes.length = 0
       state.statusUpdates.length = 0
+      api.reset()
       seedOffers.forEach(channel.addOffer)
       seedOrders.forEach(channel.addOrder)
       seedFacts.forEach(({ orderExternalId, fact }) => channel.addFact(orderExternalId, fact))
