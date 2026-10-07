@@ -21,6 +21,7 @@
     "dev": {
       "dependsOn": ["^generate"],
       "env": ["WORKER_CONCURRENCY"],
+      "passThroughEnv": ["HANZA_CONNECTOR_*"],
       "cache": false,
       "persistent": true
     }
