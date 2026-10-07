@@ -192,6 +192,8 @@ const broken: Array<[id: string, connector: AnyConnectorDefinition, fixtures?: C
     return withCapabilities({ 'orders.pull': async (_ctx, cursor) => slice([...orders, update('x', [fact(`x:${run++}`)])], cursor) })
   })()],
   ['C18', validConnector(), { ...fixtures, expiredCursor: '0' }],
+  // A journal connector needs the expired cursor fixture.
+  ['C18', validConnector(), { ...fixtures, journal: true }],
   ['C18', withCapabilities({ 'orders.pull': async (_ctx, cursor) => {
     if (cursor === 'old') throw new PermanentError('gone')
     return slice(orders, cursor)
@@ -240,7 +242,7 @@ describe('assertConformance', () => {
         return slice(feed, cursor)
       },
     })
-    await expect(assertConformance(connector, { config: { region: 'eu' }, credentials: { apiKey: 'test' }, expiredCursor: 'expired' })).resolves.toBeUndefined()
+    await expect(assertConformance(connector, { config: { region: 'eu' }, credentials: { apiKey: 'test' }, journal: true, expiredCursor: 'expired' })).resolves.toBeUndefined()
   })
 
   it('counts only full Orders for the "at least one Order" check', async () => {

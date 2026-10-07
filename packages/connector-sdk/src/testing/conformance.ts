@@ -31,6 +31,12 @@ export interface ConformanceFixtures {
   forbidden?: false | { fetch?: typeof fetch }
   /** C18: if given, orders.pull with this cursor (one the recorded Channel no longer has) must fail with `CursorExpiredError`. */
   expiredCursor?: string
+  /**
+   * The connector follows a Channel journal (ADR 0021): C18 then requires `expiredCursor`. Order updates cannot be
+   * required here: a run from cursor null starts the journal at the newest position, so a recording has no later
+   * changes in it. Cover them with a scenario cassette that pulls from an older journal cursor (see the skill).
+   */
+  journal?: boolean
   /** Page limit per pull loop. Default 100. */
   maxPages?: number
 }
@@ -309,6 +315,9 @@ export async function assertConformance(connector: AnyConnectorDefinition, fixtu
   }
 
   // C18
+  if (fixtures.expiredCursor === undefined && fixtures.journal === true) {
+    fail('C18', 'a journal connector must give the expiredCursor fixture: a cursor the recorded Channel no longer has')
+  }
   if (fixtures.expiredCursor !== undefined) {
     await check('C18', async () => {
       if (!pullOrders) {

@@ -64,18 +64,24 @@ function parseCursor(cursor: string | null): number {
   return Number(cursor)
 }
 
+// The feed's start (the journal position taken before the listing) stays in every cursor of the feed, for ever.
 const LISTING_CURSOR = /^l:(\d+):(\d+)$/
-const JOURNAL_CURSOR = /^e:(\d+)$/
+const JOURNAL_CURSOR = /^e:(\d+):(\d+)$/
 
 function isOpen(order: Order): boolean {
   return !order.facts.some((fact) => fact.type === 'cancelled' || fact.type === 'shipped')
 }
 
-function entryItem(state: FakeState, entry: FakeJournalEntry): Order | OrderUpdate {
+/** What a journal entry is pulled as; `fullFor` decides which Orders may still be sent whole. */
+function entryItem(state: FakeState, entry: FakeJournalEntry, fullFor: (orderExternalId: string) => boolean = () => true): Order | OrderUpdate {
   if (entry.update) return structuredClone(entry.update)
   const order = state.orders.get(entry.orderExternalId)
   // Like a real Channel answering 404 for a merged purchase: the connector reports it as removed.
-  return structuredClone(order ?? state.removed.get(entry.orderExternalId)!)
+  if (!order) return structuredClone(state.removed.get(entry.orderExternalId)!)
+  if (fullFor(order.externalId)) return structuredClone(order)
+  // An Order the Channel had before the feed started goes as an update: if Hanza never imported it (closed before
+  // the Connection), it is ignored instead of consuming Stock the seller already counted (ADR 0021).
+  return { kind: 'update', externalId: order.externalId, facts: structuredClone(order.facts) }
 }
 
 function expireIfForgotten(state: FakeState, position: number): void {
@@ -85,40 +91,55 @@ function expireIfForgotten(state: FakeState, position: number): void {
 }
 
 /** Journal entries after `after`, one page; the cursor format is the caller's. */
-function journalPage(state: FakeState, after: number, cursorOf: (seq: number) => string, cursor: string | null) {
+function journalPage(
+  state: FakeState,
+  after: number,
+  cursorOf: (seq: number) => string,
+  cursor: string | null,
+  fullFor?: (orderExternalId: string) => boolean,
+) {
   const pending = state.journal.filter((entry) => entry.seq > after)
   const page = pending.slice(0, PAGE_SIZE)
   return {
-    items: page.map((entry) => entryItem(state, entry)),
+    items: page.map((entry) => entryItem(state, entry, fullFor)),
     nextCursor: page.length > 0 ? cursorOf(page[page.length - 1]!.seq) : cursor,
     hasMore: pending.length > page.length,
   }
 }
 
 /**
- * The SDK's starting rule: cursor null takes the journal position first, lists the Orders open now that the journal
- * had by then (`l:<position>:<offset>`), then follows the journal from that position (`e:<seq>`).
+ * The SDK's starting rule (ADR 0021). Cursor null takes the journal position first (the feed's start), lists the Orders
+ * open now that the journal had by then, then follows the journal from that position. The listing pages by keyset
+ * (`l:<start>:<first seq of the last Order listed>`): the order (first seq) and the upper bound (the start) never change,
+ * so an Order closing between two pages cannot make another one skipped. In the journal (`e:<start>:<seq>`) a full
+ * Order is sent only for an Order placed after the start; any other Order goes as an Order update.
  */
 function pullOpenThenJournal(state: FakeState, cursor: string | null): PullResult<Order | OrderUpdate> {
+  const firstSeq = (orderExternalId: string) => state.firstSeq.get(orderExternalId) ?? Infinity
   const journal = cursor === null ? null : JOURNAL_CURSOR.exec(cursor)
   if (journal) {
-    const after = Number(journal[1])
+    const start = Number(journal[1])
+    const after = Number(journal[2])
+    if (after < start) throw new PermanentError(`Invalid cursor "${cursor}"`)
     expireIfForgotten(state, after)
-    return journalPage(state, after, (seq) => `e:${seq}`, cursor)
+    return journalPage(state, after, (seq) => `e:${start}:${seq}`, cursor, (id) => firstSeq(id) > start)
   }
   const listing = cursor === null ? null : LISTING_CURSOR.exec(cursor)
   if (cursor !== null && !listing) throw new PermanentError(`Invalid cursor "${cursor}"`)
-  const position = listing ? Number(listing[1]) : state.lastSeq
-  const offset = listing ? Number(listing[2]) : 0
-  expireIfForgotten(state, position)
-  const open = [...state.orders.values()].filter((order) => isOpen(order) && (state.firstSeq.get(order.externalId) ?? Infinity) <= position)
-  const page = open.slice(offset, offset + PAGE_SIZE)
-  const end = offset + page.length
-  if (end < open.length) return { items: structuredClone(page), nextCursor: `l:${position}:${end}`, hasMore: true }
+  const start = listing ? Number(listing[1]) : state.lastSeq
+  const afterKey = listing ? Number(listing[2]) : 0
+  expireIfForgotten(state, start)
+  const open = [...state.orders.values()]
+    .filter((order) => isOpen(order) && firstSeq(order.externalId) > afterKey && firstSeq(order.externalId) <= start)
+    .sort((a, b) => firstSeq(a.externalId) - firstSeq(b.externalId))
+  const page = open.slice(0, PAGE_SIZE)
+  if (open.length > page.length) {
+    return { items: structuredClone(page), nextCursor: `l:${start}:${firstSeq(page.at(-1)!.externalId)}`, hasMore: true }
+  }
   return {
     items: structuredClone(page),
-    nextCursor: `e:${position}`,
-    hasMore: state.journal.some((entry) => entry.seq > position),
+    nextCursor: `e:${start}:${start}`,
+    hasMore: state.journal.some((entry) => entry.seq > start),
   }
 }
 

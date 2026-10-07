@@ -123,6 +123,8 @@ export interface RunConformanceOptions extends LintOptions {
   forbidden?: false
   /** Enables check C18: an `orders.pull` cursor the API no longer has, answered in the main cassette. */
   expiredCursor?: string
+  /** A journal connector: C18 then requires `expiredCursor`. */
+  journal?: boolean
   maxPages?: number
   scrub?: ScrubConfig
   match?: MatchOptions
@@ -166,6 +168,7 @@ export async function runConformance(connector: AnyConnectorDefinition, options:
       credentials: options.credentials,
       maxPages: options.maxPages,
       expiredCursor: options.expiredCursor,
+      journal: options.journal,
       fetch: main.fetch,
       unauthorized: unauthorized ? { credentials: options.unauthorized?.credentials, fetch: unauthorized.fetch } : undefined,
       ...(options.forbidden === false ? { forbidden: false as const } : {}),
@@ -208,6 +211,7 @@ async function recordConformance(
       credentials,
       maxPages: options.maxPages,
       expiredCursor: options.expiredCursor,
+      journal: options.journal,
       fetch: main.fetch,
       unauthorized: unauthorized ? { credentials: unauthorizedCredentials, fetch: unauthorized.fetch } : undefined,
       ...(options.forbidden === false ? { forbidden: false as const } : {}),

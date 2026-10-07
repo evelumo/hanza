@@ -15,9 +15,9 @@ export type OrderUpdateResult =
 
 /**
  * Applies an Order update (input already parsed with `orderUpdateSchema`) to an Order this Connection imported before.
- * Addresses replace the stored ones only while the Order is in phase new: later, a person may already be packing it
- * for the old address. Facts take the same path as the facts of a full Order (ADR 0003, ADR 0015). Idempotent: a fact
- * is recorded once per id, and an address equal to the stored one writes nothing.
+ * Facts take the same path as the facts of a full Order (ADR 0003, ADR 0015). Addresses replace the stored ones only
+ * while the Order is still in phase new after those facts: later, a person may already be packing it for the old
+ * address. Idempotent: a fact is recorded once per id, and an address equal to the stored one writes nothing.
  */
 export async function applyOrderUpdate(
   ctx: Context,
@@ -36,9 +36,15 @@ export async function applyOrderUpdate(
     const order = rows[0]
     if (!order) return null
 
+    // Facts first: an update that cancels or ships the Order leaves its addresses alone.
+    const touched = new Set<string>()
+    const factsApplied = await applyNewFacts(tx, organizationId, connectionId, order.id, update.facts, touched)
+    const connectionIds = await markOffersForStockPush(tx, organizationId, [...touched])
+
     let addresses: Extract<OrderUpdateResult, { found: true }>['addresses'] = 'none'
     if (update.shippingAddress !== undefined || update.billingAddress !== undefined) {
-      if (order.phase !== 'new') {
+      const phase = factsApplied === 0 ? order.phase : (await tx.order.findFirstOrThrow({ where: { id: order.id, organizationId }, select: { phase: true } })).phase
+      if (phase !== 'new') {
         addresses = 'not_new'
       } else {
         const change = { shippingAddress: update.shippingAddress, billingAddress: update.billingAddress }
@@ -55,10 +61,6 @@ export async function applyOrderUpdate(
         }
       }
     }
-
-    const touched = new Set<string>()
-    const factsApplied = await applyNewFacts(tx, organizationId, connectionId, order.id, update.facts, touched)
-    const connectionIds = await markOffersForStockPush(tx, organizationId, [...touched])
     return { orderId: order.id, factsApplied, addresses, connectionIds }
   }, TX_OPTIONS)
 

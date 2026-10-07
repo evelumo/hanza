@@ -67,9 +67,9 @@ describe.skipIf(!databaseUrl)('applyOrderUpdate', () => {
     expect(await available()).toEqual({ stock: 10, reserved: 2, available: 8 })
     expect(await events(orderId)).toEqual([
       'order.imported',
-      'order.addresses_updated',
       'order.channel_fact_recorded',
       'order.payment_received',
+      'order.addresses_updated',
     ])
     const changed = await ctx.db.eventLog.findFirstOrThrow({ where: { subjectId: orderId, type: 'order.addresses_updated' } })
     expect(changed.payload).toEqual({ shippingAddress: true, billingAddress: true })
@@ -114,6 +114,15 @@ describe.skipIf(!databaseUrl)('applyOrderUpdate', () => {
     expect(await available()).toEqual({ stock: 10, reserved: 0, available: 10 })
   })
 
+  it('applies the facts first: an update that cancels the Order leaves its addresses alone', async () => {
+    const { ctx, org, connectionId, events, imported } = await setup()
+    const { order, orderId } = await imported()
+    const cancelled = update(order.externalId, { facts: [fact(`${order.externalId}:cancelled`, 'cancelled')], shippingAddress: delivery })
+    expect(await applyOrderUpdate(ctx, org, connectionId, cancelled)).toEqual({ found: true, orderId, factsApplied: 1, addresses: 'not_new' })
+    expect(await getOrder(ctx, org, orderId)).toMatchObject({ phase: 'cancelled', shippingAddress: order.shippingAddress })
+    expect(await events(orderId)).not.toContain('order.addresses_updated')
+  })
+
   it('never writes addresses back once the Buyer data was erased', async () => {
     const { ctx, org, connectionId, imported } = await setup()
     const { order, orderId } = await imported()
@@ -126,9 +135,10 @@ describe.skipIf(!databaseUrl)('applyOrderUpdate', () => {
     const { ctx, org, connectionId, imported } = await setup()
     const { order, orderId } = await imported()
     await ctx.db.order.updateMany({ where: { id: orderId }, data: { buyerData: 'v1.damaged' } })
-    const result = await applyOrderUpdate(ctx, org, connectionId, update(order.externalId, { facts: [fact('s', 'shipped')], shippingAddress: delivery }))
+    const result = await applyOrderUpdate(ctx, org, connectionId, update(order.externalId, { facts: [fact('p', 'paid')], shippingAddress: delivery }))
     expect(result).toMatchObject({ factsApplied: 1, addresses: 'unreadable' })
-    expect(await ctx.db.order.findFirstOrThrow({ where: { id: orderId } })).toMatchObject({ buyerData: 'v1.damaged', phase: 'shipped' })
+    expect(await ctx.db.order.findFirstOrThrow({ where: { id: orderId } })).toMatchObject({ buyerData: 'v1.damaged', phase: 'new' })
+    expect(await ctx.db.orderChannelFact.count({ where: { orderId } })).toBe(1)
   })
 
   it("does not touch another organization's Order with the same external id", async () => {

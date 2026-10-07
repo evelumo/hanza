@@ -123,7 +123,7 @@ describe.skipIf(!databaseUrl)('Order feed of a journal Channel end to end (real 
     // The shipped Order consumed nothing: Stock is what the seller counted.
     expect(await available()).toEqual({ stock: 6, reserved: 3, available: 3 })
     expect(lastPushedTote()).toBe(3)
-    expect((await syncState()).cursor).toBe('e:9')
+    expect((await syncState()).cursor).toBe('e:9:9')
   })
 
   it('2. an Order update pays an unpaid Order and gives it the delivery address, sealed', async () => {
@@ -135,9 +135,9 @@ describe.skipIf(!databaseUrl)('Order feed of a journal Channel end to end (real 
     const events = await ctx.db.eventLog.findMany({ where: { organizationId: org, subjectId: paid.id }, orderBy: { id: 'asc' } })
     expect(events.map((event) => event.type)).toEqual([
       'order.imported',
-      'order.addresses_updated',
       'order.channel_fact_recorded',
       'order.payment_received',
+      'order.addresses_updated',
     ])
     const row = await ctx.db.order.findFirstOrThrow({ where: { id: paid.id } })
     expect(JSON.stringify([row, events])).not.toContain('Delivery Lane')
@@ -167,6 +167,17 @@ describe.skipIf(!databaseUrl)('Order feed of a journal Channel end to end (real 
     expect(await available()).toEqual({ stock: 6, reserved: 2, available: 4 })
   })
 
+  it('4b. a later change on an Order closed before the Connection never imports it, so its Stock is not consumed again', async () => {
+    // The Channel journals something new about the shipped Order (here: its payment is booked); the connector must not
+    // send it as a full Order with its shipped fact.
+    fake.addFact('shipped-before', fact('shipped-before:paid', 'paid', '2026-10-04T12:00:00Z'))
+    await pullOrders()
+
+    expect(await ctx.db.order.count({ where: { organizationId: org, externalId: 'shipped-before' } })).toBe(0)
+    expect(await available()).toEqual({ stock: 6, reserved: 2, available: 4 })
+    expect((await syncState()).lastResult).toMatchObject({ pulled: 1, imported: 0, updatesIgnored: 1 })
+  })
+
   it('5. a cursor the Channel forgot restarts the feed from the open Orders, with an Event', async () => {
     // While Hanza is stopped: one Order is placed and closed, another is placed and stays open; then the journal moves on.
     fake.addOrder(toteOrder('gap-closed', 1))
@@ -185,7 +196,7 @@ describe.skipIf(!databaseUrl)('Order feed of a journal Channel end to end (real 
     expect(await available()).toEqual({ stock: 6, reserved: 4, available: 2 })
 
     const state = await syncState()
-    expect(state).toMatchObject({ cursor: 'e:16', lastErrorKind: null, lastResult: expect.objectContaining({ imported: 1, feedRestarts: 1 }) })
+    expect(state).toMatchObject({ cursor: 'e:17:17', lastErrorKind: null, lastResult: expect.objectContaining({ imported: 1, feedRestarts: 1 }) })
     expect((await ctx.db.connection.findFirstOrThrow({ where: { id: connectionId } })).health).toBe('ok')
 
     // Back to normal: the next pull follows the journal, with no second restart.
