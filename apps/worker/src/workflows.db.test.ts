@@ -693,6 +693,6 @@ describe.skipIf(!databaseUrl)('durable workflows end to end (real Postgres, in-m
     await drain()
     expect(await ctx.workflows.get(org, runId)).toMatchObject({ status: 'completed', results: { ship: { trackingNumber: 'TRACK-1' } } })
     expect((await ctx.db.order.findFirstOrThrow({ where: { id: order.id, organizationId: org } })).phase).toBe('shipped')
-    expect(fake.statusUpdates).toContainEqual({ orderExternalId: 'fake-order-1', status: 'shipped' })
+    expect(fake.statusUpdates).toContainEqual({ orderExternalId: 'fake-order-1', phase: 'shipped' })
   })
 })

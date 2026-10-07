@@ -60,7 +60,7 @@ describe('record → scrub → replay through a real HTTP server', () => {
     const offers = await connector.capabilities['offers.pull']!(ctx, null)
     const orders = await connector.capabilities['orders.pull']!(ctx, null)
     await connector.capabilities['stock.push']!(ctx, [{ offerExternalId: 'fake-offer-1', sku: 'FAKE-SKU-1', available: 7 }])
-    await connector.capabilities['orders.updateStatus']!(ctx, { orderExternalId: 'fake-order-1', status: 'shipped' })
+    await connector.capabilities['orders.updateStatus']!(ctx, { orderExternalId: 'fake-order-1', phase: 'shipped' })
     const full = (item: Order | OrderUpdate): Order => {
       if (isOrderUpdate(item)) throw new Error(`unexpected Order update for "${item.externalId}"`)
       return item
@@ -76,7 +76,7 @@ describe('record → scrub → replay through a real HTTP server', () => {
 
     const live = await exercise(recorder.fetch, recordedCredentials)
     expect(server.channel.stockPushes).toEqual([[{ offerExternalId: 'fake-offer-1', sku: 'FAKE-SKU-1', available: 7 }]])
-    expect(server.channel.statusUpdates).toEqual([{ orderExternalId: 'fake-order-1', status: 'shipped' }])
+    expect(server.channel.statusUpdates).toEqual([{ orderExternalId: 'fake-order-1', phase: 'shipped' }])
     await recorder.save(file)
     await server.close()
     server = null

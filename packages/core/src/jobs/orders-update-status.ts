@@ -30,7 +30,7 @@ export const ordersUpdateStatusJob = defineJob({
       try {
         await runConnectorCall(ctx, scope, async () => {
           try {
-            return await connector.capabilities['orders.updateStatus']!(context, { orderExternalId: order.externalId, status: order.phase })
+            return await connector.capabilities['orders.updateStatus']!(context, { orderExternalId: order.externalId, phase: order.phase })
           } catch (error) {
             refused = classifyConnectorError(error).kind === 'permanent'
             throw error

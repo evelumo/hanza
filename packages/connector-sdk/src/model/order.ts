@@ -3,10 +3,10 @@ import { moneySchema } from './money'
 
 /**
  * The Order phases (ADR 0018): the fixed list Hanza and every connector speak. Organizations label Orders with their own
- * Order statuses within these, which never reach a connector. Still named `OrderStatus` here (renaming it: issue #79).
+ * Order statuses within these, which never reach a connector.
  */
-export const ORDER_STATUSES = ['new', 'processing', 'shipped', 'cancelled'] as const
-export const orderStatusSchema = z.enum(ORDER_STATUSES)
+export const ORDER_PHASES = ['new', 'processing', 'shipped', 'cancelled'] as const
+export const orderPhaseSchema = z.enum(ORDER_PHASES)
 
 export const CHANNEL_FACT_TYPES = ['cancelled', 'shipped', 'paid'] as const
 export const channelFactTypeSchema = z.enum(CHANNEL_FACT_TYPES)
@@ -102,7 +102,7 @@ export const orderUpdateSchema = z.object({
   billingAddress: addressSchema.nullable().optional(),
 })
 
-export type OrderStatus = z.infer<typeof orderStatusSchema>
+export type OrderPhase = z.infer<typeof orderPhaseSchema>
 export type ChannelFactType = z.infer<typeof channelFactTypeSchema>
 export type PaymentMethod = z.infer<typeof paymentMethodSchema>
 export type Address = z.infer<typeof addressSchema>

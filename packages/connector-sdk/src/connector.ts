@@ -1,6 +1,6 @@
 import type { z } from 'zod'
 import type { Offer } from './model/offer'
-import type { Order, OrderStatus, OrderUpdate } from './model/order'
+import type { Order, OrderPhase, OrderUpdate } from './model/order'
 import type { OfferPrice } from './model/price'
 import type { PricePushResult, StockPushResult } from './model/push-result'
 import type { StockLevel } from './model/stock'
@@ -85,10 +85,10 @@ export interface Capabilities<TConfig, TCredentials> {
    * May return per-Offer results like `stock.push` (`ok` or `rejected`).
    */
   'price.push'?(ctx: CapabilityContext<TConfig, TCredentials>, prices: OfferPrice[]): Promise<void | PricePushResult[]>
-  /** Translate an Order phase (`status`) to the Channel's own status and set it. Resolve without a call if the Channel has no equivalent. Must be repeatable. */
+  /** Translate an Order phase (`phase`) to the Channel's own status and set it. Resolve without a call if the Channel has no equivalent. Must be repeatable. */
   'orders.updateStatus'?(
     ctx: CapabilityContext<TConfig, TCredentials>,
-    input: { orderExternalId: string; status: OrderStatus },
+    input: { orderExternalId: string; phase: OrderPhase },
   ): Promise<void>
 }
 export type CapabilityName = keyof Capabilities<unknown, unknown>

@@ -52,5 +52,5 @@ test('an Order status change in the panel reaches the fake Channel', async ({ pa
 
   await expect
     .poll(async () => (await fakeChannel.calls()).statusUpdates.slice(before))
-    .toContainEqual({ orderExternalId: 'fake-order-1', status: 'processing' })
+    .toContainEqual({ orderExternalId: 'fake-order-1', phase: 'processing' })
 })

@@ -12,7 +12,7 @@ A Channel that lives in memory. It exists to prove the whole path (pull Offers a
 - `createFakeChannel({ startWithOpenOrders: true })` follows the SDK's starting rule instead: cursor `null` takes the journal position, lists the Orders open now that the journal had by then, paged by keyset (`l:<start>:<first seq of the last Order listed>`), then follows the journal from that position (`e:<start>:<seq>`). In the journal an Order the journal had by the start is sent as an Order update with its facts, never as a full Order. With it, the seed's cancelled `fake-order-2` is never imported.
 - `updateOrder(id, { facts?, shippingAddress?, billingAddress? })` changes the Order and appends exactly that change as an Order update. `removeOrder(id, fact)` deletes the Order (a merged purchase): every entry of it is pulled as an update with that `cancelled` fact. `forgetJournal()` drops the journal so far: an older cursor fails with `CursorExpiredError`.
 - `offers.pull` reports a PLN price on the seed Offers except `fake-offer-5`, which has none (its currency is unknown, so Hanza never pushes a price to it).
-- `stock.push` and `orders.updateStatus` only record their input (`stockPushes`, `statusUpdates`). `price.push` records its input (`pricePushes`) and sets the Offer's price, so the next `offers.pull` reports it.
+- `stock.push` and `orders.updateStatus` only record their input (`stockPushes`, `statusUpdates`; each status update is `{ orderExternalId, phase }`; the list keeps the capability's name). `price.push` records its input (`pricePushes`) and sets the Offer's price, so the next `offers.pull` reports it.
 
 ## Over HTTP (`fake-http`)
 

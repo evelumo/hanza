@@ -144,7 +144,7 @@ describe.skipIf(!databaseUrl)('Product families do not change what a Product is 
     ])
     expect(orders['fake-order-3']).toMatchObject({ phase: 'new', attention: ['unmatched_line'] })
     expect(orders['fake-order-4']).toMatchObject({ phase: 'cancelled' })
-    expect(grouped.result.statusUpdates).toContainEqual({ orderExternalId: 'fake-order-1', status: 'shipped' })
+    expect(grouped.result.statusUpdates).toContainEqual({ orderExternalId: 'fake-order-1', phase: 'shipped' })
 
     // Deleting the family ungroups the Products and changes nothing else.
     expect(grouped.afterDelete).toEqual(grouped.result)
