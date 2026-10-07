@@ -24,4 +24,5 @@ Sellers want their own fulfilment workflow ("Waiting for packaging", "Delivered"
 
 - An organization that never opens the settings sees the same four statuses as before, in its own language.
 - Channels never learn the finer statuses, only phase changes.
-- Custom transition rules and per-status permissions (#75), automations and notifications (#77) and Stock behaviour tied to a status (#78) are follow-ups; the SDK still calls the phase `OrderStatus` (#79).
+- Custom transition rules and per-status permissions (#75), automations and notifications (#77) and Stock behaviour tied to a status (#78) are follow-ups.
+- The SDK names the phase `OrderPhase` too (`ORDER_PHASES`, `orderPhaseSchema`, and the `phase` input of `orders.updateStatus`; #79).

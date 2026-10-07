@@ -1,4 +1,4 @@
-import { AuthExpiredError, defineConnector, PermanentError, TransientError, type OrderStatus } from '@hanza/connector-sdk'
+import { AuthExpiredError, defineConnector, PermanentError, TransientError, type OrderPhase } from '@hanza/connector-sdk'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { z } from 'zod'
 import { createConnection } from '../connections/connections'
@@ -12,7 +12,7 @@ import { databaseUrl, useTestContext } from '../testing/db-test'
 import { buildOrder, user } from '../testing/fixtures'
 import { ordersUpdateStatusJob } from './orders-update-status'
 
-const updates: Array<{ orderExternalId: string; status: OrderStatus }> = []
+const updates: Array<{ orderExternalId: string; phase: OrderPhase }> = []
 let sendsRequest = true
 let failWith: Error | null = null
 let duringPush: (() => Promise<void>) | null = null
@@ -97,7 +97,7 @@ describe.skipIf(!databaseUrl)('orders.updateStatus', () => {
   it('a push that reached the Channel clears the pending push, records its result and brings the Connection back to ok', async () => {
     const { push, state, order } = await setup()
     await push()
-    expect(updates).toEqual([{ orderExternalId: 'status-order-1', status: 'processing' }])
+    expect(updates).toEqual([{ orderExternalId: 'status-order-1', phase: 'processing' }])
     expect(fetchMock).toHaveBeenCalledTimes(1)
     expect(await state()).toMatchObject({ health: 'ok', sync: { lastResult: { pushed: 1 }, lastErrorKind: null } })
     expect((await order()).statusPushDueAt).toBeNull()
@@ -131,7 +131,7 @@ describe.skipIf(!databaseUrl)('orders.updateStatus', () => {
     await push()
     expect((await order()).statusPushDueAt).not.toBeNull()
     await push()
-    expect(updates.map((update) => update.status)).toEqual(['processing', 'cancelled'])
+    expect(updates.map((update) => update.phase)).toEqual(['processing', 'cancelled'])
     expect((await order()).statusPushDueAt).toBeNull()
   })
 
@@ -161,7 +161,7 @@ describe.skipIf(!databaseUrl)('orders.updateStatus', () => {
     // Cancelling drops `unmatched_line` (nothing left to ship), but the refusal stays until the Channel takes a status.
     expect((await order()).attentionReasons).toEqual(['status_push_failed'])
     await push()
-    expect(updates).toEqual([{ orderExternalId: 'status-order-1', status: 'cancelled' }])
+    expect(updates).toEqual([{ orderExternalId: 'status-order-1', phase: 'cancelled' }])
     expect(await order()).toMatchObject({ statusPushDueAt: null, attentionReasons: [] })
   })
 
@@ -180,7 +180,7 @@ describe.skipIf(!databaseUrl)('orders.updateStatus', () => {
     expect(await ctx.db.order.findFirstOrThrow({ where: { id: orderId } })).toMatchObject({ statusPushSeq: 0, statusPushDueAt: null })
 
     await ordersUpdateStatusJob.handler(ctx, { organizationId, orderId }, run)
-    expect(updates).toEqual([{ orderExternalId: 'legacy-order', status: 'processing' }])
+    expect(updates).toEqual([{ orderExternalId: 'legacy-order', phase: 'processing' }])
   })
 
   it('a refusal of a status that has changed since leaves the newer push pending', async () => {
@@ -196,7 +196,7 @@ describe.skipIf(!databaseUrl)('orders.updateStatus', () => {
 
     failWith = null
     await push()
-    expect(updates).toEqual([{ orderExternalId: 'status-order-1', status: 'new' }])
+    expect(updates).toEqual([{ orderExternalId: 'status-order-1', phase: 'new' }])
   })
 
   it.each([

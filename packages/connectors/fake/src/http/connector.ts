@@ -8,7 +8,7 @@ import {
   type ConnectorDefinition,
   type Offer,
   type Order,
-  type OrderStatus,
+  type OrderPhase,
 } from '@hanza/connector-sdk'
 import { z } from 'zod'
 import {
@@ -138,11 +138,11 @@ export function createFakeHttpConnector(id = 'fake-http'): FakeHttpConnector {
         const items = levels.map((level) => ({ offerId: level.offerExternalId, sku: level.sku, quantity: level.available }))
         await authorized(ctx, '/stock', { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ items }) })
       },
-      async 'orders.updateStatus'(ctx, input: { orderExternalId: string; status: OrderStatus }) {
+      async 'orders.updateStatus'(ctx, input: { orderExternalId: string; phase: OrderPhase }) {
         await authorized(ctx, `/orders/${encodeURIComponent(input.orderExternalId)}/status`, {
           method: 'PUT',
           headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ status: API_STATUSES[input.status] }),
+          body: JSON.stringify({ status: API_STATUSES[input.phase] }),
         })
       },
     },

@@ -184,7 +184,7 @@ describe.skipIf(!databaseUrl)('Orders awaiting payment end to end (real Postgres
     await changeOrderStatus(ctx, org, paid.id, 'shipped', user)
     await drain()
     expect(await available()).toEqual({ stock: 1, reserved: 0, available: 1 })
-    expect(fake.statusUpdates).toContainEqual({ orderExternalId: 'unpaid-1', status: 'shipped' })
+    expect(fake.statusUpdates).toContainEqual({ orderExternalId: 'unpaid-1', phase: 'shipped' })
   })
 
   it('4. a Channel cancelling an unpaid Order releases its Reservation and restores Available', async () => {

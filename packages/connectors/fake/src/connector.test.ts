@@ -446,11 +446,11 @@ describe('recorded calls', () => {
   it('records orders.updateStatus inputs in order', async () => {
     const channel = createFakeChannel()
     const update = channel.connector.capabilities['orders.updateStatus']!
-    await update(context(), { orderExternalId: 'fake-order-1', status: 'processing' })
-    await update(context(), { orderExternalId: 'fake-order-1', status: 'shipped' })
+    await update(context(), { orderExternalId: 'fake-order-1', phase: 'processing' })
+    await update(context(), { orderExternalId: 'fake-order-1', phase: 'shipped' })
     expect(channel.statusUpdates).toEqual([
-      { orderExternalId: 'fake-order-1', status: 'processing' },
-      { orderExternalId: 'fake-order-1', status: 'shipped' },
+      { orderExternalId: 'fake-order-1', phase: 'processing' },
+      { orderExternalId: 'fake-order-1', phase: 'shipped' },
     ])
   })
 
@@ -461,7 +461,7 @@ describe('recorded calls', () => {
     await channel.connector.capabilities['price.push']!(context(), [
       { offerExternalId: 'fake-offer-1', sku: 'FAKE-SKU-1', price: { amount: '1.00', currency: 'PLN' } },
     ])
-    await channel.connector.capabilities['orders.updateStatus']!(context(), { orderExternalId: 'x', status: 'new' })
+    await channel.connector.capabilities['orders.updateStatus']!(context(), { orderExternalId: 'x', phase: 'new' })
     channel.addOffer({ externalId: 'extra', sku: null, name: 'Extra', url: null })
     channel.addFact('fake-order-1', { id: 'f', type: 'shipped', occurredAt: '2026-10-03T08:00:00Z', note: null })
 
@@ -496,7 +496,7 @@ describe('failure modes', () => {
     ['orders.pull', (ctx) => capabilities['orders.pull']!(ctx, null)],
     ['stock.push', (ctx) => capabilities['stock.push']!(ctx, [])],
     ['price.push', (ctx) => capabilities['price.push']!(ctx, [])],
-    ['orders.updateStatus', (ctx) => capabilities['orders.updateStatus']!(ctx, { orderExternalId: 'fake-order-1', status: 'shipped' })],
+    ['orders.updateStatus', (ctx) => capabilities['orders.updateStatus']!(ctx, { orderExternalId: 'fake-order-1', phase: 'shipped' })],
   ]
 
   it.each(calls)('%s: rate_limited fails with retryAfterMs 1000', async (_name, run) => {

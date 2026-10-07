@@ -12,7 +12,7 @@ import {
   type Offer,
   type OfferPrice,
   type Order,
-  type OrderStatus,
+  type OrderPhase,
   type OrderUpdate,
   type PricePushResult,
   type PullResult,
@@ -61,7 +61,7 @@ export interface FakeState {
   startWithOpenOrders: boolean
   stockPushes: StockLevel[][]
   pricePushes: OfferPrice[][]
-  statusUpdates: Array<{ orderExternalId: string; status: OrderStatus }>
+  statusUpdates: Array<{ orderExternalId: string; phase: OrderPhase }>
   /** Offers whose stock and price this Channel refuses, with the code it answers. */
   rejections: Map<string, string>
   /**

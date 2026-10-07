@@ -59,7 +59,7 @@ describe.skipIf(!databaseUrl)('Order statuses end to end (real Postgres, in-memo
   }
 
   function statusUpdates(orderExternalId: string) {
-    return fake.statusUpdates.filter((update) => update.orderExternalId === orderExternalId).map((update) => update.status)
+    return fake.statusUpdates.filter((update) => update.orderExternalId === orderExternalId).map((update) => update.phase)
   }
 
   /** The tick is global: keep only this organization's jobs (another file's Connections use another encryption key). */

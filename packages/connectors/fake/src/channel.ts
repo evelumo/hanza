@@ -1,4 +1,4 @@
-import type { Address, ChannelFact, Offer, OfferPrice, Order, OrderStatus, OrderUpdate, RateLimits, StockLevel } from '@hanza/connector-sdk'
+import type { Address, ChannelFact, Offer, OfferPrice, Order, OrderPhase, OrderUpdate, RateLimits, StockLevel } from '@hanza/connector-sdk'
 import { createFakeApi, type FakeApi } from './api'
 import { createFakeConnector, withPublication, type FakeConnector, type FakeState } from './connector'
 import { seedFacts, seedOffers, seedOrders } from './seed'
@@ -30,7 +30,7 @@ export interface FakeChannel {
   readonly stockPushes: StockLevel[][]
   /** Arguments of every price.push call, in order. A push also sets the Offer's price that offers.pull reports. */
   readonly pricePushes: OfferPrice[][]
-  readonly statusUpdates: Array<{ orderExternalId: string; status: OrderStatus }>
+  readonly statusUpdates: Array<{ orderExternalId: string; phase: OrderPhase }>
   /** The Channel refuses this Offer's stock and price with `code` from now on; null accepts them again. */
   reject(offerExternalId: string, code: string | null): void
   /**

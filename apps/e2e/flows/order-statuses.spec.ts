@@ -28,7 +28,7 @@ test('an own Order status within a phase: added in Settings, chosen on an Order,
   await expect(status.getByRole('button', { name: 'Change to: Packed' })).toBeVisible()
   await expect
     .poll(async () => (await fakeChannel.calls()).statusUpdates.slice(before))
-    .toEqual([{ orderExternalId: 'fake-order-1', status: 'processing' }])
+    .toEqual([{ orderExternalId: 'fake-order-1', phase: 'processing' }])
 
   // A move within the phase only changes the label: the Order stays in Processing and nothing is marked for the Channel.
   await status.getByRole('button', { name: 'Change to: Packed' }).click()
@@ -41,7 +41,7 @@ test('an own Order status within a phase: added in Settings, chosen on an Order,
     [orderId],
   )
   expect(rows).toEqual([{ phase: 'processing', name: 'Packed', seq: 1, pending: false }])
-  expect((await fakeChannel.calls()).statusUpdates.slice(before)).toEqual([{ orderExternalId: 'fake-order-1', status: 'processing' }])
+  expect((await fakeChannel.calls()).statusUpdates.slice(before)).toEqual([{ orderExternalId: 'fake-order-1', phase: 'processing' }])
 
   // The list filters by status (grouped by phase) and by phase.
   await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('link', { name: 'Orders' }).click()

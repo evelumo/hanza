@@ -13,7 +13,7 @@ import {
 import { deviceSignInPollSchema, deviceSignInStartSchema, isAllowedVerificationUri, type AuthContext } from '../auth'
 import { classifyConnectorError, isConnectorError, isCursorExpiredError } from '../errors'
 import { offerSchema, type Offer } from '../model/offer'
-import { ORDER_STATUSES, orderSchema, orderUpdateSchema, type Order } from '../model/order'
+import { ORDER_PHASES, orderSchema, orderUpdateSchema, type Order } from '../model/order'
 import { offerPriceSchema, type OfferPrice } from '../model/price'
 import { pricePushResultSchema, stockPushResultSchema } from '../model/push-result'
 import { stockLevelSchema, type StockLevel } from '../model/stock'
@@ -399,9 +399,9 @@ export async function assertConformance(connector: AnyConnectorDefinition, fixtu
   const firstOrder = orders[0]
   if (updateStatus && firstOrder) {
     await check('C10', async () => {
-      for (const status of ORDER_STATUSES) {
+      for (const phase of ORDER_PHASES) {
         for (let attempt = 0; attempt < 2; attempt++) {
-          await call('orders.updateStatus', () => updateStatus(context, { orderExternalId: firstOrder.externalId, status }))
+          await call('orders.updateStatus', () => updateStatus(context, { orderExternalId: firstOrder.externalId, phase }))
         }
       }
     })

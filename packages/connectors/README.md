@@ -167,7 +167,7 @@ knowing (see `apps/worker/src/recorded-fixtures.db.test.ts`).
 4. Delete `.recording/` when you are done, and never copy it anywhere.
 
 Recording runs every conformance check against the sandbox, including stock
-pushes of 0 (which end Offers on some Channels) and every Order status: use
+pushes of 0 (which end Offers on some Channels) and every Order phase: use
 sandbox data you can lose.
 
 **Re-recording** is the same command; it overwrites the cassettes. Do it when

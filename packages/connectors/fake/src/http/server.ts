@@ -228,8 +228,8 @@ export async function startFakeHttpServer(options: FakeHttpServerOptions = {}): 
     const statusPath = /^\/orders\/([^/]+)\/status$/.exec(url.pathname)
     if (request.method === 'PUT' && statusPath) {
       const { status } = statusRequestSchema.parse(JSON.parse(body))
-      const hanzaStatus = (Object.keys(API_STATUSES) as Array<keyof typeof API_STATUSES>).find((key) => API_STATUSES[key] === status)!
-      await capabilities['orders.updateStatus']!(context, { orderExternalId: decodeURIComponent(statusPath[1]!), status: hanzaStatus })
+      const phase = (Object.keys(API_STATUSES) as Array<keyof typeof API_STATUSES>).find((key) => API_STATUSES[key] === status)!
+      await capabilities['orders.updateStatus']!(context, { orderExternalId: decodeURIComponent(statusPath[1]!), phase })
       return response.writeHead(204).end()
     }
     return json(response, 404, { error: 'not_found' })

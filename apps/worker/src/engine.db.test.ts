@@ -104,7 +104,7 @@ describe.skipIf(!databaseUrl)('sync engine end to end (real Postgres, in-memory 
   }
 
   function statusUpdates(orderExternalId: string) {
-    return fake.statusUpdates.filter((update) => update.orderExternalId === orderExternalId).map((update) => update.status)
+    return fake.statusUpdates.filter((update) => update.orderExternalId === orderExternalId).map((update) => update.phase)
   }
 
   async function pullOrders() {
@@ -193,7 +193,7 @@ describe.skipIf(!databaseUrl)('sync engine end to end (real Postgres, in-memory 
 
     const availability = (await getAvailability(ctx.db, org, [products['FAKE-SKU-1']!])).get(products['FAKE-SKU-1']!)
     expect(availability).toEqual({ stock: 3, reserved: 0, available: 3 })
-    expect(fake.statusUpdates).toContainEqual({ orderExternalId: 'fake-order-1', status: 'shipped' })
+    expect(fake.statusUpdates).toContainEqual({ orderExternalId: 'fake-order-1', phase: 'shipped' })
     // The fake keeps its data in memory and sends no request, so the run only records that it finished.
     expect(await syncState(connectionId, 'order_status_push')).toMatchObject({ lastResult: null, lastErrorKind: null })
     expect((await syncState(connectionId, 'order_status_push'))?.lastFinishedAt).not.toBeNull()

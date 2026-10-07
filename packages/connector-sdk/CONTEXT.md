@@ -91,7 +91,7 @@ A Buyer's purchase placed on one Channel. After it reaches Hanza, its progress t
 _Avoid_: Purchase, transaction, checkout form
 
 **Order phase**:
-Where an Order is in fulfilment as far as Stock and Channels are concerned: new, processing, shipped or cancelled (the last two are final). One fixed list shared by every organization; Reservations, Channel facts, Needs attention and the status sent to a Channel all depend on it, and each connector translates between it and its Channel's own statuses, in both directions (ADR 0003, ADR 0018). The SDK still names it `OrderStatus`.
+Where an Order is in fulfilment as far as Stock and Channels are concerned: new, processing, shipped or cancelled (the last two are final). One fixed list shared by every organization; Reservations, Channel facts, Needs attention and the status sent to a Channel all depend on it, and each connector translates between it and its Channel's own statuses, in both directions (ADR 0003, ADR 0018). The SDK names it `OrderPhase`.
 _Avoid_: Base status, system status, stage, state
 
 **Order status**:

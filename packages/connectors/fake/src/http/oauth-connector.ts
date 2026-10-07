@@ -8,7 +8,7 @@ import {
   type ConnectorDefinition,
   type DeviceSignInPoll,
   type Offer,
-  type OrderStatus,
+  type OrderPhase,
 } from '@hanza/connector-sdk'
 import { z } from 'zod'
 import { API_STATUSES, offersPageSchema, ordersPageSchema } from './api'
@@ -168,11 +168,11 @@ export function createFakeHttpOAuthConnector(id = 'fake-http-oauth'): FakeHttpOA
         const items = levels.map((level) => ({ offerId: level.offerExternalId, sku: level.sku, quantity: level.available }))
         await send(ctx, '/stock', { method: 'PUT', headers: { ...bearer(ctx), 'content-type': 'application/json' }, body: JSON.stringify({ items }) })
       },
-      async 'orders.updateStatus'(ctx, input: { orderExternalId: string; status: OrderStatus }) {
+      async 'orders.updateStatus'(ctx, input: { orderExternalId: string; phase: OrderPhase }) {
         await send(ctx, `/orders/${encodeURIComponent(input.orderExternalId)}/status`, {
           method: 'PUT',
           headers: { ...bearer(ctx), 'content-type': 'application/json' },
-          body: JSON.stringify({ status: API_STATUSES[input.status] }),
+          body: JSON.stringify({ status: API_STATUSES[input.phase] }),
         })
       },
     },

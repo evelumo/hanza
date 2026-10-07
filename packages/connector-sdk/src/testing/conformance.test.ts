@@ -213,7 +213,7 @@ const broken: Array<[id: string, connector: AnyConnectorDefinition, fixtures?: C
   ['C9', withCapabilities({ 'stock.push': async (_ctx, levels) => levels.map((level) => ({ offerExternalId: level.offerExternalId, outcome: 'rejected' as const, code: '' })) })],
   ['C9', withCapabilities({ 'stock.push': async (_ctx, levels) => [...levels, ...levels].map((level) => ({ offerExternalId: level.offerExternalId, outcome: 'ok' as const })) })],
   ['C4', withCapabilities({ 'offers.pull': async (_ctx, cursor) => slice(offers.map((offer) => ({ ...offer, status: 'active' as const, endedReason: 'sold_out' as const })), cursor) })],
-  ['C10', withCapabilities({ 'orders.updateStatus': async (_ctx, input) => { if (input.status === 'cancelled') throw new PermanentError('no') } })],
+  ['C10', withCapabilities({ 'orders.updateStatus': async (_ctx, input) => { if (input.phase === 'cancelled') throw new PermanentError('no') } })],
   ['C13', withCapabilities({ 'offers.pull': async (_ctx, cursor) => slice(offers.map((offer) => ({ ...offer, price: null })), cursor) })],
   ['C13', withCapabilities({ 'price.push': async (_ctx, prices) => { if (prices.length === 0) throw new PermanentError('empty') } })],
   ['C13', withCapabilities({ 'price.push': async (_ctx, prices) => prices.map((price) => ({ offerExternalId: price.offerExternalId, outcome: 'ended' as never })) })],
@@ -287,6 +287,15 @@ describe('assertConformance', () => {
       'price.push': async (_ctx, prices) => prices.map((price) => ({ offerExternalId: price.offerExternalId, outcome: 'rejected' as const, code: 'PRICE_TOO_LOW' })),
     })
     await expect(assertConformance(connector, fixtures)).resolves.toBeUndefined()
+  })
+
+  it('hands orders.updateStatus every Order phase as `phase`', async () => {
+    const inputs: unknown[] = []
+    const connector = withCapabilities({ 'orders.updateStatus': async (_ctx, input) => { inputs.push(input) } })
+    await expect(assertConformance(connector, fixtures)).resolves.toBeUndefined()
+    const phases = new Set(inputs.map((input) => (input as { phase: string }).phase))
+    expect([...phases].sort()).toEqual(['cancelled', 'new', 'processing', 'shipped'])
+    for (const input of inputs) expect(Object.keys(input as object).sort()).toEqual(['orderExternalId', 'phase'])
   })
 
   it('passes for a connector without orders.updateStatus and without an unauthorized fixture', async () => {
