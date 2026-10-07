@@ -1,0 +1,1214 @@
+{
+  "version": 1,
+  "interactions": [
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://fake-channel.example.test/offers",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "json": {
+            "offers": [
+              {
+                "id": "fake-offer-1",
+                "sku": "FAKE-SKU-1",
+                "title": "Ceramic mug",
+                "price": {
+                  "amount": "39.99",
+                  "currency": "PLN"
+                }
+              },
+              {
+                "id": "fake-offer-2",
+                "sku": "FAKE-SKU-2",
+                "title": "Cotton T-shirt M",
+                "price": {
+                  "amount": "59.00",
+                  "currency": "PLN"
+                }
+              }
+            ],
+            "cursor": "2",
+            "more": true,
+            "links": {
+              "self": "https://fake-channel.example.test/offers?cursor=&access_token=[scrubbed]"
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://fake-channel.example.test/offers?cursor=2",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "json": {
+            "offers": [
+              {
+                "id": "fake-offer-3",
+                "sku": "FAKE-SKU-3",
+                "title": "Poster A3",
+                "price": {
+                  "amount": "25.00",
+                  "currency": "PLN"
+                }
+              },
+              {
+                "id": "fake-offer-4",
+                "sku": null,
+                "title": "Sticker set",
+                "price": {
+                  "amount": "5.50",
+                  "currency": "PLN"
+                }
+              }
+            ],
+            "cursor": "4",
+            "more": true,
+            "links": {
+              "self": "https://fake-channel.example.test/offers?cursor=2&access_token=[scrubbed]"
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://fake-channel.example.test/offers?cursor=4",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "json": {
+            "offers": [
+              {
+                "id": "fake-offer-5",
+                "sku": "FAKE-SKU-5",
+                "title": "Linen tote bag",
+                "price": null
+              }
+            ],
+            "cursor": "5",
+            "more": false,
+            "links": {
+              "self": "https://fake-channel.example.test/offers?cursor=4&access_token=[scrubbed]"
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://fake-channel.example.test/offers",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "json": {
+            "offers": [
+              {
+                "id": "fake-offer-1",
+                "sku": "FAKE-SKU-1",
+                "title": "Ceramic mug",
+                "price": {
+                  "amount": "39.99",
+                  "currency": "PLN"
+                }
+              },
+              {
+                "id": "fake-offer-2",
+                "sku": "FAKE-SKU-2",
+                "title": "Cotton T-shirt M",
+                "price": {
+                  "amount": "59.00",
+                  "currency": "PLN"
+                }
+              }
+            ],
+            "cursor": "2",
+            "more": true,
+            "links": {
+              "self": "https://fake-channel.example.test/offers?cursor=&access_token=[scrubbed]"
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://fake-channel.example.test/offers?cursor=2",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "json": {
+            "offers": [
+              {
+                "id": "fake-offer-3",
+                "sku": "FAKE-SKU-3",
+                "title": "Poster A3",
+                "price": {
+                  "amount": "25.00",
+                  "currency": "PLN"
+                }
+              },
+              {
+                "id": "fake-offer-4",
+                "sku": null,
+                "title": "Sticker set",
+                "price": {
+                  "amount": "5.50",
+                  "currency": "PLN"
+                }
+              }
+            ],
+            "cursor": "4",
+            "more": true,
+            "links": {
+              "self": "https://fake-channel.example.test/offers?cursor=2&access_token=[scrubbed]"
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://fake-channel.example.test/offers?cursor=4",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "json": {
+            "offers": [
+              {
+                "id": "fake-offer-5",
+                "sku": "FAKE-SKU-5",
+                "title": "Linen tote bag",
+                "price": null
+              }
+            ],
+            "cursor": "5",
+            "more": false,
+            "links": {
+              "self": "https://fake-channel.example.test/offers?cursor=4&access_token=[scrubbed]"
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://fake-channel.example.test/orders",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "json": {
+            "orders": [
+              {
+                "id": "fake-order-1",
+                "createdAt": "2026-10-01T09:00:00Z",
+                "paymentType": "ONLINE",
+                "awaitingPayment": false,
+                "total": {
+                  "amount": "79.98",
+                  "currency": "PLN"
+                },
+                "buyer": {
+                  "firstName": "scrubbed-1",
+                  "lastName": "scrubbed-2",
+                  "email": "person-1@example.com",
+                  "phone": "+00000000001",
+                  "login": "scrubbed-3",
+                  "pesel": "scrubbed-4"
+                },
+                "delivery": {
+                  "firstName": "scrubbed-1",
+                  "lastName": "scrubbed-2",
+                  "company": null,
+                  "street": "scrubbed-5",
+                  "zipCode": "scrubbed-6",
+                  "city": "scrubbed-7",
+                  "countryCode": "PL",
+                  "phone": null
+                },
+                "lines": [
+                  {
+                    "id": "l1",
+                    "offerId": "fake-offer-1",
+                    "sku": "FAKE-SKU-1",
+                    "name": "Ceramic mug",
+                    "quantity": 2,
+                    "price": {
+                      "amount": "39.99",
+                      "currency": "PLN"
+                    }
+                  }
+                ],
+                "events": []
+              },
+              {
+                "id": "fake-order-2",
+                "createdAt": "2026-10-01T10:00:00Z",
+                "paymentType": "CASH_ON_DELIVERY",
+                "awaitingPayment": false,
+                "total": {
+                  "amount": "84.00",
+                  "currency": "PLN"
+                },
+                "buyer": {
+                  "firstName": "scrubbed-1",
+                  "lastName": "scrubbed-2",
+                  "email": "person-1@example.com",
+                  "phone": "+00000000001",
+                  "login": "scrubbed-3",
+                  "pesel": "scrubbed-4"
+                },
+                "delivery": {
+                  "firstName": "scrubbed-1",
+                  "lastName": "scrubbed-2",
+                  "company": null,
+                  "street": "scrubbed-5",
+                  "zipCode": "scrubbed-6",
+                  "city": "scrubbed-7",
+                  "countryCode": "PL",
+                  "phone": null
+                },
+                "lines": [
+                  {
+                    "id": "l1",
+                    "offerId": "fake-offer-2",
+                    "sku": "FAKE-SKU-2",
+                    "name": "Cotton T-shirt M",
+                    "quantity": 1,
+                    "price": {
+                      "amount": "59.00",
+                      "currency": "PLN"
+                    }
+                  },
+                  {
+                    "id": "l2",
+                    "offerId": "fake-offer-3",
+                    "sku": "FAKE-SKU-3",
+                    "name": "Poster A3",
+                    "quantity": 1,
+                    "price": {
+                      "amount": "25.00",
+                      "currency": "PLN"
+                    }
+                  }
+                ],
+                "events": [
+                  {
+                    "id": "fake-order-2:cancelled",
+                    "type": "CANCELLED",
+                    "at": "2026-10-02T10:00:00Z",
+                    "note": "scrubbed-8"
+                  }
+                ]
+              }
+            ],
+            "cursor": "2",
+            "more": true
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://fake-channel.example.test/orders?cursor=2",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "json": {
+            "orders": [
+              {
+                "id": "fake-order-3",
+                "createdAt": "2026-10-01T11:00:00Z",
+                "paymentType": "ONLINE",
+                "awaitingPayment": false,
+                "total": {
+                  "amount": "10.00",
+                  "currency": "PLN"
+                },
+                "buyer": {
+                  "firstName": "scrubbed-1",
+                  "lastName": "scrubbed-2",
+                  "email": "person-1@example.com",
+                  "phone": "+00000000001",
+                  "login": "scrubbed-3",
+                  "pesel": "scrubbed-4"
+                },
+                "delivery": {
+                  "firstName": "scrubbed-1",
+                  "lastName": "scrubbed-2",
+                  "company": null,
+                  "street": "scrubbed-5",
+                  "zipCode": "scrubbed-6",
+                  "city": "scrubbed-7",
+                  "countryCode": "PL",
+                  "phone": null
+                },
+                "lines": [
+                  {
+                    "id": "l1",
+                    "offerId": null,
+                    "sku": "UNKNOWN-SKU",
+                    "name": "Product not in the catalogue",
+                    "quantity": 1,
+                    "price": {
+                      "amount": "10.00",
+                      "currency": "PLN"
+                    }
+                  }
+                ],
+                "events": []
+              },
+              {
+                "id": "fake-order-4",
+                "createdAt": "2026-10-01T12:00:00Z",
+                "paymentType": "ONLINE",
+                "awaitingPayment": false,
+                "total": {
+                  "amount": "16.50",
+                  "currency": "PLN"
+                },
+                "buyer": {
+                  "firstName": "scrubbed-1",
+                  "lastName": "scrubbed-2",
+                  "email": "person-1@example.com",
+                  "phone": "+00000000001",
+                  "login": "scrubbed-3",
+                  "pesel": "scrubbed-4"
+                },
+                "delivery": {
+                  "firstName": "scrubbed-1",
+                  "lastName": "scrubbed-2",
+                  "company": null,
+                  "street": "scrubbed-5",
+                  "zipCode": "scrubbed-6",
+                  "city": "scrubbed-7",
+                  "countryCode": "PL",
+                  "phone": null
+                },
+                "lines": [
+                  {
+                    "id": "l1",
+                    "offerId": "fake-offer-4",
+                    "sku": null,
+                    "name": "Sticker set",
+                    "quantity": 3,
+                    "price": {
+                      "amount": "5.50",
+                      "currency": "PLN"
+                    }
+                  }
+                ],
+                "events": []
+              }
+            ],
+            "cursor": "4",
+            "more": true
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://fake-channel.example.test/orders?cursor=4",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "json": {
+            "orders": [
+              {
+                "id": "fake-order-2",
+                "createdAt": "2026-10-01T10:00:00Z",
+                "paymentType": "CASH_ON_DELIVERY",
+                "awaitingPayment": false,
+                "total": {
+                  "amount": "84.00",
+                  "currency": "PLN"
+                },
+                "buyer": {
+                  "firstName": "scrubbed-1",
+                  "lastName": "scrubbed-2",
+                  "email": "person-1@example.com",
+                  "phone": "+00000000001",
+                  "login": "scrubbed-3",
+                  "pesel": "scrubbed-4"
+                },
+                "delivery": {
+                  "firstName": "scrubbed-1",
+                  "lastName": "scrubbed-2",
+                  "company": null,
+                  "street": "scrubbed-5",
+                  "zipCode": "scrubbed-6",
+                  "city": "scrubbed-7",
+                  "countryCode": "PL",
+                  "phone": null
+                },
+                "lines": [
+                  {
+                    "id": "l1",
+                    "offerId": "fake-offer-2",
+                    "sku": "FAKE-SKU-2",
+                    "name": "Cotton T-shirt M",
+                    "quantity": 1,
+                    "price": {
+                      "amount": "59.00",
+                      "currency": "PLN"
+                    }
+                  },
+                  {
+                    "id": "l2",
+                    "offerId": "fake-offer-3",
+                    "sku": "FAKE-SKU-3",
+                    "name": "Poster A3",
+                    "quantity": 1,
+                    "price": {
+                      "amount": "25.00",
+                      "currency": "PLN"
+                    }
+                  }
+                ],
+                "events": [
+                  {
+                    "id": "fake-order-2:cancelled",
+                    "type": "CANCELLED",
+                    "at": "2026-10-02T10:00:00Z",
+                    "note": "scrubbed-8"
+                  }
+                ]
+              }
+            ],
+            "cursor": "5",
+            "more": false
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://fake-channel.example.test/orders",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "json": {
+            "orders": [
+              {
+                "id": "fake-order-1",
+                "createdAt": "2026-10-01T09:00:00Z",
+                "paymentType": "ONLINE",
+                "awaitingPayment": false,
+                "total": {
+                  "amount": "79.98",
+                  "currency": "PLN"
+                },
+                "buyer": {
+                  "firstName": "scrubbed-1",
+                  "lastName": "scrubbed-2",
+                  "email": "person-1@example.com",
+                  "phone": "+00000000001",
+                  "login": "scrubbed-3",
+                  "pesel": "scrubbed-4"
+                },
+                "delivery": {
+                  "firstName": "scrubbed-1",
+                  "lastName": "scrubbed-2",
+                  "company": null,
+                  "street": "scrubbed-5",
+                  "zipCode": "scrubbed-6",
+                  "city": "scrubbed-7",
+                  "countryCode": "PL",
+                  "phone": null
+                },
+                "lines": [
+                  {
+                    "id": "l1",
+                    "offerId": "fake-offer-1",
+                    "sku": "FAKE-SKU-1",
+                    "name": "Ceramic mug",
+                    "quantity": 2,
+                    "price": {
+                      "amount": "39.99",
+                      "currency": "PLN"
+                    }
+                  }
+                ],
+                "events": []
+              },
+              {
+                "id": "fake-order-2",
+                "createdAt": "2026-10-01T10:00:00Z",
+                "paymentType": "CASH_ON_DELIVERY",
+                "awaitingPayment": false,
+                "total": {
+                  "amount": "84.00",
+                  "currency": "PLN"
+                },
+                "buyer": {
+                  "firstName": "scrubbed-1",
+                  "lastName": "scrubbed-2",
+                  "email": "person-1@example.com",
+                  "phone": "+00000000001",
+                  "login": "scrubbed-3",
+                  "pesel": "scrubbed-4"
+                },
+                "delivery": {
+                  "firstName": "scrubbed-1",
+                  "lastName": "scrubbed-2",
+                  "company": null,
+                  "street": "scrubbed-5",
+                  "zipCode": "scrubbed-6",
+                  "city": "scrubbed-7",
+                  "countryCode": "PL",
+                  "phone": null
+                },
+                "lines": [
+                  {
+                    "id": "l1",
+                    "offerId": "fake-offer-2",
+                    "sku": "FAKE-SKU-2",
+                    "name": "Cotton T-shirt M",
+                    "quantity": 1,
+                    "price": {
+                      "amount": "59.00",
+                      "currency": "PLN"
+                    }
+                  },
+                  {
+                    "id": "l2",
+                    "offerId": "fake-offer-3",
+                    "sku": "FAKE-SKU-3",
+                    "name": "Poster A3",
+                    "quantity": 1,
+                    "price": {
+                      "amount": "25.00",
+                      "currency": "PLN"
+                    }
+                  }
+                ],
+                "events": [
+                  {
+                    "id": "fake-order-2:cancelled",
+                    "type": "CANCELLED",
+                    "at": "2026-10-02T10:00:00Z",
+                    "note": "scrubbed-8"
+                  }
+                ]
+              }
+            ],
+            "cursor": "2",
+            "more": true
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://fake-channel.example.test/orders?cursor=2",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "json": {
+            "orders": [
+              {
+                "id": "fake-order-3",
+                "createdAt": "2026-10-01T11:00:00Z",
+                "paymentType": "ONLINE",
+                "awaitingPayment": false,
+                "total": {
+                  "amount": "10.00",
+                  "currency": "PLN"
+                },
+                "buyer": {
+                  "firstName": "scrubbed-1",
+                  "lastName": "scrubbed-2",
+                  "email": "person-1@example.com",
+                  "phone": "+00000000001",
+                  "login": "scrubbed-3",
+                  "pesel": "scrubbed-4"
+                },
+                "delivery": {
+                  "firstName": "scrubbed-1",
+                  "lastName": "scrubbed-2",
+                  "company": null,
+                  "street": "scrubbed-5",
+                  "zipCode": "scrubbed-6",
+                  "city": "scrubbed-7",
+                  "countryCode": "PL",
+                  "phone": null
+                },
+                "lines": [
+                  {
+                    "id": "l1",
+                    "offerId": null,
+                    "sku": "UNKNOWN-SKU",
+                    "name": "Product not in the catalogue",
+                    "quantity": 1,
+                    "price": {
+                      "amount": "10.00",
+                      "currency": "PLN"
+                    }
+                  }
+                ],
+                "events": []
+              },
+              {
+                "id": "fake-order-4",
+                "createdAt": "2026-10-01T12:00:00Z",
+                "paymentType": "ONLINE",
+                "awaitingPayment": false,
+                "total": {
+                  "amount": "16.50",
+                  "currency": "PLN"
+                },
+                "buyer": {
+                  "firstName": "scrubbed-1",
+                  "lastName": "scrubbed-2",
+                  "email": "person-1@example.com",
+                  "phone": "+00000000001",
+                  "login": "scrubbed-3",
+                  "pesel": "scrubbed-4"
+                },
+                "delivery": {
+                  "firstName": "scrubbed-1",
+                  "lastName": "scrubbed-2",
+                  "company": null,
+                  "street": "scrubbed-5",
+                  "zipCode": "scrubbed-6",
+                  "city": "scrubbed-7",
+                  "countryCode": "PL",
+                  "phone": null
+                },
+                "lines": [
+                  {
+                    "id": "l1",
+                    "offerId": "fake-offer-4",
+                    "sku": null,
+                    "name": "Sticker set",
+                    "quantity": 3,
+                    "price": {
+                      "amount": "5.50",
+                      "currency": "PLN"
+                    }
+                  }
+                ],
+                "events": []
+              }
+            ],
+            "cursor": "4",
+            "more": true
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://fake-channel.example.test/orders?cursor=4",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "json": {
+            "orders": [
+              {
+                "id": "fake-order-2",
+                "createdAt": "2026-10-01T10:00:00Z",
+                "paymentType": "CASH_ON_DELIVERY",
+                "awaitingPayment": false,
+                "total": {
+                  "amount": "84.00",
+                  "currency": "PLN"
+                },
+                "buyer": {
+                  "firstName": "scrubbed-1",
+                  "lastName": "scrubbed-2",
+                  "email": "person-1@example.com",
+                  "phone": "+00000000001",
+                  "login": "scrubbed-3",
+                  "pesel": "scrubbed-4"
+                },
+                "delivery": {
+                  "firstName": "scrubbed-1",
+                  "lastName": "scrubbed-2",
+                  "company": null,
+                  "street": "scrubbed-5",
+                  "zipCode": "scrubbed-6",
+                  "city": "scrubbed-7",
+                  "countryCode": "PL",
+                  "phone": null
+                },
+                "lines": [
+                  {
+                    "id": "l1",
+                    "offerId": "fake-offer-2",
+                    "sku": "FAKE-SKU-2",
+                    "name": "Cotton T-shirt M",
+                    "quantity": 1,
+                    "price": {
+                      "amount": "59.00",
+                      "currency": "PLN"
+                    }
+                  },
+                  {
+                    "id": "l2",
+                    "offerId": "fake-offer-3",
+                    "sku": "FAKE-SKU-3",
+                    "name": "Poster A3",
+                    "quantity": 1,
+                    "price": {
+                      "amount": "25.00",
+                      "currency": "PLN"
+                    }
+                  }
+                ],
+                "events": [
+                  {
+                    "id": "fake-order-2:cancelled",
+                    "type": "CANCELLED",
+                    "at": "2026-10-02T10:00:00Z",
+                    "note": "scrubbed-8"
+                  }
+                ]
+              }
+            ],
+            "cursor": "5",
+            "more": false
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://fake-channel.example.test/orders?cursor=5",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "json": {
+            "orders": [],
+            "cursor": "5",
+            "more": false
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "PUT",
+        "url": "https://fake-channel.example.test/stock",
+        "headers": {
+          "accept": "application/json",
+          "content-type": "application/json"
+        },
+        "body": {
+          "json": {
+            "items": [
+              {
+                "offerId": "fake-offer-1",
+                "sku": "FAKE-SKU-1",
+                "quantity": 0
+              },
+              {
+                "offerId": "fake-offer-2",
+                "sku": "FAKE-SKU-2",
+                "quantity": 0
+              },
+              {
+                "offerId": "fake-offer-3",
+                "sku": "FAKE-SKU-3",
+                "quantity": 0
+              }
+            ]
+          }
+        }
+      },
+      "response": {
+        "status": 204,
+        "headers": {},
+        "body": null
+      }
+    },
+    {
+      "request": {
+        "method": "PUT",
+        "url": "https://fake-channel.example.test/stock",
+        "headers": {
+          "accept": "application/json",
+          "content-type": "application/json"
+        },
+        "body": {
+          "json": {
+            "items": [
+              {
+                "offerId": "fake-offer-1",
+                "sku": "FAKE-SKU-1",
+                "quantity": 0
+              },
+              {
+                "offerId": "fake-offer-2",
+                "sku": "FAKE-SKU-2",
+                "quantity": 0
+              },
+              {
+                "offerId": "fake-offer-3",
+                "sku": "FAKE-SKU-3",
+                "quantity": 0
+              }
+            ]
+          }
+        }
+      },
+      "response": {
+        "status": 204,
+        "headers": {},
+        "body": null
+      }
+    },
+    {
+      "request": {
+        "method": "PUT",
+        "url": "https://fake-channel.example.test/stock",
+        "headers": {
+          "accept": "application/json",
+          "content-type": "application/json"
+        },
+        "body": {
+          "json": {
+            "items": [
+              {
+                "offerId": "fake-offer-1",
+                "sku": "FAKE-SKU-1",
+                "quantity": 5
+              },
+              {
+                "offerId": "fake-offer-2",
+                "sku": "FAKE-SKU-2",
+                "quantity": 5
+              },
+              {
+                "offerId": "fake-offer-3",
+                "sku": "FAKE-SKU-3",
+                "quantity": 5
+              }
+            ]
+          }
+        }
+      },
+      "response": {
+        "status": 204,
+        "headers": {},
+        "body": null
+      }
+    },
+    {
+      "request": {
+        "method": "PUT",
+        "url": "https://fake-channel.example.test/stock",
+        "headers": {
+          "accept": "application/json",
+          "content-type": "application/json"
+        },
+        "body": {
+          "json": {
+            "items": [
+              {
+                "offerId": "fake-offer-1",
+                "sku": "FAKE-SKU-1",
+                "quantity": 5
+              },
+              {
+                "offerId": "fake-offer-2",
+                "sku": "FAKE-SKU-2",
+                "quantity": 5
+              },
+              {
+                "offerId": "fake-offer-3",
+                "sku": "FAKE-SKU-3",
+                "quantity": 5
+              }
+            ]
+          }
+        }
+      },
+      "response": {
+        "status": 204,
+        "headers": {},
+        "body": null
+      }
+    },
+    {
+      "request": {
+        "method": "PUT",
+        "url": "https://fake-channel.example.test/orders/fake-order-1/status",
+        "headers": {
+          "accept": "application/json",
+          "content-type": "application/json"
+        },
+        "body": {
+          "json": {
+            "status": "NEW"
+          }
+        }
+      },
+      "response": {
+        "status": 204,
+        "headers": {},
+        "body": null
+      }
+    },
+    {
+      "request": {
+        "method": "PUT",
+        "url": "https://fake-channel.example.test/orders/fake-order-1/status",
+        "headers": {
+          "accept": "application/json",
+          "content-type": "application/json"
+        },
+        "body": {
+          "json": {
+            "status": "NEW"
+          }
+        }
+      },
+      "response": {
+        "status": 204,
+        "headers": {},
+        "body": null
+      }
+    },
+    {
+      "request": {
+        "method": "PUT",
+        "url": "https://fake-channel.example.test/orders/fake-order-1/status",
+        "headers": {
+          "accept": "application/json",
+          "content-type": "application/json"
+        },
+        "body": {
+          "json": {
+            "status": "PROCESSING"
+          }
+        }
+      },
+      "response": {
+        "status": 204,
+        "headers": {},
+        "body": null
+      }
+    },
+    {
+      "request": {
+        "method": "PUT",
+        "url": "https://fake-channel.example.test/orders/fake-order-1/status",
+        "headers": {
+          "accept": "application/json",
+          "content-type": "application/json"
+        },
+        "body": {
+          "json": {
+            "status": "PROCESSING"
+          }
+        }
+      },
+      "response": {
+        "status": 204,
+        "headers": {},
+        "body": null
+      }
+    },
+    {
+      "request": {
+        "method": "PUT",
+        "url": "https://fake-channel.example.test/orders/fake-order-1/status",
+        "headers": {
+          "accept": "application/json",
+          "content-type": "application/json"
+        },
+        "body": {
+          "json": {
+            "status": "SENT"
+          }
+        }
+      },
+      "response": {
+        "status": 204,
+        "headers": {},
+        "body": null
+      }
+    },
+    {
+      "request": {
+        "method": "PUT",
+        "url": "https://fake-channel.example.test/orders/fake-order-1/status",
+        "headers": {
+          "accept": "application/json",
+          "content-type": "application/json"
+        },
+        "body": {
+          "json": {
+            "status": "SENT"
+          }
+        }
+      },
+      "response": {
+        "status": 204,
+        "headers": {},
+        "body": null
+      }
+    },
+    {
+      "request": {
+        "method": "PUT",
+        "url": "https://fake-channel.example.test/orders/fake-order-1/status",
+        "headers": {
+          "accept": "application/json",
+          "content-type": "application/json"
+        },
+        "body": {
+          "json": {
+            "status": "CANCELLED"
+          }
+        }
+      },
+      "response": {
+        "status": 204,
+        "headers": {},
+        "body": null
+      }
+    },
+    {
+      "request": {
+        "method": "PUT",
+        "url": "https://fake-channel.example.test/orders/fake-order-1/status",
+        "headers": {
+          "accept": "application/json",
+          "content-type": "application/json"
+        },
+        "body": {
+          "json": {
+            "status": "CANCELLED"
+          }
+        }
+      },
+      "response": {
+        "status": 204,
+        "headers": {},
+        "body": null
+      }
+    }
+  ]
+}

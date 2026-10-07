@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "interactions": [
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://fake-channel.example.test/orders",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "json": {
+            "error": "invalid_token"
+          }
+        }
+      }
+    }
+  ]
+}
