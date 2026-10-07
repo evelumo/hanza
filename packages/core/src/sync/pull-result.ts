@@ -1,11 +1,12 @@
 import {
   offerSchema,
   orderSchema,
+  orderUpdateSchema,
   PermanentError,
   pricePushResultSchema,
   stockPushResultSchema,
   type Offer,
-  type Order,
+  type OrderFeedItem,
   type PricePushResult,
   type PullResult,
   type StockPushResult,
@@ -37,14 +38,25 @@ function pageSchema<T extends z.ZodType>(item: T) {
   return z.object({ items: z.array(item), nextCursor: z.string().nullable(), hasMore: z.boolean() })
 }
 
+/** An item with `kind: 'update'` is checked as an Order update, anything else as a full Order, so errors name the right fields. */
+const orderFeedItemSchema = z.unknown().transform((value, ctx): OrderFeedItem => {
+  const isUpdate = typeof value === 'object' && value !== null && (value as { kind?: unknown }).kind === 'update'
+  const parsed = (isUpdate ? orderUpdateSchema : importableOrderSchema).safeParse(value)
+  if (parsed.success) return parsed.data
+  for (const issue of parsed.error.issues) ctx.addIssue({ code: 'custom', message: issue.message, path: issue.path })
+  return z.NEVER
+})
+
 const offersPage = pageSchema(offerSchema)
-const ordersPage = pageSchema(importableOrderSchema)
+const ordersPage = pageSchema(orderFeedItemSchema)
 
 /** The item's external id when it has one; never other fields, which may hold Buyer data. */
 function itemLabel(raw: unknown, index: number, noun: string): string {
   const items = (raw as { items?: unknown } | null)?.items
-  const externalId = Array.isArray(items) ? (items[index] as { externalId?: unknown } | null)?.externalId : undefined
-  return typeof externalId === 'string' ? `${noun} "${externalId.slice(0, 200)}"` : `${noun} #${index + 1}`
+  const item = Array.isArray(items) ? (items[index] as { externalId?: unknown; kind?: unknown } | null) : undefined
+  const externalId = item?.externalId
+  const label = item?.kind === 'update' ? `${noun} update` : noun
+  return typeof externalId === 'string' ? `${label} "${externalId.slice(0, 200)}"` : `${label} #${index + 1}`
 }
 
 /** Paths and Zod's messages only: they name what is wrong, not the values. */
@@ -83,7 +95,7 @@ export function parseOffersPage(raw: unknown, cursor: string | null): PullResult
   return parsePage(offersPage, raw, cursor, 'Offer')
 }
 
-export function parseOrdersPage(raw: unknown, cursor: string | null): PullResult<Order> {
+export function parseOrdersPage(raw: unknown, cursor: string | null): PullResult<OrderFeedItem> {
   return parsePage(ordersPage, raw, cursor, 'Order')
 }
 

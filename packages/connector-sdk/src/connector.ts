@@ -1,7 +1,7 @@
 import type { z } from 'zod'
 import type { ConnectorAuth } from './auth'
 import type { Offer } from './model/offer'
-import type { Order, OrderStatus } from './model/order'
+import type { Order, OrderStatus, OrderUpdate } from './model/order'
 import type { OfferPrice } from './model/price'
 import type { PricePushResult, StockPushResult } from './model/push-result'
 import type { StockLevel } from './model/stock'
@@ -45,8 +45,36 @@ export interface Capabilities<TConfig, TCredentials, TApp = unknown> {
    * Incremental feed of Orders (new ones and ones with new Channel facts). Same cursor → same page.
    * Ready-to-fulfil Orders only, unless the connector also reports unpaid ones with `awaitingPayment: true`
    * and a `paid` fact once they are paid.
+   *
+   * Cursor `null` (a new Connection, or a restart after `CursorExpiredError`) starts the feed (ADR 0021):
+   * - First take the feed's start: the journal position now, and the boundary that tells Orders placed before it
+   *   from Orders placed after it (a time or an id). Both stay in every cursor of the feed, for ever. Take the journal
+   *   position FIRST and the boundary SECOND (Allegro: `GET /order/event-stats`, then `boughtBefore` = now): the
+   *   other way round, an Order placed between the two moments is neither listed (placed after the boundary) nor sent
+   *   in full (its events come before the journal position), so it never reserves.
+   * - Then list the Orders open on the Channel now (not shipped or finished, not cancelled; unpaid ones only if the
+   *   connector reports them) and placed before the boundary. Page the listing so that an Order closing between two
+   *   pages cannot make another one skipped: a keyset (the last key listed, in an order that never changes, such as
+   *   purchase time then id) under the frozen boundary, or, where the API only pages by offset, overlapping pages
+   *   (step back and accept duplicates). Never a plain offset.
+   * - Then follow the journal from the start's position, so nothing placed meanwhile is lost. In the journal a full
+   *   Order is sent **only for an Order placed after the boundary**; a change to any other Order goes as an Order
+   *   update. So an Order closed before the Connection is never imported (its Stock was counted on the shelf already):
+   *   its later journal entries reach the core as updates, which it ignores.
+   * The cursor is opaque, so a journal connector encodes all of this in it, e.g.
+   * `l1:<journal position>:<boundary>:<last listed key>` while listing, then `e1:<journal position>:<boundary>`.
+   * An Order returned twice is harmless: the import is idempotent.
+   *
+   * Items are full Orders, or Order updates (`kind: 'update'`) when the Channel cannot serve the whole Order, or the
+   * Order was placed before the feed's boundary: the address it reveals only at payment, or a `cancelled` fact for an
+   * Order that disappeared (merged into another). A full Order carries every fact the Channel has for it at that
+   * moment, and comes before any update of the same Order on a page. Send an update without knowing whether Hanza
+   * has the Order; the core ignores updates for Orders it does not have.
+   *
+   * Throw `CursorExpiredError` when the Channel no longer has the cursor's position (e.g. older than its retention):
+   * the core resets the feed to `null` and records the restart. Never restart silently on your own.
    */
-  'orders.pull'?(ctx: CapabilityContext<TConfig, TCredentials, TApp>, cursor: string | null): Promise<PullResult<Order>>
+  'orders.pull'?(ctx: CapabilityContext<TConfig, TCredentials, TApp>, cursor: string | null): Promise<PullResult<Order | OrderUpdate>>
   /**
    * Set absolute availability for up to 100 Offers of this Connection, 0 included. Must be repeatable.
    * May return a result per Offer: `rejected` (with a short Channel error code) when the Channel refused one Offer,

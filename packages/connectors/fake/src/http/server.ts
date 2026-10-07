@@ -2,7 +2,7 @@
 import { randomBytes } from 'node:crypto'
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http'
 import type { AddressInfo } from 'node:net'
-import type { ConnectorError, Order } from '@hanza/connector-sdk'
+import { isOrderUpdate, type ConnectorError, type Order, type OrderUpdate } from '@hanza/connector-sdk'
 import type { ScrubConfig } from '@hanza/connector-sdk/testing'
 import { createFakeChannel, type FakeChannel } from '../channel'
 import type { FakeContext } from '../connector'
@@ -63,7 +63,10 @@ function splitName(name: string) {
 }
 
 // The PESEL is the documented example number (an invented person), here so a recording has something to scrub.
-function toApiOrder(order: Order): ApiOrder {
+function toApiOrder(item: Order | OrderUpdate): ApiOrder {
+  // The fake API serves whole Orders only; its tests never make the in-memory Channel send an Order update.
+  if (isOrderUpdate(item)) throw new Error(`The fake HTTP API cannot serve the Order update for "${item.externalId}"`)
+  const order = item
   return {
     id: order.externalId,
     createdAt: order.placedAt,

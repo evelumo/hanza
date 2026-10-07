@@ -155,7 +155,7 @@ async function insertOrder(
  * Records Channel facts not seen before, in (occurredAt, id) order, applying each through `factTransition`. A fact that
  * moves the phase puts the Order in the Connection's mapped status for that phase, else its default. Caller holds the Order lock.
  */
-async function applyNewFacts(
+export async function applyNewFacts(
   tx: Tx,
   organizationId: string,
   connectionId: string,

@@ -148,6 +148,10 @@ export interface RunConformanceOptions extends LintOptions {
   deviceFlow?: boolean
   /** Skips check C14, only for a Channel that uses 403 for rejected credentials (say why in the connector's AGENTS.md). */
   forbidden?: false
+  /** Enables check C18: an `orders.pull` cursor the API no longer has, answered in the main cassette. */
+  expiredCursor?: string
+  /** A journal connector: C18 then requires `expiredCursor`. */
+  journal?: boolean
   maxPages?: number
   scrub?: ScrubConfig
   match?: MatchOptions
@@ -215,6 +219,8 @@ export async function runConformance(connector: AnyConnectorDefinition, options:
       config: options.config,
       credentials: options.credentials,
       maxPages: options.maxPages,
+      expiredCursor: options.expiredCursor,
+      journal: options.journal,
       fetch: main.fetch,
       unauthorized: unauthorized ? { credentials: options.unauthorized?.credentials, fetch: unauthorized.fetch } : undefined,
       refresh: refresh
@@ -264,6 +270,8 @@ async function recordConformance(connector: AnyConnectorDefinition, options: Run
       config: setup.config ?? options.config,
       credentials,
       maxPages: options.maxPages,
+      expiredCursor: options.expiredCursor,
+      journal: options.journal,
       fetch: main.fetch,
       unauthorized: unauthorized ? { credentials: unauthorizedCredentials, fetch: unauthorized.fetch } : undefined,
       refresh: refresh

@@ -90,6 +90,24 @@ export async function saveSyncCursor(
   await writeState(ctx.db, organizationId, connectionId, stream, { cursor })
 }
 
+/**
+ * The Channel no longer has the Order feed's position (`CursorExpiredError`): back to cursor null, which starts again
+ * with the Orders open now. Recorded as an Event because Orders opened and closed meanwhile are never imported, so a
+ * person can see that a gap may exist. Cursor and Event in one transaction: a retry neither loses nor repeats it.
+ */
+export async function restartOrderFeed(ctx: Context, organizationId: string, connectionId: string): Promise<void> {
+  await ctx.db.$transaction(async (tx) => {
+    await requireConnection(tx, organizationId, connectionId)
+    await writeState(tx, organizationId, connectionId, 'orders_pull', { cursor: null })
+    await appendEvent(tx, {
+      organizationId,
+      type: 'connection.order_feed_restarted',
+      subject: { type: 'connection', id: connectionId },
+      payload: {},
+    })
+  }, TX_OPTIONS)
+}
+
 export async function finishSyncRun(
   ctx: Context,
   organizationId: string,

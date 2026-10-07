@@ -1,7 +1,7 @@
 import { mkdtemp, readFile, rm, stat } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import type { CapabilityContext } from '@hanza/connector-sdk'
+import { isOrderUpdate, type CapabilityContext, type Order, type OrderUpdate } from '@hanza/connector-sdk'
 import {
   assertNoSecrets,
   createRecordingFetch,
@@ -62,7 +62,11 @@ describe('record → scrub → replay through a real HTTP server', () => {
     const orders = await connector.capabilities['orders.pull']!(ctx, null)
     await connector.capabilities['stock.push']!(ctx, [{ offerExternalId: 'fake-offer-1', sku: 'FAKE-SKU-1', available: 7 }])
     await connector.capabilities['orders.updateStatus']!(ctx, { orderExternalId: 'fake-order-1', status: 'shipped' })
-    return { offers, orders }
+    const full = (item: Order | OrderUpdate): Order => {
+      if (isOrderUpdate(item)) throw new Error(`unexpected Order update for "${item.externalId}"`)
+      return item
+    }
+    return { offers, orders: { ...orders, items: orders.items.map(full) } }
   }
 
   it('writes a cassette without credentials or personal data that replays the same answers', async () => {

@@ -9,7 +9,7 @@ export {
   type ConnectionRow,
   type OpenedConnection,
 } from './connections'
-export { startSyncRun, saveSyncCursor, finishSyncRun, failSyncRun } from './sync-state'
+export { startSyncRun, saveSyncCursor, finishSyncRun, failSyncRun, restartOrderFeed } from './sync-state'
 export {
   refreshCredentials,
   needsRefresh,

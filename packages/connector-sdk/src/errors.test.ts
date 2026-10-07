@@ -3,11 +3,13 @@ import { z } from 'zod'
 import {
   AuthExpiredError,
   ConnectorError,
+  CursorExpiredError,
   PermanentError,
   RateLimitedError,
   TransientError,
   classifyConnectorError,
   errorFromResponse,
+  isCursorExpiredError,
   retryAfterFromHeaders,
 } from './errors'
 
@@ -21,6 +23,24 @@ describe('error classes', () => {
     expect(limited.kind).toBe('rate_limited')
     expect(limited.retryAfterMs).toBe(5)
     expect(limited).toBeInstanceOf(ConnectorError)
+  })
+})
+
+describe('CursorExpiredError', () => {
+  it('is a PermanentError, so anywhere but a pull with a cursor it stops the run like one', () => {
+    const error = new CursorExpiredError('older than the journal')
+    expect(error).toBeInstanceOf(PermanentError)
+    expect(classifyConnectorError(error)).toEqual({ kind: 'permanent', retryAfterMs: null, message: 'older than the journal' })
+  })
+
+  it('is recognised by instanceof and by shape (a second copy of the SDK), and nothing else is', () => {
+    expect(isCursorExpiredError(new CursorExpiredError('x'))).toBe(true)
+    expect(isCursorExpiredError({ name: 'CursorExpiredError', kind: 'permanent', cursorExpired: true, message: 'x' })).toBe(true)
+    expect(isCursorExpiredError(new PermanentError('x'))).toBe(false)
+    expect(isCursorExpiredError({ name: 'CursorExpiredError', kind: 'transient', cursorExpired: true })).toBe(false)
+    expect(isCursorExpiredError({ name: 'PermanentError', kind: 'permanent', cursorExpired: true })).toBe(false)
+    expect(isCursorExpiredError(null)).toBe(false)
+    expect(isCursorExpiredError('CursorExpiredError')).toBe(false)
   })
 })
 

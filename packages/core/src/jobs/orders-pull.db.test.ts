@@ -1,4 +1,4 @@
-import { defineConnector, type Order, type PullResult } from '@hanza/connector-sdk'
+import { CursorExpiredError, defineConnector, type Order, type OrderUpdate, type PullResult } from '@hanza/connector-sdk'
 import { describe, expect, it } from 'vitest'
 import { z } from 'zod'
 import { createConnection } from '../connections/connections'
@@ -6,12 +6,13 @@ import type { JobRunInfo } from '../jobs'
 import { importOrder } from '../orders/import'
 import { getAvailability } from '../stock/availability'
 import { ensureDefaultWarehouse } from '../stock/warehouse'
+import { PermanentJobError } from '../jobs'
 import { createTestOrganization } from '../testing/context'
 import { databaseUrl, useTestContext } from '../testing/db-test'
-import { buildOrder, orderLine, uniqueSku, user } from '../testing/fixtures'
+import { buildOrder, fact, orderLine, uniqueSku, user } from '../testing/fixtures'
 import { ordersPullJob } from './orders-pull'
 
-type Pull = (cursor: string | null) => Promise<PullResult<Order>>
+type Pull = (cursor: string | null) => Promise<PullResult<Order | OrderUpdate>>
 let pull: Pull = async () => ({ items: [], nextCursor: null, hasMore: false })
 let calls = 0
 
@@ -100,6 +101,70 @@ describe.skipIf(!databaseUrl)('orders.pull', () => {
     }
     await runPull()
     expect(waitingFor()).toEqual([])
+  })
+
+  it('an expired cursor resets the feed to null with an Event, and the same run carries on from the open Orders', async () => {
+    const { ctx, organizationId, connectionId, runPull } = await setup()
+    await ctx.db.syncState.create({ data: { organizationId, connectionId, stream: 'orders_pull', cursor: 'e1:old' } })
+    const seen: Array<string | null> = []
+    pull = async (cursor) => {
+      seen.push(cursor)
+      if (cursor === 'e1:old') throw new CursorExpiredError('older than the journal')
+      if (cursor === null) return { items: [buildOrder({ externalId: 'open-now' })], nextCursor: 'e1:new', hasMore: true }
+      return { items: [], nextCursor: cursor, hasMore: false }
+    }
+    await runPull()
+
+    expect(seen).toEqual(['e1:old', null, 'e1:new'])
+    const sync = await ctx.db.syncState.findFirstOrThrow({ where: { connectionId, stream: 'orders_pull' } })
+    expect(sync).toMatchObject({
+      cursor: 'e1:new',
+      lastErrorKind: null,
+      lastResult: { pulled: 1, imported: 1, factsApplied: 0, pages: 2, feedRestarts: 1 },
+    })
+    const events = await ctx.db.eventLog.findMany({ where: { organizationId, type: 'connection.order_feed_restarted' } })
+    expect(events.map((event) => [event.subjectType, event.subjectId, event.payload])).toEqual([['connection', connectionId, {}]])
+    expect((await ctx.db.connection.findFirstOrThrow({ where: { id: connectionId } })).health).toBe('ok')
+  })
+
+  it('an expired cursor for null, or a second one in the same run, fails the run as permanent', async () => {
+    const { ctx, organizationId, connectionId, runPull } = await setup()
+    pull = async () => {
+      throw new CursorExpiredError('nothing at all')
+    }
+    await expect(runPull()).rejects.toBeInstanceOf(PermanentJobError)
+    expect(calls).toBe(1)
+    expect(await ctx.db.syncState.findFirstOrThrow({ where: { connectionId, stream: 'orders_pull' } })).toMatchObject({
+      lastErrorKind: 'permanent',
+      cursor: null,
+    })
+
+    await ctx.db.syncState.updateMany({ where: { connectionId, stream: 'orders_pull' }, data: { cursor: 'e1:old' } })
+    calls = 0
+    await expect(runPull()).rejects.toBeInstanceOf(PermanentJobError)
+    expect(calls).toBe(2)
+    expect(await ctx.db.eventLog.count({ where: { organizationId, type: 'connection.order_feed_restarted' } })).toBe(1)
+    expect((await ctx.db.connection.findFirstOrThrow({ where: { id: connectionId } })).health).toBe('failing')
+  })
+
+  it('applies Order updates to Orders it has and ignores the others without failing the page', async () => {
+    const { ctx, organizationId, connectionId, runPull } = await setup()
+    await importOrder(ctx, organizationId, connectionId, buildOrder({ externalId: 'known' }))
+    pull = async () => ({
+      items: [
+        { kind: 'update', externalId: 'unknown', facts: [fact('unknown:removed', 'cancelled')] },
+        { kind: 'update', externalId: 'known', facts: [fact('known:shipped', 'shipped')] },
+        buildOrder({ externalId: 'new-one' }),
+      ],
+      nextCursor: '1',
+      hasMore: false,
+    })
+    await runPull()
+
+    expect(await ctx.db.order.findFirstOrThrow({ where: { connectionId, externalId: 'known' } })).toMatchObject({ phase: 'shipped' })
+    expect(await ctx.db.order.count({ where: { connectionId, externalId: 'unknown' } })).toBe(0)
+    const sync = await ctx.db.syncState.findFirstOrThrow({ where: { connectionId, stream: 'orders_pull' } })
+    expect(sync).toMatchObject({ cursor: '1', lastResult: { pulled: 3, imported: 1, factsApplied: 1, pages: 1, updatesIgnored: 1 } })
   })
 
   it('a payload naming another organization does nothing', async () => {
