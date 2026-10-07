@@ -15,3 +15,10 @@ export {
   type FakeOAuthOptions,
   type FakeRefreshBehaviour,
 } from './oauth'
+export {
+  createFakeHttpConnector,
+  fakeHttpConfigSchema,
+  fakeHttpCredentialsSchema,
+  FAKE_HTTP_BASE_URL,
+  type FakeHttpConnector,
+} from './http/connector'

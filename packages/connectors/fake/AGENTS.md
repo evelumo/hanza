@@ -23,6 +23,12 @@ A Channel that lives in memory. It exists to prove the whole path (pull Offers a
 - `issueCredentials()` makes credentials as if signed in, `expireAccessTokens()` makes the Channel refuse the tokens issued so far, `revokeAll()` also kills the refresh tokens (the seller unlinked the application).
 - The e2e probe (`apps/e2e/src/fake-channel-probe.ts`) exposes approve, deny and revoke to the Playwright flows.
 
+## Over HTTP (`fake-http`)
+
+`createFakeHttpConnector()` (`src/http/`) is the same Channel seen through a small JSON API: `POST /oauth/token` (client credentials, form body) gives a Bearer token for `GET /offers`, `GET /orders`, `PUT /stock` and `PUT /orders/{id}/status`. It is a normal connector (only `ctx.fetch`, zod-parsed responses, `errorFromResponse`) and is not in the registry. It shows how a real connector is tested: its conformance test and the engine test (`apps/worker/src/recorded-fixtures.db.test.ts`) replay committed cassettes (`src/http/fixtures/`, `apps/worker/src/fixtures/`).
+
+`@hanza/connector-fake/http-server` (test tooling, never imported by the connector) serves a fresh `createFakeChannel()` on a random local port, with a Buyer phone number, a PESEL-like id, a session cookie and the token echoed in a link, so a recording has things to scrub; `fakeHttpScrub` is the scrub config. To record again: `HANZA_RECORD_FIXTURES=1 pnpm --filter @hanza/connector-fake exec vitest run src/http/connector.test.ts` (and the same in `apps/worker` for the engine cassette, with `HANZA_TEST_DATABASE_URL` set); the recording talks only to that local server.
+
 ## Using it in tests
 
 Create an isolated instance with `createFakeChannel()`; pass `{ id: 'fake-shop' }` (any id but `fake`) to register a second, independent fake Channel next to the first, for tests that need two Channels with their own recorded pushes; use `fakeChannel` (the instance the registry exposes) only when the registered connector itself is needed. `reset()` restores the seed and clears recorded calls. The seed data is documented in `src/seed.ts` (the code is the source of truth; the original design is GitHub issue #18).
