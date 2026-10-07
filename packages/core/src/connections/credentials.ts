@@ -51,7 +51,11 @@ export function credentialsExpiry(connector: AnyConnectorDefinition, credentials
   return Number.isNaN(time) ? null : new Date(time)
 }
 
-/** True when the connector can refresh and the access token expires within the margin. Unknown expiry: no proactive refresh. */
+/**
+ * True when the connector can refresh and the access token expires within the margin. Unknown expiry: no proactive
+ * refresh. A Channel whose tokens live 15 minutes or less is refreshed before every run: correct (the lock keeps it to
+ * one refresh at a time), but one token request per run; lower REFRESH_MARGIN_MS per connector if such a Channel comes.
+ */
 export function needsRefresh(connector: AnyConnectorDefinition, credentials: unknown, now: Date): boolean {
   if (connector.auth.type !== 'oauth2' || !connector.auth.refresh) return false
   const expiry = credentialsExpiry(connector, credentials)

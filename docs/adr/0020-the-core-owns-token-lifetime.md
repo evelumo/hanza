@@ -15,5 +15,8 @@ We decided that a connector with `auth.type: 'oauth2'` still adds the token to i
 ## Consequences
 
 - A transaction stays open across one HTTP request (bounded by the 30 s fetch timeout; the transaction allows 45 s), holding one database connection per refreshing Connection.
+- Every job that needs the lock while another refresh holds it also holds a database connection while it waits (up to that refresh's 45 s). Many jobs of one Connection refreshing at once can therefore take many pool connections for as long as one token request; the lock then lets each of them through at once, since they find the version moved.
+- A sign-in's write of new credentials takes the same lock and waits as long as a refresh can hold it (its transaction allows 60 s). It stores the approved credentials sealed on the sign-in first, so a failed write is retried from them (a device code yields tokens only once).
+- Token and device-flow requests go through the same rate-limited `fetch` as capabilities (ADR 0019), so they spend the connector's request budgets.
 - A Connection whose refresh token died costs one token request per job already queued for it, then nothing: the tick skips `auth_expired` Connections (ADR 0008).
 - Connectors still see secrets and must never log them (ADR 0006); the core logs ids only and writes no Event per refresh.
