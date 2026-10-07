@@ -119,6 +119,8 @@ export interface RunConformanceOptions extends LintOptions {
   credentials: unknown
   /** Enables check C11 against the unauthorized cassette. */
   unauthorized?: { credentials?: unknown }
+  /** Skips check C14, only for a Channel that uses 403 for rejected credentials (say why in the connector's AGENTS.md). */
+  forbidden?: false
   maxPages?: number
   scrub?: ScrubConfig
   match?: MatchOptions
@@ -163,6 +165,7 @@ export async function runConformance(connector: AnyConnectorDefinition, options:
       maxPages: options.maxPages,
       fetch: main.fetch,
       unauthorized: unauthorized ? { credentials: options.unauthorized?.credentials, fetch: unauthorized.fetch } : undefined,
+      ...(options.forbidden === false ? { forbidden: false as const } : {}),
     })
   } catch (error) {
     failure = messageOf(error)
@@ -203,6 +206,7 @@ async function recordConformance(
       maxPages: options.maxPages,
       fetch: main.fetch,
       unauthorized: unauthorized ? { credentials: unauthorizedCredentials, fetch: unauthorized.fetch } : undefined,
+      ...(options.forbidden === false ? { forbidden: false as const } : {}),
     })
   } catch (error) {
     failure = error
