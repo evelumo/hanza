@@ -14,6 +14,7 @@ import { classifyConnectorError, isConnectorError } from '../errors'
 import { offerSchema, type Offer } from '../model/offer'
 import { ORDER_STATUSES, orderSchema, type Order } from '../model/order'
 import { offerPriceSchema, type OfferPrice } from '../model/price'
+import { pricePushResultSchema, stockPushResultSchema } from '../model/push-result'
 import { stockLevelSchema, type StockLevel } from '../model/stock'
 
 export interface ConformanceFixtures {
@@ -255,18 +256,47 @@ export async function assertConformance(connector: AnyConnectorDefinition, fixtu
     })
   }
 
+  // Per-Offer results are optional; when returned they must name only Offers of the call, once each.
+  const checkResults = (
+    id: string,
+    name: string,
+    raw: unknown,
+    schema: z.ZodType<{ offerExternalId: string; outcome: string }>,
+    sent: Array<{ offerExternalId: string; available?: number }>,
+  ) => {
+    if (raw === undefined || raw === null) return
+    const parsed = z.array(schema).safeParse(raw)
+    if (!parsed.success) {
+      fail(id, `${name} returned results that are not an array of per-Offer results: ${z.prettifyError(parsed.error)}`)
+      return
+    }
+    const byId = new Map(sent.map((item) => [item.offerExternalId, item]))
+    const seen = new Set<string>()
+    for (const result of parsed.data) {
+      const item = byId.get(result.offerExternalId)
+      if (!item) fail(id, `${name} returned a result for Offer "${result.offerExternalId}", which was not in the call`)
+      if (seen.has(result.offerExternalId)) fail(id, `${name} returned two results for Offer "${result.offerExternalId}"`)
+      seen.add(result.offerExternalId)
+      if (result.outcome === 'ended' && item && item.available !== 0) {
+        fail(id, `${name} reported Offer "${result.offerExternalId}" ended after a number above 0`)
+      }
+    }
+  }
+
   // C9
   const pushStock = capabilities['stock.push']
   if (pushStock) {
     await check('C9', async () => {
-      await call('stock.push', () => pushStock(context, []))
+      checkResults('C9', 'stock.push', await call('stock.push', () => pushStock(context, [])), stockPushResultSchema, [])
       const sample = offers.slice(0, 3)
+      // 0 may end an Offer on a real Channel; a connector that reopens sold-out Offers gets them back with 5.
       for (const available of [0, 5]) {
         const levels: StockLevel[] = sample.map((offer) =>
           stockLevelSchema.parse({ offerExternalId: offer.externalId, sku: offer.sku, available }),
         )
-        await call('stock.push', () => pushStock(context, levels))
-        await call('stock.push', () => pushStock(context, levels))
+        for (let attempt = 0; attempt < 2; attempt++) {
+          checkResults('C9', 'stock.push', await call('stock.push', () => pushStock(context, levels)), stockPushResultSchema, levels)
+        }
       }
     })
   }
@@ -294,13 +324,14 @@ export async function assertConformance(connector: AnyConnectorDefinition, fixtu
         fail('C13', 'price.push is implemented but no Offer from offers.pull reports a price, so Hanza could never push one')
         return
       }
-      await call('price.push', () => pushPrice(context, []))
+      checkResults('C13', 'price.push', await call('price.push', () => pushPrice(context, [])), pricePushResultSchema, [])
       for (const amount of ['19.99', '25']) {
         const prices: OfferPrice[] = priced.slice(0, 3).map((offer) =>
           offerPriceSchema.parse({ offerExternalId: offer.externalId, sku: offer.sku, price: { amount, currency: offer.price!.currency } }),
         )
-        await call('price.push', () => pushPrice(context, prices))
-        await call('price.push', () => pushPrice(context, prices))
+        for (let attempt = 0; attempt < 2; attempt++) {
+          checkResults('C13', 'price.push', await call('price.push', () => pushPrice(context, prices)), pricePushResultSchema, prices)
+        }
       }
     })
   }

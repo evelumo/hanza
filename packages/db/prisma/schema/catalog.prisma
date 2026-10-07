@@ -63,6 +63,23 @@ enum OfferLinkMethod {
   @@map("offer_link_method")
 }
 
+/// The Offer's publication on its Channel, as last reported by `offers.pull` or a push result (#88).
+enum OfferChannelStatus {
+  active
+  inactive
+  ended
+
+  @@map("offer_channel_status")
+}
+
+/// Why an ended Offer ended; only `sold_out` Offers are ever reopened by a push (ADR 0022).
+enum OfferEndedReason {
+  sold_out
+  other
+
+  @@map("offer_ended_reason")
+}
+
 model Offer {
   id                  String           @id @default(uuid(7))
   organizationId      String
@@ -92,6 +109,15 @@ model Offer {
   lastPushedPriceAmount   Decimal?  @db.Decimal(19, 4)
   lastPushedPriceCurrency String?   @db.Char(3)
   lastPricePushedAt       DateTime?
+  /// Null = the Channel never said (unknown). Set together with `channelEndedReason` (only for `ended`).
+  channelStatus           OfferChannelStatus?
+  channelEndedReason      OfferEndedReason?
+  /// The Channel's code for refusing the stock push at `stockPushedSeq`; cleared by the next push or skip (#68).
+  stockRejectedCode       String?
+  stockRejectedAt         DateTime?
+  /// The Channel's code for refusing the price push at `pricePushedSeq`; cleared by the next push or skip (#68).
+  priceRejectedCode       String?
+  priceRejectedAt         DateTime?
   lastSeenAt          DateTime
   createdAt           DateTime         @default(now())
   updatedAt           DateTime         @updatedAt

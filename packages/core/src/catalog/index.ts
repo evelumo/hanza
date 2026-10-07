@@ -41,6 +41,22 @@ export {
   getOffer,
   listOffersAwaitingStockPush,
   markOffersPushed,
+  recordStockPushOutcomes,
   type OfferRow,
   type OfferDetail,
+  type StockPushOutcome,
 } from './offers'
+export {
+  decideStockPush,
+  describeOfferStock,
+  listRejectedOffers,
+  retryOfferPush,
+  OFFER_ENDED_CODE,
+  type OfferPublication,
+  type OfferStockView,
+  type PushKind,
+  type PushRejection,
+  type RejectedOfferRow,
+  type StockPushDecision,
+  type StockPushStatus,
+} from './offer-push'

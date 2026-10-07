@@ -39,3 +39,19 @@ describe('isPriceBlocked', () => {
     expect(isPriceBlocked('pushed')).toBe(false)
   })
 })
+
+describe('rejected prices', () => {
+  const rejected = { ...offer, priceStatus: 'rejected' as const }
+
+  it('shows the Channel code, and is shown as blocked', () => {
+    const at = new Date('2026-10-06T10:00:00Z')
+    expect(priceStatusText(translatorFor('en'), { ...rejected, priceRejection: { code: 'PRICE_TOO_LOW', at } }, dateTime)).toBe(
+      'Rejected by the channel: PRICE_TOO_LOW.',
+    )
+    expect(priceStatusText(translatorFor('pl'), { ...rejected, priceRejection: { code: 'PRICE_TOO_LOW', at } }, dateTime)).toBe(
+      'Odrzucone przez kanał: PRICE_TOO_LOW.',
+    )
+    expect(priceStatusText(translatorFor('en'), rejected, dateTime)).toBe(catalogues.en.prices.status.pending)
+    expect(isPriceBlocked('rejected')).toBe(true)
+  })
+})

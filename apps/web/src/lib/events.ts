@@ -80,6 +80,17 @@ function detail(t: Translator, format: EventFormatters, type: string, payload: P
     case 'product.price_changed':
     case 'offer.price_changed':
       return arrow(priceText(t, format.money, payload.from), priceText(t, format.money, payload.to))
+    case 'offer.channel_status_changed': {
+      const reason = text(payload.endedReason)
+      return arrow(publicationText(t, payload.from, null), publicationText(t, payload.to, reason))
+    }
+    case 'offer.push_rejected': {
+      const push = pushLabel(t, payload.push)
+      const code = text(payload.code)
+      return push && code ? `${push}: ${code}` : push
+    }
+    case 'offer.push_retried':
+      return pushLabel(t, payload.push)
     case 'order.status_changed':
       return arrow(statusName(t, payload.fromStatus, text(payload.from)), statusName(t, payload.toStatus, text(payload.to)))
     case 'connection.status_mapping_changed': {
@@ -139,6 +150,15 @@ function mappedName(t: Translator, snapshot: unknown, phase: string | null): str
   if (typeof snapshot !== 'object' || snapshot === null) return t('events.defaultStatus')
   return statusName(t, snapshot, phase) ?? t('events.defaultStatus')
 }
+const pushLabel = (t: Translator, value: unknown) => (value === 'stock' || value === 'price' ? t(`events.push.${value}`) : null)
+
+/** A publication from an untrusted payload; null (never reported) reads "Unknown". */
+function publicationText(t: Translator, status: unknown, endedReason: string | null): string | null {
+  if (status === null) return t('labels.publication.unknown')
+  if (status === 'ended' && endedReason === 'sold_out') return t('labels.publication.ended_sold_out')
+  return status === 'active' || status === 'inactive' || status === 'ended' ? t(`labels.publication.${status}`) : text(status)
+}
+
 const healthLabel = (t: Translator, value: string | null) => (value === null ? null : labelOrRaw(t, 'labels.health', value))
 
 /** Null in the payload means retention off; anything that is not a number is unknown. */

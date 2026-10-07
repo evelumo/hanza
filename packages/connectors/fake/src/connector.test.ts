@@ -11,13 +11,13 @@ import {
 } from '@hanza/connector-sdk'
 import { assertConformance } from '@hanza/connector-sdk/testing'
 import { describe, expect, it } from 'vitest'
-import { FAKE_API_URL, createFakeChannel, fakeChannel, fakeConnector } from './index'
+import { FAKE_API_URL, createFakeChannel, fakeChannel, fakeConnector, FAKE_OFFER_ENDED_CODE, FAKE_REJECTED_CODE } from './index'
 import { seedFacts, seedOffers, seedOrders } from './seed'
 
-type FakeContext = CapabilityContext<{ failMode: 'none' | 'rate_limited' | 'transient' | 'permanent' }, { apiKey: string }>
+type FakeContext = CapabilityContext<{ failMode: 'none' | 'rate_limited' | 'transient' | 'permanent'; rejectOffers: string }, { apiKey: string }>
 
 const context = (overrides: Partial<FakeContext['config']> = {}, apiKey = 'test'): FakeContext => ({
-  config: { failMode: 'none', ...overrides },
+  config: { failMode: 'none', rejectOffers: '', ...overrides },
   credentials: { apiKey },
   fetch: async () => {
     throw new Error('the fake connector never uses the network')
@@ -59,6 +59,83 @@ describe('fake connector', () => {
     seedOffers.forEach((offer) => expect(offerSchema.parse(offer)).toEqual(offer))
     seedOrders.forEach((order) => expect(orderSchema.parse(order)).toEqual(order))
     seedFacts.forEach(({ fact }) => expect(fact.id).toBe('fake-order-2:cancelled'))
+  })
+})
+
+describe('per-Offer results and publication', () => {
+  const level = (offerExternalId: string, available: number) => ({ offerExternalId, sku: null, available })
+
+  it('ends an active Offer at 0, reopens it above 0 because it sold out, and reports it on the next pull', async () => {
+    const channel = createFakeChannel()
+    const push = channel.connector.capabilities['stock.push']!
+    expect(await push(context(), [level('fake-offer-1', 0), level('fake-offer-2', 4)])).toEqual([
+      { offerExternalId: 'fake-offer-1', outcome: 'ended' },
+    ])
+    expect(channel.offer('fake-offer-1', 'test')).toMatchObject({ status: 'ended', endedReason: 'sold_out' })
+    const pulled = await channel.connector.capabilities['offers.pull']!(context(), null)
+    expect(pulled.items[0]).toMatchObject({ externalId: 'fake-offer-1', status: 'ended', endedReason: 'sold_out' })
+
+    // A 0 that leaves it sold out says so again (a retry after a lost answer must learn it); above 0 reopens it.
+    expect(await push(context(), [level('fake-offer-1', 0)])).toEqual([{ offerExternalId: 'fake-offer-1', outcome: 'ended' }])
+    expect(await push(context(), [level('fake-offer-1', 2)])).toEqual([])
+    expect(channel.offer('fake-offer-1', 'test')).toMatchObject({ status: 'active' })
+    expect(channel.offer('fake-offer-1', 'test')).not.toHaveProperty('endedReason')
+    expect(channel.connector.reopensSoldOutOffers).toBe(true)
+  })
+
+  it('keeps what pushes did to Offers per account, so one Connection never ends another one\'s Offer', async () => {
+    const channel = createFakeChannel()
+    const push = channel.connector.capabilities['stock.push']!
+    const pull = channel.connector.capabilities['offers.pull']!
+    await push(context({}, 'seller-a'), [level('fake-offer-1', 0)])
+
+    expect((await pull(context({}, 'seller-a'), null)).items[0]).toMatchObject({ status: 'ended', endedReason: 'sold_out' })
+    expect((await pull(context({}, 'seller-b'), null)).items[0]).toMatchObject({ status: 'active' })
+    expect((await pull(context({}, 'seller-b'), null)).items[0]).not.toHaveProperty('endedReason')
+    expect(channel.offer('fake-offer-1')).toMatchObject({ status: 'active' })
+    // seller-b's 4 does not reopen anything of seller-a's, and seller-a's Offer stays ended.
+    expect(await push(context({}, 'seller-b'), [level('fake-offer-1', 4)])).toEqual([])
+    expect(channel.offer('fake-offer-1', 'seller-a')).toMatchObject({ status: 'ended' })
+
+    // Replacing the Offer in the catalogue sets it for everyone; reset forgets every account.
+    channel.addOffer({ ...channel.offer('fake-offer-1')!, status: 'inactive' })
+    expect(channel.offer('fake-offer-1', 'seller-a')).toMatchObject({ status: 'inactive' })
+    await push(context({}, 'seller-b'), [level('fake-offer-2', 0)])
+    channel.reset()
+    expect(channel.offer('fake-offer-2', 'seller-b')).toMatchObject({ status: 'active' })
+  })
+
+  it('refuses a number above 0 for an Offer ended for another reason', async () => {
+    const channel = createFakeChannel()
+    channel.addOffer({ externalId: 'ended-by-seller', sku: null, name: 'Ended', url: null, status: 'ended', endedReason: 'other' })
+    expect(await channel.connector.capabilities['stock.push']!(context(), [level('ended-by-seller', 3)])).toEqual([
+      { offerExternalId: 'ended-by-seller', outcome: 'rejected', code: FAKE_OFFER_ENDED_CODE },
+    ])
+    expect(channel.offer('ended-by-seller', 'test')).toMatchObject({ status: 'ended', endedReason: 'other' })
+    // A 0 to it changes nothing and reports nothing: it did not end because it sold out.
+    expect(await channel.connector.capabilities['stock.push']!(context(), [level('ended-by-seller', 0)])).toEqual([])
+  })
+
+  it('rejects the stock and price of configured Offers and keeps the others', async () => {
+    const channel = createFakeChannel()
+    channel.reject('fake-offer-2', 'PRICE_TOO_LOW')
+    const ctx = context({ rejectOffers: ' fake-offer-3 , other' })
+    expect(await channel.connector.capabilities['stock.push']!(ctx, [level('fake-offer-1', 1), level('fake-offer-2', 1), level('fake-offer-3', 1)])).toEqual([
+      { offerExternalId: 'fake-offer-2', outcome: 'rejected', code: 'PRICE_TOO_LOW' },
+      { offerExternalId: 'fake-offer-3', outcome: 'rejected', code: FAKE_REJECTED_CODE },
+    ])
+    const price = (offerExternalId: string) => ({ offerExternalId, sku: null, price: { amount: '9.99', currency: 'PLN' } })
+    expect(await channel.connector.capabilities['price.push']!(ctx, [price('fake-offer-1'), price('fake-offer-3')])).toEqual([
+      { offerExternalId: 'fake-offer-3', outcome: 'rejected', code: FAKE_REJECTED_CODE },
+    ])
+    expect(channel.offer('fake-offer-1')?.price).toEqual({ amount: '9.99', currency: 'PLN' })
+    expect(channel.offer('fake-offer-3')?.price).toEqual({ amount: '25.00', currency: 'PLN' })
+
+    channel.reject('fake-offer-2', null)
+    expect(await channel.connector.capabilities['stock.push']!(context(), [level('fake-offer-2', 1)])).toEqual([])
+    channel.reject('fake-offer-2', 'X')
+    channel.reset()
+    expect(await channel.connector.capabilities['stock.push']!(context(), [level('fake-offer-2', 1)])).toEqual([])
   })
 })
 
@@ -296,7 +373,7 @@ describe('failure modes', () => {
   })
 
   it('defaults failMode to none and requires an API key', () => {
-    expect(fakeConnector.configSchema.parse({})).toEqual({ failMode: 'none' })
+    expect(fakeConnector.configSchema.parse({})).toEqual({ failMode: 'none', rejectOffers: '' })
     expect(fakeConnector.credentialsSchema.safeParse({ apiKey: '' }).success).toBe(false)
     expect(fakeConnector.configSchema.safeParse({ failMode: 'sometimes' }).success).toBe(false)
   })

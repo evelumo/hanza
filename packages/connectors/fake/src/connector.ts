@@ -12,16 +12,24 @@ import {
   type OfferPrice,
   type Order,
   type OrderStatus,
+  type PricePushResult,
   type PullResult,
   type RateLimits,
   type StockLevel,
+  type StockPushResult,
 } from '@hanza/connector-sdk'
 import { z } from 'zod'
 import { FAKE_API_URL } from './api'
 
 export const fakeConfigSchema = z.object({
   failMode: z.enum(['none', 'rate_limited', 'transient', 'permanent']).default('none').describe('Failure simulation'),
+  rejectOffers: z.string().max(1000).default('').describe('Offers that refuse stock and prices (comma-separated ids)'),
 })
+
+/** The code the fake Channel refuses an Offer's stock or price with. */
+export const FAKE_REJECTED_CODE = 'FAKE_REJECTED'
+/** The code it refuses a number above 0 for an Offer that ended for another reason than selling out with. */
+export const FAKE_OFFER_ENDED_CODE = 'OFFER_ENDED'
 
 export const fakeCredentialsSchema = z.object({ apiKey: z.string().min(1).describe('API key') })
 
@@ -35,6 +43,28 @@ export interface FakeState {
   stockPushes: StockLevel[][]
   pricePushes: OfferPrice[][]
   statusUpdates: Array<{ orderExternalId: string; status: OrderStatus }>
+  /** Offers whose stock and price this Channel refuses, with the code it answers. */
+  rejections: Map<string, string>
+  /**
+   * What stock pushes did to each Offer's publication, per seller account (the API key): on a real marketplace every
+   * Connection is its own account with its own Offers, so one Connection ending an Offer must not end another's.
+   */
+  publications: Map<string, Map<string, Publication>>
+}
+
+type Publication = Pick<Offer, 'status' | 'endedReason'>
+
+/** The Offer as this account sees it: its own publication if a push changed it, else the catalogue's. */
+export function withPublication(state: FakeState, account: string, offer: Offer): Offer {
+  const own = state.publications.get(account)?.get(offer.externalId)
+  if (!own) return offer
+  const { endedReason: _dropped, ...rest } = offer
+  return { ...rest, status: own.status, ...(own.endedReason ? { endedReason: own.endedReason } : {}) }
+}
+
+function rejectedBy(ctx: FakeContext, state: FakeState, offerExternalId: string): string | undefined {
+  const configured = ctx.config.rejectOffers.split(',').map((id) => id.trim())
+  return configured.includes(offerExternalId) ? FAKE_REJECTED_CODE : state.rejections.get(offerExternalId)
 }
 
 const PAGE_SIZE = 2
@@ -93,6 +123,7 @@ export function createFakeConnector(state: FakeState, options: FakeConnectorOpti
     name: 'Test channel',
     kind: 'marketplace',
     auth: { type: 'apiKey' },
+    reopensSoldOutOffers: true,
     configSchema: fakeConfigSchema,
     credentialsSchema: fakeCredentialsSchema,
     ...(options.rateLimits ? { rateLimits: options.rateLimits } : {}),
@@ -100,7 +131,7 @@ export function createFakeConnector(state: FakeState, options: FakeConnectorOpti
       async 'offers.pull'(ctx, cursor): Promise<PullResult<Offer>> {
         await request(ctx, 'offers.pull')
         const start = parseCursor(cursor)
-        const items = state.offers.slice(start, start + PAGE_SIZE)
+        const items = state.offers.slice(start, start + PAGE_SIZE).map((offer) => withPublication(state, ctx.credentials.apiKey, offer))
         const end = start + items.length
         return { items: structuredClone(items), nextCursor: String(end), hasMore: end < state.offers.length }
       },
@@ -116,18 +147,54 @@ export function createFakeConnector(state: FakeState, options: FakeConnectorOpti
           hasMore: pending.length > page.length,
         }
       },
+      // Like Allegro: 0 ends an active Offer (sold out), a number above 0 reopens a sold-out one, and an Offer ended
+      // for another reason refuses a number above 0; checked here, at push time, whatever Hanza last pulled. A 0 that
+      // leaves the Offer sold out is reported `ended` every time, so a retried push after a lost answer still says so.
+      // offers.pull then reports what the pushes of this account did.
       async 'stock.push'(ctx, levels) {
         await request(ctx, 'stock.push')
         state.stockPushes.push(structuredClone(levels))
+        const account = ctx.credentials.apiKey
+        const own = state.publications.get(account) ?? new Map<string, Publication>()
+        state.publications.set(account, own)
+        const results: StockPushResult[] = []
+        for (const { offerExternalId, available } of levels) {
+          const code = rejectedBy(ctx, state, offerExternalId)
+          if (code !== undefined) {
+            results.push({ offerExternalId, outcome: 'rejected', code })
+            continue
+          }
+          const known = state.offers.find((candidate) => candidate.externalId === offerExternalId)
+          if (!known) continue
+          const { status, endedReason } = withPublication(state, account, known)
+          if (status === 'inactive') continue
+          const soldOut = status === 'ended' && endedReason === 'sold_out'
+          if (available === 0) {
+            if (status === 'ended' && !soldOut) continue
+            if (!soldOut) own.set(offerExternalId, { status: 'ended', endedReason: 'sold_out' })
+            results.push({ offerExternalId, outcome: 'ended' })
+          } else if (status === 'ended') {
+            if (soldOut) own.set(offerExternalId, { status: 'active' })
+            else results.push({ offerExternalId, outcome: 'rejected', code: FAKE_OFFER_ENDED_CODE })
+          }
+        }
+        return results
       },
       async 'price.push'(ctx, prices) {
         await request(ctx, 'price.push')
         state.pricePushes.push(structuredClone(prices))
-        // Like a real Channel, the next offers.pull reports the price that was set.
+        const results: PricePushResult[] = []
         for (const { offerExternalId, price } of prices) {
+          const code = rejectedBy(ctx, state, offerExternalId)
+          if (code !== undefined) {
+            results.push({ offerExternalId, outcome: 'rejected', code })
+            continue
+          }
+          // Like a real Channel, the next offers.pull reports the price that was set.
           const offer = state.offers.find((candidate) => candidate.externalId === offerExternalId)
           if (offer) offer.price = { ...price }
         }
+        return results
       },
       async 'orders.updateStatus'(ctx, input) {
         await request(ctx, 'orders.updateStatus')

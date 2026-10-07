@@ -34,7 +34,7 @@ describe.skipIf(!databaseUrl)('offers', () => {
       ],
       new Date('2026-10-01T10:00:00Z'),
     )
-    expect(first).toEqual({ created: 5, updated: 0, linked: 4, repriced: 0 })
+    expect(first).toEqual({ created: 5, updated: 0, linked: 4, repriced: 0, republished: 0 })
     expect(await offer('null-to-sku')).toMatchObject({ sku: 'A', productId: a, linkedBy: 'sku', stockPushSeq: 1 })
     expect(await offer('no-match')).toMatchObject({ productId: null, linkedBy: null, stockPushSeq: 0 })
 
@@ -52,7 +52,7 @@ describe.skipIf(!databaseUrl)('offers', () => {
       ],
       seenAt,
     )
-    expect(second).toEqual({ created: 0, updated: 4, linked: 1, repriced: 1 })
+    expect(second).toEqual({ created: 0, updated: 4, linked: 1, repriced: 1, republished: 0 })
     expect(await offer('relink')).toMatchObject({ productId: b, linkedBy: 'sku', stockPushSeq: 2 })
     expect(await offer('unlink')).toMatchObject({ productId: null, linkedBy: null, sku: 'GONE' })
     expect(await offer('manual')).toMatchObject({ productId: null, linkedBy: 'manual' })

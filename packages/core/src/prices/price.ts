@@ -6,7 +6,7 @@ import { DomainError } from '../errors'
 export type PriceSkipReason = 'no_price' | 'currency_unknown' | 'currency_mismatch'
 
 /** What the panel shows for an Offer's price. */
-export type PriceStatus = 'not_linked' | 'unsupported' | PriceSkipReason | 'pending' | 'pushed'
+export type PriceStatus = 'not_linked' | 'unsupported' | PriceSkipReason | 'pending' | 'rejected' | 'pushed'
 
 /**
  * A price as Hanza stores it: a valid Money with an amount above zero and no more decimal places than the currency
@@ -63,11 +63,15 @@ export function priceStatus(offer: {
   lastPushed: Money | null
   /** The push sequence is ahead of the last handled one. */
   awaitingPush: boolean
+  /** The Channel refused the last price push (and nothing newer is waiting). */
+  rejected?: boolean
 }): PriceStatus {
   if (!offer.linked) return 'not_linked'
   if (!offer.supported) return 'unsupported'
   const decision = decidePricePush(offer.effective, offer.channelCurrency)
   if ('skip' in decision) return decision.skip
-  if (offer.awaitingPush || !sameMoney(offer.lastPushed, decision.push)) return 'pending'
+  if (offer.awaitingPush) return 'pending'
+  if (offer.rejected) return 'rejected'
+  if (!sameMoney(offer.lastPushed, decision.push)) return 'pending'
   return 'pushed'
 }
