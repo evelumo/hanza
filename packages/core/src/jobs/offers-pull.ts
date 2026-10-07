@@ -22,6 +22,7 @@ export const offersPullJob = defineJob({
       const seenAt = new Date()
       const counts = { seen: 0, created: 0, updated: 0, linked: 0 }
       let repriced = 0
+      let republished = 0
       let cursor: string | null = null
       let hasMore = true
       for (let page = 0; page < MAX_PAGES && hasMore; page++) {
@@ -35,6 +36,7 @@ export const offersPullJob = defineJob({
           counts.updated += upserted.updated
           counts.linked += upserted.linked
           repriced += upserted.repriced
+          republished += upserted.republished
         }
         cursor = result.nextCursor
         hasMore = result.hasMore
@@ -49,7 +51,7 @@ export const offersPullJob = defineJob({
       // Every run, not only when this one linked an Offer: a retry of a run that linked on an
       // earlier page sees linked 0. Cheap when nothing can match (the candidate query is empty).
       await rematchUnmatchedLines(ctx, organizationId)
-      if (counts.linked > 0) await requestStockPush(ctx, organizationId, [connectionId])
+      if (counts.linked > 0 || republished > 0) await requestStockPush(ctx, organizationId, [connectionId])
       if (counts.linked > 0 || repriced > 0) await requestPricePush(ctx, organizationId, [connectionId])
       if (trigger === 'manual') {
         await ctx.queue.enqueue(

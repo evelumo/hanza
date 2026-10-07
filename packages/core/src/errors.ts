@@ -30,6 +30,7 @@ export type DomainErrorCode =
   | 'status_name_required'
   | 'status_pending_deletion'
   | 'status_is_replacement'
+  | 'not_linked'
 
 /** Thrown by services for expected failures; the panel maps `code` to translated copy. */
 export class DomainError extends Error {

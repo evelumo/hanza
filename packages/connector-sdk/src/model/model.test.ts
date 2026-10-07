@@ -3,6 +3,7 @@ import { offerSchema } from './offer'
 import { currencyMinorUnits, moneySchema } from './money'
 import { orderSchema } from './order'
 import { offerPriceSchema } from './price'
+import { pricePushResultSchema, stockPushResultSchema } from './push-result'
 import { stockLevelSchema } from './stock'
 
 const address = {
@@ -165,5 +166,34 @@ describe('offerSchema and stockLevelSchema', () => {
     expect(stockLevelSchema.safeParse({ offerExternalId: 'a', sku: null, available: 0 }).success).toBe(true)
     expect(stockLevelSchema.safeParse({ offerExternalId: 'a', sku: null, available: -1 }).success).toBe(false)
     expect(stockLevelSchema.safeParse({ offerExternalId: 'a', sku: null, available: 1.5 }).success).toBe(false)
+  })
+})
+
+describe('Offer publication', () => {
+  const offer = { externalId: 'a', sku: 'SKU', name: 'Mug', url: null }
+
+  it('accepts a status, and a reason only for an ended Offer', () => {
+    for (const status of ['active', 'inactive', 'ended'] as const) expect(offerSchema.safeParse({ ...offer, status }).success).toBe(true)
+    expect(offerSchema.safeParse({ ...offer, status: 'ended', endedReason: 'sold_out' }).success).toBe(true)
+    expect(offerSchema.safeParse({ ...offer, status: 'ended', endedReason: 'other' }).success).toBe(true)
+    expect(offerSchema.safeParse({ ...offer, status: 'active', endedReason: 'sold_out' }).success).toBe(false)
+    expect(offerSchema.safeParse({ ...offer, endedReason: 'sold_out' }).success).toBe(false)
+    expect(offerSchema.safeParse({ ...offer, status: 'ENDED' }).success).toBe(false)
+  })
+})
+
+describe('push results', () => {
+  it('accepts ok, ended and rejected with a short code for stock', () => {
+    expect(stockPushResultSchema.safeParse({ offerExternalId: 'a', outcome: 'ok' }).success).toBe(true)
+    expect(stockPushResultSchema.safeParse({ offerExternalId: 'a', outcome: 'ended' }).success).toBe(true)
+    expect(stockPushResultSchema.safeParse({ offerExternalId: 'a', outcome: 'rejected', code: 'OFFER_NOT_FOUND' }).success).toBe(true)
+    expect(stockPushResultSchema.safeParse({ offerExternalId: 'a', outcome: 'rejected' }).success).toBe(false)
+    expect(stockPushResultSchema.safeParse({ offerExternalId: 'a', outcome: 'rejected', code: ' ' }).success).toBe(false)
+    expect(stockPushResultSchema.safeParse({ offerExternalId: 'a', outcome: 'rejected', code: 'x'.repeat(101) }).success).toBe(false)
+  })
+
+  it('has no ended outcome for prices', () => {
+    expect(pricePushResultSchema.safeParse({ offerExternalId: 'a', outcome: 'rejected', code: 'PRICE_TOO_LOW' }).success).toBe(true)
+    expect(pricePushResultSchema.safeParse({ offerExternalId: 'a', outcome: 'ended' }).success).toBe(false)
   })
 })

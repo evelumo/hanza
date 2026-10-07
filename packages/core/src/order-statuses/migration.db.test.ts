@@ -1,10 +1,13 @@
 import { randomUUID } from 'node:crypto'
+import { readFile } from 'node:fs/promises'
+import { join } from 'node:path'
 import { createDb, type Db } from '@hanza/db'
 import { applyMigration, createTestDatabase, migrationNames } from '@hanza/db/testing'
 import { describe, expect, it } from 'vitest'
 import { databaseUrl } from '../testing/db-test'
 
 const MIGRATION = '20261005210451_custom_order_statuses'
+const MIGRATIONS_DIR = join(import.meta.dirname, '..', '..', '..', 'db', 'prisma', 'migrations')
 
 type Seeded = {
   status: 'new' | 'processing' | 'shipped' | 'cancelled'
@@ -74,8 +77,13 @@ async function snapshot(db: Db): Promise<Map<string, unknown[]>> {
 }
 
 describe.skipIf(!databaseUrl)(`migration ${MIGRATION}`, () => {
-  it('is the last migration, so it runs after every migration that still names the `status` column', async () => {
-    expect((await migrationNames()).at(-1)).toBe(MIGRATION)
+  it('runs after every migration that still names the `status` column', async () => {
+    const names = await migrationNames()
+    expect(names).toContain(MIGRATION)
+    // Later migrations must not name the Order's old column (`"status"`), which this one renames to `phase`.
+    for (const later of names.filter((name) => name > MIGRATION)) {
+      expect(await readFile(join(MIGRATIONS_DIR, later, 'migration.sql'), 'utf8'), later).not.toMatch(/"status"/)
+    }
   })
 
   it('gives every organization its default statuses and moves every existing Order to the default of its phase, changing nothing else', async () => {

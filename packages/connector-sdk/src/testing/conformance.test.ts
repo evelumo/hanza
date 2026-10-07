@@ -147,9 +147,15 @@ const broken: Array<[id: string, connector: AnyConnectorDefinition, fixtures?: C
   ['C8', withCapabilities({ 'orders.pull': async (_ctx, cursor) => ({ ...slice(orders, cursor), hasMore: false }) })],
   ['C9', withCapabilities({ 'stock.push': async (_ctx, levels) => { if (levels.length === 0) throw new PermanentError('empty') } })],
   ['C9', withCapabilities({ 'stock.push': async (_ctx, levels) => { if (levels[0]?.available === 5) throw new PermanentError('five') } })],
+  ['C9', withCapabilities({ 'stock.push': async () => [{ offerExternalId: 'unknown', outcome: 'ok' }] })],
+  ['C9', withCapabilities({ 'stock.push': async (_ctx, levels) => levels.map((level) => ({ offerExternalId: level.offerExternalId, outcome: 'ended' as const })) })],
+  ['C9', withCapabilities({ 'stock.push': async (_ctx, levels) => levels.map((level) => ({ offerExternalId: level.offerExternalId, outcome: 'rejected' as const, code: '' })) })],
+  ['C9', withCapabilities({ 'stock.push': async (_ctx, levels) => [...levels, ...levels].map((level) => ({ offerExternalId: level.offerExternalId, outcome: 'ok' as const })) })],
+  ['C4', withCapabilities({ 'offers.pull': async (_ctx, cursor) => slice(offers.map((offer) => ({ ...offer, status: 'active' as const, endedReason: 'sold_out' as const })), cursor) })],
   ['C10', withCapabilities({ 'orders.updateStatus': async (_ctx, input) => { if (input.status === 'cancelled') throw new PermanentError('no') } })],
   ['C13', withCapabilities({ 'offers.pull': async (_ctx, cursor) => slice(offers.map((offer) => ({ ...offer, price: null })), cursor) })],
   ['C13', withCapabilities({ 'price.push': async (_ctx, prices) => { if (prices.length === 0) throw new PermanentError('empty') } })],
+  ['C13', withCapabilities({ 'price.push': async (_ctx, prices) => prices.map((price) => ({ offerExternalId: price.offerExternalId, outcome: 'ended' as never })) })],
   ['C13', (() => {
     const seen = new Set<string>()
     return withCapabilities({
@@ -170,6 +176,21 @@ const broken: Array<[id: string, connector: AnyConnectorDefinition, fixtures?: C
 describe('assertConformance', () => {
   it('passes for a minimal valid connector', async () => {
     await expect(assertConformance(validConnector(), fixtures)).resolves.toBeUndefined()
+  })
+
+  it('passes for a connector that reports publication statuses and per-Offer results', async () => {
+    const connector = withCapabilities({
+      'offers.pull': async (_ctx, cursor) =>
+        slice([{ ...offers[0]!, status: 'active' as const }, { ...offers[1]!, status: 'ended' as const, endedReason: 'sold_out' as const }, offers[2]!], cursor),
+      'stock.push': async (_ctx, levels) =>
+        levels.map((level, index) =>
+          index === 0
+            ? { offerExternalId: level.offerExternalId, outcome: 'rejected' as const, code: 'OFFER_NOT_FOUND' }
+            : { offerExternalId: level.offerExternalId, outcome: level.available === 0 ? ('ended' as const) : ('ok' as const) },
+        ),
+      'price.push': async (_ctx, prices) => prices.map((price) => ({ offerExternalId: price.offerExternalId, outcome: 'rejected' as const, code: 'PRICE_TOO_LOW' })),
+    })
+    await expect(assertConformance(connector, fixtures)).resolves.toBeUndefined()
   })
 
   it('passes for a connector without orders.updateStatus and without an unauthorized fixture', async () => {

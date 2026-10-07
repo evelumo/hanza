@@ -120,7 +120,8 @@
         "link": "Link",
         "lastPushed": "Last pushed",
         "price": "Price",
-        "actions": "Actions"
+        "actions": "Actions",
+        "publication": "On the channel"
       },
       "linkedManually": "Manual",
       "linkedBySku": "By SKU",
@@ -225,7 +226,8 @@
       "offer": "Offer",
       "sku": "SKU",
       "seen": "Seen",
-      "link": "Link manually"
+      "link": "Link manually",
+      "publication": "On the channel"
     },
     "selectOffer": "Select offer {name}",
     "selectAll": "Select all offers with a SKU",
@@ -247,7 +249,13 @@
     "overrideTitle": "Offer price",
     "overrideDescription": "A price for this offer only. It wins over the product's base price; remove it to go back to the base price.",
     "mismatchHint": "Set an offer price in {currency} to send one.",
-    "notLinked": "This offer is not linked to a product, so Hanza sends neither its stock nor its price. Link it on the list of offers without a product."
+    "notLinked": "This offer is not linked to a product, so Hanza sends neither its stock nor its price. Link it on the list of offers without a product.",
+    "publication": "On the channel",
+    "publicationHint": "As reported at the last sync or stock push.",
+    "lastPushedStock": "Last sent stock",
+    "stockTitle": "Stock on the channel",
+    "stockDescription": "Hanza sends the number the channel may sell. If the channel refuses this offer, the other offers keep syncing; retry once the cause is fixed. A change of stock or stock settings retries it on its own.",
+    "priceRetryDescription": "If the channel refuses this offer's price, retry once the cause is fixed. A new price retries it on its own."
   },
   "prices": {
     "none": "No price",
@@ -267,7 +275,8 @@
       "currency_unknown": "Not sent: the channel did not report the offer's currency.",
       "currency_mismatch": "Not sent: the channel sells this offer in {channelCurrency} and the price is in {priceCurrency}.",
       "pending": "Waiting to be sent.",
-      "pushed": "Sent {date}."
+      "pushed": "Sent {date}.",
+      "rejected": "Rejected by the channel."
     }
   },
   "orders": {
@@ -388,6 +397,13 @@
         "defaultOption": "Default status of the phase ({status})",
         "save": "Save",
         "adminsOnly": "Only an owner or admin of the organization can change this."
+      },
+      "rejectedTitle": "Offers rejected by the channel",
+      "rejectedDescription": "The channel refused the last stock or price of these offers. The other offers keep syncing. Open an offer to see why and to retry.",
+      "rejectedColumns": {
+        "offer": "Offer",
+        "stock": "Stock",
+        "price": "Price"
       }
     },
     "new": {
@@ -529,6 +545,13 @@
     "erasureCause": {
       "retention": "retention period",
       "erasure_request": "erasure request"
+    },
+    "publication": {
+      "active": "Active",
+      "inactive": "Inactive (draft)",
+      "ended": "Ended",
+      "ended_sold_out": "Ended (sold out)",
+      "unknown": "Unknown"
     }
   },
   "sync": {
@@ -543,7 +566,8 @@
       "pages": "pages",
       "pushed": "pushed",
       "truncated": "stopped at the page limit",
-      "skipped": "not sent"
+      "skipped": "not sent",
+      "rejected": "rejected"
     }
   },
   "events": {
@@ -589,7 +613,10 @@
       "warehouse_updated": "Warehouse changed",
       "warehouse_deactivated": "Warehouse deactivated",
       "warehouse_activated": "Warehouse activated",
-      "warehouse_deleted": "Warehouse deleted"
+      "warehouse_deleted": "Warehouse deleted",
+      "offer_channel_status_changed": "Offer status on the channel changed",
+      "offer_push_rejected": "The channel rejected an offer",
+      "offer_push_retried": "Sending an offer retried"
     },
     "lines": "{count, plural, one {# line} other {# lines}}",
     "defaultStatus": "default status",
@@ -599,7 +626,11 @@
     "ordersErased": "{count, plural, one {# order erased} other {# orders erased}}",
     "allWarehouses": "all warehouses",
     "someWarehouses": "{count, plural, one {# chosen warehouse} other {# chosen warehouses}}",
-    "priority": "priority {change}"
+    "priority": "priority {change}",
+    "push": {
+      "stock": "stock",
+      "price": "price"
+    }
   },
   "errors": {
     "domain": {
@@ -631,7 +662,8 @@
       "warehouse_in_use": "The warehouse is still in use: a channel chose it, or it has reservations in its history. Change the channel’s warehouses first, or deactivate it instead of deleting it.",
       "no_warehouse_selected": "Choose at least one warehouse.",
       "reservation_not_open": "Only an open reservation of a new or processing order can be moved.",
-      "not_enough_stock": "That warehouse does not have enough available for the whole line."
+      "not_enough_stock": "That warehouse does not have enough available for the whole line.",
+      "not_linked": "This offer is not linked to a product."
     },
     "unexpected": "Something went wrong. Please try again.",
     "invalidInput": "Check the fields.",
@@ -767,6 +799,20 @@
       "channelsLine": "Chosen by: {channels}",
       "historyTitle": "History",
       "historyEmpty": "No events."
+    }
+  },
+  "offerPush": {
+    "rejected": "Rejected by the channel: {code}.",
+    "offerEnded": "Not sent: the offer has ended on the channel. Hanza reopens only offers that sold out; reactivate it on the channel to sell it again.",
+    "retry": "Retry",
+    "retrying": "Retrying…",
+    "retryStock": "Retry sending the stock",
+    "retryPrice": "Retry sending the price",
+    "stock": {
+      "not_linked": "Not sent: the offer is not linked to a product.",
+      "pending": "Waiting to be sent.",
+      "not_sent": "Not sent: the offer has ended on the channel, and there is no stock to reopen it with.",
+      "pushed": "{count, plural, one {# unit} other {# units}} sent {date}."
     }
   }
 }

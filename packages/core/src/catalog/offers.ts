@@ -1,4 +1,4 @@
-import type { Money, Offer } from '@hanza/connector-sdk'
+import type { Money, Offer, OfferEndedReason, OfferPublicationStatus } from '@hanza/connector-sdk'
 import type { Actor } from '../actor'
 import { systemActor } from '../actor'
 import type { Context } from '../context'
@@ -10,6 +10,14 @@ import { moneyFromColumns } from '../prices/price'
 import { requestPricePushAfterCommit } from '../prices/push'
 import { requestStockPushAfterCommit } from '../stock/push'
 import { TX_OPTIONS } from '../transaction'
+import {
+  describeOfferStock,
+  offerStockColumns,
+  publicationFromColumns,
+  setOfferPublication,
+  type OfferPublication,
+  type OfferStockView,
+} from './offer-push'
 import { normalizeSku } from './sku'
 
 export interface OfferRow {
@@ -24,6 +32,7 @@ export interface OfferRow {
   productSku: string | null
   linkedBy: 'sku' | 'manual' | null
   lastSeenAt: Date
+  publication: OfferPublication | null
 }
 
 /**
@@ -31,10 +40,15 @@ export interface OfferRow {
  * never-linked Offer is linked by SKU; one linked by SKU follows its SKU
  * (relinked or unlinked); a manually linked or unlinked Offer is left alone.
  *
- * Unlike the panel-facing services this enqueues nothing: when `linked > 0` the
- * caller (the `offers.pull` job) must call `requestStockPush` for the
- * Connection and `rematchUnmatchedLines` itself, after this returns, and
- * `requestPricePush` when `linked` or `repriced` is above 0.
+ * Unlike the panel-facing services this enqueues nothing: when `linked` or
+ * `republished` is above 0 the caller (the `offers.pull` job) must call
+ * `requestStockPush` for the Connection and `rematchUnmatchedLines` itself,
+ * after this returns, and `requestPricePush` when `linked` or `repriced` is above 0.
+ *
+ * A reported publication is stored (one the connector does not report is left
+ * as it is). When it changes on a linked Offer whose publication was known, the
+ * Offer is marked for a stock push, so an Offer reactivated or ended on the
+ * Channel gets its number or its rejection again (ADR 0022).
  *
  * The Channel's price is stored as reported and never adopted (ADR 0011); a
  * linked Offer whose Channel currency changed is marked for a price push, since
@@ -46,7 +60,7 @@ export async function upsertOffers(
   connectionId: string,
   offers: Offer[],
   seenAt: Date,
-): Promise<{ created: number; updated: number; linked: number; repriced: number }> {
+): Promise<{ created: number; updated: number; linked: number; repriced: number; republished: number }> {
   return ctx.db.$transaction(async (tx) => {
     const connection = await tx.connection.findFirst({ where: { id: connectionId, organizationId }, select: { id: true } })
     if (!connection) throw new DomainError('not_found')
@@ -60,7 +74,16 @@ export async function upsertOffers(
       FOR UPDATE`
     const existing = await tx.offer.findMany({
       where: { organizationId, connectionId, externalId: { in: externalIds } },
-      select: { id: true, externalId: true, productId: true, linkedBy: true, channelPriceCurrency: true, product: { select: { sku: true } } },
+      select: {
+        id: true,
+        externalId: true,
+        productId: true,
+        linkedBy: true,
+        channelPriceCurrency: true,
+        channelStatus: true,
+        channelEndedReason: true,
+        product: { select: { sku: true } },
+      },
     })
     const current = new Map(existing.map((offer) => [offer.externalId, offer]))
 
@@ -68,7 +91,7 @@ export async function upsertOffers(
     const products = await tx.product.findMany({ where: { organizationId, sku: { in: skus } }, select: { id: true, sku: true } })
     const productBySku = new Map(products.map((product) => [product.sku, product.id]))
 
-    const counts = { created: 0, updated: 0, linked: 0, repriced: 0 }
+    const counts = { created: 0, updated: 0, linked: 0, repriced: 0, republished: 0 }
     const linkedEvent = (offerId: string, productId: string) =>
       appendEvent(tx, {
         organizationId,
@@ -81,12 +104,17 @@ export async function upsertOffers(
       const match = offer.sku ? productBySku.get(offer.sku) : undefined
       const known = current.get(offer.externalId)
       const channelPrice = offer.price ?? null
+      const publication =
+        offer.status === undefined
+          ? undefined
+          : { channelStatus: offer.status, channelEndedReason: offer.status === 'ended' ? (offer.endedReason ?? null) : null }
       const fields = {
         sku: offer.sku,
         name: offer.name,
         url: offer.url,
         channelPriceAmount: channelPrice?.amount ?? null,
         channelPriceCurrency: channelPrice?.currency ?? null,
+        ...publication,
         lastSeenAt: seenAt,
       }
 
@@ -110,6 +138,8 @@ export async function upsertOffers(
           productId: match ?? null,
           linkedBy: match ? 'sku' : null,
           channelPriceCurrency: fields.channelPriceCurrency,
+          channelStatus: publication?.channelStatus ?? null,
+          channelEndedReason: publication?.channelEndedReason ?? null,
           product: match && offer.sku ? { sku: offer.sku } : null,
         })
         counts.created++
@@ -129,16 +159,33 @@ export async function upsertOffers(
 
       const linkedTo = link ? link.productId : known.productId
       const repriced = linkedTo !== null && (link !== undefined || known.channelPriceCurrency !== fields.channelPriceCurrency)
+      const republishedFrom =
+        publication &&
+        known.channelStatus !== null &&
+        (known.channelStatus !== publication.channelStatus || known.channelEndedReason !== publication.channelEndedReason)
+          ? known.channelStatus
+          : undefined
+      const republished = linkedTo !== null && republishedFrom !== undefined
       await tx.offer.updateMany({
         where: { id: known.id, organizationId },
         data: {
           ...fields,
-          ...(link ? { ...link, ...(link.productId ? { stockPushSeq: { increment: 1 } } : {}) } : {}),
+          ...((link?.productId ?? null) !== null || republished ? { stockPushSeq: { increment: 1 } } : {}),
+          ...(link ? link : {}),
           ...(repriced ? { pricePushSeq: { increment: 1 } } : {}),
         },
       })
       counts.updated++
       if (repriced) counts.repriced++
+      if (republished) counts.republished++
+      if (publication && republishedFrom !== undefined) {
+        await appendEvent(tx, {
+          organizationId,
+          type: 'offer.channel_status_changed',
+          subject: { type: 'offer', id: known.id },
+          payload: { from: republishedFrom, to: publication.channelStatus, endedReason: publication.channelEndedReason, source: 'pull' },
+        })
+      }
       if (link) {
         if (known.productId && known.productId !== link.productId) {
           await appendEvent(tx, {
@@ -155,6 +202,8 @@ export async function upsertOffers(
         current.set(offer.externalId, {
           ...known,
           channelPriceCurrency: fields.channelPriceCurrency,
+          channelStatus: publication?.channelStatus ?? known.channelStatus,
+          channelEndedReason: publication ? publication.channelEndedReason : known.channelEndedReason,
           productId: link.productId,
           linkedBy: link.linkedBy,
           product: link.productId && offer.sku ? { sku: offer.sku } : null,
@@ -240,11 +289,12 @@ export async function listOffers(
       productSku: offer.product?.sku ?? null,
       linkedBy: offer.linkedBy,
       lastSeenAt: offer.lastSeenAt,
+      publication: publicationFromColumns(offer.channelStatus, offer.channelEndedReason),
     })),
   }
 }
 
-export interface OfferDetail extends OfferPriceView {
+export interface OfferDetail extends OfferPriceView, OfferStockView {
   id: string
   connectionId: string
   connectionName: string
@@ -270,6 +320,7 @@ export async function getOffer(ctx: Context, organizationId: string, offerId: st
       linkedBy: true,
       lastSeenAt: true,
       ...offerPriceColumns,
+      ...offerStockColumns,
       connection: { select: { name: true, connectorId: true } },
       product: { select: { id: true, sku: true, name: true, basePriceAmount: true, basePriceCurrency: true } },
     },
@@ -295,39 +346,94 @@ export async function getOffer(ctx: Context, organizationId: string, offerId: st
     lastSeenAt: offer.lastSeenAt,
     product,
     ...describeOfferPrice(ctx, { ...offer, connectorId: offer.connection.connectorId }, product),
+    ...describeOfferStock(offer),
   }
 }
 
-/** Linked Offers whose push sequence is ahead of the last pushed one, by id. */
+/** Linked Offers whose push sequence is ahead of the last pushed one, by id, with their publication on the Channel. */
 export async function listOffersAwaitingStockPush(
   ctx: Context,
   organizationId: string,
   connectionId: string,
   limit: number,
-): Promise<Array<{ offerId: string; externalId: string; sku: string | null; productId: string; seq: number }>> {
-  return ctx.db.$queryRaw`
-    SELECT "id" AS "offerId", "externalId", "sku", "productId", "stockPushSeq" AS "seq"
+): Promise<Array<{ offerId: string; externalId: string; sku: string | null; productId: string; seq: number; publication: OfferPublication | null }>> {
+  const rows = await ctx.db.$queryRaw<
+    Array<{
+      offerId: string
+      externalId: string
+      sku: string | null
+      productId: string
+      seq: number
+      channelStatus: OfferPublicationStatus | null
+      channelEndedReason: OfferEndedReason | null
+    }>
+  >`
+    SELECT "id" AS "offerId", "externalId", "sku", "productId", "stockPushSeq" AS "seq", "channelStatus", "channelEndedReason"
     FROM "offer"
     WHERE "organizationId" = ${organizationId} AND "connectionId" = ${connectionId}
       AND "productId" IS NOT NULL AND "stockPushSeq" > "stockPushedSeq"
     ORDER BY "id"
     LIMIT ${limit}`
+  return rows.map(({ channelStatus, channelEndedReason, ...row }) => ({ ...row, publication: publicationFromColumns(channelStatus, channelEndedReason) }))
+}
+
+/** What one stock push did for one Offer; `publication` is what the Channel's answer says about it now. */
+export interface StockPushOutcome {
+  offerId: string
+  seq: number
+  outcome: { pushed: number } | { rejected: string } | { skipped: true }
+  publication?: OfferPublication
 }
 
 /**
- * Compare-and-clear: records `seq` as pushed only if it is still ahead, so a
- * bump that happened after the list was read keeps the Offer pending.
+ * Records a batch's outcomes, Offers locked in id order. Compare-and-clear: `seq` is recorded as handled only if it
+ * is still ahead, so a change after the list was read keeps the Offer pending (and a rejection of a superseded
+ * number is dropped). A rejection is kept with its code and an Event, and the Offer counts as handled, so it does not
+ * fill every batch; a push or a skip clears it. A publication the Channel reported is stored whatever the sequence.
  */
+export async function recordStockPushOutcomes(ctx: Context, organizationId: string, outcomes: StockPushOutcome[]): Promise<void> {
+  if (outcomes.length === 0) return
+  const sorted = [...outcomes].sort((a, b) => (a.offerId < b.offerId ? -1 : a.offerId > b.offerId ? 1 : 0))
+  await ctx.db.$transaction(async (tx) => {
+    const now = new Date()
+    for (const item of sorted) {
+      if (item.publication) await setOfferPublication(tx, organizationId, item.offerId, item.publication, 'push')
+      const where = { id: item.offerId, organizationId, stockPushedSeq: { lt: item.seq } }
+      const { outcome } = item
+      if ('pushed' in outcome) {
+        await tx.offer.updateMany({
+          where,
+          data: { stockPushedSeq: item.seq, lastPushedAvailable: outcome.pushed, lastPushedAt: now, stockRejectedCode: null, stockRejectedAt: null },
+        })
+      } else if ('rejected' in outcome) {
+        const { count } = await tx.offer.updateMany({
+          where,
+          data: { stockPushedSeq: item.seq, stockRejectedCode: outcome.rejected, stockRejectedAt: now },
+        })
+        if (count > 0) {
+          await appendEvent(tx, {
+            organizationId,
+            type: 'offer.push_rejected',
+            subject: { type: 'offer', id: item.offerId },
+            payload: { push: 'stock', code: outcome.rejected },
+          })
+        }
+      } else {
+        await tx.offer.updateMany({ where, data: { stockPushedSeq: item.seq, stockRejectedCode: null, stockRejectedAt: null } })
+      }
+    }
+  }, TX_OPTIONS)
+}
+
+/** `recordStockPushOutcomes` for a batch the Channel accepted whole. */
 export async function markOffersPushed(
   ctx: Context,
   organizationId: string,
   pushed: Array<{ offerId: string; seq: number; available: number }>,
 ): Promise<void> {
-  const sorted = [...pushed].sort((a, b) => (a.offerId < b.offerId ? -1 : a.offerId > b.offerId ? 1 : 0))
-  for (const item of sorted) {
-    await ctx.db.$executeRaw`
-      UPDATE "offer"
-      SET "stockPushedSeq" = ${item.seq}, "lastPushedAvailable" = ${item.available}, "lastPushedAt" = now(), "updatedAt" = now()
-      WHERE "id" = ${item.offerId} AND "organizationId" = ${organizationId} AND "stockPushedSeq" < ${item.seq}`
-  }
+  await recordStockPushOutcomes(
+    ctx,
+    organizationId,
+    pushed.map(({ offerId, seq, available }) => ({ offerId, seq, outcome: { pushed: available } })),
+  )
 }

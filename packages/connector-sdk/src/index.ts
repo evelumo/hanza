@@ -44,6 +44,22 @@ export {
   type OrderStatus,
   type PaymentMethod,
 } from './model/order'
-export { offerSchema, type Offer } from './model/offer'
+export {
+  offerEndedReasonSchema,
+  offerPublicationStatusSchema,
+  offerSchema,
+  OFFER_ENDED_REASONS,
+  OFFER_PUBLICATION_STATUSES,
+  type Offer,
+  type OfferEndedReason,
+  type OfferPublicationStatus,
+} from './model/offer'
+export {
+  pricePushResultSchema,
+  pushRejectionCodeSchema,
+  stockPushResultSchema,
+  type PricePushResult,
+  type StockPushResult,
+} from './model/push-result'
 export { stockLevelSchema, type StockLevel } from './model/stock'
 export { offerPriceSchema, type OfferPrice } from './model/price'

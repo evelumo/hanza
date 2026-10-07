@@ -1,5 +1,5 @@
 export { createFakeChannel, fakeChannel, fakeConnector, type FakeChannel } from './channel'
-export { fakeConfigSchema, fakeCredentialsSchema } from './connector'
+export { fakeConfigSchema, fakeCredentialsSchema, FAKE_OFFER_ENDED_CODE, FAKE_REJECTED_CODE } from './connector'
 export {
   createFakeHttpConnector,
   fakeHttpConfigSchema,

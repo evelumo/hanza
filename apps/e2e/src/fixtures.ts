@@ -97,11 +97,15 @@ export async function signUpThroughForms(page: Page): Promise<Account> {
   return account
 }
 
-/** Adds a Connection with the fake connector (its first sync starts on its own); returns its id. */
-export async function addFakeConnection(page: Page, name = 'Fake marketplace'): Promise<string> {
+/**
+ * Adds a Connection with the fake connector (its first sync starts on its own); returns its id. `rejectOffers` lists
+ * fake Offer ids whose stock and price this Connection's Channel refuses (per Connection, so flows never share it).
+ */
+export async function addFakeConnection(page: Page, name = 'Fake marketplace', options: { rejectOffers?: string } = {}): Promise<string> {
   await page.goto('/connections/new')
   await page.getByRole('link', { name: /Test channel/ }).click()
   await page.getByLabel('Name', { exact: true }).fill(name)
+  if (options.rejectOffers) await page.getByLabel(/Offers that refuse stock and prices/).fill(options.rejectOffers)
   await page.getByLabel('API key').fill('e2e-api-key')
   await page.getByRole('button', { name: 'Add connection' }).click()
   await expect(page.getByRole('heading', { level: 1, name })).toBeVisible()

@@ -198,7 +198,7 @@ describe.skipIf(!databaseUrl)('stock.push', () => {
     expect(ctx.queue.waiting.filter((job) => (job.payload as { connectionId: string }).connectionId === connectionId)).toEqual([
       { name: 'stock.push', payload: { organizationId, connectionId }, options: { coalesceKey: `stock.push:${connectionId}` } },
     ])
-    expect((await ctx.db.syncState.findFirstOrThrow({ where: { connectionId, stream: 'stock_push' } })).lastResult).toEqual({ pushed: 1_000 })
+    expect((await ctx.db.syncState.findFirstOrThrow({ where: { connectionId, stream: 'stock_push' } })).lastResult).toEqual({ pushed: 1_000, rejected: 0, skipped: 0 })
   })
 
   it('a payload naming another organization does nothing', async () => {

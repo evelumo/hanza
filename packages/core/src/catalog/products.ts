@@ -12,6 +12,7 @@ import { requestStockPushAfterCommit } from '../stock/push'
 import { DEFAULT_WAREHOUSE_CODE, ensureDefaultWarehouse } from '../stock/warehouse'
 import { TX_OPTIONS } from '../transaction'
 import { autoLinkOffersBySku } from './auto-link'
+import { describeOfferStock, offerStockColumns, type OfferStockView } from './offer-push'
 import { normalizeSku } from './sku'
 
 /** The family a Product is in and its value for each of the family's attributes, in the family's order. */
@@ -45,9 +46,8 @@ export interface ProductDetail extends ProductRow {
       externalId: string
       name: string
       linkedBy: 'sku' | 'manual'
-      lastPushedAvailable: number | null
-      lastPushedAt: Date | null
-    } & OfferPriceView
+    } & OfferPriceView &
+      OfferStockView
   >
   /** Active Warehouses in placement order, each with this Product's Stock, Reserved and Available there. */
   warehouses: Array<{ id: string; name: string; isDefault: boolean } & Availability>
@@ -197,8 +197,7 @@ export async function getProduct(ctx: Context, organizationId: string, productId
           externalId: true,
           name: true,
           linkedBy: true,
-          lastPushedAvailable: true,
-          lastPushedAt: true,
+          ...offerStockColumns,
           ...offerPriceColumns,
           connection: { select: { name: true, connectorId: true } },
         },
@@ -244,8 +243,7 @@ export async function getProduct(ctx: Context, organizationId: string, productId
       name: offer.name,
       // A linked Offer always records how it was linked.
       linkedBy: offer.linkedBy ?? 'manual',
-      lastPushedAvailable: offer.lastPushedAvailable,
-      lastPushedAt: offer.lastPushedAt,
+      ...describeOfferStock(offer),
       ...describeOfferPrice(ctx, { ...offer, connectorId: offer.connection.connectorId }, { basePrice }),
     })),
     warehouses: warehouses.map((warehouse) => ({

@@ -17,13 +17,25 @@ export interface FakeChannel {
   /** Arguments of every price.push call, in order. A push also sets the Offer's price that offers.pull reports. */
   readonly pricePushes: OfferPrice[][]
   readonly statusUpdates: Array<{ orderExternalId: string; status: OrderStatus }>
-  /** Back to the seed, recorded calls cleared. */
+  /** The Channel refuses this Offer's stock and price with `code` from now on; null accepts them again. */
+  reject(offerExternalId: string, code: string | null): void
+  /** The Offer as offers.pull reports it now (its status changes when a push ends or reopens it). */
+  offer(offerExternalId: string): Offer | undefined
+  /** Back to the seed, recorded calls and rejections cleared. */
   reset(): void
 }
 
 /** `id` other than "fake" lets a test register several independent fake Channels side by side. */
 export function createFakeChannel(options: { id?: string } = {}): FakeChannel {
-  const state: FakeState = { offers: [], orders: new Map(), journal: [], stockPushes: [], pricePushes: [], statusUpdates: [] }
+  const state: FakeState = {
+    offers: [],
+    orders: new Map(),
+    journal: [],
+    stockPushes: [],
+    pricePushes: [],
+    statusUpdates: [],
+    rejections: new Map(),
+  }
 
   const appendToJournal = (orderExternalId: string) => {
     state.journal.push({ seq: state.journal.length + 1, orderExternalId })
@@ -55,6 +67,14 @@ export function createFakeChannel(options: { id?: string } = {}): FakeChannel {
     stockPushes: state.stockPushes,
     pricePushes: state.pricePushes,
     statusUpdates: state.statusUpdates,
+    reject(offerExternalId, code) {
+      if (code === null) state.rejections.delete(offerExternalId)
+      else state.rejections.set(offerExternalId, code)
+    },
+    offer(offerExternalId) {
+      const offer = state.offers.find((candidate) => candidate.externalId === offerExternalId)
+      return offer ? structuredClone(offer) : undefined
+    },
     reset() {
       state.offers.length = 0
       state.orders.clear()
@@ -62,6 +82,7 @@ export function createFakeChannel(options: { id?: string } = {}): FakeChannel {
       state.stockPushes.length = 0
       state.pricePushes.length = 0
       state.statusUpdates.length = 0
+      state.rejections.clear()
       seedOffers.forEach(channel.addOffer)
       seedOrders.forEach(channel.addOrder)
       seedFacts.forEach(({ orderExternalId, fact }) => channel.addFact(orderExternalId, fact))

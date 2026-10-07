@@ -15,6 +15,7 @@ export const updateProductSchema = z.object({ productId: idSchema, name: product
 export const setStockSchema = z.object({ productId: idSchema, warehouseId: idSchema, stock: unitsSchema })
 export const unlinkOfferSchema = z.object({ offerId: idSchema })
 export const linkOfferSchema = z.object({ offerId: idSchema, sku: skuSchema })
+export const retryOfferPushSchema = z.object({ offerId: idSchema, push: z.enum(['stock', 'price'], { error: FIELD_INVALID }) })
 export const createProductsFromOffersSchema = z.object({
   offerIds: z.array(idSchema, { error: OFFERS_REQUIRED }).min(1, OFFERS_REQUIRED).max(200, messageKey('validation.offersTooMany')),
 })

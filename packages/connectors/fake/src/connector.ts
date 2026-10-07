@@ -10,14 +10,22 @@ import {
   type OfferPrice,
   type Order,
   type OrderStatus,
+  type PricePushResult,
   type PullResult,
   type StockLevel,
+  type StockPushResult,
 } from '@hanza/connector-sdk'
 import { z } from 'zod'
 
 export const fakeConfigSchema = z.object({
   failMode: z.enum(['none', 'rate_limited', 'transient', 'permanent']).default('none').describe('Failure simulation'),
+  rejectOffers: z.string().max(1000).default('').describe('Offers that refuse stock and prices (comma-separated ids)'),
 })
+
+/** The code the fake Channel refuses an Offer's stock or price with. */
+export const FAKE_REJECTED_CODE = 'FAKE_REJECTED'
+/** The code it refuses a number above 0 for an Offer that ended for another reason than selling out with. */
+export const FAKE_OFFER_ENDED_CODE = 'OFFER_ENDED'
 
 export const fakeCredentialsSchema = z.object({ apiKey: z.string().min(1).describe('API key') })
 
@@ -31,6 +39,13 @@ export interface FakeState {
   stockPushes: StockLevel[][]
   pricePushes: OfferPrice[][]
   statusUpdates: Array<{ orderExternalId: string; status: OrderStatus }>
+  /** Offers whose stock and price this Channel refuses, with the code it answers. */
+  rejections: Map<string, string>
+}
+
+function rejectedBy(ctx: FakeContext, state: FakeState, offerExternalId: string): string | undefined {
+  const configured = ctx.config.rejectOffers.split(',').map((id) => id.trim())
+  return configured.includes(offerExternalId) ? FAKE_REJECTED_CODE : state.rejections.get(offerExternalId)
 }
 
 const PAGE_SIZE = 2
@@ -63,6 +78,7 @@ export function createFakeConnector(state: FakeState, id = 'fake'): FakeConnecto
     name: 'Test channel',
     kind: 'marketplace',
     auth: { type: 'apiKey' },
+    reopensSoldOutOffers: true,
     configSchema: fakeConfigSchema,
     credentialsSchema: fakeCredentialsSchema,
     capabilities: {
@@ -85,18 +101,52 @@ export function createFakeConnector(state: FakeState, id = 'fake'): FakeConnecto
           hasMore: pending.length > page.length,
         }
       },
+      // Like Allegro: 0 ends an active Offer (sold out), a number above 0 reopens a sold-out one, and an Offer ended
+      // for another reason refuses a number above 0. offers.pull then reports what the push did.
       async 'stock.push'(ctx, levels) {
         failIfRequested(ctx)
         state.stockPushes.push(structuredClone(levels))
+        const results: StockPushResult[] = []
+        for (const { offerExternalId, available } of levels) {
+          const code = rejectedBy(ctx, state, offerExternalId)
+          if (code !== undefined) {
+            results.push({ offerExternalId, outcome: 'rejected', code })
+            continue
+          }
+          const offer = state.offers.find((candidate) => candidate.externalId === offerExternalId)
+          if (!offer || offer.status === 'inactive') continue
+          if (available === 0) {
+            if (offer.status === 'active') {
+              offer.status = 'ended'
+              offer.endedReason = 'sold_out'
+              results.push({ offerExternalId, outcome: 'ended' })
+            }
+          } else if (offer.status === 'ended') {
+            if (offer.endedReason === 'sold_out') {
+              offer.status = 'active'
+              delete offer.endedReason
+            } else {
+              results.push({ offerExternalId, outcome: 'rejected', code: FAKE_OFFER_ENDED_CODE })
+            }
+          }
+        }
+        return results
       },
       async 'price.push'(ctx, prices) {
         failIfRequested(ctx)
         state.pricePushes.push(structuredClone(prices))
-        // Like a real Channel, the next offers.pull reports the price that was set.
+        const results: PricePushResult[] = []
         for (const { offerExternalId, price } of prices) {
+          const code = rejectedBy(ctx, state, offerExternalId)
+          if (code !== undefined) {
+            results.push({ offerExternalId, outcome: 'rejected', code })
+            continue
+          }
+          // Like a real Channel, the next offers.pull reports the price that was set.
           const offer = state.offers.find((candidate) => candidate.externalId === offerExternalId)
           if (offer) offer.price = { ...price }
         }
+        return results
       },
       async 'orders.updateStatus'(ctx, input) {
         failIfRequested(ctx)
