@@ -30,6 +30,7 @@ describe.skipIf(!databaseUrl)('connections', () => {
       name: 'My channel',
       config: { failMode: 'none' },
       credentials: { apiKey: 'super-secret-key' },
+      credentialsVersion: 0,
       health: 'unknown',
     })
 

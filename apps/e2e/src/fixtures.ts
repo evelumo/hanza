@@ -23,7 +23,16 @@ export interface Account {
   organization: string
 }
 
-export const test = base.extend<{ fakeChannel: FakeChannelProbe }, { db: pg.Pool }>({
+/** Acts as the person on the fake OAuth Channel's sign-in page, through the probe in the worker. */
+export interface FakeOAuthProbe {
+  /** Approves a pending sign-in code, as the default account unless another is given. */
+  approve(userCode: string, account?: { id: string; label: string }): Promise<void>
+  deny(userCode: string): Promise<void>
+  /** Every token issued so far stops working, refresh tokens included (the seller unlinked the application). */
+  revokeAll(): Promise<void>
+}
+
+export const test = base.extend<{ fakeChannel: FakeChannelProbe; fakeOAuth: FakeOAuthProbe }, { db: pg.Pool }>({
   fakeChannel: async ({}, use) => {
     const url = `${readRunEnv('probeUrl')}/fake-channel`
     await use({
@@ -32,6 +41,17 @@ export const test = base.extend<{ fakeChannel: FakeChannelProbe }, { db: pg.Pool
         if (!response.ok) throw new Error(`fake Channel probe answered ${response.status}`)
         return (await response.json()) as FakeChannelCalls
       },
+    })
+  },
+  fakeOAuth: async ({}, use) => {
+    const post = async (path: string, body?: unknown) => {
+      const response = await fetch(`${readRunEnv('probeUrl')}${path}`, { method: 'POST', body: body === undefined ? undefined : JSON.stringify(body) })
+      if (!response.ok) throw new Error(`fake OAuth probe answered ${response.status}: ${await response.text()}`)
+    }
+    await use({
+      approve: (userCode, account) => post('/fake-oauth/approve', { userCode, account }),
+      deny: (userCode) => post('/fake-oauth/deny', { userCode }),
+      revokeAll: () => post('/fake-oauth/revoke'),
     })
   },
   // For assertions the panel does not show; the run's own throwaway database.

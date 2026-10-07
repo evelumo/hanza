@@ -38,6 +38,14 @@ model Connection {
   config          Json
   /// Sealed with HANZA_ENCRYPTION_KEY, organization id as authenticated data (ADR 0006). Never selected by panel queries.
   credentials     String
+  /// Bumped on every write of `credentials` (refresh, sign-in); a refresh writes only if it is unchanged (ADR 0020).
+  credentialsVersion  Int       @default(0)
+  /// When the access token in `credentials` expires, as the connector reports it. Not secret.
+  credentialsExpireAt DateTime?
+  /// The account on the Channel the credentials belong to, from a sign-in. "Sign in again" refuses a different one.
+  accountId           String?
+  /// Shown in the panel, e.g. the seller's login on the Channel. Not secret.
+  accountLabel        String?
   health          ConnectionHealth @default(unknown)
   healthChangedAt DateTime?
   /// Safety buffer: units of Available this Channel is never told about. CHECK >= 0 (ADR 0013).
@@ -55,9 +63,69 @@ model Connection {
   syncStates     SyncState[]
   warehouses     ConnectionWarehouse[]
   statusMappings ChannelStatusMapping[]
+  signIns        ConnectionSignIn[]
 
   @@index([organizationId, connectorId])
+  // One Connection per Channel account in an organization; NULLs are distinct, so Connections without an account are unaffected.
+  @@unique([organizationId, connectorId, accountId])
   @@map("connection")
+}
+
+enum SignInStatus {
+  starting
+  pending
+  approved
+  denied
+  expired
+  failed
+  account_mismatch
+  account_in_use
+  cancelled
+
+  @@map("sign_in_status")
+}
+
+/// An interactive sign-in (OAuth device flow) for a new Connection or one that must sign in again.
+model ConnectionSignIn {
+  id                      String       @id @default(uuid(7))
+  organizationId          String
+  connectorId             String
+  /// The Connection that signs in again; for a new one, null until it is created on approval.
+  connectionId            String?
+  /// For a new Connection: its name and the config validated against the connector's `configSchema`.
+  name                    String?
+  config                  Json?
+  status                  SignInStatus @default(starting)
+  /// Shown to the person, who types it on the Channel's page. Not secret on its own.
+  userCode                String?
+  verificationUri         String?
+  verificationUriComplete String?
+  /// Sealed, organization id and row id as authenticated data; cleared once the sign-in ends. Never selected by panel queries.
+  deviceCode              String?
+  intervalSeconds         Int?
+  /// A sign-in still starting or pending after this is expired by `sync.tick`.
+  expiresAt               DateTime
+  lastPolledAt            DateTime?
+  /// The Channel account that approved, for the panel (e.g. when it was refused).
+  accountLabel            String?
+  /// The Channel account id the approval reported, kept with `approvedCredentials`.
+  accountId               String?
+  /// Credentials of an approval, sealed like `deviceCode`, stored before they are applied: a device code yields them
+  /// only once, so a failed completion is retried from here. Cleared once the sign-in ends.
+  approvedCredentials     String?
+  createdByUserId         String?
+  finishedAt              DateTime?
+  createdAt               DateTime     @default(now())
+  updatedAt               DateTime     @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  connection   Connection?  @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, createdAt])
+  @@index([connectionId])
+  // `sync.tick` expires and removes sign-ins by time, across organizations.
+  @@index([status, expiresAt])
+  @@map("connection_sign_in")
 }
 
 /// The Warehouses a Channel counts when its `allWarehouses` is false. Only active Warehouses are ever added (ADR 0017).

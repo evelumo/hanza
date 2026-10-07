@@ -12,13 +12,13 @@ export const databaseUrl = inject('hanzaTestDatabaseUrl')
  * `applicationName` tags its sessions (see `lock-waits.ts`).
  */
 export function useTestContext(
-  options: { applicationName?: string; connectors?: AnyConnectorDefinition[] } = {},
+  options: { applicationName?: string; connectors?: AnyConnectorDefinition[]; connectorSettings?: Readonly<Record<string, string>> } = {},
 ): () => TestContext {
   let ctx: TestContext | undefined
   beforeAll(() => {
     if (!databaseUrl) throw new Error('HANZA_TEST_DATABASE_URL is not set')
     const url = options.applicationName ? withApplicationName(databaseUrl, options.applicationName) : databaseUrl
-    ctx = createTestContext({ databaseUrl: url, connectors: options.connectors })
+    ctx = createTestContext({ databaseUrl: url, connectors: options.connectors, connectorSettings: options.connectorSettings })
   })
   afterAll(async () => {
     await ctx?.db.$disconnect()

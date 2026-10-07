@@ -20,6 +20,18 @@ _Avoid_: Status translation, status map, channel statuses
 Whether Hanza can currently work with a Connection: not checked yet, working, failing, or waiting for the organization to sign in to the connector again. It waits for sign-in only when the Channel no longer accepts the credentials; a Channel refusing one request (a 403) makes it failing.
 _Avoid_: Connection status, connection state
 
+**Installation settings**:
+A connector's settings that belong to the whole Hanza installation, not to one organization, such as the client id and secret of the OAuth application its operator registered with a marketplace. Set by whoever runs Hanza in `HANZA_CONNECTOR_<CONNECTOR>_<FIELD>`; a connector whose required ones are missing is "not set up" and cannot be connected.
+_Avoid_: App config, global config, connector credentials
+
+**Sign-in**:
+A person proving to a Channel that Hanza may act for their account there, so a Connection gets its credentials: Hanza shows a code, the person approves it on the Channel's page, and Hanza stores the result. "Sign in again" does the same for an existing Connection and must end with the same Channel account.
+_Avoid_: Authorization, OAuth flow, login, reconnect
+
+**Channel account**:
+The seller's account on the Channel that a Connection signed in as. One per Connection; an organization cannot connect the same Channel account twice.
+_Avoid_: Seller id, profile, user
+
 **Push rejection**:
 The Channel refusing the stock or price Hanza sent for one Offer (with its short error code), while the rest of the push went through. Recorded on the Offer and shown with a Retry; the Offer is not sent again until Retry or a change that alters what it would be told, and the Connection stays healthy. Hanza records one itself, without calling the Channel, for an ended Offer it must not reopen.
 _Avoid_: Push error, failed sync, sync failure

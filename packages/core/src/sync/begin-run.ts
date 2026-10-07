@@ -1,6 +1,7 @@
 import type { AnyConnectorDefinition, CapabilityContext, CapabilityName } from '@hanza/connector-sdk'
 import type { SyncStream } from '@hanza/db'
 import { openConnection } from '../connections/connections'
+import { canRefresh, needsRefresh, parseCredentials, refreshCredentials } from '../connections/credentials'
 import { failSyncRun, startSyncRun } from '../connections/sync-state'
 import type { Context } from '../context'
 import { describeFailure } from '../describe-failure'
@@ -39,9 +40,9 @@ async function beginSyncRun(ctx: Context, input: SyncRunInput): Promise<SyncRun 
   }
   if (!connector.capabilities[capability]) return null
 
-  const scope: RunScope = { organizationId, connectionId, stream, run }
+  const baseScope: RunScope = { organizationId, connectionId, stream, run }
   const { cursor } = await startSyncRun(ctx, organizationId, connectionId, stream)
-  const built = await runConnectorCall(ctx, scope, async () => buildCapabilityContext(ctx, opened, connector))
+  const built = await runConnectorCall(ctx, baseScope, async () => buildCapabilityContext(ctx, opened, connector))
   let requests = 0
   const context: CapabilityContext = {
     ...built,
@@ -50,6 +51,21 @@ async function beginSyncRun(ctx: Context, input: SyncRunInput): Promise<SyncRun 
       return built.fetch(resource, init)
     },
   }
+
+  // Token lifetime is the core's (ADR 0020): refresh ahead of expiry, and once after the Channel refuses the token.
+  let version = opened.credentialsVersion
+  const renew = async (force: boolean) => {
+    const current = await refreshCredentials(ctx, { organizationId, connectionId, connector, app: context.app, seenVersion: version, force })
+    if (!current) return false
+    // In place: capabilities get this object, so a retried call uses the new credentials.
+    context.credentials = parseCredentials(connector, current.credentials)
+    version = current.version
+    return true
+  }
+  if (needsRefresh(connector, context.credentials, new Date())) {
+    await runConnectorCall(ctx, baseScope, () => renew(false))
+  }
+  const scope: RunScope = canRefresh(connector) ? { ...baseScope, reauthorize: () => renew(true) } : baseScope
   return { connector, context, scope, cursor, channelRequests: () => requests }
 }
 

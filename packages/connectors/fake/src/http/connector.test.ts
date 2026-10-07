@@ -20,6 +20,7 @@ const recordedCredentials = { clientId: 'fake-http-client', clientSecret: 'fake-
 
 function context(fetch: typeof globalThis.fetch, credentials = replayCredentials) {
   return {
+    app: {},
     config: { baseUrl: FAKE_HTTP_BASE_URL },
     credentials,
     fetch,

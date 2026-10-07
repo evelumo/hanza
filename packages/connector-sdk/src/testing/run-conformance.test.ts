@@ -53,7 +53,7 @@ const channel: typeof fetch = async (input, init) => {
 }
 
 const pageSchema = z.object({ items: z.array(z.any()), nextCursor: z.string().nullable(), hasMore: z.boolean() })
-type Ctx = CapabilityContext<Record<string, never>, { apiKey: string }>
+type Ctx = CapabilityContext<Record<string, never>, { apiKey: string }, Record<string, never>>
 
 async function call(ctx: Ctx, path: string, init: RequestInit = {}, errors: ErrorFromResponseOptions = {}) {
   let response: Response
@@ -205,7 +205,7 @@ describe('openCassette and withFetch', () => {
       const recording = await openCassette(file, { recording: () => ({ fetch: channel, close: () => void (closed = true) }) })
       expect(recording.mode).toBe('record')
       const live = withFetch(connector, recording.fetch)
-      const ctx = (apiKey: string): Ctx => ({ config: {}, credentials: { apiKey }, fetch: () => Promise.reject(new Error('ctx.fetch must not be used')), log: () => {} })
+      const ctx = (apiKey: string): Ctx => ({ app: {}, config: {}, credentials: { apiKey }, fetch: () => Promise.reject(new Error('ctx.fetch must not be used')), log: () => {} })
       const first = await live.capabilities['offers.pull']!(ctx(LIVE_KEY), null)
       await recording.close()
       expect(closed).toBe(true)

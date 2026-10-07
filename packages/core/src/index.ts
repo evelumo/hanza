@@ -14,6 +14,7 @@ export {
   type QueueWorker,
 } from './queue'
 export { createConnectorRegistry, type ConnectorRegistry } from './connectors/registry'
+export { settingsVariable, type ConnectorSettings } from './connectors/settings'
 export {
   createInMemoryRateLimiter,
   createRedisRateLimiter,
@@ -36,6 +37,7 @@ export { ordersUpdateStatusJob } from './jobs/orders-update-status'
 export { orderStatusesDeleteJob } from './jobs/order-statuses-delete'
 export { privacyTickJob, PRIVACY_TICK_EVERY_MS } from './jobs/privacy-tick'
 export { privacySweepJob } from './jobs/privacy-sweep'
+export { signInStartJob, signInPollJob } from './jobs/sign-in'
 export {
   syncTickRef,
   offersPullRef,
@@ -46,6 +48,8 @@ export {
   orderStatusesDeleteRef,
   privacyTickRef,
   privacySweepRef,
+  signInStartRef,
+  signInPollRef,
   coalesceKeys,
 } from './jobs/refs'
 export { systemActor, type Actor } from './actor'

@@ -34,7 +34,10 @@ type Ctx = CapabilityContext<z.output<typeof fakeHttpConfigSchema>, z.output<typ
 
 export type FakeHttpConnector = ConnectorDefinition<typeof fakeHttpConfigSchema, typeof fakeHttpCredentialsSchema>
 
-async function send(ctx: Ctx, path: string, init: RequestInit = {}): Promise<Response> {
+/** What the HTTP helpers need from a capability's or a sign-in hook's context. */
+export type HttpContext = { fetch: typeof fetch; config: { baseUrl: string } }
+
+export async function send(ctx: HttpContext, path: string, init: RequestInit = {}): Promise<Response> {
   let response: Response
   try {
     response = await ctx.fetch(new URL(path, ctx.config.baseUrl), {
@@ -48,7 +51,7 @@ async function send(ctx: Ctx, path: string, init: RequestInit = {}): Promise<Res
   return response
 }
 
-async function parse<T extends z.ZodType>(response: Response, schema: T, what: string): Promise<z.output<T>> {
+export async function parse<T extends z.ZodType>(response: Response, schema: T, what: string): Promise<z.output<T>> {
   const parsed = schema.safeParse(await response.json().catch(() => undefined))
   // Paths only: a message could echo Buyer data back.
   if (!parsed.success) throw new PermanentError(`Unexpected ${what} response: ${parsed.error.issues.map((issue) => issue.path.join('.')).join(', ')}`)

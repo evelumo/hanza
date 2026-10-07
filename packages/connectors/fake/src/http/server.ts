@@ -35,15 +35,27 @@ export interface FakeHttpServer {
   fetch: typeof fetch
   /** Every access token the server handed out (to prove none reached a cassette). */
   issuedTokens: string[]
+  /** Every refresh token the server handed out. */
+  issuedRefreshTokens: string[]
+  /** A token pair as if the seller had signed in (OAuth variant): what a recording loads from its git-ignored place. */
+  signIn(): { accessToken: string; refreshToken: string; expiresIn: number }
+  /** Approves a pending device sign-in, as the person on the Channel's page would. */
+  approve(userCode: string): void
   close(): Promise<void>
 }
 
 export interface FakeHttpServerOptions {
   clientId?: string
   clientSecret?: string
+  /** Device sign-ins are approved as soon as they start (recording the conformance kit, which polls once). */
+  autoApproveDevices?: boolean
 }
 
-const context: FakeContext = { config: { failMode: 'none', rejectOffers: '' }, credentials: { apiKey: 'server' }, fetch, log: () => {} }
+export const FAKE_HTTP_ACCOUNT = { id: 'fake-seller-1', login: 'fake-seller' }
+const ACCESS_TOKEN_SECONDS = 3600
+const DEVICE_CODE_SECONDS = 600
+
+const context: FakeContext = { app: {}, config: { failMode: 'none', rejectOffers: '' }, credentials: { apiKey: 'server' }, fetch, log: () => {} }
 
 function splitName(name: string) {
   const [firstName = '', ...rest] = name.split(' ')
@@ -116,13 +128,68 @@ export async function startFakeHttpServer(options: FakeHttpServerOptions = {}): 
   const channel = createFakeChannel({ id: 'fake-http-backend' })
   const { capabilities } = channel.connector
   const issuedTokens: string[] = []
+  const issuedRefreshTokens: string[] = []
+  // Access tokens a refresh replaced, and refresh tokens already used: strict rotation.
+  const revoked = new Set<string>()
+  const devices = new Map<string, { userCode: string; approved: boolean; used: boolean; expiresAt: number }>()
+
+  const issuePair = () => {
+    const accessToken = jwtLike()
+    const refreshToken = randomBytes(24).toString('base64url')
+    issuedTokens.push(accessToken)
+    issuedRefreshTokens.push(refreshToken)
+    return { accessToken, refreshToken, expiresIn: ACCESS_TOKEN_SECONDS }
+  }
+  const tokenBody = (pair: ReturnType<typeof issuePair>) => ({
+    access_token: pair.accessToken,
+    refresh_token: pair.refreshToken,
+    token_type: 'bearer',
+    expires_in: pair.expiresIn,
+  })
+  const basicClient = (request: IncomingMessage) => {
+    const encoded = /^Basic (.+)$/.exec(request.headers.authorization ?? '')?.[1]
+    return encoded !== undefined && Buffer.from(encoded, 'base64').toString('utf8') === `${clientId}:${clientSecret}`
+  }
 
   const handle = async (request: IncomingMessage, response: ServerResponse) => {
     const url = new URL(request.url ?? '/', 'http://localhost')
     const body = await readBody(request)
 
+    if (request.method === 'POST' && url.pathname === '/oauth/device') {
+      if (!basicClient(request)) return json(response, 401, { error: 'invalid_client' })
+      const deviceCode = randomBytes(24).toString('base64url')
+      const userCode = randomBytes(6).toString('hex').toUpperCase().slice(0, 9)
+      devices.set(deviceCode, { userCode, approved: options.autoApproveDevices === true, used: false, expiresAt: Date.now() + DEVICE_CODE_SECONDS * 1000 })
+      return json(response, 200, {
+        device_code: deviceCode,
+        user_code: userCode,
+        verification_uri: `${FAKE_HTTP_BASE_URL}/activate`,
+        verification_uri_complete: `${FAKE_HTTP_BASE_URL}/activate?code=${userCode}`,
+        expires_in: DEVICE_CODE_SECONDS,
+        interval: 5,
+      })
+    }
+
+    const form = new URLSearchParams(body)
+    if (request.method === 'POST' && url.pathname === '/oauth/token' && form.get('grant_type') === 'refresh_token') {
+      if (!basicClient(request)) return json(response, 401, { error: 'invalid_client' })
+      const refreshToken = form.get('refresh_token') ?? ''
+      if (!issuedRefreshTokens.includes(refreshToken) || revoked.has(refreshToken)) return json(response, 400, { error: 'invalid_grant' })
+      revoked.add(refreshToken)
+      return json(response, 200, tokenBody(issuePair()))
+    }
+    if (request.method === 'POST' && url.pathname === '/oauth/token' && form.get('grant_type') === 'urn:ietf:params:oauth:grant-type:device_code') {
+      if (!basicClient(request)) return json(response, 401, { error: 'invalid_client' })
+      const device = devices.get(form.get('device_code') ?? '')
+      // Like Allegro: an unknown or already used device code is a client error, not "expired".
+      if (!device || device.used) return json(response, 400, { error: 'invalid_grant' })
+      if (device.expiresAt <= Date.now()) return json(response, 400, { error: 'expired_token' })
+      if (!device.approved) return json(response, 400, { error: 'authorization_pending' })
+      device.used = true
+      return json(response, 200, tokenBody(issuePair()))
+    }
+
     if (request.method === 'POST' && url.pathname === '/oauth/token') {
-      const form = new URLSearchParams(body)
       if (form.get('client_id') !== clientId || form.get('client_secret') !== clientSecret) {
         return json(response, 401, { error: 'invalid_client' })
       }
@@ -134,8 +201,10 @@ export async function startFakeHttpServer(options: FakeHttpServerOptions = {}): 
     }
 
     const token = /^Bearer (.+)$/.exec(request.headers.authorization ?? '')?.[1]
-    if (!token || !issuedTokens.includes(token)) return json(response, 401, { error: 'invalid_token' })
+    if (!token || !issuedTokens.includes(token) || revoked.has(token)) return json(response, 401, { error: 'invalid_token' })
     const cursor = url.searchParams.get('cursor')
+
+    if (request.method === 'GET' && url.pathname === '/me') return json(response, 200, FAKE_HTTP_ACCOUNT)
 
     if (request.method === 'GET' && url.pathname === '/offers') {
       const page = await capabilities['offers.pull']!(context, cursor)
@@ -186,6 +255,13 @@ export async function startFakeHttpServer(options: FakeHttpServerOptions = {}): 
     origin,
     fetch: transport,
     issuedTokens,
+    issuedRefreshTokens,
+    signIn: issuePair,
+    approve(userCode) {
+      const device = [...devices.values()].find((candidate) => candidate.userCode === userCode)
+      if (!device) throw new Error(`No device sign-in with user code ${userCode}`)
+      device.approved = true
+    },
     close: () =>
       new Promise<void>((resolve, reject) => {
         server.close((error) => (error ? reject(error) : resolve()))

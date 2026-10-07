@@ -43,6 +43,7 @@ export type EventType =
   | 'order_status.deleted'
   | 'connection.created'
   | 'connection.health_changed'
+  | 'connection.signed_in'
   | 'connection.stock_rules_changed'
   | 'connection.warehouses_changed'
   | 'connection.status_mapping_changed'
