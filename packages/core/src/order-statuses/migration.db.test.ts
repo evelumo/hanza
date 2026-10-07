@@ -1,13 +1,11 @@
 import { randomUUID } from 'node:crypto'
 import { readFile } from 'node:fs/promises'
-import { join } from 'node:path'
 import { createDb, type Db } from '@hanza/db'
 import { applyMigration, createTestDatabase, migrationNames } from '@hanza/db/testing'
 import { describe, expect, it } from 'vitest'
 import { databaseUrl } from '../testing/db-test'
 
 const MIGRATION = '20261005210451_custom_order_statuses'
-const MIGRATIONS_DIR = join(import.meta.dirname, '..', '..', '..', 'db', 'prisma', 'migrations')
 
 type Seeded = {
   status: 'new' | 'processing' | 'shipped' | 'cancelled'
@@ -77,12 +75,15 @@ async function snapshot(db: Db): Promise<Map<string, unknown[]>> {
 }
 
 describe.skipIf(!databaseUrl)(`migration ${MIGRATION}`, () => {
-  it('runs after every migration that still names the `status` column', async () => {
+  it('runs after every migration that still names the Order `status` column', async () => {
+    // A later migration may exist (e.g. one for Connections), but none after this one may touch the Order's old
+    // `status` column or its `order_status` type, which this migration replaces.
     const names = await migrationNames()
-    expect(names).toContain(MIGRATION)
-    // Later migrations must not name the Order's old column (`"status"`), which this one renames to `phase`.
-    for (const later of names.filter((name) => name > MIGRATION)) {
-      expect(await readFile(join(MIGRATIONS_DIR, later, 'migration.sql'), 'utf8'), later).not.toMatch(/"status"/)
+    const later = names.slice(names.indexOf(MIGRATION) + 1)
+    for (const name of later) {
+      const sql = await readFile(new URL(`../../../db/prisma/migrations/${name}/migration.sql`, import.meta.url), 'utf8')
+      const statements = sql.split(';')
+      expect(statements.filter((statement) => /"order_status"|(?=[^]*"order"[\s(.])(?=[^]*"status")/.test(statement)), name).toEqual([])
     }
   })
 

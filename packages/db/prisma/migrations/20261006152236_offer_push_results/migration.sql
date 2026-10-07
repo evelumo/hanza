@@ -14,7 +14,7 @@ ADD COLUMN     "stockRejectedCode" TEXT;
 
 -- An ended reason only with an ended status; a rejection code and its time are set together.
 ALTER TABLE "offer" ADD CONSTRAINT "offer_channel_ended_reason_check"
-  CHECK ("channelEndedReason" IS NULL OR "channelStatus" = 'ended');
+  CHECK ("channelEndedReason" IS NULL OR "channelStatus" IS NOT DISTINCT FROM 'ended');
 ALTER TABLE "offer" ADD CONSTRAINT "offer_stock_rejected_check"
   CHECK (("stockRejectedCode" IS NULL) = ("stockRejectedAt" IS NULL));
 ALTER TABLE "offer" ADD CONSTRAINT "offer_price_rejected_check"

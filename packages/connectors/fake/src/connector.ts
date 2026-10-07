@@ -4,6 +4,8 @@ import {
   RateLimitedError,
   TransientError,
   defineConnector,
+  errorFromResponse,
+  isConnectorError,
   type CapabilityContext,
   type ConnectorDefinition,
   type Offer,
@@ -12,10 +14,12 @@ import {
   type OrderStatus,
   type PricePushResult,
   type PullResult,
+  type RateLimits,
   type StockLevel,
   type StockPushResult,
 } from '@hanza/connector-sdk'
 import { z } from 'zod'
+import { FAKE_API_URL } from './api'
 
 export const fakeConfigSchema = z.object({
   failMode: z.enum(['none', 'rate_limited', 'transient', 'permanent']).default('none').describe('Failure simulation'),
@@ -41,6 +45,21 @@ export interface FakeState {
   statusUpdates: Array<{ orderExternalId: string; status: OrderStatus }>
   /** Offers whose stock and price this Channel refuses, with the code it answers. */
   rejections: Map<string, string>
+  /**
+   * What stock pushes did to each Offer's publication, per seller account (the API key): on a real marketplace every
+   * Connection is its own account with its own Offers, so one Connection ending an Offer must not end another's.
+   */
+  publications: Map<string, Map<string, Publication>>
+}
+
+type Publication = Pick<Offer, 'status' | 'endedReason'>
+
+/** The Offer as this account sees it: its own publication if a push changed it, else the catalogue's. */
+export function withPublication(state: FakeState, account: string, offer: Offer): Offer {
+  const own = state.publications.get(account)?.get(offer.externalId)
+  if (!own) return offer
+  const { endedReason: _dropped, ...rest } = offer
+  return { ...rest, status: own.status, ...(own.endedReason ? { endedReason: own.endedReason } : {}) }
 }
 
 function rejectedBy(ctx: FakeContext, state: FakeState, offerExternalId: string): string | undefined {
@@ -72,25 +91,52 @@ function failIfRequested(ctx: FakeContext): void {
 
 export type FakeConnector = ConnectorDefinition<typeof fakeConfigSchema, typeof fakeCredentialsSchema>
 
-export function createFakeConnector(state: FakeState, id = 'fake'): FakeConnector {
+export interface FakeConnectorOptions {
+  id?: string
+  /** Send one request per call through `ctx.fetch` to `FAKE_API_URL`, the way a real connector talks to its Channel. */
+  http?: boolean
+  rateLimits?: RateLimits
+}
+
+export function createFakeConnector(state: FakeState, options: FakeConnectorOptions = {}): FakeConnector {
+  // What a real connector's client does: authenticate, map a failed response, and let the core's errors through.
+  const request = async (ctx: FakeContext, operation: string) => {
+    failIfRequested(ctx)
+    if (!options.http) return
+    let response: Response
+    try {
+      response = await ctx.fetch(`${FAKE_API_URL}/${operation}`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${ctx.credentials.apiKey}` },
+      })
+    } catch (error) {
+      // E.g. the RateLimitedError of the core's limiter: wrapping it would turn a wait into a failure.
+      if (isConnectorError(error)) throw error
+      throw new TransientError('The Channel could not be reached', { cause: error })
+    }
+    if (!response.ok) throw await errorFromResponse(response)
+    await response.body?.cancel()
+  }
+
   return defineConnector({
-    id,
+    id: options.id ?? 'fake',
     name: 'Test channel',
     kind: 'marketplace',
     auth: { type: 'apiKey' },
     reopensSoldOutOffers: true,
     configSchema: fakeConfigSchema,
     credentialsSchema: fakeCredentialsSchema,
+    ...(options.rateLimits ? { rateLimits: options.rateLimits } : {}),
     capabilities: {
       async 'offers.pull'(ctx, cursor): Promise<PullResult<Offer>> {
-        failIfRequested(ctx)
+        await request(ctx, 'offers.pull')
         const start = parseCursor(cursor)
-        const items = state.offers.slice(start, start + PAGE_SIZE)
+        const items = state.offers.slice(start, start + PAGE_SIZE).map((offer) => withPublication(state, ctx.credentials.apiKey, offer))
         const end = start + items.length
         return { items: structuredClone(items), nextCursor: String(end), hasMore: end < state.offers.length }
       },
       async 'orders.pull'(ctx, cursor): Promise<PullResult<Order>> {
-        failIfRequested(ctx)
+        await request(ctx, 'orders.pull')
         const after = parseCursor(cursor)
         const pending = state.journal.filter((entry) => entry.seq > after)
         const page = pending.slice(0, PAGE_SIZE)
@@ -102,10 +148,15 @@ export function createFakeConnector(state: FakeState, id = 'fake'): FakeConnecto
         }
       },
       // Like Allegro: 0 ends an active Offer (sold out), a number above 0 reopens a sold-out one, and an Offer ended
-      // for another reason refuses a number above 0. offers.pull then reports what the push did.
+      // for another reason refuses a number above 0; checked here, at push time, whatever Hanza last pulled. A 0 that
+      // leaves the Offer sold out is reported `ended` every time, so a retried push after a lost answer still says so.
+      // offers.pull then reports what the pushes of this account did.
       async 'stock.push'(ctx, levels) {
-        failIfRequested(ctx)
+        await request(ctx, 'stock.push')
         state.stockPushes.push(structuredClone(levels))
+        const account = ctx.credentials.apiKey
+        const own = state.publications.get(account) ?? new Map<string, Publication>()
+        state.publications.set(account, own)
         const results: StockPushResult[] = []
         for (const { offerExternalId, available } of levels) {
           const code = rejectedBy(ctx, state, offerExternalId)
@@ -113,27 +164,24 @@ export function createFakeConnector(state: FakeState, id = 'fake'): FakeConnecto
             results.push({ offerExternalId, outcome: 'rejected', code })
             continue
           }
-          const offer = state.offers.find((candidate) => candidate.externalId === offerExternalId)
-          if (!offer || offer.status === 'inactive') continue
+          const known = state.offers.find((candidate) => candidate.externalId === offerExternalId)
+          if (!known) continue
+          const { status, endedReason } = withPublication(state, account, known)
+          if (status === 'inactive') continue
+          const soldOut = status === 'ended' && endedReason === 'sold_out'
           if (available === 0) {
-            if (offer.status === 'active') {
-              offer.status = 'ended'
-              offer.endedReason = 'sold_out'
-              results.push({ offerExternalId, outcome: 'ended' })
-            }
-          } else if (offer.status === 'ended') {
-            if (offer.endedReason === 'sold_out') {
-              offer.status = 'active'
-              delete offer.endedReason
-            } else {
-              results.push({ offerExternalId, outcome: 'rejected', code: FAKE_OFFER_ENDED_CODE })
-            }
+            if (status === 'ended' && !soldOut) continue
+            if (!soldOut) own.set(offerExternalId, { status: 'ended', endedReason: 'sold_out' })
+            results.push({ offerExternalId, outcome: 'ended' })
+          } else if (status === 'ended') {
+            if (soldOut) own.set(offerExternalId, { status: 'active' })
+            else results.push({ offerExternalId, outcome: 'rejected', code: FAKE_OFFER_ENDED_CODE })
           }
         }
         return results
       },
       async 'price.push'(ctx, prices) {
-        failIfRequested(ctx)
+        await request(ctx, 'price.push')
         state.pricePushes.push(structuredClone(prices))
         const results: PricePushResult[] = []
         for (const { offerExternalId, price } of prices) {
@@ -149,7 +197,7 @@ export function createFakeConnector(state: FakeState, id = 'fake'): FakeConnecto
         return results
       },
       async 'orders.updateStatus'(ctx, input) {
-        failIfRequested(ctx)
+        await request(ctx, 'orders.updateStatus')
         state.statusUpdates.push({ ...input })
       },
     },

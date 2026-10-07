@@ -12,6 +12,7 @@ import { requestStockPushAfterCommit } from '../stock/push'
 import { TX_OPTIONS } from '../transaction'
 import {
   describeOfferStock,
+  OFFER_ENDED_CODE,
   offerStockColumns,
   publicationFromColumns,
   setOfferPublication,
@@ -387,9 +388,12 @@ export interface StockPushOutcome {
 
 /**
  * Records a batch's outcomes, Offers locked in id order. Compare-and-clear: `seq` is recorded as handled only if it
- * is still ahead, so a change after the list was read keeps the Offer pending (and a rejection of a superseded
- * number is dropped). A rejection is kept with its code and an Event, and the Offer counts as handled, so it does not
- * fill every batch; a push or a skip clears it. A publication the Channel reported is stored whatever the sequence.
+ * is still ahead of the handled one, so a change after the list was read keeps the Offer pending. A rejection is kept
+ * with its code and an Event, and the Offer counts as handled, so it does not fill every batch; a push or a skip
+ * clears it. A rejection of a number that was overtaken meanwhile is still stored, but the Offer stays pending (the
+ * panel shows it waiting), and the next push replaces it. Hanza's own `offer_ended` is not recorded as a new Event
+ * while it is already stored: it is repeated on every change of Stock without asking the Channel. A publication the
+ * Channel reported is stored whatever the sequence.
  */
 export async function recordStockPushOutcomes(ctx: Context, organizationId: string, outcomes: StockPushOutcome[]): Promise<void> {
   if (outcomes.length === 0) return
@@ -406,11 +410,13 @@ export async function recordStockPushOutcomes(ctx: Context, organizationId: stri
           data: { stockPushedSeq: item.seq, lastPushedAvailable: outcome.pushed, lastPushedAt: now, stockRejectedCode: null, stockRejectedAt: null },
         })
       } else if ('rejected' in outcome) {
+        const before = await tx.offer.findFirst({ where: { id: item.offerId, organizationId }, select: { stockRejectedCode: true } })
         const { count } = await tx.offer.updateMany({
           where,
           data: { stockPushedSeq: item.seq, stockRejectedCode: outcome.rejected, stockRejectedAt: now },
         })
-        if (count > 0) {
+        const repeated = outcome.rejected === OFFER_ENDED_CODE && before?.stockRejectedCode === OFFER_ENDED_CODE
+        if (count > 0 && !repeated) {
           await appendEvent(tx, {
             organizationId,
             type: 'offer.push_rejected',

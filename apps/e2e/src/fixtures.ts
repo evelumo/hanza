@@ -98,7 +98,8 @@ export async function signUpThroughForms(page: Page): Promise<Account> {
 }
 
 /**
- * Adds a Connection with the fake connector (its first sync starts on its own); returns its id. `rejectOffers` lists
+ * Adds a Connection with the fake connector (its first sync starts on its own) under its own seller account (a fresh
+ * API key), so pushes of other flows never end its Offers; returns its id. `rejectOffers` lists
  * fake Offer ids whose stock and price this Connection's Channel refuses (per Connection, so flows never share it).
  */
 export async function addFakeConnection(page: Page, name = 'Fake marketplace', options: { rejectOffers?: string } = {}): Promise<string> {
@@ -106,7 +107,8 @@ export async function addFakeConnection(page: Page, name = 'Fake marketplace', o
   await page.getByRole('link', { name: /Test channel/ }).click()
   await page.getByLabel('Name', { exact: true }).fill(name)
   if (options.rejectOffers) await page.getByLabel(/Offers that refuse stock and prices/).fill(options.rejectOffers)
-  await page.getByLabel('API key').fill('e2e-api-key')
+  // Its own key, i.e. its own seller account: the fake Channel keeps what pushes did to Offers per account.
+  await page.getByLabel('API key').fill(`e2e-api-key-${crypto.randomUUID()}`)
   await page.getByRole('button', { name: 'Add connection' }).click()
   await expect(page.getByRole('heading', { level: 1, name })).toBeVisible()
   const id = new URL(page.url()).pathname.split('/').pop()

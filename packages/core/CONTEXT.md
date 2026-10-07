@@ -17,12 +17,16 @@ Per Channel, which Order status an Order gets when that Channel reports an Order
 _Avoid_: Status translation, status map, channel statuses
 
 **Connection health**:
-Whether Hanza can currently work with a Connection: not checked yet, working, failing, or waiting for the organization to sign in to the connector again.
+Whether Hanza can currently work with a Connection: not checked yet, working, failing, or waiting for the organization to sign in to the connector again. It waits for sign-in only when the Channel no longer accepts the credentials; a Channel refusing one request (a 403) makes it failing.
 _Avoid_: Connection status, connection state
 
 **Push rejection**:
 The Channel refusing the stock or price Hanza sent for one Offer (with its short error code), while the rest of the push went through. Recorded on the Offer and shown with a Retry; the Offer is not sent again until Retry or a change that alters what it would be told, and the Connection stays healthy. Hanza records one itself, without calling the Channel, for an ended Offer it must not reopen.
 _Avoid_: Push error, failed sync, sync failure
+
+**Request budget**:
+How many requests Hanza lets itself send to a connector's API in a window of time, or at once, set below the Channel's own rate limits: one budget shared by every Connection of that connector on the installation, across organizations, and one per Connection. The connector declares them, every worker shares them, and a job whose request does not fit waits or is delayed, never failed (ADR 0019).
+_Avoid_: Quota, throttle
 
 **Event**:
 A record that something happened to an organization's data, written together with the change it describes. Events are a trail and a trigger, never the source of truth.

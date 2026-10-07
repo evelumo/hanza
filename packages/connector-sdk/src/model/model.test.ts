@@ -190,6 +190,10 @@ describe('push results', () => {
     expect(stockPushResultSchema.safeParse({ offerExternalId: 'a', outcome: 'rejected' }).success).toBe(false)
     expect(stockPushResultSchema.safeParse({ offerExternalId: 'a', outcome: 'rejected', code: ' ' }).success).toBe(false)
     expect(stockPushResultSchema.safeParse({ offerExternalId: 'a', outcome: 'rejected', code: 'x'.repeat(101) }).success).toBe(false)
+    expect(stockPushResultSchema.safeParse({ offerExternalId: 'a', outcome: 'rejected', code: 'allegro.offer:LOCKED-2' }).success).toBe(true)
+    for (const code of ['Price too low', 'jan@example.com', 'OFFER\nNOT_FOUND', 'ZAMKNIĘTA']) {
+      expect(stockPushResultSchema.safeParse({ offerExternalId: 'a', outcome: 'rejected', code }).success).toBe(false)
+    }
   })
 
   it('has no ended outcome for prices', () => {

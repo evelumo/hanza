@@ -11,7 +11,7 @@ import {
 } from '@hanza/connector-sdk'
 import { assertConformance } from '@hanza/connector-sdk/testing'
 import { describe, expect, it } from 'vitest'
-import { createFakeChannel, fakeChannel, fakeConnector, FAKE_OFFER_ENDED_CODE, FAKE_REJECTED_CODE } from './index'
+import { FAKE_API_URL, createFakeChannel, fakeChannel, fakeConnector, FAKE_OFFER_ENDED_CODE, FAKE_REJECTED_CODE } from './index'
 import { seedFacts, seedOffers, seedOrders } from './seed'
 
 type FakeContext = CapabilityContext<{ failMode: 'none' | 'rate_limited' | 'transient' | 'permanent'; rejectOffers: string }, { apiKey: string }>
@@ -71,16 +71,38 @@ describe('per-Offer results and publication', () => {
     expect(await push(context(), [level('fake-offer-1', 0), level('fake-offer-2', 4)])).toEqual([
       { offerExternalId: 'fake-offer-1', outcome: 'ended' },
     ])
-    expect(channel.offer('fake-offer-1')).toMatchObject({ status: 'ended', endedReason: 'sold_out' })
+    expect(channel.offer('fake-offer-1', 'test')).toMatchObject({ status: 'ended', endedReason: 'sold_out' })
     const pulled = await channel.connector.capabilities['offers.pull']!(context(), null)
     expect(pulled.items[0]).toMatchObject({ externalId: 'fake-offer-1', status: 'ended', endedReason: 'sold_out' })
 
-    // 0 again changes nothing; a number above 0 reopens it.
-    expect(await push(context(), [level('fake-offer-1', 0)])).toEqual([])
+    // A 0 that leaves it sold out says so again (a retry after a lost answer must learn it); above 0 reopens it.
+    expect(await push(context(), [level('fake-offer-1', 0)])).toEqual([{ offerExternalId: 'fake-offer-1', outcome: 'ended' }])
     expect(await push(context(), [level('fake-offer-1', 2)])).toEqual([])
-    expect(channel.offer('fake-offer-1')).toMatchObject({ status: 'active' })
-    expect(channel.offer('fake-offer-1')).not.toHaveProperty('endedReason')
+    expect(channel.offer('fake-offer-1', 'test')).toMatchObject({ status: 'active' })
+    expect(channel.offer('fake-offer-1', 'test')).not.toHaveProperty('endedReason')
     expect(channel.connector.reopensSoldOutOffers).toBe(true)
+  })
+
+  it('keeps what pushes did to Offers per account, so one Connection never ends another one\'s Offer', async () => {
+    const channel = createFakeChannel()
+    const push = channel.connector.capabilities['stock.push']!
+    const pull = channel.connector.capabilities['offers.pull']!
+    await push(context({}, 'seller-a'), [level('fake-offer-1', 0)])
+
+    expect((await pull(context({}, 'seller-a'), null)).items[0]).toMatchObject({ status: 'ended', endedReason: 'sold_out' })
+    expect((await pull(context({}, 'seller-b'), null)).items[0]).toMatchObject({ status: 'active' })
+    expect((await pull(context({}, 'seller-b'), null)).items[0]).not.toHaveProperty('endedReason')
+    expect(channel.offer('fake-offer-1')).toMatchObject({ status: 'active' })
+    // seller-b's 4 does not reopen anything of seller-a's, and seller-a's Offer stays ended.
+    expect(await push(context({}, 'seller-b'), [level('fake-offer-1', 4)])).toEqual([])
+    expect(channel.offer('fake-offer-1', 'seller-a')).toMatchObject({ status: 'ended' })
+
+    // Replacing the Offer in the catalogue sets it for everyone; reset forgets every account.
+    channel.addOffer({ ...channel.offer('fake-offer-1')!, status: 'inactive' })
+    expect(channel.offer('fake-offer-1', 'seller-a')).toMatchObject({ status: 'inactive' })
+    await push(context({}, 'seller-b'), [level('fake-offer-2', 0)])
+    channel.reset()
+    expect(channel.offer('fake-offer-2', 'seller-b')).toMatchObject({ status: 'active' })
   })
 
   it('refuses a number above 0 for an Offer ended for another reason', async () => {
@@ -89,7 +111,9 @@ describe('per-Offer results and publication', () => {
     expect(await channel.connector.capabilities['stock.push']!(context(), [level('ended-by-seller', 3)])).toEqual([
       { offerExternalId: 'ended-by-seller', outcome: 'rejected', code: FAKE_OFFER_ENDED_CODE },
     ])
-    expect(channel.offer('ended-by-seller')).toMatchObject({ status: 'ended', endedReason: 'other' })
+    expect(channel.offer('ended-by-seller', 'test')).toMatchObject({ status: 'ended', endedReason: 'other' })
+    // A 0 to it changes nothing and reports nothing: it did not end because it sold out.
+    expect(await channel.connector.capabilities['stock.push']!(context(), [level('ended-by-seller', 0)])).toEqual([])
   })
 
   it('rejects the stock and price of configured Offers and keeps the others', async () => {
@@ -352,5 +376,62 @@ describe('failure modes', () => {
     expect(fakeConnector.configSchema.parse({})).toEqual({ failMode: 'none', rejectOffers: '' })
     expect(fakeConnector.credentialsSchema.safeParse({ apiKey: '' }).success).toBe(false)
     expect(fakeConnector.configSchema.safeParse({ failMode: 'sometimes' }).success).toBe(false)
+  })
+})
+
+describe('HTTP mode', () => {
+  const httpContext = (fetch: typeof globalThis.fetch, apiKey = 'test'): FakeContext => ({ ...context({}, apiKey), fetch })
+
+  it('passes the conformance kit, including C14 (a 403 is not an expired sign-in)', async () => {
+    const channel = createFakeChannel({ http: true })
+    await assertConformance(channel.connector, {
+      config: { failMode: 'none' },
+      credentials: { apiKey: 'test' },
+      fetch: channel.api.fetch,
+      unauthorized: { credentials: { apiKey: 'expired' } },
+    })
+    expect(channel.api.requests.length).toBeGreaterThan(0)
+  })
+
+  it('sends one authenticated request per call and records it', async () => {
+    const channel = createFakeChannel({ http: true })
+    await channel.connector.capabilities['stock.push']!(httpContext(channel.api.fetch, 'key-a'), [])
+    expect(channel.api.requests).toEqual([{ at: expect.any(Number), operation: 'stock.push', apiKey: 'key-a' }])
+    expect(channel.stockPushes).toEqual([[]])
+  })
+
+  it('maps 401 to AuthExpiredError, a bare 403 to PermanentError and 429 to RateLimitedError with its Retry-After', async () => {
+    const channel = createFakeChannel({ http: true })
+    const push = () => channel.connector.capabilities['stock.push']!(httpContext(channel.api.fetch), [])
+    channel.api.failNext(401)
+    await expect(push()).rejects.toBeInstanceOf(AuthExpiredError)
+    channel.api.failNext(403)
+    const forbidden = await push().catch((error: unknown) => error)
+    expect(classifyConnectorError(forbidden)).toEqual({ kind: 'permanent', retryAfterMs: null, message: '403 Forbidden' })
+    channel.api.failNext(403, { headers: { 'WWW-Authenticate': 'Bearer error="invalid_token"' } })
+    await expect(push()).rejects.toBeInstanceOf(AuthExpiredError)
+    channel.api.failNext(429, { headers: { 'Retry-After': '2' } })
+    expect(classifyConnectorError(await push().catch((error: unknown) => error))).toMatchObject({ kind: 'rate_limited', retryAfterMs: 2000 })
+    expect(channel.stockPushes).toEqual([])
+  })
+
+  it('lets a ConnectorError from ctx.fetch through and maps a network failure to TransientError', async () => {
+    const channel = createFakeChannel({ http: true })
+    const limited = new RateLimitedError('budget used up', { retryAfterMs: 500 })
+    const pull = (fetch: typeof globalThis.fetch) => channel.connector.capabilities['orders.pull']!(httpContext(fetch), null)
+    await expect(pull(async () => { throw limited })).rejects.toBe(limited)
+    await expect(pull(async () => { throw new TypeError('fetch failed') })).rejects.toBeInstanceOf(TransientError)
+  })
+
+  it('answers only its own URL', async () => {
+    const { api } = createFakeChannel({ http: true })
+    await expect(api.fetch('https://example.com/x')).rejects.toThrow(/does not serve/)
+    expect((await api.fetch(`${FAKE_API_URL}/offers.pull`)).status).toBe(204)
+  })
+
+  it('declares the rate limits it is given', () => {
+    const rateLimits = { application: { requests: 5, windowMs: 1000 }, connection: { concurrency: 1 } }
+    expect(createFakeChannel({ rateLimits }).connector.rateLimits).toEqual(rateLimits)
+    expect(createFakeChannel().connector.rateLimits).toBeUndefined()
   })
 })

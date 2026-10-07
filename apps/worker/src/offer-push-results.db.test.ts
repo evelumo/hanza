@@ -106,7 +106,7 @@ describe.skipIf(!databaseUrl)('per-Offer push results and Offer publication end 
     await setStock(ctx, org, products['FAKE-SKU-3']!, 0, user)
     await drain()
     expect(sent('fake-offer-3').at(-1)).toBe(0)
-    expect(fake.offer('fake-offer-3')).toMatchObject({ status: 'ended', endedReason: 'sold_out' })
+    expect(fake.offer('fake-offer-3', 'test')).toMatchObject({ status: 'ended', endedReason: 'sold_out' })
     expect(await offer('fake-offer-3')).toMatchObject({ channelStatus: 'ended', channelEndedReason: 'sold_out', lastPushedAvailable: 0 })
     expect(await getOffer(ctx, org, (await offer('fake-offer-3')).id)).toMatchObject({
       publication: { status: 'ended', endedReason: 'sold_out' },
@@ -124,7 +124,7 @@ describe.skipIf(!databaseUrl)('per-Offer push results and Offer publication end 
     await setStock(ctx, org, products['FAKE-SKU-3']!, 4, user)
     await drain()
     expect(sent('fake-offer-3').at(-1)).toBe(4)
-    expect(fake.offer('fake-offer-3')).toMatchObject({ status: 'active' })
+    expect(fake.offer('fake-offer-3', 'test')).toMatchObject({ status: 'active' })
     expect(await offer('fake-offer-3')).toMatchObject({ channelStatus: 'active', channelEndedReason: null, lastPushedAvailable: 4 })
   })
 

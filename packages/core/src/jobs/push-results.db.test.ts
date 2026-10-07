@@ -152,6 +152,31 @@ describe.skipIf(!databaseUrl)('per-Offer push results', () => {
     expect(await t.health()).toBe('unknown')
   })
 
+  it("Hanza's own offer_ended is recorded as one Event, not again on every change of Stock", async () => {
+    const t = await setup('results-reopening', [{ id: 'by-seller', status: 'ended', endedReason: 'other' }])
+    await t.pushStock()
+    for (const units of [6, 7, 8]) {
+      await setStock(t.ctx, t.organizationId, t.products['by-seller']!, units, user)
+      await t.pushStock()
+    }
+    expect(stockCalls).toEqual([])
+    expect(await t.events('offer.push_rejected')).toHaveLength(1)
+    const offer = await t.offerRow('by-seller')
+    expect(offer).toMatchObject({ stockRejectedCode: 'offer_ended' })
+    expect(offer.stockPushedSeq).toBe(offer.stockPushSeq)
+  })
+
+  it('the database refuses an ended reason without an ended publication, and a code without its time', async () => {
+    const t = await setup('results-plain', [{ id: 'a' }])
+    const { id } = await t.offerRow('a')
+    const set = (columns: string) => t.ctx.db.$executeRawUnsafe(`UPDATE "offer" SET ${columns} WHERE "id" = $1 AND "organizationId" = $2`, id, t.organizationId)
+    await expect(set(`"channelStatus" = NULL, "channelEndedReason" = 'sold_out'`)).rejects.toThrow(/offer_channel_ended_reason_check/)
+    await expect(set(`"channelStatus" = 'active', "channelEndedReason" = 'sold_out'`)).rejects.toThrow(/offer_channel_ended_reason_check/)
+    await expect(set(`"stockRejectedCode" = 'X'`)).rejects.toThrow(/offer_stock_rejected_check/)
+    await expect(set(`"priceRejectedAt" = now()`)).rejects.toThrow(/offer_price_rejected_check/)
+    await expect(set(`"channelStatus" = 'ended', "channelEndedReason" = 'sold_out'`)).resolves.toBe(1)
+  })
+
   it('a sold-out Offer is rejected when the connector does not reopen Offers', async () => {
     const t = await setup('results-plain', [{ id: 'a', status: 'ended', endedReason: 'sold_out' }, { id: 'b', status: 'inactive' }])
     await t.pushStock()

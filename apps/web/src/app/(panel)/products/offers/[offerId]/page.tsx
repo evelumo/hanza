@@ -1,4 +1,4 @@
-import { getOffer } from '@hanza/core'
+import { getOffer, OFFER_ENDED_CODE } from '@hanza/core'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
@@ -91,7 +91,8 @@ export default async function OfferPage({ params }: { params: Promise<{ offerId:
           <p className={`text-sm ${offer.stockStatus === 'rejected' ? 'font-medium text-amber-800' : 'text-muted'}`}>
             {stockStatusText(t, offer, format.dateTime)}
           </p>
-          {offer.stockStatus === 'rejected' ? retry('stock', t('offerPush.retryStock')) : null}
+          {/* Hanza's own `offer_ended` changes only when the Channel reports the Offer again, so a Retry would not help. */}
+          {offer.stockStatus === 'rejected' && offer.stockRejection?.code !== OFFER_ENDED_CODE ? retry('stock', t('offerPush.retryStock')) : null}
         </div>
       </Section>
 

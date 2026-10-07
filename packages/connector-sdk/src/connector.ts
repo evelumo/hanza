@@ -17,7 +17,11 @@ export interface CapabilityContext<TConfig = unknown, TCredentials = unknown> {
   config: TConfig
   /** Secrets, parsed with `credentialsSchema`. The connector adds them to its own requests; never log them. */
   credentials: TCredentials
-  /** Global fetch with a 30 s timeout added by the core. */
+  /**
+   * Global fetch with a 30 s timeout added by the core, which also enforces the connector's `rateLimits`: it may
+   * wait briefly, or reject with a `RateLimitedError` before sending. Let a `ConnectorError` from it through
+   * unchanged (wrap only other rejections, e.g. as `TransientError`).
+   */
   fetch: typeof fetch
   log(message: string, fields?: Record<string, unknown>): void
 }
@@ -44,7 +48,7 @@ export interface Capabilities<TConfig, TCredentials> {
    * Set absolute availability for up to 100 Offers of this Connection, 0 included. Must be repeatable.
    * May return a result per Offer: `rejected` (with a short Channel error code) when the Channel refused one Offer,
    * so the others still count as pushed; `ended` when the Channel ended the Offer because it got 0. Offers left out
-   * of the results, or no results at all, count as `ok`. Throw for a failure of the whole call.
+   * of the results, or no results at all (nothing, or null), count as `ok`. Throw for a failure of the whole call.
    */
   'stock.push'?(ctx: CapabilityContext<TConfig, TCredentials>, levels: StockLevel[]): Promise<void | StockPushResult[]>
   /**
@@ -60,6 +64,23 @@ export interface Capabilities<TConfig, TCredentials> {
   ): Promise<void>
 }
 export type CapabilityName = keyof Capabilities<unknown, unknown>
+
+/** At most `requests` requests in any window of `windowMs` milliseconds. */
+export interface RequestRate {
+  requests: number
+  windowMs: number
+}
+
+/**
+ * Limits the core enforces on `ctx.fetch` across every worker of the installation, so Hanza slows itself
+ * down before the Channel blocks it. Set them below the Channel's published limits, leaving headroom.
+ */
+export interface RateLimits {
+  /** Shared by every Connection of this connector on the installation, across organizations (one API application). */
+  application?: RequestRate
+  /** Per Connection (one account on the Channel): a request rate and/or how many requests may be in flight at once. */
+  connection?: { rate?: RequestRate; concurrency?: number }
+}
 
 export interface ConnectorDefinition<
   TConfigSchema extends z.ZodType = z.ZodType,
@@ -78,8 +99,12 @@ export interface ConnectorDefinition<
   /**
    * True when `stock.push` with a number above 0 reactivates an Offer that ended because it sold out
    * (`endedReason: 'sold_out'`). Without it Hanza never pushes to an ended Offer and reports it rejected (ADR 0022).
+   * Hanza decides from the publication it last pulled, which may be stale: a connector that declares this must check,
+   * at push time, why the Offer ended, reopen it only if it sold out, and report `rejected` otherwise.
    */
   reopensSoldOutOffers?: boolean
+  /** Optional request limits the core enforces on `ctx.fetch`; none when omitted. */
+  rateLimits?: RateLimits
 }
 export type AnyConnectorDefinition = ConnectorDefinition<z.ZodType, z.ZodType>
 
@@ -96,12 +121,33 @@ export function isChannel(connector: AnyConnectorDefinition): boolean {
   return CHANNEL_KINDS.includes(connector.kind)
 }
 
+const isPositiveInteger = (value: unknown) => typeof value === 'number' && Number.isSafeInteger(value) && value > 0
+
+/** Null when `rateLimits` is absent or valid, else what is wrong with it. */
+export function rateLimitsProblem(rateLimits: RateLimits | undefined): string | null {
+  if (rateLimits === undefined) return null
+  const rateProblem = (label: string, rate: RequestRate | undefined) =>
+    rate === undefined || (isPositiveInteger(rate.requests) && isPositiveInteger(rate.windowMs))
+      ? null
+      : `${label} needs positive integer requests and windowMs`
+  const { application, connection } = rateLimits
+  return (
+    rateProblem('rateLimits.application', application) ??
+    rateProblem('rateLimits.connection.rate', connection?.rate) ??
+    (connection?.concurrency === undefined || isPositiveInteger(connection.concurrency)
+      ? null
+      : 'rateLimits.connection.concurrency must be a positive integer')
+  )
+}
+
 export function defineConnector<TConfig extends z.ZodType, TCredentials extends z.ZodType>(
   definition: ConnectorDefinition<TConfig, TCredentials>,
 ): ConnectorDefinition<TConfig, TCredentials> {
   if (!CONNECTOR_ID_PATTERN.test(definition.id)) {
     throw new Error(`Invalid connector id "${definition.id}": use lowercase letters, digits and dashes`)
   }
+  const problem = rateLimitsProblem(definition.rateLimits)
+  if (problem !== null) throw new Error(`Connector "${definition.id}": ${problem}`)
   if (isChannel(definition as unknown as AnyConnectorDefinition)) {
     const implemented = listCapabilities(definition as unknown as AnyConnectorDefinition)
     const missing = CHANNEL_CAPABILITIES.filter((name) => !implemented.includes(name))
