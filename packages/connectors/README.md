@@ -22,6 +22,18 @@ a `paid` Channel fact once they are paid (ADR 0015; details in the skill):
   refund): one Order that breaks `orderSchema` turns the whole page into a
   `PermanentError` and stops the Connection's Order feed.
 
+Where `orders.pull` starts and what it may return (ADR 0021; details in the skill):
+
+- Cursor `null` returns the Orders open on the Channel now, then follows the
+  journal from a position taken before that listing; Orders closed before the
+  Connection never arrive. The cursor is opaque: encode the phase in it.
+- When the Channel no longer has the cursor's position, throw
+  `CursorExpiredError`: the core restarts from `null` and records it.
+- An item is a full Order or an Order update (`kind: 'update'`: facts and
+  addresses), for what the Channel cannot serve as a whole Order (an address
+  revealed at payment, an Order that disappeared). The core ignores updates
+  for Orders it does not have.
+
 Every connector proves it follows the contract with the conformance kit,
 called from its own `connector.test.ts` with recorded fixtures and no network
 (see "Recorded fixtures" below).

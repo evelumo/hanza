@@ -119,6 +119,8 @@ export interface RunConformanceOptions extends LintOptions {
   credentials: unknown
   /** Enables check C11 against the unauthorized cassette. */
   unauthorized?: { credentials?: unknown }
+  /** Enables check C15: an `orders.pull` cursor the API no longer has, answered in the main cassette. */
+  expiredCursor?: string
   maxPages?: number
   scrub?: ScrubConfig
   match?: MatchOptions
@@ -161,6 +163,7 @@ export async function runConformance(connector: AnyConnectorDefinition, options:
       config: options.config,
       credentials: options.credentials,
       maxPages: options.maxPages,
+      expiredCursor: options.expiredCursor,
       fetch: main.fetch,
       unauthorized: unauthorized ? { credentials: options.unauthorized?.credentials, fetch: unauthorized.fetch } : undefined,
     })
@@ -201,6 +204,7 @@ async function recordConformance(
       config: setup.config ?? options.config,
       credentials,
       maxPages: options.maxPages,
+      expiredCursor: options.expiredCursor,
       fetch: main.fetch,
       unauthorized: unauthorized ? { credentials: unauthorizedCredentials, fetch: unauthorized.fetch } : undefined,
     })
