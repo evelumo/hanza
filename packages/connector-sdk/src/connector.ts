@@ -44,7 +44,10 @@ export interface Capabilities<TConfig, TCredentials> {
    *
    * Cursor `null` (a new Connection, or a restart after `CursorExpiredError`) starts the feed (ADR 0021):
    * - First take the feed's start: the journal position now, and the boundary that tells Orders placed before it
-   *   from Orders placed after it (a time or an id). Both stay in every cursor of the feed, for ever.
+   *   from Orders placed after it (a time or an id). Both stay in every cursor of the feed, for ever. Take the journal
+   *   position FIRST and the boundary SECOND (Allegro: `GET /order/event-stats`, then `boughtBefore` = now): the
+   *   other way round, an Order placed between the two moments is neither listed (placed after the boundary) nor sent
+   *   in full (its events come before the journal position), so it never reserves.
    * - Then list the Orders open on the Channel now (not shipped or finished, not cancelled; unpaid ones only if the
    *   connector reports them) and placed before the boundary. Page the listing so that an Order closing between two
    *   pages cannot make another one skipped: a keyset (the last key listed, in an order that never changes, such as
