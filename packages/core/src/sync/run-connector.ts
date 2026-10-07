@@ -3,6 +3,7 @@ import type { SyncStream } from '@hanza/db'
 import { failSyncRun } from '../connections/sync-state'
 import type { Context } from '../context'
 import { PermanentJobError, RetryLaterError, type JobRunInfo } from '../jobs'
+import { isRefusedBeforeSending } from '../rate-limit/limited-fetch'
 
 export interface RunScope {
   organizationId: string
@@ -43,7 +44,7 @@ export function isRecordedFailure(error: unknown): boolean {
 /**
  * Runs one connector call and turns its failure into the job outcome, Connection health and `sync_state`
  * by error kind: auth_expired stops retrying and marks the Connection; rate_limited retries later without
- * using an attempt; transient retries with backoff and marks the Connection failing on the last attempt;
+ * using an attempt (a Channel's, at most MAX_RATE_LIMIT_RETRIES times in a row; Hanza's own refusals without limit); transient retries with backoff and marks the Connection failing on the last attempt;
  * permanent stops retrying and marks it failing. A success is left to the caller, which finishes the run once.
  * With `scope.reauthorize`, an auth_expired first renews the credentials and retries the call once; a refused
  * refresh or a second auth_expired then takes the auth_expired path.
@@ -72,8 +73,10 @@ async function recordFailure(ctx: Context, scope: RunScope, error: unknown): Pro
   const classified = classifyConnectorError(error)
   const { retryAfterMs, message } = classified
   const { organizationId, connectionId, stream, run } = scope
-  // Without the cap a Channel that always answers 429 would keep the job (and health `unknown`) forever.
-  const kind = classified.kind === 'rate_limited' && run.retriedLater >= MAX_RATE_LIMIT_RETRIES ? 'transient' : classified.kind
+  // Without the cap a Channel that always answers 429 would keep the job (and health `unknown`) forever. A refusal
+  // by Hanza's own limiter never reached the Channel: it neither counts towards the cap nor is turned into one.
+  const refused = classified.kind === 'rate_limited' && isRefusedBeforeSending(error)
+  const kind = classified.kind === 'rate_limited' && !refused && run.retriedLater >= MAX_RATE_LIMIT_RETRIES ? 'transient' : classified.kind
   const fail = (health: 'failing' | 'auth_expired' | null) =>
     failSyncRun(ctx, organizationId, connectionId, stream, { kind, message, health })
 
@@ -83,7 +86,7 @@ async function recordFailure(ctx: Context, scope: RunScope, error: unknown): Pro
       throw markRecorded(new PermanentJobError(message))
     case 'rate_limited':
       await fail(null)
-      throw markRecorded(new RetryLaterError(retryLaterDelay(retryAfterMs), message))
+      throw markRecorded(new RetryLaterError(retryLaterDelay(retryAfterMs), message, { counted: !refused }))
     case 'transient':
       await fail(run.attempt >= run.maxAttempts ? 'failing' : null)
       throw markRecorded(error)

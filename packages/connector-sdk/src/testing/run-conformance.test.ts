@@ -4,7 +4,7 @@ import { join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { z } from 'zod'
 import { defineConnector, type CapabilityContext } from '../connector'
-import { errorFromResponse, TransientError } from '../errors'
+import { errorFromResponse, TransientError, type ErrorFromResponseOptions } from '../errors'
 import type { Offer } from '../model/offer'
 import type { Order } from '../model/order'
 import { loadCassette, writeCassette } from './cassette'
@@ -53,7 +53,7 @@ const channel: typeof fetch = async (input, init) => {
 const pageSchema = z.object({ items: z.array(z.any()), nextCursor: z.string().nullable(), hasMore: z.boolean() })
 type Ctx = CapabilityContext<Record<string, never>, { apiKey: string }, Record<string, never>>
 
-async function call(ctx: Ctx, path: string, init: RequestInit = {}) {
+async function call(ctx: Ctx, path: string, init: RequestInit = {}, errors: ErrorFromResponseOptions = {}) {
   let response: Response
   try {
     response = await ctx.fetch(`${API}${path}`, { ...init, headers: { accept: 'application/json', authorization: `Bearer ${ctx.credentials.apiKey}` } })
@@ -61,11 +61,11 @@ async function call(ctx: Ctx, path: string, init: RequestInit = {}) {
     // Like a real connector: a failed fetch is transient, and the cause's message is not repeated.
     throw new TransientError('network failure', { cause: error })
   }
-  if (!response.ok) throw await errorFromResponse(response)
+  if (!response.ok) throw await errorFromResponse(response, errors)
   return response
 }
 
-const connector = defineConnector({
+const stubConnector = (errors: ErrorFromResponseOptions = {}) => defineConnector({
   id: 'stub',
   name: 'Stub',
   kind: 'marketplace',
@@ -74,16 +74,17 @@ const connector = defineConnector({
   credentialsSchema: z.object({ apiKey: z.string().min(1).describe('API key') }),
   capabilities: {
     async 'offers.pull'(ctx, cursor) {
-      return pageSchema.parse(await (await call(ctx, `/offers${cursor === null ? '' : `?cursor=${cursor}`}`)).json())
+      return pageSchema.parse(await (await call(ctx, `/offers${cursor === null ? '' : `?cursor=${cursor}`}`, {}, errors)).json())
     },
     async 'orders.pull'(ctx, cursor) {
-      return pageSchema.parse(await (await call(ctx, `/orders${cursor === null ? '' : `?cursor=${cursor}`}`)).json())
+      return pageSchema.parse(await (await call(ctx, `/orders${cursor === null ? '' : `?cursor=${cursor}`}`, {}, errors)).json())
     },
     async 'stock.push'(ctx, levels) {
-      if (levels.length > 0) await call(ctx, '/stock', { method: 'PUT', body: JSON.stringify(levels) })
+      if (levels.length > 0) await call(ctx, '/stock', { method: 'PUT', body: JSON.stringify(levels) }, errors)
     },
   },
 })
+const connector = stubConnector()
 
 const replayOptions = (fixtures: string) => ({
   fixtures,
@@ -147,6 +148,13 @@ describe('runConformance', () => {
     await record()
     await writeFile(join(dir, 'raw-order.json'), JSON.stringify({ note: 'Bearer abcdefgh12345678' }))
     await expect(runConformance(connector, replayOptions(dir))).rejects.toThrow(/raw-order\.json: note \[bearer\] Bear… \(23 chars\)/)
+  })
+
+  it('runs C14 on the replay, and skips it with forbidden: false for a Channel that signs out with 403', async () => {
+    await record()
+    const signsOutWith403 = stubConnector({ isAuthFailure: (response) => response.status === 403 })
+    await expect(runConformance(signsOutWith403, replayOptions(dir))).rejects.toThrow(/\[C14\] orders\.pull failed as 'auth_expired' on a 403/)
+    await expect(runConformance(signsOutWith403, { ...replayOptions(dir), forbidden: false })).resolves.toBeUndefined()
   })
 
   it('explains how to record a missing cassette', async () => {

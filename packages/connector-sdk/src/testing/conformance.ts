@@ -5,6 +5,7 @@ import {
   CONNECTOR_ID_PATTERN,
   CONNECTOR_KINDS,
   isChannel,
+  rateLimitsProblem,
   type AnyConnectorDefinition,
   type CapabilityContext,
   type PullResult,
@@ -25,14 +26,20 @@ export interface ConformanceFixtures {
   fetch?: typeof fetch
   /** If given, orders.pull with these overrides must fail with kind 'auth_expired'. */
   unauthorized?: { credentials?: unknown; fetch?: typeof fetch }
+  /**
+   * C14: the pulls, run against a Channel that answers every request `403 Forbidden` (no auth signal), must not fail
+   * `auth_expired`, and must send a request when `fetch` is given. Default: a fetch answering a bare 403. Pass `false` only if the Channel really uses 403 for
+   * rejected credentials, and say so in the connector's AGENTS.md.
+   */
+  forbidden?: false | { fetch?: typeof fetch }
   /** Page limit per pull loop. Default 100. */
   maxPages?: number
   /**
-   * Required when the connector has `auth.refresh` (C14): `auth.refresh` of `credentials` with this `fetch`
+   * Required when the connector has `auth.refresh` (C15): `auth.refresh` of `credentials` with this `fetch`
    * must succeed; with `refused`, it must fail with kind 'auth_expired'.
    */
   refresh?: { fetch?: typeof fetch; refused?: { credentials?: unknown; fetch?: typeof fetch } }
-  /** Required when the connector has `auth.deviceFlow` (C15): `start`, then one `poll` of its device code, with this `fetch`. */
+  /** Required when the connector has `auth.deviceFlow` (C16): `start`, then one `poll` of its device code, with this `fetch`. */
   deviceFlow?: { fetch?: typeof fetch }
 }
 
@@ -103,6 +110,8 @@ export async function assertConformance(connector: AnyConnectorDefinition, fixtu
   if (typeof connector.name !== 'string' || connector.name.trim() === '') fail('C1', 'name is empty')
   if (!CONNECTOR_KINDS.includes(connector.kind)) fail('C1', `kind "${String(connector.kind)}" is not valid`)
   if (!AUTH_TYPES.includes(connector.auth?.type)) fail('C1', `auth.type "${String(connector.auth?.type)}" is not valid`)
+  const rateLimits = rateLimitsProblem(connector.rateLimits)
+  if (rateLimits !== null) fail('C1', rateLimits)
 
   // C2
   const config = connector.configSchema.safeParse(fixtures.config)
@@ -341,6 +350,36 @@ export async function assertConformance(connector: AnyConnectorDefinition, fixtu
     })
   }
 
+  // C14
+  const forbiddenPulls = (
+    [
+      ['orders.pull', pullOrders],
+      ['offers.pull', pullOffers],
+    ] as const
+  ).filter(([, pull]) => pull !== undefined)
+  if (fixtures.forbidden !== false && forbiddenPulls.length > 0) {
+    await check('C14', async () => {
+      const answer = (fixtures.forbidden && fixtures.forbidden.fetch) || (async () => new Response(null, { status: 403, statusText: 'Forbidden' }))
+      let requests = 0
+      const forbiddenFetch: typeof fetch = (input, init) => {
+        requests++
+        return answer(input, init)
+      }
+      for (const [name, pull] of forbiddenPulls) {
+        try {
+          await call(name, () => (pull as (ctx: CapabilityContext, cursor: string | null) => Promise<unknown>)({ ...context, fetch: forbiddenFetch }, null))
+        } catch (error) {
+          const { kind } = classifyConnectorError(error)
+          if (kind === 'auth_expired') {
+            fail('C14', `${name} failed as 'auth_expired' on a 403 Forbidden; without an auth signal a 403 is 'permanent' (no sign-in prompt)`)
+          }
+        }
+      }
+      // A connector that talks HTTP (it was given recorded responses) must have met the 403, or the check proved nothing.
+      if (fixtures.fetch && requests === 0) fail('C14', 'no pull made a request, so the 403 was never seen')
+    })
+  }
+
   const authContext = (fetchOverride?: typeof fetch): AuthContext => ({
     app: context.app,
     config: context.config,
@@ -350,22 +389,22 @@ export async function assertConformance(connector: AnyConnectorDefinition, fixtu
   const { auth } = connector
   const isIsoTime = (value: unknown) => value === null || z.iso.datetime({ offset: true }).safeParse(value).success
 
-  // C14
+  // C15
   if (auth.type === 'oauth2' && (auth.refresh || auth.expiresAt)) {
-    await check('C14', async () => {
+    await check('C15', async () => {
       if (auth.expiresAt && !isIsoTime(auth.expiresAt(context.credentials))) {
-        fail('C14', 'auth.expiresAt must return null or an ISO datetime with an offset')
+        fail('C15', 'auth.expiresAt must return null or an ISO datetime with an offset')
       }
       if (!auth.refresh) return
       if (!fixtures.refresh) {
-        fail('C14', 'auth.refresh is implemented: pass a refresh fixture')
+        fail('C15', 'auth.refresh is implemented: pass a refresh fixture')
         return
       }
       const refreshed = await call('auth.refresh', () => auth.refresh!(authContext(fixtures.refresh!.fetch), context.credentials))
       const parsed = connector.credentialsSchema.safeParse(refreshed)
-      if (!parsed.success) fail('C14', 'auth.refresh returned credentials that credentialsSchema rejects')
+      if (!parsed.success) fail('C15', 'auth.refresh returned credentials that credentialsSchema rejects')
       else if (auth.expiresAt && !isIsoTime(auth.expiresAt(parsed.data))) {
-        fail('C14', 'auth.expiresAt of the refreshed credentials must return null or an ISO datetime with an offset')
+        fail('C15', 'auth.expiresAt of the refreshed credentials must return null or an ISO datetime with an offset')
       }
       const refused = fixtures.refresh.refused
       if (!refused) return
@@ -373,7 +412,7 @@ export async function assertConformance(connector: AnyConnectorDefinition, fixtu
       if (refused.credentials !== undefined) {
         const parsedRefused = connector.credentialsSchema.safeParse(refused.credentials)
         if (!parsedRefused.success) {
-          fail('C14', 'credentialsSchema rejects the refused refresh credentials fixture')
+          fail('C15', 'credentialsSchema rejects the refused refresh credentials fixture')
           return
         }
         value = parsedRefused.data
@@ -382,41 +421,41 @@ export async function assertConformance(connector: AnyConnectorDefinition, fixtu
         await call('auth.refresh', () => auth.refresh!(authContext(refused.fetch ?? fixtures.refresh!.fetch), value))
       } catch (error) {
         const { kind } = classifyConnectorError(error)
-        if (kind !== 'auth_expired') fail('C14', `a refused auth.refresh failed as '${kind}', expected 'auth_expired'`)
+        if (kind !== 'auth_expired') fail('C15', `a refused auth.refresh failed as '${kind}', expected 'auth_expired'`)
         return
       }
-      fail('C14', 'auth.refresh with the refused fixture resolved; it must reject')
+      fail('C15', 'auth.refresh with the refused fixture resolved; it must reject')
     })
   }
 
-  // C15
+  // C16
   const deviceFlow = auth.type === 'oauth2' ? auth.deviceFlow : undefined
   if (deviceFlow) {
-    await check('C15', async () => {
+    await check('C16', async () => {
       if (!fixtures.deviceFlow) {
-        fail('C15', 'auth.deviceFlow is implemented: pass a deviceFlow fixture')
+        fail('C16', 'auth.deviceFlow is implemented: pass a deviceFlow fixture')
         return
       }
       const authCtx = authContext(fixtures.deviceFlow.fetch)
       const started = deviceSignInStartSchema.safeParse(await call('deviceFlow.start', () => deviceFlow.start(authCtx)))
       if (!started.success) {
-        fail('C15', `deviceFlow.start returned an invalid result: ${z.prettifyError(started.error)}`)
+        fail('C16', `deviceFlow.start returned an invalid result: ${z.prettifyError(started.error)}`)
         return
       }
       const { verificationUri, verificationUriComplete, deviceCode } = started.data
       if (!isAllowedVerificationUri(verificationUri, deviceFlow.verificationHosts)) {
-        fail('C15', 'verificationUri must be an https: URL on one of verificationHosts')
+        fail('C16', 'verificationUri must be an https: URL on one of verificationHosts')
       }
       if (verificationUriComplete !== null && !isAllowedVerificationUri(verificationUriComplete, deviceFlow.verificationHosts)) {
-        fail('C15', 'verificationUriComplete must be null or an https: URL on one of verificationHosts')
+        fail('C16', 'verificationUriComplete must be null or an https: URL on one of verificationHosts')
       }
       const polled = deviceSignInPollSchema.safeParse(await call('deviceFlow.poll', () => deviceFlow.poll(authCtx, deviceCode)))
       if (!polled.success) {
-        fail('C15', `deviceFlow.poll returned an invalid result: ${z.prettifyError(polled.error)}`)
+        fail('C16', `deviceFlow.poll returned an invalid result: ${z.prettifyError(polled.error)}`)
         return
       }
       if (polled.data.status === 'approved' && !connector.credentialsSchema.safeParse(polled.data.credentials).success) {
-        fail('C15', 'deviceFlow.poll approved with credentials that credentialsSchema rejects')
+        fail('C16', 'deviceFlow.poll approved with credentials that credentialsSchema rejects')
       }
     })
   }

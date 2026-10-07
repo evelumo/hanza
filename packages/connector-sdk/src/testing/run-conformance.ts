@@ -106,11 +106,11 @@ export function withFetch<T extends AnyConnectorDefinition>(connector: T, replac
 
 export const CONFORMANCE_CASSETTE = `conformance${CASSETTE_SUFFIX}`
 export const UNAUTHORIZED_CASSETTE = `conformance-unauthorized${CASSETTE_SUFFIX}`
-/** `auth.refresh` of the credentials (check C14). */
+/** `auth.refresh` of the credentials (check C15). */
 export const REFRESH_CASSETTE = `conformance-refresh${CASSETTE_SUFFIX}`
-/** `auth.refresh` the Channel refuses (check C14). */
+/** `auth.refresh` the Channel refuses (check C15). */
 export const REFRESH_REFUSED_CASSETTE = `conformance-refresh-refused${CASSETTE_SUFFIX}`
-/** `auth.deviceFlow.start`, then one `poll` (check C15). */
+/** `auth.deviceFlow.start`, then one `poll` (check C16). */
 export const DEVICE_FLOW_CASSETTE = `conformance-device-flow${CASSETTE_SUFFIX}`
 
 export interface ConformanceRecordingSetup extends RecordingSetup {
@@ -140,12 +140,14 @@ export interface RunConformanceOptions extends LintOptions {
   /** Enables check C11 against the unauthorized cassette. */
   unauthorized?: { credentials?: unknown }
   /**
-   * Required for a connector with `auth.refresh`: check C14 against `conformance-refresh.cassette.json`, and with
+   * Required for a connector with `auth.refresh`: check C15 against `conformance-refresh.cassette.json`, and with
    * `refused` against `conformance-refresh-refused.cassette.json`.
    */
   refresh?: { refused?: { credentials: unknown } }
-  /** Required for a connector with `auth.deviceFlow`: check C15 against `conformance-device-flow.cassette.json`. */
+  /** Required for a connector with `auth.deviceFlow`: check C16 against `conformance-device-flow.cassette.json`. */
   deviceFlow?: boolean
+  /** Skips check C14, only for a Channel that uses 403 for rejected credentials (say why in the connector's AGENTS.md). */
+  forbidden?: false
   maxPages?: number
   scrub?: ScrubConfig
   match?: MatchOptions
@@ -222,6 +224,7 @@ export async function runConformance(connector: AnyConnectorDefinition, options:
           }
         : undefined,
       deviceFlow: deviceFlow ? { fetch: deviceFlow.fetch } : undefined,
+      ...(options.forbidden === false ? { forbidden: false as const } : {}),
     })
   } catch (error) {
     failure = messageOf(error)
@@ -267,6 +270,7 @@ async function recordConformance(connector: AnyConnectorDefinition, options: Run
         ? { fetch: refresh.fetch, refused: refreshRefused ? { credentials: refusedCredentials, fetch: refreshRefused.fetch } : undefined }
         : undefined,
       deviceFlow: deviceFlow ? { fetch: deviceFlow.fetch } : undefined,
+      ...(options.forbidden === false ? { forbidden: false as const } : {}),
     })
   } catch (error) {
     failure = error

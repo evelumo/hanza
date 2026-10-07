@@ -3,6 +3,7 @@ export {
   deviceFlowOf,
   isChannel,
   listCapabilities,
+  rateLimitsProblem,
   CHANNEL_KINDS,
   CONNECTOR_KINDS,
   type AnyConnectorDefinition,
@@ -12,6 +13,8 @@ export {
   type ConnectorDefinition,
   type ConnectorKind,
   type PullResult,
+  type RateLimits,
+  type RequestRate,
 } from './connector'
 export {
   deviceSignInPollSchema,
@@ -30,12 +33,16 @@ export {
 export {
   classifyConnectorError,
   errorFromResponse,
+  isConnectorError,
+  retryAfterFromHeaders,
   AuthExpiredError,
   ConnectorError,
   PermanentError,
   RateLimitedError,
   TransientError,
+  DEFAULT_RETRY_AFTER_MS,
   type ConnectorErrorKind,
+  type ErrorFromResponseOptions,
 } from './errors'
 export { currencyMinorUnits, currencySchema, moneySchema, type Money } from './model/money'
 export {

@@ -22,7 +22,7 @@ const credentials = { accessToken: 'replay-access-token', refreshToken: 'replay-
 const recordedApp = { clientId: 'recorded-client-id', clientSecret: 'recorded-client-secret' }
 
 describe('fake-http-oauth connector with recorded fixtures', () => {
-  it('passes the conformance kit (C2 with installation settings, C14 refresh, C15 device flow) against its cassettes', async () => {
+  it('passes the conformance kit (C2 with installation settings, C15 refresh, C16 device flow) against its cassettes', async () => {
     await runConformance(connector, {
       fixtures,
       app,

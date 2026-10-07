@@ -31,6 +31,17 @@ credentials, ADR 0020) and `auth.deviceFlow` (the panel's "Connect" and "Sign
 in again" then go through a code the person approves on the Channel). Its
 credentials are never typed into a form.
 
+Only an explicit auth signal asks a person to sign in again: a 401, a
+`WWW-Authenticate: Bearer error="invalid_token"`, or the connector's own
+`isAuthFailure` predicate passed to `errorFromResponse`. A 403 means "no right to
+this resource" and fails the run as permanent, without a sign-in prompt
+(conformance check C14).
+
+A connector declares its Channel's request limits in `rateLimits` (per API
+application, per Connection, concurrency); the core enforces them in `ctx.fetch`
+across every worker (ADR 0019). `ctx.fetch` may then reject with
+`RateLimitedError` before sending: let it through unchanged.
+
 Every connector proves it follows the contract with the conformance kit,
 called from its own `connector.test.ts` with recorded fixtures and no network
 (see "Recorded fixtures" below).
@@ -49,9 +60,10 @@ not fit, report `price: null`.
 
 | Id | Package | Kind | What it is |
 | --- | --- | --- | --- |
-| `fake` | `@hanza/connector-fake` | marketplace | In-memory Channel for tests and demos, with every capability including `price.push`. The reference for how a connector looks. Not a real Channel. |
+| `fake` | `@hanza/connector-fake` | marketplace | In-memory Channel for tests and demos, with every capability including `price.push`. The reference for how a connector looks. Not a real Channel. With `http: true` it also sends one request per call through `ctx.fetch`, answered by its in-memory `api` (for tests of rate limits and error mapping). |
 | `fake-oauth` | `@hanza/connector-fake` | marketplace | The same in-memory data behind an OAuth sign-in (device flow, rotating tokens, installation settings). Only available where `HANZA_CONNECTOR_FAKE_OAUTH_CLIENT_ID` and `_CLIENT_SECRET` are set. Not a real Channel. |
 | `fake-http` | `@hanza/connector-fake` | marketplace | Not registered. The same fake Channel behind a small JSON API with client-credentials tokens (`src/http/`), tested only with recorded fixtures: the reference for a connector that talks HTTP. |
+| `fake-http-oauth` | `@hanza/connector-fake` | marketplace | Not registered. The same API with an OAuth life cycle shaped like Allegro's (installation settings, device flow, rotating refresh tokens; `src/http/oauth-connector.ts`), tested with recorded fixtures through `runConformance` (`app`, `refresh`, `deviceFlow`): the reference for an OAuth connector. |
 
 Allegro and WooCommerce come first among the real ones (stage 2 of the plan).
 

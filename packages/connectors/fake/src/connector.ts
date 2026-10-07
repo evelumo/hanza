@@ -4,6 +4,8 @@ import {
   RateLimitedError,
   TransientError,
   defineConnector,
+  errorFromResponse,
+  isConnectorError,
   type CapabilityContext,
   type ConnectorDefinition,
   type Offer,
@@ -11,9 +13,11 @@ import {
   type Order,
   type OrderStatus,
   type PullResult,
+  type RateLimits,
   type StockLevel,
 } from '@hanza/connector-sdk'
 import { z } from 'zod'
+import { FAKE_API_URL } from './api'
 
 export const fakeConfigSchema = z.object({
   failMode: z.enum(['none', 'rate_limited', 'transient', 'permanent']).default('none').describe('Failure simulation'),
@@ -57,24 +61,51 @@ function failIfRequested(ctx: FakeContext): void {
 
 export type FakeConnector = ConnectorDefinition<typeof fakeConfigSchema, typeof fakeCredentialsSchema>
 
-export function createFakeConnector(state: FakeState, id = 'fake'): FakeConnector {
+export interface FakeConnectorOptions {
+  id?: string
+  /** Send one request per call through `ctx.fetch` to `FAKE_API_URL`, the way a real connector talks to its Channel. */
+  http?: boolean
+  rateLimits?: RateLimits
+}
+
+export function createFakeConnector(state: FakeState, options: FakeConnectorOptions = {}): FakeConnector {
+  // What a real connector's client does: authenticate, map a failed response, and let the core's errors through.
+  const request = async (ctx: FakeContext, operation: string) => {
+    failIfRequested(ctx)
+    if (!options.http) return
+    let response: Response
+    try {
+      response = await ctx.fetch(`${FAKE_API_URL}/${operation}`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${ctx.credentials.apiKey}` },
+      })
+    } catch (error) {
+      // E.g. the RateLimitedError of the core's limiter: wrapping it would turn a wait into a failure.
+      if (isConnectorError(error)) throw error
+      throw new TransientError('The Channel could not be reached', { cause: error })
+    }
+    if (!response.ok) throw await errorFromResponse(response)
+    await response.body?.cancel()
+  }
+
   return defineConnector({
-    id,
+    id: options.id ?? 'fake',
     name: 'Test channel',
     kind: 'marketplace',
     auth: { type: 'apiKey' },
     configSchema: fakeConfigSchema,
     credentialsSchema: fakeCredentialsSchema,
+    ...(options.rateLimits ? { rateLimits: options.rateLimits } : {}),
     capabilities: {
       async 'offers.pull'(ctx, cursor): Promise<PullResult<Offer>> {
-        failIfRequested(ctx)
+        await request(ctx, 'offers.pull')
         const start = parseCursor(cursor)
         const items = state.offers.slice(start, start + PAGE_SIZE)
         const end = start + items.length
         return { items: structuredClone(items), nextCursor: String(end), hasMore: end < state.offers.length }
       },
       async 'orders.pull'(ctx, cursor): Promise<PullResult<Order>> {
-        failIfRequested(ctx)
+        await request(ctx, 'orders.pull')
         const after = parseCursor(cursor)
         const pending = state.journal.filter((entry) => entry.seq > after)
         const page = pending.slice(0, PAGE_SIZE)
@@ -86,11 +117,11 @@ export function createFakeConnector(state: FakeState, id = 'fake'): FakeConnecto
         }
       },
       async 'stock.push'(ctx, levels) {
-        failIfRequested(ctx)
+        await request(ctx, 'stock.push')
         state.stockPushes.push(structuredClone(levels))
       },
       async 'price.push'(ctx, prices) {
-        failIfRequested(ctx)
+        await request(ctx, 'price.push')
         state.pricePushes.push(structuredClone(prices))
         // Like a real Channel, the next offers.pull reports the price that was set.
         for (const { offerExternalId, price } of prices) {
@@ -99,7 +130,7 @@ export function createFakeConnector(state: FakeState, id = 'fake'): FakeConnecto
         }
       },
       async 'orders.updateStatus'(ctx, input) {
-        failIfRequested(ctx)
+        await request(ctx, 'orders.updateStatus')
         state.statusUpdates.push({ ...input })
       },
     },

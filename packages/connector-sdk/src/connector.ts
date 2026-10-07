@@ -19,7 +19,11 @@ export interface CapabilityContext<TConfig = unknown, TCredentials = unknown, TA
   config: TConfig
   /** Secrets, parsed with `credentialsSchema`. The connector adds them to its own requests; never log them. */
   credentials: TCredentials
-  /** Global fetch with a 30 s timeout added by the core. */
+  /**
+   * Global fetch with a 30 s timeout added by the core, which also enforces the connector's `rateLimits`: it may
+   * wait briefly, or reject with a `RateLimitedError` before sending. Let a `ConnectorError` from it through
+   * unchanged (wrap only other rejections, e.g. as `TransientError`).
+   */
   fetch: typeof fetch
   log(message: string, fields?: Record<string, unknown>): void
 }
@@ -57,6 +61,23 @@ export interface Capabilities<TConfig, TCredentials, TApp = unknown> {
 }
 export type CapabilityName = keyof Capabilities<unknown, unknown, unknown>
 
+/** At most `requests` requests in any window of `windowMs` milliseconds. */
+export interface RequestRate {
+  requests: number
+  windowMs: number
+}
+
+/**
+ * Limits the core enforces on `ctx.fetch` across every worker of the installation, so Hanza slows itself
+ * down before the Channel blocks it. Set them below the Channel's published limits, leaving headroom.
+ */
+export interface RateLimits {
+  /** Shared by every Connection of this connector on the installation, across organizations (one API application). */
+  application?: RequestRate
+  /** Per Connection (one account on the Channel): a request rate and/or how many requests may be in flight at once. */
+  connection?: { rate?: RequestRate; concurrency?: number }
+}
+
 export interface ConnectorDefinition<
   TConfigSchema extends z.ZodType = z.ZodType,
   TCredentialsSchema extends z.ZodType = z.ZodType,
@@ -79,6 +100,8 @@ export interface ConnectorDefinition<
   /** Same shape rules; stored encrypted. Use z.object({}) when there are none. */
   credentialsSchema: TCredentialsSchema
   capabilities: Capabilities<z.output<TConfigSchema>, z.output<TCredentialsSchema>, z.output<TAppSchema>>
+  /** Optional request limits the core enforces on `ctx.fetch`; none when omitted. */
+  rateLimits?: RateLimits
 }
 export type AnyConnectorDefinition = ConnectorDefinition<z.ZodType, z.ZodType, z.ZodType>
 
@@ -95,6 +118,25 @@ export function isChannel(connector: AnyConnectorDefinition): boolean {
   return CHANNEL_KINDS.includes(connector.kind)
 }
 
+const isPositiveInteger = (value: unknown) => typeof value === 'number' && Number.isSafeInteger(value) && value > 0
+
+/** Null when `rateLimits` is absent or valid, else what is wrong with it. */
+export function rateLimitsProblem(rateLimits: RateLimits | undefined): string | null {
+  if (rateLimits === undefined) return null
+  const rateProblem = (label: string, rate: RequestRate | undefined) =>
+    rate === undefined || (isPositiveInteger(rate.requests) && isPositiveInteger(rate.windowMs))
+      ? null
+      : `${label} needs positive integer requests and windowMs`
+  const { application, connection } = rateLimits
+  return (
+    rateProblem('rateLimits.application', application) ??
+    rateProblem('rateLimits.connection.rate', connection?.rate) ??
+    (connection?.concurrency === undefined || isPositiveInteger(connection.concurrency)
+      ? null
+      : 'rateLimits.connection.concurrency must be a positive integer')
+  )
+}
+
 /** The device flow of a connector, if it has one. */
 export function deviceFlowOf(connector: AnyConnectorDefinition) {
   return connector.auth.type === 'oauth2' ? connector.auth.deviceFlow : undefined
@@ -108,6 +150,8 @@ export function defineConnector<
   if (!CONNECTOR_ID_PATTERN.test(definition.id)) {
     throw new Error(`Invalid connector id "${definition.id}": use lowercase letters, digits and dashes`)
   }
+  const problem = rateLimitsProblem(definition.rateLimits)
+  if (problem !== null) throw new Error(`Connector "${definition.id}": ${problem}`)
   const { auth } = definition
   if (auth.type === 'oauth2' && auth.deviceFlow && auth.deviceFlow.verificationHosts.length === 0) {
     throw new Error(`Connector "${definition.id}" has a device flow but no verificationHosts`)

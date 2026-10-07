@@ -15,6 +15,18 @@ export {
 } from './queue'
 export { createConnectorRegistry, type ConnectorRegistry } from './connectors/registry'
 export { settingsVariable, type ConnectorSettings } from './connectors/settings'
+export {
+  createInMemoryRateLimiter,
+  createRedisRateLimiter,
+  RATE_LIMIT_MAX_WAIT_MS,
+  RequestRefusedError,
+  UNAVAILABLE_RETRY_AFTER_MS,
+  type Bucket,
+  type LeaseResult,
+  type RedisRateLimiterOptions,
+  type RateLimiter,
+  type Reservation,
+} from './rate-limit'
 export { systemPingJob } from './jobs/system-ping'
 export { syncTickJob } from './jobs/sync-tick'
 export { offersPullJob } from './jobs/offers-pull'

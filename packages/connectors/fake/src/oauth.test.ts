@@ -20,7 +20,7 @@ describe('fake OAuth connector', () => {
   it('passes the conformance kit, refresh and device flow included', async () => {
     const channel = createFakeOAuthChannel()
     const credentials = channel.issueCredentials()
-    // C15 polls once, right after start.
+    // C16 polls once, right after start.
     channel.options.autoApprove = true
     const refused = channel.issueCredentials()
     channel.revokeAll()

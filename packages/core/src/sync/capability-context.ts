@@ -2,7 +2,7 @@ import { PermanentError, type AnyConnectorDefinition, type CapabilityContext } f
 import type { z } from 'zod'
 import type { OpenedConnection } from '../connections/connections'
 import type { Context } from '../context'
-import { connectorApp, timedFetch } from './auth-context'
+import { connectionFetch, connectorApp } from './auth-context'
 
 function issuePaths(prefix: string, error: z.ZodError): string[] {
   return error.issues.map((issue) => [prefix, ...issue.path.map(String)].join('.'))
@@ -30,7 +30,7 @@ export function buildCapabilityContext(ctx: Context, opened: OpenedConnection, c
     app,
     config: config.data,
     credentials: credentials.data,
-    fetch: timedFetch,
+    fetch: connectionFetch(ctx, connector, opened.id),
     log: (message, extra) => ctx.log.info(message, { ...extra, ...fields }),
   }
 }
