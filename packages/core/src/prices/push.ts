@@ -2,7 +2,9 @@ import type { Money } from '@hanza/connector-sdk'
 import type { Tx } from '@hanza/db'
 import { afterCommit } from '../after-commit'
 import type { Context } from '../context'
+import { appendEvent } from '../events'
 import { coalesceKeys, pricePushRef } from '../jobs/refs'
+import { TX_OPTIONS } from '../transaction'
 import { effectivePrice, moneyFromColumns } from './price'
 
 /**
@@ -85,24 +87,48 @@ export async function listOffersAwaitingPricePush(
 }
 
 /**
- * Compare-and-clear, like `markOffersPushed`: records `seq` as handled only if it is still ahead, so a change
+ * Compare-and-clear, like `recordStockPushOutcomes`: records `seq` as handled only if it is still ahead, so a change
  * made after the list was read keeps the Offer pending. `pushed` null = skipped (nothing that could be sent).
+ * `rejected` = the Channel refused this Offer's price: the code is kept with an Event and the Offer counts as
+ * handled; a later push or skip clears it.
  */
 export async function markOffersPriceHandled(
   ctx: Context,
   organizationId: string,
-  handled: Array<{ offerId: string; seq: number; pushed: Money | null }>,
+  handled: Array<{ offerId: string; seq: number; pushed: Money | null; rejected?: string }>,
 ): Promise<void> {
+  if (handled.length === 0) return
   const sorted = [...handled].sort((a, b) => (a.offerId < b.offerId ? -1 : a.offerId > b.offerId ? 1 : 0))
-  for (const item of sorted) {
-    await ctx.db.offer.updateMany({
-      where: { id: item.offerId, organizationId, pricePushedSeq: { lt: item.seq } },
-      data: {
-        pricePushedSeq: item.seq,
-        ...(item.pushed
-          ? { lastPushedPriceAmount: item.pushed.amount, lastPushedPriceCurrency: item.pushed.currency, lastPricePushedAt: new Date() }
-          : {}),
-      },
-    })
-  }
+  await ctx.db.$transaction(async (tx) => {
+    const now = new Date()
+    for (const item of sorted) {
+      const where = { id: item.offerId, organizationId, pricePushedSeq: { lt: item.seq } }
+      if (item.rejected !== undefined) {
+        const { count } = await tx.offer.updateMany({
+          where,
+          data: { pricePushedSeq: item.seq, priceRejectedCode: item.rejected, priceRejectedAt: now },
+        })
+        if (count > 0) {
+          await appendEvent(tx, {
+            organizationId,
+            type: 'offer.push_rejected',
+            subject: { type: 'offer', id: item.offerId },
+            payload: { push: 'price', code: item.rejected },
+          })
+        }
+        continue
+      }
+      await tx.offer.updateMany({
+        where,
+        data: {
+          pricePushedSeq: item.seq,
+          priceRejectedCode: null,
+          priceRejectedAt: null,
+          ...(item.pushed
+            ? { lastPushedPriceAmount: item.pushed.amount, lastPushedPriceCurrency: item.pushed.currency, lastPricePushedAt: now }
+            : {}),
+        },
+      })
+    }
+  }, TX_OPTIONS)
 }

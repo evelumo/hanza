@@ -120,7 +120,8 @@
         "link": "Powiązanie",
         "lastPushed": "Ostatnio wysłano",
         "price": "Cena",
-        "actions": "Akcje"
+        "actions": "Akcje",
+        "publication": "W kanale"
       },
       "linkedManually": "Ręcznie",
       "linkedBySku": "Po SKU",
@@ -225,7 +226,8 @@
       "offer": "Oferta",
       "sku": "SKU",
       "seen": "Widziana",
-      "link": "Połącz ręcznie"
+      "link": "Połącz ręcznie",
+      "publication": "W kanale"
     },
     "selectOffer": "Zaznacz ofertę {name}",
     "selectAll": "Zaznacz wszystkie oferty z SKU",
@@ -247,7 +249,13 @@
     "overrideTitle": "Cena oferty",
     "overrideDescription": "Cena tylko dla tej oferty. Ma pierwszeństwo przed ceną bazową produktu; usuń ją, aby wrócić do ceny bazowej.",
     "mismatchHint": "Ustaw cenę oferty w {currency}, aby ją wysłać.",
-    "notLinked": "Ta oferta nie jest połączona z produktem, więc Hanza nie wysyła ani jej stanu, ani ceny. Połącz ją na liście ofert bez produktu."
+    "notLinked": "Ta oferta nie jest połączona z produktem, więc Hanza nie wysyła ani jej stanu, ani ceny. Połącz ją na liście ofert bez produktu.",
+    "publication": "W kanale",
+    "publicationHint": "Tak, jak podano przy ostatniej synchronizacji lub wysyłce stanu.",
+    "lastPushedStock": "Ostatnio wysłany stan",
+    "stockTitle": "Stan w kanale",
+    "stockDescription": "Hanza wysyła liczbę sztuk, którą kanał może sprzedać. Jeśli kanał odrzuci tę ofertę, pozostałe oferty synchronizują się dalej; ponów po usunięciu przyczyny. Zmiana stanu lub ustawień stanu ponawia ją sama.",
+    "priceRetryDescription": "Jeśli kanał odrzuci cenę tej oferty, ponów po usunięciu przyczyny. Nowa cena ponawia ją sama."
   },
   "prices": {
     "none": "Brak ceny",
@@ -267,7 +275,8 @@
       "currency_unknown": "Nie wysłano: kanał nie podał waluty oferty.",
       "currency_mismatch": "Nie wysłano: kanał sprzedaje tę ofertę w {channelCurrency}, a cena jest w {priceCurrency}.",
       "pending": "Czeka na wysłanie.",
-      "pushed": "Wysłano {date}."
+      "pushed": "Wysłano {date}.",
+      "rejected": "Odrzucone przez kanał."
     }
   },
   "orders": {
@@ -388,6 +397,13 @@
         "defaultOption": "Domyślny status fazy ({status})",
         "save": "Zapisz",
         "adminsOnly": "Tylko właściciel lub administrator organizacji może to zmienić."
+      },
+      "rejectedTitle": "Oferty odrzucone przez kanał",
+      "rejectedDescription": "Kanał odrzucił ostatnio wysłany stan lub cenę tych ofert. Pozostałe oferty synchronizują się dalej. Otwórz ofertę, aby zobaczyć powód i ponowić.",
+      "rejectedColumns": {
+        "offer": "Oferta",
+        "stock": "Stan",
+        "price": "Cena"
       }
     },
     "new": {
@@ -529,6 +545,13 @@
     "erasureCause": {
       "retention": "okres przechowywania",
       "erasure_request": "prośba o usunięcie"
+    },
+    "publication": {
+      "active": "Aktywna",
+      "inactive": "Nieaktywna (szkic)",
+      "ended": "Zakończona",
+      "ended_sold_out": "Zakończona (wyprzedana)",
+      "unknown": "Nieznany"
     }
   },
   "sync": {
@@ -545,7 +568,8 @@
       "truncated": "przerwane na limicie stron",
       "skipped": "niewysłane",
       "updatesIgnored": "zmiany zamówień spoza Hanzy",
-      "feedRestarts": "pobieranie zamówień od nowa"
+      "feedRestarts": "pobieranie zamówień od nowa",
+      "rejected": "odrzucone"
     }
   },
   "events": {
@@ -593,7 +617,10 @@
       "warehouse_activated": "Aktywowano magazyn",
       "warehouse_deleted": "Usunięto magazyn",
       "order_addresses_updated": "Kanał przesłał nowe adresy",
-      "connection_order_feed_restarted": "Pobieranie zamówień od nowa"
+      "connection_order_feed_restarted": "Pobieranie zamówień od nowa",
+      "offer_channel_status_changed": "Zmienił się status oferty w kanale",
+      "offer_push_rejected": "Kanał odrzucił ofertę",
+      "offer_push_retried": "Ponowiono wysłanie oferty"
     },
     "lines": "{count, plural, one {# pozycja} few {# pozycje} many {# pozycji} other {# pozycji}}",
     "defaultStatus": "status domyślny",
@@ -605,7 +632,11 @@
     "someWarehouses": "{count, plural, one {# wybrany magazyn} few {# wybrane magazyny} many {# wybranych magazynów} other {# wybranego magazynu}}",
     "priority": "priorytet {change}",
     "feedRestartGap": "może brakować zamówień złożonych i zamkniętych w międzyczasie",
-    "addresses": "{which, select, shipping {adres dostawy} billing {adres do faktury} other {adres dostawy i adres do faktury}}"
+    "addresses": "{which, select, shipping {adres dostawy} billing {adres do faktury} other {adres dostawy i adres do faktury}}",
+    "push": {
+      "stock": "stan",
+      "price": "cena"
+    }
   },
   "errors": {
     "domain": {
@@ -637,7 +668,8 @@
       "warehouse_in_use": "Magazyn jest nadal używany: wybrał go kanał albo ma rezerwacje w historii. Najpierw zmień magazyny kanału albo dezaktywuj magazyn zamiast go usuwać.",
       "no_warehouse_selected": "Wybierz co najmniej jeden magazyn.",
       "reservation_not_open": "Przenieść można tylko otwartą rezerwację nowego lub realizowanego zamówienia.",
-      "not_enough_stock": "Ten magazyn nie ma dość Dostępnego na całą pozycję."
+      "not_enough_stock": "Ten magazyn nie ma dość Dostępnego na całą pozycję.",
+      "not_linked": "Ta oferta nie jest połączona z produktem."
     },
     "unexpected": "Coś poszło nie tak. Spróbuj ponownie.",
     "invalidInput": "Sprawdź poprawność pól.",
@@ -773,6 +805,20 @@
       "channelsLine": "Wybrany przez: {channels}",
       "historyTitle": "Historia",
       "historyEmpty": "Brak zdarzeń."
+    }
+  },
+  "offerPush": {
+    "rejected": "Odrzucone przez kanał: {code}.",
+    "offerEnded": "Nie wysłano: oferta została zakończona w kanale. Hanza wznawia tylko oferty, które się wyprzedały; aby znów ją sprzedawać, aktywuj ją w kanale.",
+    "retry": "Ponów",
+    "retrying": "Ponawianie…",
+    "retryStock": "Ponów wysłanie stanu",
+    "retryPrice": "Ponów wysłanie ceny",
+    "stock": {
+      "not_linked": "Nie wysłano: oferta nie jest połączona z produktem.",
+      "pending": "Czeka na wysłanie.",
+      "not_sent": "Nie wysłano: oferta została zakończona w kanale i nie ma stanu, z którym można ją wznowić.",
+      "pushed": "Wysłano {count, plural, one {# sztukę} few {# sztuki} many {# sztuk} other {# sztuki}} {date}."
     }
   }
 }

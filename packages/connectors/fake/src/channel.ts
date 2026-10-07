@@ -1,10 +1,11 @@
 import type { Address, ChannelFact, Offer, OfferPrice, Order, OrderStatus, OrderUpdate, RateLimits, StockLevel } from '@hanza/connector-sdk'
 import { createFakeApi, type FakeApi } from './api'
-import { createFakeConnector, type FakeConnector, type FakeState } from './connector'
+import { createFakeConnector, withPublication, type FakeConnector, type FakeState } from './connector'
 import { seedFacts, seedOffers, seedOrders } from './seed'
 
 export interface FakeChannel {
   connector: FakeConnector
+  /** Adds or replaces an Offer in the catalogue every account sees, publication included. */
   addOffer(offer: Offer): void
   /** Appends the Order to the journal. */
   addOrder(order: Order): void
@@ -30,9 +31,16 @@ export interface FakeChannel {
   /** Arguments of every price.push call, in order. A push also sets the Offer's price that offers.pull reports. */
   readonly pricePushes: OfferPrice[][]
   readonly statusUpdates: Array<{ orderExternalId: string; status: OrderStatus }>
+  /** The Channel refuses this Offer's stock and price with `code` from now on; null accepts them again. */
+  reject(offerExternalId: string, code: string | null): void
+  /**
+   * The Offer as offers.pull reports it to the account with this API key (a push of that account may have ended or
+   * reopened it); without one, as the catalogue has it.
+   */
+  offer(offerExternalId: string, apiKey?: string): Offer | undefined
   /** The Channel's HTTP side; the connector calls it only with `http: true`. */
   readonly api: FakeApi
-  /** Back to the seed, recorded calls cleared. */
+  /** Back to the seed, recorded calls and rejections cleared. */
   reset(): void
 }
 
@@ -66,6 +74,8 @@ export function createFakeChannel(options: FakeChannelOptions = {}): FakeChannel
     stockPushes: [],
     pricePushes: [],
     statusUpdates: [],
+    rejections: new Map(),
+    publications: new Map(),
   }
   const api = createFakeApi()
 
@@ -97,6 +107,8 @@ export function createFakeChannel(options: FakeChannelOptions = {}): FakeChannel
       const index = state.offers.findIndex((existing) => existing.externalId === offer.externalId)
       if (index === -1) state.offers.push(copy)
       else state.offers[index] = copy
+      // A test that replaces an Offer sets how every account sees it.
+      for (const own of state.publications.values()) own.delete(offer.externalId)
     },
     addOrder(order) {
       state.orders.set(order.externalId, structuredClone(order))
@@ -129,6 +141,15 @@ export function createFakeChannel(options: FakeChannelOptions = {}): FakeChannel
     stockPushes: state.stockPushes,
     pricePushes: state.pricePushes,
     statusUpdates: state.statusUpdates,
+    reject(offerExternalId, code) {
+      if (code === null) state.rejections.delete(offerExternalId)
+      else state.rejections.set(offerExternalId, code)
+    },
+    offer(offerExternalId, apiKey) {
+      const offer = state.offers.find((candidate) => candidate.externalId === offerExternalId)
+      if (!offer) return undefined
+      return structuredClone(apiKey === undefined ? offer : withPublication(state, apiKey, offer))
+    },
     reset() {
       state.offers.length = 0
       state.orders.clear()
@@ -140,6 +161,8 @@ export function createFakeChannel(options: FakeChannelOptions = {}): FakeChannel
       state.stockPushes.length = 0
       state.pricePushes.length = 0
       state.statusUpdates.length = 0
+      state.rejections.clear()
+      state.publications.clear()
       api.reset()
       seedOffers.forEach(channel.addOffer)
       seedOrders.forEach(channel.addOrder)

@@ -1,16 +1,20 @@
-import { getOffer } from '@hanza/core'
+import { getOffer, OFFER_ENDED_CODE } from '@hanza/core'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import { useId, type ReactNode } from 'react'
+import { ActionForm } from '@/components/action-form'
+import { ActionButton } from '@/components/form'
 import { PriceForm } from '@/components/price-form'
 import { EmptyState, Section, linkClass } from '@/components/section'
 import { getT } from '@/i18n/server'
 import { getContext } from '@/lib/context'
 import { getFormatters } from '@/lib/formatters'
+import { publicationLabel, stockStatusText } from '@/lib/offer-push-status'
 import { isPriceBlocked, priceStatusText } from '@/lib/price-status'
 import { safeHttpUrl } from '@/lib/safe-url'
 import { requireTenant } from '@/lib/session'
-import { setOfferPriceAction } from './actions'
+import { retryOfferPushAction, setOfferPriceAction } from './actions'
 
 export const dynamic = 'force-dynamic'
 
@@ -19,9 +23,11 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 function Figure({ label, value, note }: { label: string; value: string; note?: string }) {
+  const labelId = useId()
+  // A named group ties the value to its label for assistive technology (and tests).
   return (
-    <div className="rounded-lg border border-line bg-white px-5 py-4">
-      <p className="text-sm text-muted">{label}</p>
+    <div role="group" aria-labelledby={labelId} className="rounded-lg border border-line bg-white px-5 py-4">
+      <p id={labelId} className="text-sm text-muted">{label}</p>
       <p className="mt-1 text-2xl font-semibold tabular-nums">{value}</p>
       {note ? <p className="text-xs text-muted">{note}</p> : null}
     </div>
@@ -38,6 +44,15 @@ export default async function OfferPage({ params }: { params: Promise<{ offerId:
   const href = safeHttpUrl(offer.url)
   const none = t('prices.none')
   const blocked = isPriceBlocked(offer.priceStatus)
+  const retry = (push: 'stock' | 'price', label: string): ReactNode => (
+    <ActionForm action={retryOfferPushAction} className="space-y-2">
+      <input type="hidden" name="offerId" value={offer.id} />
+      <input type="hidden" name="push" value={push} />
+      <ActionButton variant="secondary" pendingLabel={t('offerPush.retrying')} aria-label={label}>
+        {t('offerPush.retry')}
+      </ActionButton>
+    </ActionForm>
+  )
 
   return (
     <div className="space-y-6">
@@ -63,6 +78,24 @@ export default async function OfferPage({ params }: { params: Promise<{ offerId:
         <p className="font-mono text-sm text-muted">{t('offerDetail.connectionLine', { connection: offer.connectionName, externalId: offer.externalId })}</p>
       </div>
 
+      <Section title={t('offerDetail.stockTitle')} description={t('offerDetail.stockDescription')}>
+        <div className="space-y-3 px-5 py-4">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Figure label={t('offerDetail.publication')} value={publicationLabel(t, offer.publication)} note={t('offerDetail.publicationHint')} />
+            <Figure
+              label={t('offerDetail.lastPushedStock')}
+              value={offer.lastPushedAt ? t('common.units', { count: offer.lastPushedAvailable ?? 0 }) : t('offerDetail.notSent')}
+              note={offer.lastPushedAt ? format.dateTime(offer.lastPushedAt) : undefined}
+            />
+          </div>
+          <p className={`text-sm ${offer.stockStatus === 'rejected' ? 'font-medium text-amber-800' : 'text-muted'}`}>
+            {stockStatusText(t, offer, format.dateTime)}
+          </p>
+          {/* Hanza's own `offer_ended` changes only when the Channel reports the Offer again, so a Retry would not help. */}
+          {offer.stockStatus === 'rejected' && offer.stockRejection?.code !== OFFER_ENDED_CODE ? retry('stock', t('offerPush.retryStock')) : null}
+        </div>
+      </Section>
+
       <div className="grid gap-4 sm:grid-cols-3">
         <Figure label={t('offerDetail.effectivePrice')} value={offer.effectivePrice ? format.money(offer.effectivePrice) : none} />
         <Figure
@@ -83,6 +116,12 @@ export default async function OfferPage({ params }: { params: Promise<{ offerId:
           <> {t('offerDetail.mismatchHint', { currency: offer.channelPrice.currency })}</>
         ) : null}
       </p>
+      {offer.priceStatus === 'rejected' ? (
+        <div className="space-y-2">
+          <p className="text-sm text-muted">{t('offerDetail.priceRetryDescription')}</p>
+          {retry('price', t('offerPush.retryPrice'))}
+        </div>
+      ) : null}
 
       <Section title={t('offerDetail.overrideTitle')} description={t('offerDetail.overrideDescription')}>
         {offer.product ? (

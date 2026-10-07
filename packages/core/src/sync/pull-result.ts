@@ -3,9 +3,13 @@ import {
   orderSchema,
   orderUpdateSchema,
   PermanentError,
+  pricePushResultSchema,
+  stockPushResultSchema,
   type Offer,
   type OrderFeedItem,
+  type PricePushResult,
   type PullResult,
+  type StockPushResult,
 } from '@hanza/connector-sdk'
 import { z } from 'zod'
 
@@ -93,4 +97,42 @@ export function parseOffersPage(raw: unknown, cursor: string | null): PullResult
 
 export function parseOrdersPage(raw: unknown, cursor: string | null): PullResult<OrderFeedItem> {
   return parsePage(ordersPage, raw, cursor, 'Order')
+}
+
+function parsePushResults<T extends { offerExternalId: string; outcome: string }>(
+  schema: z.ZodType<T>,
+  raw: unknown,
+  sent: Array<{ offerExternalId: string; available?: number }>,
+  capability: string,
+): Map<string, T> {
+  const results = new Map<string, T>()
+  // No results at all: every Offer of the call counts as pushed, as before per-Offer results existed.
+  if (raw === undefined || raw === null) return results
+  const parsed = z.array(schema).safeParse(raw)
+  if (!parsed.success) {
+    const paths = [...new Set(parsed.error.issues.map((issue) => `${issue.path.map(String).join('.') || 'results'}: ${issue.message}`))]
+    throw new PermanentError(`${capability} returned results that break the contract: ${paths.slice(0, MAX_REPORTED_ISSUES).join('; ')}`)
+  }
+  const byId = new Map(sent.map((item) => [item.offerExternalId, item]))
+  for (const result of parsed.data) {
+    const item = byId.get(result.offerExternalId)
+    const label = `Offer "${result.offerExternalId.slice(0, 200)}"`
+    if (!item) throw new PermanentError(`${capability} returned a result for ${label}, which was not in the call`)
+    if (results.has(result.offerExternalId)) throw new PermanentError(`${capability} returned two results for ${label}`)
+    if (result.outcome === 'ended' && item.available !== 0) {
+      throw new PermanentError(`${capability} reported ${label} ended after a number above 0`)
+    }
+    results.set(result.offerExternalId, result)
+  }
+  return results
+}
+
+/** Validates what `stock.push` returned, by Offer external id; Offers without a result were pushed. Failures are `PermanentError`s. */
+export function parseStockPushResults(raw: unknown, levels: Array<{ offerExternalId: string; available: number }>): Map<string, StockPushResult> {
+  return parsePushResults(stockPushResultSchema, raw, levels, 'stock.push')
+}
+
+/** Validates what `price.push` returned, by Offer external id; Offers without a result were pushed. Failures are `PermanentError`s. */
+export function parsePricePushResults(raw: unknown, prices: Array<{ offerExternalId: string }>): Map<string, PricePushResult> {
+  return parsePushResults(pricePushResultSchema, raw, prices, 'price.push')
 }

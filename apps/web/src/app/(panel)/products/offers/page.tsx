@@ -8,6 +8,7 @@ import { getT } from '@/i18n/server'
 import { getContext } from '@/lib/context'
 import { getFormatters } from '@/lib/formatters'
 import { outOfRangeRedirect, pageWindow, parsePage } from '@/lib/pagination'
+import { publicationLabel } from '@/lib/offer-push-status'
 import { safeHttpUrl } from '@/lib/safe-url'
 import { requireTenant } from '@/lib/session'
 import { CREATE_PRODUCTS_FORM_ID, CreateProductsForm } from './create-products-form'
@@ -58,6 +59,7 @@ export default async function UnlinkedOffersPage({ searchParams }: { searchParam
                   <th scope="col" className={thClass}>{t('offers.columns.connection')}</th>
                   <th scope="col" className={thClass}>{t('offers.columns.offer')}</th>
                   <th scope="col" className={thClass}>{t('offers.columns.sku')}</th>
+                  <th scope="col" className={thClass}>{t('offers.columns.publication')}</th>
                   <th scope="col" className={thClass}>{t('offers.columns.seen')}</th>
                   <th scope="col" className={thClass}>{t('offers.columns.link')}</th>
                 </tr>
@@ -91,6 +93,7 @@ export default async function UnlinkedOffersPage({ searchParams }: { searchParam
                         <span className="block font-mono text-xs text-muted">{offer.externalId}</span>
                       </td>
                       <td className={`${tdClass} font-mono`}>{offer.sku ?? <span className="font-sans text-muted">{t('common.none')}</span>}</td>
+                      <td className={tdClass}>{publicationLabel(t, offer.publication)}</td>
                       <td className={tdClass}>{format.dateTime(offer.lastSeenAt)}</td>
                       <td className={tdClass}>
                         <LinkOfferForm offerId={offer.id} />

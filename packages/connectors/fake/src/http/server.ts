@@ -43,7 +43,7 @@ export interface FakeHttpServerOptions {
   clientSecret?: string
 }
 
-const context: FakeContext = { config: { failMode: 'none' }, credentials: { apiKey: 'server' }, fetch, log: () => {} }
+const context: FakeContext = { config: { failMode: 'none', rejectOffers: '' }, credentials: { apiKey: 'server' }, fetch, log: () => {} }
 
 function splitName(name: string) {
   const [firstName = '', ...rest] = name.split(' ')
