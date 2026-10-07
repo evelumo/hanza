@@ -1,3 +1,4 @@
+import { deviceFlowOf } from '@hanza/connector-sdk'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
@@ -34,7 +35,21 @@ export default async function NewConnectionPage({ searchParams }: { searchParams
           <p className="mt-1 text-muted">{t('connections.new.description')}</p>
         </div>
         <ul className="divide-y divide-line rounded-lg border border-line bg-white">
-          {connectors.map((connector) => (
+          {connectors.map((connector) => {
+            const settings = ctx.connectors.settings(connector.id)
+            // Not set up on this installation: listed for the operator, but it cannot be connected.
+            if (!settings.ok) {
+              return (
+                <li key={connector.id} className="px-5 py-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="font-medium text-muted">{connector.name}</span>
+                    <span className="text-sm text-muted">{t('connections.new.notConfigured')}</span>
+                  </div>
+                  <p className="mt-1 text-xs text-muted">{t('connections.new.notConfiguredHint', { variables: settings.variables.join(', ') })}</p>
+                </li>
+              )
+            }
+            return (
             <li key={connector.id}>
               <Link
                 href={`/connections/new?connector=${encodeURIComponent(connector.id)}`}
@@ -44,7 +59,8 @@ export default async function NewConnectionPage({ searchParams }: { searchParams
                 <span className="text-sm text-muted">{labelOrRaw(t, 'labels.connectorKind', connector.kind)}</span>
               </Link>
             </li>
-          ))}
+            )
+          })}
         </ul>
       </div>
     )
@@ -52,6 +68,8 @@ export default async function NewConnectionPage({ searchParams }: { searchParams
 
   const connector = ctx.connectors.get(connectorId)
   if (!connector) notFound()
+  const settings = ctx.connectors.settings(connector.id)
+  const signIn = deviceFlowOf(connector) !== undefined
 
   return (
     <div className="max-w-md space-y-6">
@@ -62,11 +80,20 @@ export default async function NewConnectionPage({ searchParams }: { searchParams
         <h1 className="mt-2 text-2xl font-semibold tracking-tight">{t('connections.new.titleFor', { connector: connector.name })}</h1>
       </div>
       <div className="rounded-lg border border-line bg-white p-5">
-        <NewConnectionForm
-          connectorId={connector.id}
-          configFields={describeFields('config', connector.configSchema)}
-          credentialsFields={describeFields('credentials', connector.credentialsSchema)}
-        />
+        {settings.ok ? (
+          <NewConnectionForm
+            connectorId={connector.id}
+            configFields={describeFields('config', connector.configSchema)}
+            // A connector that signs in gets its credentials from the sign-in, never from a form.
+            credentialsFields={signIn ? [] : describeFields('credentials', connector.credentialsSchema)}
+            signIn={signIn ? { connector: connector.name } : null}
+          />
+        ) : (
+          <div role="alert" className="space-y-1 text-sm">
+            <p className="font-medium">{t('connections.new.notConfigured')}</p>
+            <p className="text-muted">{t('connections.new.notConfiguredHint', { variables: settings.variables.join(', ') })}</p>
+          </div>
+        )}
       </div>
     </div>
   )

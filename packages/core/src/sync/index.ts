@@ -1,4 +1,4 @@
-export { addConnection, requestSync } from './requests'
+export { addConnection, requestSync, enqueueSync } from './requests'
 export { buildCapabilityContext } from './capability-context'
 export {
   runConnectorCall,

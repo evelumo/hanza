@@ -131,6 +131,10 @@ async function main(): Promise<number> {
     HANZA_ENCRYPTION_KEY: randomBytes(32).toString('base64'),
     WORKER_CONCURRENCY: '5',
     PORT: String(webPort),
+    // Makes the test connector with an OAuth sign-in available (installation settings, #83); polls every second.
+    HANZA_CONNECTOR_FAKE_OAUTH_CLIENT_ID: 'e2e-client',
+    HANZA_CONNECTOR_FAKE_OAUTH_CLIENT_SECRET: randomBytes(16).toString('hex'),
+    HANZA_CONNECTOR_FAKE_OAUTH_POLL_INTERVAL_SECONDS: '1',
   }
   try {
     const probe = join(e2eDir, 'src', 'fake-channel-probe.ts')

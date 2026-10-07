@@ -1,7 +1,9 @@
+import { deviceFlowOf } from '@hanza/connector-sdk'
 import type { z } from 'zod'
 import type { Actor } from '../actor'
 import { afterCommit } from '../after-commit'
 import { createConnection } from '../connections/connections'
+import { credentialsExpiry } from '../connections/credentials'
 import type { Context } from '../context'
 import { DomainError } from '../errors'
 import { coalesceKeys, offersPullRef, pricePushRef, stockPushRef } from '../jobs/refs'
@@ -19,7 +21,9 @@ export async function addConnection(
   input: { connectorId: string; name: string; config: unknown; credentials: unknown },
   actor: Actor,
 ): Promise<{ connectionId: string }> {
-  const connector = ctx.connectors.require(input.connectorId)
+  const connector = ctx.connectors.requireConfigured(input.connectorId)
+  // Its credentials come from signing in (`startSignIn`), never from a form.
+  if (deviceFlowOf(connector)) throw new DomainError('sign_in_required')
   const config = connector.configSchema.safeParse(input.config)
   const credentials = connector.credentialsSchema.safeParse(input.credentials)
   if (!config.success || !credentials.success) {
@@ -40,6 +44,7 @@ export async function addConnection(
       name: input.name,
       config: config.data as Record<string, unknown>,
       credentials: credentials.data as Record<string, unknown>,
+      credentialsExpireAt: credentialsExpiry(connector, credentials.data),
     },
     actor,
   )
@@ -55,6 +60,11 @@ export async function addConnection(
 export async function requestSync(ctx: Context, organizationId: string, connectionId: string): Promise<void> {
   const connection = await ctx.db.connection.findFirst({ where: { id: connectionId, organizationId }, select: { id: true } })
   if (!connection) throw new DomainError('not_found')
+  await enqueueSync(ctx, organizationId, connectionId)
+}
+
+/** Enqueues the streams worth starting at once: Offers (which then pull Orders), stock and prices. */
+export async function enqueueSync(ctx: Context, organizationId: string, connectionId: string): Promise<void> {
   await ctx.queue.enqueue(
     offersPullRef,
     { organizationId, connectionId, trigger: 'manual' },

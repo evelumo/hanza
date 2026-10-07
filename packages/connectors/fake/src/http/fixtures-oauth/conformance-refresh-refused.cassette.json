@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "interactions": [
+    {
+      "request": {
+        "method": "POST",
+        "url": "https://fake-channel.example.test/oauth/token",
+        "headers": {
+          "accept": "application/json",
+          "content-type": "application/x-www-form-urlencoded"
+        },
+        "body": {
+          "text": "grant_type=refresh_token&refresh_token=%5Bscrubbed%5D"
+        }
+      },
+      "response": {
+        "status": 400,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "json": {
+            "error": "invalid_grant"
+          }
+        }
+      }
+    }
+  ]
+}

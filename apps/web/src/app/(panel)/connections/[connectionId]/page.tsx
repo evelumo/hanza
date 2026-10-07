@@ -1,4 +1,4 @@
-import { isChannel } from '@hanza/connector-sdk'
+import { deviceFlowOf, isChannel } from '@hanza/connector-sdk'
 import {
   canManageOrganization,
   CHANNEL_REPORTED_PHASES,
@@ -24,7 +24,7 @@ import { orderStatusName, reportedPhaseLabel, streamLabel, syncErrorLabel } from
 import { rejectionText } from '@/lib/offer-push-status'
 import { requireTenant } from '@/lib/session'
 import { isSyncRunning } from '@/lib/sync-status'
-import { requestSyncAction } from '../actions'
+import { requestSyncAction, signInAgainAction } from '../actions'
 import { formatSyncResult } from '../sync-summary'
 import { ChannelWarehousesForm } from './channel-warehouses-form'
 import { StatusMappingForm, type MappingRow } from './status-mapping-form'
@@ -46,6 +46,16 @@ export default async function ConnectionPage({ params }: { params: Promise<{ con
   if (!connection) notFound()
   const connector = ctx.connectors.get(connection.connectorId)
   const connectorName = connector?.name ?? connection.connectorId
+  const canSignIn = connector !== undefined && deviceFlowOf(connector) !== undefined
+  const authExpired = connection.health === 'auth_expired'
+  const signInAgain = (variant: 'primary' | 'secondary') => (
+    <ActionForm action={signInAgainAction}>
+      <input type="hidden" name="connectionId" value={connection.id} />
+      <ActionButton variant={variant} pendingLabel={t('connections.detail.signInAgainStarting')}>
+        {t('connections.detail.signInAgain')}
+      </ActionButton>
+    </ActionForm>
+  )
   const [events, warehouses, statuses, mapping, canManage, rejectedOffers] = await Promise.all([
     listEvents(ctx, organizationId, { type: 'connection', id: connection.id }, 20),
     listWarehouses(ctx, organizationId),
@@ -84,16 +94,35 @@ export default async function ConnectionPage({ params }: { params: Promise<{ con
             ? t('connections.detail.connectorLineChanged', { connector: connectorName, date: format.dateTime(connection.healthChangedAt) })
             : t('connections.detail.connectorLine', { connector: connectorName })}
         </p>
+        {connection.accountLabel ? (
+          <p className="mt-1 text-sm text-muted">{t('connections.detail.account', { account: connection.accountLabel })}</p>
+        ) : null}
       </div>
+
+      {canSignIn && authExpired ? (
+        <section
+          aria-label={t('connections.detail.authExpiredTitle')}
+          className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-amber-300 bg-amber-50 px-5 py-4"
+        >
+          <div>
+            <h2 className="font-semibold text-amber-900">{t('connections.detail.authExpiredTitle')}</h2>
+            <p className="text-sm text-amber-900">{t('connections.detail.authExpired', { connector: connectorName })}</p>
+          </div>
+          {signInAgain('primary')}
+        </section>
+      ) : null}
 
       <Section
         title={t('connections.detail.syncTitle')}
         description={t('connections.detail.syncDescription')}
         actions={
-          <ActionForm action={requestSyncAction} success={t('connections.detail.syncRequested')}>
-            <ActionButton pendingLabel={t('connections.detail.syncing')}>{t('connections.detail.syncNow')}</ActionButton>
-            <input type="hidden" name="connectionId" value={connection.id} />
-          </ActionForm>
+          <div className="flex flex-wrap items-start gap-2">
+            {canSignIn && !authExpired ? signInAgain('secondary') : null}
+            <ActionForm action={requestSyncAction} success={t('connections.detail.syncRequested')}>
+              <ActionButton pendingLabel={t('connections.detail.syncing')}>{t('connections.detail.syncNow')}</ActionButton>
+              <input type="hidden" name="connectionId" value={connection.id} />
+            </ActionForm>
+          </div>
         }
       >
         {connection.syncStates.length === 0 ? (

@@ -404,7 +404,12 @@
         "offer": "Offer",
         "stock": "Stock",
         "price": "Price"
-      }
+      },
+      "account": "Signed in as {account}",
+      "signInAgain": "Sign in again",
+      "signInAgainStarting": "Starting…",
+      "authExpiredTitle": "Sign-in required",
+      "authExpired": "{connector} no longer accepts the sign-in of this connection, so it does not sync. Sign in again to resume."
     },
     "new": {
       "title": "Add connection",
@@ -418,7 +423,12 @@
       "credentialsNote": "We store them encrypted and never show them again.",
       "optionalField": "{label} (optional)",
       "submit": "Add connection",
-      "submitting": "Adding…"
+      "submitting": "Adding…",
+      "notConfigured": "Not set up on this installation",
+      "notConfiguredHint": "Whoever runs this Hanza sets these variables and restarts it: {variables}",
+      "signInNote": "Next you get a code to confirm on {connector}. Hanza never sees your password there.",
+      "continueToSignIn": "Continue to sign-in",
+      "startingSignIn": "Starting…"
     },
     "stockRules": {
       "title": "Stock sent to this channel",
@@ -439,6 +449,31 @@
       "legend": "Warehouses",
       "save": "Save warehouses",
       "saved": "Saved. The new numbers will be sent to this channel."
+    },
+    "signIn": {
+      "title": "Sign in to {connector}",
+      "titleAgain": "Sign in again to {connector}: {connection}",
+      "connectionName": "New connection: {name}",
+      "starting": "Preparing your code…",
+      "instructions": "Open the sign-in page of {connector}, enter this code and allow access for Hanza.",
+      "codeLabel": "Your code",
+      "open": "Open the {connector} sign-in page",
+      "noLink": "Go to the sign-in page of {connector} and enter the code there.",
+      "validUntil": "The code is valid until {time}.",
+      "waiting": "Waiting for your approval. This page updates by itself.",
+      "cancel": "Cancel",
+      "cancelling": "Cancelling…",
+      "tryAgain": "Try again",
+      "retrying": "Starting…",
+      "approved": "Signed in. Opening the connection…",
+      "denied": "Access was refused on {connector}.",
+      "expired": "The code expired before it was approved.",
+      "failed": "The sign-in failed. Try again in a moment.",
+      "account_mismatch": "You signed in as {account}, a different {connector} account than this connection uses. Sign in with the account the connection was set up with, or add a new connection.",
+      "account_mismatch_unknown": "This connection is bound to another {connector} account, and {connector} did not say which account approved. Sign in with the account the connection was set up with, or add a new connection.",
+      "account_in_use": "The {connector} account {account} already has a connection here. Use “Sign in again” on that connection instead.",
+      "cancelled": "The sign-in was cancelled.",
+      "back": "Back to connections"
     }
   },
   "privacy": {
@@ -620,7 +655,8 @@
       "connection_order_feed_restarted": "Order feed restarted",
       "offer_channel_status_changed": "Offer status on the channel changed",
       "offer_push_rejected": "The channel rejected an offer",
-      "offer_push_retried": "Sending an offer retried"
+      "offer_push_retried": "Sending an offer retried",
+      "connection_signed_in": "Signed in to the channel"
     },
     "lines": "{count, plural, one {# line} other {# lines}}",
     "defaultStatus": "default status",
@@ -669,7 +705,10 @@
       "no_warehouse_selected": "Choose at least one warehouse.",
       "reservation_not_open": "Only an open reservation of a new or processing order can be moved.",
       "not_enough_stock": "That warehouse does not have enough available for the whole line.",
-      "not_linked": "This offer is not linked to a product."
+      "not_linked": "This offer is not linked to a product.",
+      "connector_not_configured": "This connector is not set up on this installation yet. Ask whoever runs Hanza.",
+      "sign_in_required": "This connector is connected by signing in, not with a form.",
+      "no_sign_in": "This connector has no sign-in."
     },
     "unexpected": "Something went wrong. Please try again.",
     "invalidInput": "Check the fields.",

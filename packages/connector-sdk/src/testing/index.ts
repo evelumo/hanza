@@ -20,9 +20,12 @@ export {
 } from './secrets-lint'
 export {
   CONFORMANCE_CASSETTE,
+  DEVICE_FLOW_CASSETTE,
   isRecording,
   openCassette,
   RECORD_ENV,
+  REFRESH_CASSETTE,
+  REFRESH_REFUSED_CASSETTE,
   runConformance,
   UNAUTHORIZED_CASSETTE,
   withFetch,

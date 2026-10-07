@@ -14,6 +14,17 @@ A Channel that lives in memory. It exists to prove the whole path (pull Offers a
 - `offers.pull` reports a PLN price on the seed Offers except `fake-offer-5`, which has none (its currency is unknown, so Hanza never pushes a price to it).
 - `stock.push` and `orders.updateStatus` only record their input (`stockPushes`, `statusUpdates`; each status update is `{ orderExternalId, phase }`; the list keeps the capability's name). `price.push` records its input (`pricePushes`) and sets the Offer's price, so the next `offers.pull` reports it.
 
+## The OAuth variant (`fake-oauth`)
+
+`createFakeOAuthChannel()` (registered instance: `fakeOAuthChannel`) puts the same in-memory data (`data`, a plain fake Channel) behind an OAuth sign-in, to test the core's token handling and the panel's sign-in without a network:
+
+- Installation settings `clientId`, `clientSecret` and `pollIntervalSeconds` (default 5) from `HANZA_CONNECTOR_FAKE_OAUTH_*`; without the first two it is "not set up".
+- Credentials `{ accessToken, refreshToken, accessTokenExpiresAt }`. Every capability call checks the access token and records it in `tokenUses`; an unknown, expired or revoked one fails with `AuthExpiredError`.
+- `auth.refresh` follows `options.refreshBehaviour`: `rotate` (strict rotation: the old pair stops working at once), `fail_permanent` (`AuthExpiredError`) or `fail_transient` (`TransientError`); `options.refreshDelayMs` makes concurrent refreshes overlap; every call is in `refreshes`.
+- `auth.deviceFlow`: codes on `https://fake-oauth.hanza.test`; the test acts as the person with `approve(userCode, account?)`, `deny`, `slowDown`; a device code is spent after one approval.
+- `issueCredentials()` makes credentials as if signed in, `expireAccessTokens()` makes the Channel refuse the tokens issued so far, `revokeAll()` also kills the refresh tokens (the seller unlinked the application).
+- The e2e probe (`apps/e2e/src/fake-channel-probe.ts`) exposes approve, deny and revoke to the Playwright flows.
+
 ## Over HTTP (`fake-http`)
 
 `createFakeHttpConnector()` (`src/http/`) is the same Channel seen through a small JSON API: `POST /oauth/token` (client credentials, form body) gives a Bearer token for `GET /offers`, `GET /orders`, `PUT /stock` and `PUT /orders/{id}/status`. It is a normal connector (only `ctx.fetch`, zod-parsed responses, `errorFromResponse`) and is not in the registry. It shows how a real connector is tested: its conformance test and the engine test (`apps/worker/src/recorded-fixtures.db.test.ts`) replay committed cassettes (`src/http/fixtures/`, `apps/worker/src/fixtures/`).

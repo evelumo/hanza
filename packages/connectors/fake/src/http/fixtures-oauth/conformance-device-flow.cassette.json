@@ -1,0 +1,83 @@
+{
+  "version": 1,
+  "interactions": [
+    {
+      "request": {
+        "method": "POST",
+        "url": "https://fake-channel.example.test/oauth/device",
+        "headers": {
+          "accept": "application/json",
+          "content-type": "application/x-www-form-urlencoded"
+        },
+        "body": {
+          "text": "client_id=%5Bscrubbed%5D"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "json": {
+            "device_code": "[scrubbed]",
+            "user_code": "[scrubbed]",
+            "verification_uri": "https://fake-channel.example.test/activate",
+            "verification_uri_complete": "https://fake-channel.example.test/activate?code=[scrubbed]",
+            "expires_in": 600,
+            "interval": 5
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "url": "https://fake-channel.example.test/oauth/token",
+        "headers": {
+          "accept": "application/json",
+          "content-type": "application/x-www-form-urlencoded"
+        },
+        "body": {
+          "text": "grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Adevice_code&device_code=%5Bscrubbed%5D"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "json": {
+            "access_token": "[scrubbed]",
+            "refresh_token": "[scrubbed]",
+            "token_type": "bearer",
+            "expires_in": 3600
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://fake-channel.example.test/me",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "json": {
+            "id": "fake-seller-1",
+            "login": "scrubbed-1"
+          }
+        }
+      }
+    }
+  ]
+}

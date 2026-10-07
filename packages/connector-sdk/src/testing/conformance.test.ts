@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { z } from 'zod'
+import type { OAuth2Auth } from '../auth'
 import type { AnyConnectorDefinition } from '../connector'
 import { AuthExpiredError, CursorExpiredError, PermanentError, errorFromResponse } from '../errors'
 import type { Offer } from '../model/offer'
@@ -82,6 +83,48 @@ const fixtures: ConformanceFixtures = {
   credentials: { apiKey: 'test' },
   unauthorized: { credentials: { apiKey: 'expired' } },
 }
+
+const deviceStart = {
+  deviceCode: 'device-1',
+  userCode: 'ABCDEFGHI',
+  verificationUri: 'https://login.example.test/device',
+  verificationUriComplete: 'https://login.example.test/device?code=ABCDEFGHI',
+  expiresInSeconds: 600,
+  intervalSeconds: 5,
+}
+
+// An OAuth connector with installation settings, refresh and a device flow that passes C2, C14 and C15.
+function oauthConnector(auth: Partial<OAuth2Auth> = {}, overrides: Partial<AnyConnectorDefinition> = {}): AnyConnectorDefinition {
+  return validConnector({
+    appConfigSchema: z.object({ clientId: z.string().min(1) }),
+    auth: {
+      type: 'oauth2',
+      refresh: async (_ctx, credentials) => {
+        if ((credentials as { apiKey: string }).apiKey === 'expired') throw new AuthExpiredError('refused')
+        return { apiKey: 'rotated' }
+      },
+      expiresAt: () => '2026-10-07T10:00:00Z',
+      deviceFlow: {
+        start: async () => deviceStart,
+        poll: async () => ({ status: 'approved', credentials: { apiKey: 'signed-in' }, account: { id: 'seller-1', label: 'seller' } }),
+        verificationHosts: ['login.example.test'],
+      },
+      ...auth,
+    },
+    ...overrides,
+  })
+}
+
+const oauthFixtures: ConformanceFixtures = {
+  ...fixtures,
+  app: { clientId: 'client' },
+  refresh: { refused: { credentials: { apiKey: 'expired' } } },
+  deviceFlow: {},
+}
+
+const flow = (overrides: Partial<NonNullable<OAuth2Auth['deviceFlow']>>) => ({
+  deviceFlow: { ...(oauthConnector().auth as OAuth2Auth).deviceFlow!, ...overrides },
+})
 
 function withCapabilities(capabilities: AnyConnectorDefinition['capabilities']) {
   return validConnector({ capabilities: { ...validConnector().capabilities, ...capabilities } })
@@ -212,6 +255,18 @@ const broken: Array<[id: string, connector: AnyConnectorDefinition, fixtures?: C
   ['C12', withCapabilities({ 'stock.push': async () => { throw new Error('plain error') } })],
   ['C12', withCapabilities({ 'orders.pull': async () => { throw new Error('plain error') } })],
   ['C12', withCapabilities({ 'price.push': async () => { throw new Error('plain error') } })],
+  ['C2', oauthConnector(), { ...oauthFixtures, app: {} }],
+  ['C2', oauthConnector({}, { appConfigSchema: z.object({ nested: z.object({ a: z.string() }) }) }), { ...oauthFixtures, app: { nested: { a: 'x' } } }],
+  ['C15', oauthConnector(), { ...oauthFixtures, refresh: undefined }],
+  ['C15', oauthConnector({ refresh: async () => ({}) }), oauthFixtures],
+  ['C15', oauthConnector({ refresh: async () => ({ apiKey: 'always' }) }), oauthFixtures],
+  ['C15', oauthConnector({ expiresAt: () => 'tomorrow' }), oauthFixtures],
+  ['C15', oauthConnector({ refresh: async () => { throw new Error('plain error') } }), oauthFixtures],
+  ['C16', oauthConnector(), { ...oauthFixtures, deviceFlow: undefined }],
+  ['C16', oauthConnector(flow({ start: async () => ({ ...deviceStart, verificationUri: 'http://login.example.test/device' }) })), oauthFixtures],
+  ['C16', oauthConnector(flow({ start: async () => ({ ...deviceStart, verificationUriComplete: 'https://evil.example/device' }) })), oauthFixtures],
+  ['C16', oauthConnector(flow({ poll: async () => ({ status: 'later' }) as never })), oauthFixtures],
+  ['C16', oauthConnector(flow({ poll: async () => ({ status: 'approved', credentials: {}, account: null }) })), oauthFixtures],
 ]
 
 describe('assertConformance', () => {
@@ -295,6 +350,15 @@ describe('assertConformance', () => {
     expect(pushed[0]).toEqual([])
     expect(pushed.slice(1).flat().every((price) => price.offerExternalId === 'o1' && price.price.currency === 'PLN')).toBe(true)
     expect(pushed.slice(1).map((prices) => prices[0]?.price.amount)).toEqual(['19.99', '19.99', '25', '25'])
+  })
+
+  it('passes for an OAuth connector with installation settings, refresh and a device flow', async () => {
+    const seen: unknown[] = []
+    const connector = oauthConnector({}, {
+      capabilities: { ...validConnector().capabilities, 'stock.push': async (ctx) => void seen.push(ctx.app) },
+    })
+    await expect(assertConformance(connector, oauthFixtures)).resolves.toBeUndefined()
+    expect(seen[0]).toEqual({ clientId: 'client' })
   })
 
   it('skips Channel checks for a connector that is not a Channel', async () => {

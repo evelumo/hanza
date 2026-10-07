@@ -93,6 +93,7 @@ model Organization {
   orderLines        OrderLine[]
   orderChannelFacts OrderChannelFact[]
   connections       Connection[]
+  connectionSignIns ConnectionSignIn[]
   syncStates        SyncState[]
   channelWarehouses ConnectionWarehouse[]
   privacySettings   PrivacySettings?

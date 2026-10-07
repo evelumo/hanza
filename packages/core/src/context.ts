@@ -28,6 +28,8 @@ export interface CreateContextOptions {
   env?: Env
   /** Usually `connectors` from `@hanza/connector-registry`; empty when omitted. */
   connectors?: AnyConnectorDefinition[]
+  /** Where the connectors' installation settings (`HANZA_CONNECTOR_*`) are read from; `process.env` when omitted. */
+  connectorSettings?: Readonly<Record<string, string | undefined>>
 }
 
 export function createContext(scope: string, options: CreateContextOptions = {}): Context {
@@ -41,7 +43,7 @@ export function createContext(scope: string, options: CreateContextOptions = {})
     queue,
     log,
     secrets: createSecretBox(env.HANZA_ENCRYPTION_KEY),
-    connectors: createConnectorRegistry(options.connectors ?? []),
+    connectors: createConnectorRegistry(options.connectors ?? [], { settings: options.connectorSettings ?? process.env }),
     workflows: createWorkflowEngine({ db, queue, log }),
     // With HANZA_QUEUE_PREFIX set (e2e runs) the queue's prefix, so a run that deletes `<prefix>:*` also deletes its
     // budgets; otherwise "hanza" (BullMQ's own default is "bull"). Refuses requests while Redis is unreachable.

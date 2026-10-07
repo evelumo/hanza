@@ -55,6 +55,16 @@ export const privacySweepRef = {
   schema: z.object({ organizationId: id }),
 } satisfies JobRef
 
+export const signInStartRef = {
+  name: 'connections.signIn.start',
+  schema: z.object({ organizationId: id, signInId: id }),
+} satisfies JobRef
+
+export const signInPollRef = {
+  name: 'connections.signIn.poll',
+  schema: z.object({ organizationId: id, signInId: id }),
+} satisfies JobRef
+
 export const coalesceKeys = {
   offersPull: (connectionId: string) => `offers.pull:${connectionId}`,
   ordersPull: (connectionId: string) => `orders.pull:${connectionId}`,
@@ -63,4 +73,6 @@ export const coalesceKeys = {
   ordersUpdateStatus: (orderId: string) => `orders.updateStatus:${orderId}`,
   orderStatusesDelete: (statusId: string) => `orderStatuses.delete:${statusId}`,
   privacySweep: (organizationId: string) => `privacy.sweep:${organizationId}`,
+  signInStart: (signInId: string) => `connections.signIn.start:${signInId}`,
+  signInPoll: (signInId: string) => `connections.signIn.poll:${signInId}`,
 }

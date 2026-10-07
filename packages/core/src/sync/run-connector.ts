@@ -10,6 +10,12 @@ export interface RunScope {
   connectionId: string
   stream: SyncStream
   run: JobRunInfo
+  /**
+   * Set for connectors that refresh credentials (ADR 0020): after an `auth_expired` from the call, renews the run's
+   * credentials (refreshing them, or re-reading them if another job already did) and resolves true when the call is
+   * worth one retry with them.
+   */
+  reauthorize?: () => Promise<boolean>
 }
 
 /** A rate-limited retry does not use an attempt, so a zero or past Retry-After must not become a hot loop. */
@@ -40,34 +46,52 @@ export function isRecordedFailure(error: unknown): boolean {
  * by error kind: auth_expired stops retrying and marks the Connection; rate_limited retries later without
  * using an attempt (a Channel's, at most MAX_RATE_LIMIT_RETRIES times in a row; Hanza's own refusals without limit); transient retries with backoff and marks the Connection failing on the last attempt;
  * permanent stops retrying and marks it failing. A success is left to the caller, which finishes the run once.
+ * With `scope.reauthorize`, an auth_expired first renews the credentials and retries the call once; a refused
+ * refresh or a second auth_expired then takes the auth_expired path.
  */
 export async function runConnectorCall<T>(ctx: Context, scope: RunScope, call: () => Promise<T>): Promise<T> {
   try {
     return await call()
   } catch (error) {
-    const classified = classifyConnectorError(error)
-    const { retryAfterMs, message } = classified
-    const { organizationId, connectionId, stream, run } = scope
-    // Without the cap a Channel that always answers 429 would keep the job (and health `unknown`) forever. A refusal
-    // by Hanza's own limiter never reached the Channel: it neither counts towards the cap nor is turned into one.
-    const refused = classified.kind === 'rate_limited' && isRefusedBeforeSending(error)
-    const kind = classified.kind === 'rate_limited' && !refused && run.retriedLater >= MAX_RATE_LIMIT_RETRIES ? 'transient' : classified.kind
-    const fail = (health: 'failing' | 'auth_expired' | null) =>
-      failSyncRun(ctx, organizationId, connectionId, stream, { kind, message, health })
-
-    switch (kind) {
-      case 'auth_expired':
-        await fail('auth_expired')
-        throw markRecorded(new PermanentJobError(message))
-      case 'rate_limited':
-        await fail(null)
-        throw markRecorded(new RetryLaterError(retryLaterDelay(retryAfterMs), message, { counted: !refused }))
-      case 'transient':
-        await fail(run.attempt >= run.maxAttempts ? 'failing' : null)
-        throw markRecorded(error)
-      case 'permanent':
-        await fail('failing')
-        throw markRecorded(new PermanentJobError(message))
+    if (!scope.reauthorize || classifyConnectorError(error).kind !== 'auth_expired') return recordFailure(ctx, scope, error)
+    let renewed: boolean
+    try {
+      renewed = await scope.reauthorize()
+    } catch (refreshError) {
+      return recordFailure(ctx, scope, refreshError)
     }
+    if (!renewed) return recordFailure(ctx, scope, error)
+    try {
+      return await call()
+    } catch (retryError) {
+      return recordFailure(ctx, scope, retryError)
+    }
+  }
+}
+
+async function recordFailure(ctx: Context, scope: RunScope, error: unknown): Promise<never> {
+  const classified = classifyConnectorError(error)
+  const { retryAfterMs, message } = classified
+  const { organizationId, connectionId, stream, run } = scope
+  // Without the cap a Channel that always answers 429 would keep the job (and health `unknown`) forever. A refusal
+  // by Hanza's own limiter never reached the Channel: it neither counts towards the cap nor is turned into one.
+  const refused = classified.kind === 'rate_limited' && isRefusedBeforeSending(error)
+  const kind = classified.kind === 'rate_limited' && !refused && run.retriedLater >= MAX_RATE_LIMIT_RETRIES ? 'transient' : classified.kind
+  const fail = (health: 'failing' | 'auth_expired' | null) =>
+    failSyncRun(ctx, organizationId, connectionId, stream, { kind, message, health })
+
+  switch (kind) {
+    case 'auth_expired':
+      await fail('auth_expired')
+      throw markRecorded(new PermanentJobError(message))
+    case 'rate_limited':
+      await fail(null)
+      throw markRecorded(new RetryLaterError(retryLaterDelay(retryAfterMs), message, { counted: !refused }))
+    case 'transient':
+      await fail(run.attempt >= run.maxAttempts ? 'failing' : null)
+      throw markRecorded(error)
+    case 'permanent':
+      await fail('failing')
+      throw markRecorded(new PermanentJobError(message))
   }
 }

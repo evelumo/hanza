@@ -16,11 +16,13 @@ const silentLogger: Logger = { info() {}, warn() {}, error() {} }
 /**
  * A real database, a random encryption key, a silent logger, an in-memory queue, the given connectors and the
  * workflow engine on them, and an in-memory rate limiter unless `rateLimiter` is given (e.g. a Redis one shared by
- * two contexts standing for two workers).
+ * two contexts standing for two workers). Connector installation settings come only from `connectorSettings`
+ * (never the machine's environment).
  */
 export function createTestContext(options: {
   databaseUrl: string
   connectors?: AnyConnectorDefinition[]
+  connectorSettings?: Readonly<Record<string, string>>
   rateLimiter?: RateLimiter
 }): TestContext {
   const key = randomBytes(32).toString('base64')
@@ -32,7 +34,7 @@ export function createTestContext(options: {
     queue,
     log: silentLogger,
     secrets: createSecretBox(key),
-    connectors: createConnectorRegistry(options.connectors ?? []),
+    connectors: createConnectorRegistry(options.connectors ?? [], { settings: options.connectorSettings ?? {} }),
     workflows: createWorkflowEngine({ db, queue, log: silentLogger }),
     rateLimiter: options.rateLimiter ?? createInMemoryRateLimiter(),
   }
