@@ -215,8 +215,11 @@ describe.skipIf(!databaseUrl).each(variants)('shared rate limits end to end ($na
     fake.api.reset()
     fake.api.failNext(429, { headers: { 'Retry-After': '1' } })
     const delays: number[] = []
-    // A's request gets the 429; B's waits for the park to end instead of adding to the Channel's anger.
-    await Promise.all([runJob(workerOne, ordersPullJob, pull(a), delays), sleep(50).then(() => runJob(workerTwo, offersPullJob, pull(b)))])
+    // A's request gets the 429 and its job is delayed; B, started only then (the park is written before the
+    // connector even sees the response), waits for the park to end instead of adding to it.
+    const runA = runJob(workerOne, ordersPullJob, pull(a), delays)
+    await vi.waitFor(() => expect(delays).toHaveLength(1), { timeout: 5_000, interval: 5 })
+    await Promise.all([runA, runJob(workerTwo, offersPullJob, pull(b))])
 
     expect(delays).toEqual([1000])
     const [limited, ...after] = fake.api.requests
@@ -231,9 +234,10 @@ describe.skipIf(!databaseUrl).each(variants)('shared rate limits end to end ($na
   it('a park longer than the wait delays other jobs without contacting the Channel, until the budget recovers', async () => {
     const [a, b] = connections as [(typeof connections)[number], (typeof connections)[number]]
     fake.api.reset()
-    fake.api.failNext(429, { headers: { 'Retry-After': '3' } })
+    // Far longer than the 2 s a request may wait, so B is still refused on a machine slowed down by other tests.
+    fake.api.failNext(429, { headers: { 'Retry-After': '5' } })
     const run = { attempt: 1, maxAttempts: 5, retriedLater: 0 }
-    await expect(ordersPullJob.handler(workerOne, pull(a), run)).rejects.toMatchObject({ name: 'RetryLaterError', delayMs: 3000 })
+    await expect(ordersPullJob.handler(workerOne, pull(a), run)).rejects.toMatchObject({ name: 'RetryLaterError', delayMs: 5000 })
     expect((await ordersState(a)).lastErrorKind).toBe('rate_limited')
 
     // B (another organization) is held by the application budget before it sends anything.
@@ -245,7 +249,7 @@ describe.skipIf(!databaseUrl).each(variants)('shared rate limits end to end ($na
     expect(await health(a)).toBe('ok')
     expect(await health(b)).toBe('ok')
 
-    await sleep(3000)
+    await sleep(5000)
     await ordersPullJob.handler(workerOne, pull(a), run)
     await ordersPullJob.handler(workerTwo, pull(b), run)
     expect((await ordersState(a)).lastErrorKind).toBeNull()
