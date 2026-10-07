@@ -24,6 +24,8 @@ CREATE TABLE "connection_sign_in" (
     "expiresAt" TIMESTAMP(3) NOT NULL,
     "lastPolledAt" TIMESTAMP(3),
     "accountLabel" TEXT,
+    "accountId" TEXT,
+    "approvedCredentials" TEXT,
     "createdByUserId" TEXT,
     "finishedAt" TIMESTAMP(3),
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,

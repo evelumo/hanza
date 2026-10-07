@@ -81,7 +81,7 @@ export async function startSignIn(ctx: Context, organizationId: string, input: S
     signInId = await ctx.db.$transaction(async (tx) => {
       await tx.connectionSignIn.updateMany({
         where: { organizationId, connectionId: connection.id, status: { in: [...OPEN_SIGN_IN_STATUSES] } },
-        data: { status: 'cancelled', deviceCode: null, finishedAt: new Date() },
+        data: { status: 'cancelled', deviceCode: null, approvedCredentials: null, finishedAt: new Date() },
       })
       const row = await tx.connectionSignIn.create({
         data: { organizationId, connectorId: connector.id, connectionId: connection.id, expiresAt, createdByUserId },
@@ -133,7 +133,7 @@ export async function cancelSignIn(ctx: Context, organizationId: string, signInI
   if (!row) throw new DomainError('not_found')
   await ctx.db.connectionSignIn.updateMany({
     where: { id: signInId, organizationId, status: { in: [...OPEN_SIGN_IN_STATUSES] } },
-    data: { status: 'cancelled', deviceCode: null, finishedAt: new Date() },
+    data: { status: 'cancelled', deviceCode: null, approvedCredentials: null, finishedAt: new Date() },
   })
 }
 
@@ -144,7 +144,7 @@ export async function cancelSignIn(ctx: Context, organizationId: string, signInI
 export async function sweepSignIns(ctx: Context, now: Date): Promise<{ expired: number; deleted: number }> {
   const expired = await ctx.db.connectionSignIn.updateMany({
     where: { status: { in: [...OPEN_SIGN_IN_STATUSES] }, expiresAt: { lte: now } },
-    data: { status: 'expired', deviceCode: null, finishedAt: now },
+    data: { status: 'expired', deviceCode: null, approvedCredentials: null, finishedAt: now },
   })
   const deleted = await ctx.db.connectionSignIn.deleteMany({
     where: { status: { notIn: [...OPEN_SIGN_IN_STATUSES] }, finishedAt: { lte: new Date(now.getTime() - SIGN_IN_KEEP_MS) } },

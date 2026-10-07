@@ -21,8 +21,7 @@ import { coalesceKeys, signInPollRef } from '../jobs/refs'
 import { buildAuthContext, connectorApp } from '../sync/auth-context'
 import { enqueueSync } from '../sync/requests'
 import { retryLaterDelay } from '../sync/run-connector'
-import { TX_OPTIONS } from '../transaction'
-import { credentialsExpiry, lockCredentials, parseConfig, parseCredentials } from './credentials'
+import { CREDENTIALS_WRITE_TX_OPTIONS, credentialsExpiry, lockCredentials, parseConfig, parseCredentials } from './credentials'
 import { insertConnection } from './connections'
 import { OPEN_SIGN_IN_STATUSES } from './sign-in'
 import { setHealth } from './sync-state'
@@ -43,6 +42,9 @@ type SignInRow = {
   expiresAt: Date
   lastPolledAt: Date | null
   createdByUserId: string | null
+  approvedCredentials: string | null
+  accountId: string | null
+  accountLabel: string | null
 }
 
 const rowSelect = {
@@ -58,10 +60,15 @@ const rowSelect = {
   expiresAt: true,
   lastPolledAt: true,
   createdByUserId: true,
+  approvedCredentials: true,
+  accountId: true,
+  accountLabel: true,
 } as const
 
 // The device code is bound to its organization and its sign-in: a sealed value copied to another row does not open.
 const deviceCodeAad = (row: { organizationId: string; id: string }) => `${row.organizationId}:${row.id}`
+// Approved credentials get their own AAD, so a sealed device code can never be opened as credentials or the reverse.
+const approvalAad = (row: { organizationId: string; id: string }) => `${row.organizationId}:${row.id}:credentials`
 
 async function loadRow(ctx: Context, organizationId: string, signInId: string): Promise<SignInRow | null> {
   return ctx.db.connectionSignIn.findFirst({ where: { id: signInId, organizationId }, select: rowSelect })
@@ -71,7 +78,7 @@ async function loadRow(ctx: Context, organizationId: string, signInId: string): 
 async function finish(ctx: Context, row: SignInRow, status: Exclude<SignInStatus, 'starting' | 'pending'>, reason?: unknown): Promise<void> {
   await ctx.db.connectionSignIn.updateMany({
     where: { id: row.id, organizationId: row.organizationId, status: { in: [...OPEN_SIGN_IN_STATUSES] } },
-    data: { status, deviceCode: null, finishedAt: new Date() },
+    data: { status, deviceCode: null, approvedCredentials: null, finishedAt: new Date() },
   })
   const fields = { organizationId: row.organizationId, signInId: row.id, connectorId: row.connectorId, status }
   if (reason === undefined) ctx.log.info('sign-in ended', fields)
@@ -174,7 +181,10 @@ export async function runSignInStart(ctx: Context, organizationId: string, signI
  */
 export async function runSignInPoll(ctx: Context, organizationId: string, signInId: string): Promise<void> {
   const row = await loadRow(ctx, organizationId, signInId)
-  if (!row || row.status !== 'pending' || !row.deviceCode) return
+  if (!row || row.status !== 'pending') return
+  // Approved earlier, but storing the result failed: the device code is spent, so finish from what was kept.
+  if (row.approvedCredentials) return resumeApproval(ctx, row)
+  if (!row.deviceCode) return
   const now = new Date()
   if (row.expiresAt <= now) {
     await finish(ctx, row, 'expired')
@@ -232,9 +242,39 @@ export async function runSignInPoll(ctx: Context, organizationId: string, signIn
         await finish(ctx, row, 'failed', error)
         return
       }
+      // Kept (sealed) before it is applied: the Channel hands these out once, and applying them can fail.
+      const kept = await ctx.db.connectionSignIn.updateMany({
+        where: { id: row.id, organizationId, status: 'pending' },
+        data: {
+          approvedCredentials: ctx.secrets.seal(JSON.stringify(credentials), approvalAad(row)),
+          accountId: result.account?.id ?? null,
+          accountLabel: result.account?.label ?? null,
+          deviceCode: null,
+        },
+      })
+      // Cancelled or expired meanwhile: the person no longer waits for it.
+      if (kept.count === 0) return
       await completeSignIn(ctx, row, connector, credentials, result.account)
     }
   }
+}
+
+/** Applies credentials an earlier poll kept but could not apply (the transaction failed). */
+async function resumeApproval(ctx: Context, row: SignInRow): Promise<void> {
+  const prepared = await prepare(ctx, row)
+  if (!prepared) return
+  let credentials: Record<string, unknown>
+  try {
+    credentials = parseCredentials(prepared.connector, JSON.parse(ctx.secrets.open(row.approvedCredentials!, approvalAad(row)))) as Record<
+      string,
+      unknown
+    >
+  } catch (error) {
+    await finish(ctx, row, 'failed', error)
+    return
+  }
+  const account = row.accountId ? { id: row.accountId, label: row.accountLabel ?? row.accountId } : null
+  await completeSignIn(ctx, row, prepared.connector, credentials, account)
 }
 
 type Outcome = { status: 'approved'; connectionId: string; created: boolean } | { status: 'account_mismatch' | 'account_in_use' | 'failed' } | null
@@ -260,6 +300,7 @@ async function completeSignIn(
     ({
       status,
       deviceCode: null,
+      approvedCredentials: null,
       finishedAt: new Date(),
       accountLabel: account?.label ?? null,
       ...(connectionId ? { connectionId } : {}),
@@ -291,7 +332,9 @@ async function completeSignIn(
           select: { accountId: true, accountLabel: true, credentialsVersion: true },
         })
         if (!connection) return refuse('failed')
-        if (account && connection.accountId !== null && connection.accountId !== account.id) return refuse('account_mismatch')
+        // Bound to an account: only that account may sign in again. A Channel that cannot say which account approved
+        // (account null) cannot prove it, so it is refused too, or another seller could take over the Connection.
+        if (connection.accountId !== null && (account === null || connection.accountId !== account.id)) return refuse('account_mismatch')
         if (connection.accountId === null && (await accountTaken(connectionId))) return refuse('account_in_use')
         await tx.connection.updateMany({
           where: { id: connectionId, organizationId },
@@ -330,7 +373,7 @@ async function completeSignIn(
       })
       await tx.connectionSignIn.updateMany({ where: { id: row.id, organizationId }, data: end('approved', connectionId) })
       return { status: 'approved', connectionId, created }
-    }, TX_OPTIONS)
+    }, CREDENTIALS_WRITE_TX_OPTIONS)
   } catch (error) {
     // Two sign-ins of one Channel account approved at the same moment: the unique index lets one through.
     if (!isUniqueViolation(error)) throw error

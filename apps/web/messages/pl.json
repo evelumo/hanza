@@ -434,6 +434,7 @@
       "expired": "Kod wygasł, zanim został zatwierdzony.",
       "failed": "Logowanie się nie udało. Spróbuj ponownie za chwilę.",
       "account_mismatch": "Zalogowano jako {account}, czyli na inne konto {connector} niż to, którego używa to połączenie. Zaloguj się na konto, z którym połączenie zostało utworzone, albo dodaj nowe połączenie.",
+      "account_mismatch_unknown": "To połączenie jest powiązane z innym kontem {connector}, a {connector} nie podał, które konto wyraziło zgodę. Zaloguj się na konto, z którym połączenie zostało utworzone, albo dodaj nowe połączenie.",
       "account_in_use": "Konto {connector} {account} ma już tu połączenie. Użyj „Zaloguj się ponownie” na tamtym połączeniu.",
       "cancelled": "Logowanie zostało anulowane.",
       "back": "Wróć do połączeń"

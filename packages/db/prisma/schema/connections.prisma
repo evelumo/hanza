@@ -108,6 +108,11 @@ model ConnectionSignIn {
   lastPolledAt            DateTime?
   /// The Channel account that approved, for the panel (e.g. when it was refused).
   accountLabel            String?
+  /// The Channel account id the approval reported, kept with `approvedCredentials`.
+  accountId               String?
+  /// Credentials of an approval, sealed like `deviceCode`, stored before they are applied: a device code yields them
+  /// only once, so a failed completion is retried from here. Cleared once the sign-in ends.
+  approvedCredentials     String?
   createdByUserId         String?
   finishedAt              DateTime?
   createdAt               DateTime     @default(now())

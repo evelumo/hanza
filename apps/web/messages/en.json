@@ -434,6 +434,7 @@
       "expired": "The code expired before it was approved.",
       "failed": "The sign-in failed. Try again in a moment.",
       "account_mismatch": "You signed in as {account}, a different {connector} account than this connection uses. Sign in with the account the connection was set up with, or add a new connection.",
+      "account_mismatch_unknown": "This connection is bound to another {connector} account, and {connector} did not say which account approved. Sign in with the account the connection was set up with, or add a new connection.",
       "account_in_use": "The {connector} account {account} already has a connection here. Use “Sign in again” on that connection instead.",
       "cancelled": "The sign-in was cancelled.",
       "back": "Back to connections"

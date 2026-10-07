@@ -43,6 +43,8 @@ export interface FakeOAuthOptions {
   deviceCodeLifetimeSeconds: number
   /** Every new device sign-in is approved at once, as the default account. Default false. */
   autoApprove: boolean
+  /** False: an approval does not say which account approved (`account: null`), as some Channels cannot. Default true. */
+  reportAccount: boolean
 }
 
 export const FAKE_OAUTH_VERIFICATION_HOST = 'fake-oauth.hanza.test'
@@ -102,6 +104,7 @@ const defaults = (): FakeOAuthOptions => ({
   refreshDelayMs: 0,
   deviceCodeLifetimeSeconds: 600,
   autoApprove: false,
+  reportAccount: true,
 })
 
 /**
@@ -212,7 +215,7 @@ export function createFakeOAuthChannel(options: { id?: string } = {}): FakeOAuth
           }
           if (device.status !== 'approved') return { status: device.status }
           device.used = true
-          return { status: 'approved', credentials: issue(device.account), account: device.account }
+          return { status: 'approved', credentials: issue(device.account), account: channel.options.reportAccount ? device.account : null }
         },
       },
     },

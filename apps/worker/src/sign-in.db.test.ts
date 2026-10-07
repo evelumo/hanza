@@ -1,6 +1,8 @@
 import { createFakeOAuthChannel, FAKE_OAUTH_DEFAULT_ACCOUNT, type FakeOAuthChannel } from '@hanza/connector-fake'
 import {
   addConnection,
+  createConnection,
+  refreshCredentials,
   cancelSignIn,
   coalesceKeys,
   DomainError,
@@ -240,6 +242,98 @@ describe.skipIf(!databaseUrl)('sign-in through the device flow (real Postgres, i
     await ctx.queue.drain(ctx, jobs, { maxJobs: 1 })
     const own = ctx.queue.waiting.filter((job) => (job.payload as { connectionId?: string }).connectionId === connectionId)
     expect(own.map((job) => job.name).sort()).toEqual(['offers.pull', 'orders.pull', 'stock.push'])
+    ctx.queue.waiting.length = 0
+  })
+
+  /** A Connection bound to `account`, signed in as if through an earlier sign-in. */
+  async function boundConnection(name: string, account = { id: 'seller-a', label: 'seller-a' }) {
+    const { connectionId: id } = await createConnection(
+      ctx,
+      org,
+      { connectorId: 'fake-oauth', name, config: {}, credentials: fake.issueCredentials(account), account },
+      user,
+    )
+    return id
+  }
+
+  it('refuses signing in again when the Channel does not say which account approved and the Connection is bound', async () => {
+    const id = await boundConnection('Bound to seller A')
+    const before = await connection(id)
+    fake.options.reportAccount = false
+    try {
+      const again = await startedSignIn({ connectionId: id })
+      // Seller B approves, and the Channel reports no account.
+      fake.approve(again.userCode, { id: 'seller-b', label: 'seller-b' })
+      await step()
+      expect(await signIn(again.signInId)).toMatchObject({ status: 'account_mismatch', accountLabel: null, approvedCredentials: null })
+      expect(await connection(id)).toMatchObject({ credentials: before.credentials, credentialsVersion: 0, accountId: 'seller-a' })
+    } finally {
+      fake.options.reportAccount = true
+    }
+  })
+
+  it('an approval waits for a slow refresh of the same Connection instead of failing (both hold the credentials lock)', async () => {
+    const seller = { id: 'seller-slow', label: 'seller-slow' }
+    const id = await boundConnection('Slow refresh', seller)
+    const again = await startedSignIn({ connectionId: id })
+    fake.approve(again.userCode, seller)
+    fake.options.refreshDelayMs = 12_000
+    try {
+      const refreshing = refreshCredentials(ctx, {
+        organizationId: org,
+        connectionId: id,
+        connector: fake.connector,
+        app: { clientId: 'test-client', clientSecret: 'test-secret', pollIntervalSeconds: 2 },
+        seenVersion: 0,
+        force: true,
+      })
+      // The refresh holds the lock (it is inside the token request) before the approval tries to take it.
+      await new Promise((resolve) => setTimeout(resolve, 300))
+      const started = Date.now()
+      await step()
+      expect(Date.now() - started).toBeGreaterThan(10_000)
+      expect(await refreshing).toMatchObject({ refreshed: true, version: 1 })
+    } finally {
+      fake.options.refreshDelayMs = 0
+    }
+    expect(await signIn(again.signInId)).toMatchObject({ status: 'approved', approvedCredentials: null })
+    // The sign-in wrote after the refresh: its credentials win, and the version moved twice.
+    expect(await connection(id)).toMatchObject({ credentialsVersion: 2, health: 'unknown' })
+    ctx.queue.waiting.length = 0
+  }, 60_000)
+
+  it('keeps approved credentials sealed and applies them on the next run when the first attempt to store them fails', async () => {
+    const pending = await startedSignIn({ connectorId: 'fake-oauth', name: 'Flaky database', config: {} })
+    fake.approve(pending.userCode, { id: 'seller-flaky', label: 'seller-flaky' })
+    let failed = false
+    const flaky = {
+      ...ctx,
+      db: new Proxy(ctx.db, {
+        get(target, property, receiver) {
+          if (property === '$transaction' && !failed) {
+            failed = true
+            return async () => {
+              throw new Error('connection lost')
+            }
+          }
+          return Reflect.get(target, property, receiver)
+        },
+      }),
+    }
+    await intervalPasses(pending.signInId)
+    const first = await ctx.queue.drain(flaky, jobs, { maxJobs: 1 })
+    expect(failed).toBe(true)
+    expect(first.failed).toEqual([])
+    const kept = await signIn(pending.signInId)
+    expect(kept).toMatchObject({ status: 'pending', deviceCode: null, accountId: 'seller-flaky' })
+    expect(kept.approvedCredentials).toMatch(/^v1:/)
+    expect(kept.approvedCredentials).not.toContain('fake-access-')
+
+    // The queue retries the job: the device code is spent, so it completes from the kept credentials.
+    await step()
+    const done = await signIn(pending.signInId)
+    expect(done).toMatchObject({ status: 'approved', approvedCredentials: null })
+    expect(await connection(done.connectionId!)).toMatchObject({ accountId: 'seller-flaky', name: 'Flaky database' })
     ctx.queue.waiting.length = 0
   })
 

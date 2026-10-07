@@ -52,7 +52,9 @@ export default async function SignInPage({ params }: { params: Promise<{ signInI
       case 'failed':
         return t('connections.signIn.failed')
       case 'account_mismatch':
-        return t('connections.signIn.account_mismatch', values)
+        return view.accountLabel
+          ? t('connections.signIn.account_mismatch', values)
+          : t('connections.signIn.account_mismatch_unknown', { connector: connectorName })
       case 'account_in_use':
         return t('connections.signIn.account_in_use', values)
       case 'cancelled':

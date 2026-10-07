@@ -8,7 +8,13 @@ import { buildAuthContext } from '../sync/auth-context'
 export const REFRESH_MARGIN_MS = 15 * 60_000
 
 // The refresh request runs inside the transaction that holds the lock (bounded by the 30 s fetch timeout).
-const REFRESH_TX_OPTIONS = { timeout: 45_000, maxWait: 10_000 } as const
+export const REFRESH_TX_OPTIONS = { timeout: 45_000, maxWait: 10_000 } as const
+/**
+ * For any other write of a Connection's credentials (a sign-in): it may wait for the lock as long as a refresh can
+ * hold it (its whole transaction), and still has time for its own writes. A shorter timeout would fail an approved
+ * sign-in whenever a slow refresh of the same Connection is in flight.
+ */
+export const CREDENTIALS_WRITE_TX_OPTIONS = { timeout: REFRESH_TX_OPTIONS.timeout + 15_000, maxWait: 10_000 } as const
 
 function issuePaths(prefix: string, error: z.ZodError): string {
   return error.issues.map((issue) => [prefix, ...issue.path.map(String)].join('.')).join(', ')
