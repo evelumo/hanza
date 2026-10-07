@@ -120,7 +120,8 @@ export function createJobProcessor(ctx: Context, jobs: JobDefinition[]): (job: P
     } catch (error) {
       if (error instanceof RetryLaterError) {
         ctx.log.info('job retries later', { name: job.name, id: job.id, delayMs: error.delayMs, reason: error.message })
-        await job.updateData({ ...(data as Record<string, unknown>), [RETRY_LATER_KEY]: { attempt, count: retriedLater + 1 } })
+        const count = retriedLater + (error.counted ? 1 : 0)
+        await job.updateData({ ...(data as Record<string, unknown>), [RETRY_LATER_KEY]: { attempt, count } })
         // Moving to delayed this way does not count as an attempt.
         await job.moveToDelayed(Date.now() + error.delayMs, token)
         throw new DelayedError()

@@ -44,6 +44,16 @@ describe('defineConnector', () => {
     expect(() => defineConnector({ ...base, id: 'example-courier', kind: 'courier', capabilities: {} })).not.toThrow()
   })
 
+  it('accepts positive integer rate limits and rejects anything else', () => {
+    const define = (rateLimits: unknown) => () =>
+      defineConnector({ ...base, id: 'example-courier', kind: 'courier', capabilities: {}, rateLimits: rateLimits as never })
+    expect(define({ application: { requests: 6000, windowMs: 60_000 }, connection: { concurrency: 3 } })).not.toThrow()
+    expect(define({ connection: { rate: { requests: 5, windowMs: 1000 } } })).not.toThrow()
+    expect(define({ application: { requests: 0, windowMs: 1000 } })).toThrow(/rateLimits.application/)
+    expect(define({ connection: { rate: { requests: 5, windowMs: 0.5 } } })).toThrow(/rateLimits.connection.rate/)
+    expect(define({ connection: { concurrency: -1 } })).toThrow(/concurrency/)
+  })
+
   it('keeps definitions with specific config types assignable to AnyConnectorDefinition', () => {
     const connector: AnyConnectorDefinition = defineConnector({
       ...base,

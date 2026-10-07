@@ -16,7 +16,7 @@ import {
 } from '@hanza/connector-sdk'
 import { assertConformance } from '@hanza/connector-sdk/testing'
 import { describe, expect, it } from 'vitest'
-import { createFakeChannel, fakeChannel, fakeConnector } from './index'
+import { FAKE_API_URL, createFakeChannel, fakeChannel, fakeConnector } from './index'
 import { seedFacts, seedOffers, seedOrders } from './seed'
 
 type FakeContext = CapabilityContext<{ failMode: 'none' | 'rate_limited' | 'transient' | 'permanent' }, { apiKey: string }>
@@ -416,5 +416,62 @@ describe('failure modes', () => {
     expect(fakeConnector.configSchema.parse({})).toEqual({ failMode: 'none' })
     expect(fakeConnector.credentialsSchema.safeParse({ apiKey: '' }).success).toBe(false)
     expect(fakeConnector.configSchema.safeParse({ failMode: 'sometimes' }).success).toBe(false)
+  })
+})
+
+describe('HTTP mode', () => {
+  const httpContext = (fetch: typeof globalThis.fetch, apiKey = 'test'): FakeContext => ({ ...context({}, apiKey), fetch })
+
+  it('passes the conformance kit, including C14 (a 403 is not an expired sign-in)', async () => {
+    const channel = createFakeChannel({ http: true })
+    await assertConformance(channel.connector, {
+      config: { failMode: 'none' },
+      credentials: { apiKey: 'test' },
+      fetch: channel.api.fetch,
+      unauthorized: { credentials: { apiKey: 'expired' } },
+    })
+    expect(channel.api.requests.length).toBeGreaterThan(0)
+  })
+
+  it('sends one authenticated request per call and records it', async () => {
+    const channel = createFakeChannel({ http: true })
+    await channel.connector.capabilities['stock.push']!(httpContext(channel.api.fetch, 'key-a'), [])
+    expect(channel.api.requests).toEqual([{ at: expect.any(Number), operation: 'stock.push', apiKey: 'key-a' }])
+    expect(channel.stockPushes).toEqual([[]])
+  })
+
+  it('maps 401 to AuthExpiredError, a bare 403 to PermanentError and 429 to RateLimitedError with its Retry-After', async () => {
+    const channel = createFakeChannel({ http: true })
+    const push = () => channel.connector.capabilities['stock.push']!(httpContext(channel.api.fetch), [])
+    channel.api.failNext(401)
+    await expect(push()).rejects.toBeInstanceOf(AuthExpiredError)
+    channel.api.failNext(403)
+    const forbidden = await push().catch((error: unknown) => error)
+    expect(classifyConnectorError(forbidden)).toEqual({ kind: 'permanent', retryAfterMs: null, message: '403 Forbidden' })
+    channel.api.failNext(403, { headers: { 'WWW-Authenticate': 'Bearer error="invalid_token"' } })
+    await expect(push()).rejects.toBeInstanceOf(AuthExpiredError)
+    channel.api.failNext(429, { headers: { 'Retry-After': '2' } })
+    expect(classifyConnectorError(await push().catch((error: unknown) => error))).toMatchObject({ kind: 'rate_limited', retryAfterMs: 2000 })
+    expect(channel.stockPushes).toEqual([])
+  })
+
+  it('lets a ConnectorError from ctx.fetch through and maps a network failure to TransientError', async () => {
+    const channel = createFakeChannel({ http: true })
+    const limited = new RateLimitedError('budget used up', { retryAfterMs: 500 })
+    const pull = (fetch: typeof globalThis.fetch) => channel.connector.capabilities['orders.pull']!(httpContext(fetch), null)
+    await expect(pull(async () => { throw limited })).rejects.toBe(limited)
+    await expect(pull(async () => { throw new TypeError('fetch failed') })).rejects.toBeInstanceOf(TransientError)
+  })
+
+  it('answers only its own URL', async () => {
+    const { api } = createFakeChannel({ http: true })
+    await expect(api.fetch('https://example.com/x')).rejects.toThrow(/does not serve/)
+    expect((await api.fetch(`${FAKE_API_URL}/offers.pull`)).status).toBe(204)
+  })
+
+  it('declares the rate limits it is given', () => {
+    const rateLimits = { application: { requests: 5, windowMs: 1000 }, connection: { concurrency: 1 } }
+    expect(createFakeChannel({ rateLimits }).connector.rateLimits).toEqual(rateLimits)
+    expect(createFakeChannel().connector.rateLimits).toBeUndefined()
   })
 })

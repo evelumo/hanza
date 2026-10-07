@@ -119,7 +119,9 @@ export interface RunConformanceOptions extends LintOptions {
   credentials: unknown
   /** Enables check C11 against the unauthorized cassette. */
   unauthorized?: { credentials?: unknown }
-  /** Enables check C15: an `orders.pull` cursor the API no longer has, answered in the main cassette. */
+  /** Skips check C14, only for a Channel that uses 403 for rejected credentials (say why in the connector's AGENTS.md). */
+  forbidden?: false
+  /** Enables check C18: an `orders.pull` cursor the API no longer has, answered in the main cassette. */
   expiredCursor?: string
   maxPages?: number
   scrub?: ScrubConfig
@@ -166,6 +168,7 @@ export async function runConformance(connector: AnyConnectorDefinition, options:
       expiredCursor: options.expiredCursor,
       fetch: main.fetch,
       unauthorized: unauthorized ? { credentials: options.unauthorized?.credentials, fetch: unauthorized.fetch } : undefined,
+      ...(options.forbidden === false ? { forbidden: false as const } : {}),
     })
   } catch (error) {
     failure = messageOf(error)
@@ -207,6 +210,7 @@ async function recordConformance(
       expiredCursor: options.expiredCursor,
       fetch: main.fetch,
       unauthorized: unauthorized ? { credentials: unauthorizedCredentials, fetch: unauthorized.fetch } : undefined,
+      ...(options.forbidden === false ? { forbidden: false as const } : {}),
     })
   } catch (error) {
     failure = error

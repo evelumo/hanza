@@ -84,6 +84,16 @@ const limited = defineWorkflow({ name: 'test.limited', input: z.object({}) }).st
   return { ok: true }
 })
 
+// A step that calls a connector: the Channel's 429 arrives as the SDK's RateLimitedError (here shaped like one, as
+// from another copy of the SDK), not as a RetryLaterError.
+const channelLimited = defineWorkflow({ name: 'test.channelLimited', input: z.object({}) }).step('call', async ({ runId, attempt }) => {
+  called(runId, `call#${attempt}`)
+  if ((calls.get(runId) ?? []).length === 1) {
+    throw Object.assign(new Error('429 Too Many Requests'), { name: 'RateLimitedError', kind: 'rate_limited', retryAfterMs: 30_000 })
+  }
+  return { ok: true }
+})
+
 /** Every execution hangs until the test settles it with a name (its result) or an error (thrown). */
 const slow = defineWorkflow({ name: 'test.slow', input: z.object({}) })
   .step('work', async ({ runId }) => {
@@ -143,7 +153,7 @@ describe.skipIf(!databaseUrl)('durable workflows end to end (real Postgres, in-m
   let fake: FakeChannel
   let org: string
   let clock: Date
-  const known = [...workflows, pipeline, timer, approval, doomed, limited, slow, concurrent, typed, bulky, evolvingV1, fulfil]
+  const known = [...workflows, pipeline, timer, approval, doomed, limited, channelLimited, slow, concurrent, typed, bulky, evolvingV1, fulfil]
   const testJobs = buildJobs(known)
   const stepJob = testJobs.find((job) => job.name === workflowStepRef.name) as JobDefinition
 
@@ -280,6 +290,22 @@ describe.skipIf(!databaseUrl)('durable workflows end to end (real Postgres, in-m
     await sweep()
     expect(calls.get(runId)).toEqual(['call#1'])
     travel(1_000)
+    await sweep()
+    expect(calls.get(runId)).toEqual(['call#1', 'call#1'])
+    expect(await run(runId)).toMatchObject({ status: 'completed', results: { call: { ok: true } } })
+  })
+
+  it("waits out a connector's rate limit in a step like RetryLaterError: later, without using an attempt", async () => {
+    const { runId } = await ctx.workflows.start(channelLimited, org, {})
+    await drain()
+    expect(calls.get(runId)).toEqual(['call#1'])
+    expect(await run(runId)).toMatchObject({
+      status: 'running',
+      attempts: 0,
+      wakeAt: new Date(clock.getTime() + 30_000),
+      lastError: 'RetryLaterError: 429 Too Many Requests',
+    })
+    travel(30_000)
     await sweep()
     expect(calls.get(runId)).toEqual(['call#1', 'call#1'])
     expect(await run(runId)).toMatchObject({ status: 'completed', results: { call: { ok: true } } })

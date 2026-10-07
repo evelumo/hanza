@@ -5,6 +5,7 @@ import {
   CONNECTOR_ID_PATTERN,
   CONNECTOR_KINDS,
   isChannel,
+  rateLimitsProblem,
   type AnyConnectorDefinition,
   type CapabilityContext,
   type PullResult,
@@ -22,7 +23,13 @@ export interface ConformanceFixtures {
   fetch?: typeof fetch
   /** If given, orders.pull with these overrides must fail with kind 'auth_expired'. */
   unauthorized?: { credentials?: unknown; fetch?: typeof fetch }
-  /** If given, orders.pull with this cursor (one the recorded Channel no longer has) must fail with `CursorExpiredError`. */
+  /**
+   * C14: the pulls, run against a Channel that answers every request `403 Forbidden` (no auth signal), must not fail
+   * `auth_expired`, and must send a request when `fetch` is given. Default: a fetch answering a bare 403. Pass `false` only if the Channel really uses 403 for
+   * rejected credentials, and say so in the connector's AGENTS.md.
+   */
+  forbidden?: false | { fetch?: typeof fetch }
+  /** C18: if given, orders.pull with this cursor (one the recorded Channel no longer has) must fail with `CursorExpiredError`. */
   expiredCursor?: string
   /** Page limit per pull loop. Default 100. */
   maxPages?: number
@@ -100,6 +107,8 @@ export async function assertConformance(connector: AnyConnectorDefinition, fixtu
   if (typeof connector.name !== 'string' || connector.name.trim() === '') fail('C1', 'name is empty')
   if (!CONNECTOR_KINDS.includes(connector.kind)) fail('C1', `kind "${String(connector.kind)}" is not valid`)
   if (!AUTH_TYPES.includes(connector.auth?.type)) fail('C1', `auth.type "${String(connector.auth?.type)}" is not valid`)
+  const rateLimits = rateLimitsProblem(connector.rateLimits)
+  if (rateLimits !== null) fail('C1', rateLimits)
 
   // C2
   const config = connector.configSchema.safeParse(fixtures.config)
@@ -197,7 +206,7 @@ export async function assertConformance(connector: AnyConnectorDefinition, fixtu
     })
   }
 
-  // C6, C7, C8, C14
+  // C6, C7, C8, C17
   let orders: Order[] = []
   let feed: unknown[] = []
   const pullOrders = capabilities['orders.pull']
@@ -269,14 +278,14 @@ export async function assertConformance(connector: AnyConnectorDefinition, fixtu
 
     // Updates for Orders this run never returned in full are fine: the Order may have closed before the Connection,
     // and the core ignores updates for Orders it does not have. What must hold is that fact ids are stable.
-    await check('C14', async () => {
+    await check('C17', async () => {
       const typeOf = new Map<string, string>()
       const remember = (externalId: string, fact: { id: string; type: string }) => {
         const key = JSON.stringify([externalId, fact.id])
         const known = typeOf.get(key)
         if (known === undefined) typeOf.set(key, fact.type)
         else if (known !== fact.type) {
-          fail('C14', `fact "${fact.id}" of Order "${externalId}" is reported as ${known} and as ${fact.type}; a fact id must keep its meaning`)
+          fail('C17', `fact "${fact.id}" of Order "${externalId}" is reported as ${known} and as ${fact.type}; a fact id must keep its meaning`)
         }
       }
       feed.forEach((item, index) => {
@@ -287,32 +296,32 @@ export async function assertConformance(connector: AnyConnectorDefinition, fixtu
         }
         const update = orderUpdateSchema.safeParse(item)
         if (!update.success) {
-          fail('C14', `Order update #${index} fails orderUpdateSchema: ${z.prettifyError(update.error)}`)
+          fail('C17', `Order update #${index} fails orderUpdateSchema: ${z.prettifyError(update.error)}`)
           return
         }
         const { externalId, facts } = update.data
         if (new Set(facts.map((fact) => fact.id)).size !== facts.length) {
-          fail('C14', `Order update for "${externalId}" has duplicate fact ids`)
+          fail('C17', `Order update for "${externalId}" has duplicate fact ids`)
         }
         facts.forEach((fact) => remember(externalId, fact))
       })
     })
   }
 
-  // C15
+  // C18
   if (fixtures.expiredCursor !== undefined) {
-    await check('C15', async () => {
+    await check('C18', async () => {
       if (!pullOrders) {
-        fail('C15', 'orders.pull is missing, so the expired cursor fixture cannot be exercised')
+        fail('C18', 'orders.pull is missing, so the expired cursor fixture cannot be exercised')
         return
       }
       try {
         await call('orders.pull', () => pullOrders(context, fixtures.expiredCursor!))
       } catch (error) {
-        if (!isCursorExpiredError(error)) fail('C15', `orders.pull with the expired cursor failed with ${describeError(error)}, expected CursorExpiredError`)
+        if (!isCursorExpiredError(error)) fail('C18', `orders.pull with the expired cursor failed with ${describeError(error)}, expected CursorExpiredError`)
         return
       }
-      fail('C15', 'orders.pull with the expired cursor resolved; it must reject with CursorExpiredError')
+      fail('C18', 'orders.pull with the expired cursor resolved; it must reject with CursorExpiredError')
     })
   }
 
@@ -394,6 +403,36 @@ export async function assertConformance(connector: AnyConnectorDefinition, fixtu
         return
       }
       fail('C11', 'orders.pull with the unauthorized fixture resolved; it must reject')
+    })
+  }
+
+  // C14
+  const forbiddenPulls = (
+    [
+      ['orders.pull', pullOrders],
+      ['offers.pull', pullOffers],
+    ] as const
+  ).filter(([, pull]) => pull !== undefined)
+  if (fixtures.forbidden !== false && forbiddenPulls.length > 0) {
+    await check('C14', async () => {
+      const answer = (fixtures.forbidden && fixtures.forbidden.fetch) || (async () => new Response(null, { status: 403, statusText: 'Forbidden' }))
+      let requests = 0
+      const forbiddenFetch: typeof fetch = (input, init) => {
+        requests++
+        return answer(input, init)
+      }
+      for (const [name, pull] of forbiddenPulls) {
+        try {
+          await call(name, () => (pull as (ctx: CapabilityContext, cursor: string | null) => Promise<unknown>)({ ...context, fetch: forbiddenFetch }, null))
+        } catch (error) {
+          const { kind } = classifyConnectorError(error)
+          if (kind === 'auth_expired') {
+            fail('C14', `${name} failed as 'auth_expired' on a 403 Forbidden; without an auth signal a 403 is 'permanent' (no sign-in prompt)`)
+          }
+        }
+      }
+      // A connector that talks HTTP (it was given recorded responses) must have met the 403, or the check proved nothing.
+      if (fixtures.fetch && requests === 0) fail('C14', 'no pull made a request, so the 403 was never seen')
     })
   }
 

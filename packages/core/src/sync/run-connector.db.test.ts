@@ -14,6 +14,7 @@ import { createConnection } from '../connections/connections'
 import { saveSyncCursor } from '../connections/sync-state'
 import { PermanentJobError, RetryLaterError, type JobRunInfo } from '../jobs'
 import { ordersPullJob } from '../jobs/orders-pull'
+import { RequestRefusedError } from '../rate-limit/limited-fetch'
 import { createTestOrganization } from '../testing/context'
 import { databaseUrl, useTestContext } from '../testing/db-test'
 import { buildOrder, orderLine, user } from '../testing/fixtures'
@@ -120,6 +121,20 @@ describe.skipIf(!databaseUrl)('runConnectorCall (through orders.pull)', () => {
     expect(await state()).toMatchObject({ health: 'unknown', sync: { lastErrorKind: 'transient', lastError: '429 Too Many Requests' } })
     await expect(runPull({ ...lastAttempt, retriedLater: 10 })).rejects.toBe(limited)
     expect((await state()).health).toBe('failing')
+  })
+
+  it("rate_limited by Hanza's own limiter: never turned transient by the cap, and not counted towards it", async () => {
+    const { runPull, state } = await setup()
+    pull = failWith(new RequestRefusedError('Request limit reached', { retryAfterMs: 4_000 }))
+    for (const run of [{ ...firstAttempt, retriedLater: 10 }, { ...lastAttempt, retriedLater: 50 }]) {
+      const error = await runPull(run).catch((caught: unknown) => caught)
+      expect(error).toBeInstanceOf(RetryLaterError)
+      expect(error).toMatchObject({ delayMs: 4_000, counted: false })
+    }
+    expect(await state()).toMatchObject({ health: 'unknown', sync: { lastErrorKind: 'rate_limited' } })
+    // The Channel's own 429 still counts.
+    pull = failWith(new RateLimitedError('429 Too Many Requests', { retryAfterMs: 4_000 }))
+    expect(await runPull().catch((caught: unknown) => caught)).toMatchObject({ counted: true })
   })
 
   it('transient: rethrown for a normal retry; health turns failing only on the last attempt', async () => {

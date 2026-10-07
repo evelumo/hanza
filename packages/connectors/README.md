@@ -22,6 +22,17 @@ a `paid` Channel fact once they are paid (ADR 0015; details in the skill):
   refund): one Order that breaks `orderSchema` turns the whole page into a
   `PermanentError` and stops the Connection's Order feed.
 
+Only an explicit auth signal asks a person to sign in again: a 401, a
+`WWW-Authenticate: Bearer error="invalid_token"`, or the connector's own
+`isAuthFailure` predicate passed to `errorFromResponse`. A 403 means "no right to
+this resource" and fails the run as permanent, without a sign-in prompt
+(conformance check C14).
+
+A connector declares its Channel's request limits in `rateLimits` (per API
+application, per Connection, concurrency); the core enforces them in `ctx.fetch`
+across every worker (ADR 0019). `ctx.fetch` may then reject with
+`RateLimitedError` before sending: let it through unchanged.
+
 Where `orders.pull` starts and what it may return (ADR 0021; details in the skill):
 
 - Cursor `null` returns the Orders open on the Channel now, then follows the
@@ -52,7 +63,7 @@ not fit, report `price: null`.
 
 | Id | Package | Kind | What it is |
 | --- | --- | --- | --- |
-| `fake` | `@hanza/connector-fake` | marketplace | In-memory Channel for tests and demos, with every capability including `price.push`. The reference for how a connector looks. Not a real Channel. |
+| `fake` | `@hanza/connector-fake` | marketplace | In-memory Channel for tests and demos, with every capability including `price.push`. The reference for how a connector looks. Not a real Channel. With `http: true` it also sends one request per call through `ctx.fetch`, answered by its in-memory `api` (for tests of rate limits and error mapping). |
 | `fake-http` | `@hanza/connector-fake` | marketplace | Not registered. The same fake Channel behind a small JSON API with client-credentials tokens (`src/http/`), tested only with recorded fixtures: the reference for a connector that talks HTTP. |
 
 Allegro and WooCommerce come first among the real ones (stage 2 of the plan).

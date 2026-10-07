@@ -1,4 +1,5 @@
-import type { Address, ChannelFact, Offer, OfferPrice, Order, OrderStatus, OrderUpdate, StockLevel } from '@hanza/connector-sdk'
+import type { Address, ChannelFact, Offer, OfferPrice, Order, OrderStatus, OrderUpdate, RateLimits, StockLevel } from '@hanza/connector-sdk'
+import { createFakeApi, type FakeApi } from './api'
 import { createFakeConnector, type FakeConnector, type FakeState } from './connector'
 import { seedFacts, seedOffers, seedOrders } from './seed'
 
@@ -29,16 +30,30 @@ export interface FakeChannel {
   /** Arguments of every price.push call, in order. A push also sets the Offer's price that offers.pull reports. */
   readonly pricePushes: OfferPrice[][]
   readonly statusUpdates: Array<{ orderExternalId: string; status: OrderStatus }>
+  /** The Channel's HTTP side; the connector calls it only with `http: true`. */
+  readonly api: FakeApi
   /** Back to the seed, recorded calls cleared. */
   reset(): void
 }
 
-/**
- * `id` other than "fake" lets a test register several independent fake Channels side by side. `startWithOpenOrders`
- * makes cursor null follow the SDK's starting rule (the Orders open now, then the journal); without it, cursor null
- * replays the whole journal, which the seed and most tests rely on.
- */
-export function createFakeChannel(options: { id?: string; startWithOpenOrders?: boolean } = {}): FakeChannel {
+export interface FakeChannelOptions {
+  /** Other than "fake" lets a test register several independent fake Channels side by side. */
+  id?: string
+  /**
+   * Every capability call also sends one request through `ctx.fetch`, answered by `api.fetch` (route the global
+   * fetch there in tests), and maps a failed answer with `errorFromResponse`. Off by default: no network.
+   */
+  http?: boolean
+  /** Declared on the connector, for tests of the core's limiter. */
+  rateLimits?: RateLimits
+  /**
+   * Cursor null follows the SDK's starting rule (the Orders open now, then the journal, ADR 0021). Without it, cursor
+   * null replays the whole journal, which the seed and most tests rely on.
+   */
+  startWithOpenOrders?: boolean
+}
+
+export function createFakeChannel(options: FakeChannelOptions = {}): FakeChannel {
   const state: FakeState = {
     offers: [],
     orders: new Map(),
@@ -52,6 +67,7 @@ export function createFakeChannel(options: { id?: string; startWithOpenOrders?: 
     pricePushes: [],
     statusUpdates: [],
   }
+  const api = createFakeApi()
 
   const appendToJournal = (orderExternalId: string, update?: OrderUpdate) => {
     const seq = ++state.lastSeq
@@ -74,7 +90,8 @@ export function createFakeChannel(options: { id?: string; startWithOpenOrders?: 
   }
 
   const channel: FakeChannel = {
-    connector: createFakeConnector(state, options.id),
+    connector: createFakeConnector(state, options),
+    api,
     addOffer(offer) {
       const copy = structuredClone(offer)
       const index = state.offers.findIndex((existing) => existing.externalId === offer.externalId)
@@ -123,6 +140,7 @@ export function createFakeChannel(options: { id?: string; startWithOpenOrders?: 
       state.stockPushes.length = 0
       state.pricePushes.length = 0
       state.statusUpdates.length = 0
+      api.reset()
       seedOffers.forEach(channel.addOffer)
       seedOrders.forEach(channel.addOrder)
       seedFacts.forEach(({ orderExternalId, fact }) => channel.addFact(orderExternalId, fact))

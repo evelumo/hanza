@@ -1,8 +1,11 @@
 import { randomUUID } from 'node:crypto'
+import { classifyConnectorError, isConnectorError } from '@hanza/connector-sdk'
 import { Prisma, type WorkflowRun } from '@hanza/db'
 import { afterCommit } from '../after-commit'
 import type { Context } from '../context'
 import { PermanentJobError, RetryLaterError } from '../jobs'
+import { isRefusedBeforeSending } from '../rate-limit/limited-fetch'
+import { retryLaterDelay } from '../sync/run-connector'
 import { describeFailure } from '../describe-failure'
 import { TX_OPTIONS } from '../transaction'
 import type { AnyWorkflowDefinition, WorkflowStep } from './define'
@@ -150,7 +153,8 @@ async function runStep(
       attempt,
       maxAttempts: MAX_STEP_ATTEMPTS,
     })
-  } catch (error) {
+  } catch (thrown) {
+    const error = retryLaterOnRateLimit(thrown)
     const description = describeFailure(error)
     if (error instanceof PermanentJobError || (!(error instanceof RetryLaterError) && attempt >= MAX_STEP_ATTEMPTS)) {
       if (!(await fail(ctx, run, description, { claimToken }))) return lostClaim(error)
@@ -180,6 +184,14 @@ async function runStep(
   // Another execution of this step finished first, or the run was cancelled: this result is discarded.
   if (!entry) return
   await enqueueAdvance(ctx, { organizationId: run.organizationId, runId: run.id }, entry, new Date())
+}
+
+/** A step that calls a connector waits out a rate limit like a sync job: later, without using an attempt. */
+function retryLaterOnRateLimit(error: unknown): unknown {
+  if (error instanceof RetryLaterError || error instanceof PermanentJobError || !isConnectorError(error)) return error
+  const { kind, retryAfterMs, message } = classifyConnectorError(error)
+  if (kind !== 'rate_limited') return error
+  return new RetryLaterError(retryLaterDelay(retryAfterMs), message, { counted: !isRefusedBeforeSending(error) })
 }
 
 async function wakeUp(ctx: Context, definition: AnyWorkflowDefinition, run: WorkflowRun, index: number, step: WorkflowStep, input: unknown) {
