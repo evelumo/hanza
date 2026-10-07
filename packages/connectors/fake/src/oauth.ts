@@ -139,7 +139,7 @@ export function createFakeOAuthChannel(options: { id?: string } = {}): FakeOAuth
   type Ctx = CapabilityContext<z.output<typeof fakeOAuthConfigSchema>, FakeOAuthCredentials, z.output<typeof fakeOAuthAppSchema>>
   // The data behind the sign-in is a plain fake Channel; its connector is called with dummy credentials.
   const inner = data.connector.capabilities
-  const innerContext = (ctx: Ctx) => ({ app: {}, config: { failMode: 'none' as const }, credentials: { apiKey: 'inner' }, fetch: ctx.fetch, log: ctx.log })
+  const innerContext = (ctx: Ctx) => ({ app: {}, config: { failMode: 'none' as const, rejectOffers: '' }, credentials: { apiKey: 'inner' }, fetch: ctx.fetch, log: ctx.log })
 
   const authorise = (ctx: Ctx, capability: CapabilityName) => {
     clientIds.push(ctx.app.clientId)

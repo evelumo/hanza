@@ -9,6 +9,7 @@ import { TagBadge } from '@/components/status-badge'
 import { getContext } from '@/lib/context'
 import { getT } from '@/i18n/server'
 import { getFormatters } from '@/lib/formatters'
+import { publicationLabel, stockStatusText } from '@/lib/offer-push-status'
 import { isPriceBlocked, priceStatusText } from '@/lib/price-status'
 import { requireTenant } from '@/lib/session'
 import { notFound } from 'next/navigation'
@@ -146,6 +147,7 @@ export default async function ProductPage({ params }: { params: Promise<{ produc
                   <th scope="col" className={thClass}>{t('products.detail.offerColumns.connection')}</th>
                   <th scope="col" className={thClass}>{t('products.detail.offerColumns.offer')}</th>
                   <th scope="col" className={thClass}>{t('products.detail.offerColumns.link')}</th>
+                  <th scope="col" className={thClass}>{t('products.detail.offerColumns.publication')}</th>
                   <th scope="col" className={thClass}>{t('products.detail.offerColumns.lastPushed')}</th>
                   <th scope="col" className={thClass}>{t('products.detail.offerColumns.price')}</th>
                   <th scope="col" className={thClass}>
@@ -164,6 +166,7 @@ export default async function ProductPage({ params }: { params: Promise<{ produc
                       <span className="block font-mono text-xs text-muted">{offer.externalId}</span>
                     </td>
                     <td className={tdClass}>{offer.linkedBy === 'manual' ? t('products.detail.linkedManually') : t('products.detail.linkedBySku')}</td>
+                    <td className={tdClass}>{publicationLabel(t, offer.publication)}</td>
                     <td className={tdClass}>
                       {offer.lastPushedAt ? (
                         <>
@@ -173,6 +176,9 @@ export default async function ProductPage({ params }: { params: Promise<{ produc
                       ) : (
                         <span className="text-muted">{t('products.detail.notPushed')}</span>
                       )}
+                      {offer.stockStatus === 'rejected' || offer.stockStatus === 'not_sent' ? (
+                        <span className="block max-w-xs text-xs font-medium text-amber-800">{stockStatusText(t, offer, format.dateTime)}</span>
+                      ) : null}
                     </td>
                     <td className={tdClass}>
                       {offer.effectivePrice ? (

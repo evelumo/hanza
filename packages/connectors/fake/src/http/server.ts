@@ -55,7 +55,7 @@ export const FAKE_HTTP_ACCOUNT = { id: 'fake-seller-1', login: 'fake-seller' }
 const ACCESS_TOKEN_SECONDS = 3600
 const DEVICE_CODE_SECONDS = 600
 
-const context: FakeContext = { app: {}, config: { failMode: 'none' }, credentials: { apiKey: 'server' }, fetch, log: () => {} }
+const context: FakeContext = { app: {}, config: { failMode: 'none', rejectOffers: '' }, credentials: { apiKey: 'server' }, fetch, log: () => {} }
 
 function splitName(name: string) {
   const [firstName = '', ...rest] = name.split(' ')

@@ -56,11 +56,29 @@ with at most 4 decimal places and an upper-case ISO 4217 currency (`PLN`, not
 the whole `offers.pull` page, not just that Offer; if the Channel's price does
 not fit, report `price: null`.
 
+Report each Offer's publication too when the Channel has one (`status`:
+`active`, `inactive` or `ended`, and for `ended` the `endedReason`: `sold_out`
+when the Channel ended it because its stock reached 0, `other` otherwise), and
+keep returning ended Offers: they stay linked. `stock.push` and `price.push` may
+return a result per Offer instead of failing the call for one Offer the Channel
+refuses: `{ offerExternalId, outcome: 'rejected', code }` with the Channel's
+short error code (letters, digits and `_ . : -`; never free text, which may
+echo data), and for stock `outcome: 'ended'` for every 0 that leaves the Offer
+sold out, also when it already was (a push retried after a lost answer must
+still tell Hanza). Offers left out count as applied; throw only when the whole
+call failed. Hanza records a rejection on the Offer and keeps the Connection
+healthy (#68). Hanza never pushes a number to an ended Offer unless it ended
+because it sold out and the connector declares `reopensSoldOutOffers: true`,
+meaning its `stock.push` reactivates such an Offer when the number is above 0
+(ADR 0022). Hanza decides from the publication it last pulled, which may be
+stale, so a connector that declares it must check at push time why the Offer
+ended, reopen it only if it sold out, and report `rejected` otherwise.
+
 ## Connectors
 
 | Id | Package | Kind | What it is |
 | --- | --- | --- | --- |
-| `fake` | `@hanza/connector-fake` | marketplace | In-memory Channel for tests and demos, with every capability including `price.push`. The reference for how a connector looks. Not a real Channel. With `http: true` it also sends one request per call through `ctx.fetch`, answered by its in-memory `api` (for tests of rate limits and error mapping). |
+| `fake` | `@hanza/connector-fake` | marketplace | In-memory Channel for tests and demos, with every capability including `price.push`. Like Allegro, pushing 0 ends an Offer and a number above 0 reopens a sold-out one; the config field `rejectOffers` (and `channel.reject()` in tests) makes it refuse chosen Offers. The reference for how a connector looks. Not a real Channel. With `http: true` it also sends one request per call through `ctx.fetch`, answered by its in-memory `api` (for tests of rate limits and error mapping). |
 | `fake-oauth` | `@hanza/connector-fake` | marketplace | The same in-memory data behind an OAuth sign-in (device flow, rotating tokens, installation settings). Only available where `HANZA_CONNECTOR_FAKE_OAUTH_CLIENT_ID` and `_CLIENT_SECRET` are set. Not a real Channel. |
 | `fake-http` | `@hanza/connector-fake` | marketplace | Not registered. The same fake Channel behind a small JSON API with client-credentials tokens (`src/http/`), tested only with recorded fixtures: the reference for a connector that talks HTTP. |
 | `fake-http-oauth` | `@hanza/connector-fake` | marketplace | Not registered. The same API with an OAuth life cycle shaped like Allegro's (installation settings, device flow, rotating refresh tokens; `src/http/oauth-connector.ts`), tested with recorded fixtures through `runConformance` (`app`, `refresh`, `deviceFlow`): the reference for an OAuth connector. |

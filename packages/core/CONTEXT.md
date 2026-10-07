@@ -32,6 +32,10 @@ _Avoid_: Authorization, OAuth flow, login, reconnect
 The seller's account on the Channel that a Connection signed in as. One per Connection; an organization cannot connect the same Channel account twice.
 _Avoid_: Seller id, profile, user
 
+**Push rejection**:
+The Channel refusing the stock or price Hanza sent for one Offer (with its short error code), while the rest of the push went through. Recorded on the Offer and shown with a Retry; the Offer is not sent again until Retry or a change that alters what it would be told, and the Connection stays healthy. Hanza records one itself, without calling the Channel, for an ended Offer it must not reopen.
+_Avoid_: Push error, failed sync, sync failure
+
 **Request budget**:
 How many requests Hanza lets itself send to a connector's API in a window of time, or at once, set below the Channel's own rate limits: one budget shared by every Connection of that connector on the installation, across organizations, and one per Connection. The connector declares them, every worker shares them, and a job whose request does not fit waits or is delayed, never failed (ADR 0019).
 _Avoid_: Quota, throttle

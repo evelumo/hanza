@@ -5,6 +5,7 @@ import {
   getConnection,
   getStatusMapping,
   listEvents,
+  listRejectedOffers,
   listOrderStatuses,
   listWarehouses,
 } from '@hanza/core'
@@ -20,6 +21,7 @@ import { getContext } from '@/lib/context'
 import { describeEvent } from '@/lib/events'
 import { getFormatters } from '@/lib/formatters'
 import { orderStatusName, reportedPhaseLabel, streamLabel, syncErrorLabel } from '@/lib/labels'
+import { rejectionText } from '@/lib/offer-push-status'
 import { requireTenant } from '@/lib/session'
 import { isSyncRunning } from '@/lib/sync-status'
 import { requestSyncAction, signInAgainAction } from '../actions'
@@ -54,12 +56,13 @@ export default async function ConnectionPage({ params }: { params: Promise<{ con
       </ActionButton>
     </ActionForm>
   )
-  const [events, warehouses, statuses, mapping, canManage] = await Promise.all([
+  const [events, warehouses, statuses, mapping, canManage, rejectedOffers] = await Promise.all([
     listEvents(ctx, organizationId, { type: 'connection', id: connection.id }, 20),
     listWarehouses(ctx, organizationId),
     listOrderStatuses(ctx, organizationId),
     getStatusMapping(ctx, organizationId, connection.id),
     canManageOrganization(ctx, organizationId, user.id),
+    listRejectedOffers(ctx, organizationId, connection.id),
   ])
   const mappingRows: MappingRow[] = CHANNEL_REPORTED_PHASES.map((phase) => {
     const inPhase = statuses.filter((status) => status.phase === phase)
@@ -162,6 +165,46 @@ export default async function ConnectionPage({ params }: { params: Promise<{ con
           </div>
         )}
       </Section>
+
+      {rejectedOffers.length > 0 ? (
+        <Section title={t('connections.detail.rejectedTitle')} description={t('connections.detail.rejectedDescription')}>
+          <div className="overflow-x-auto">
+            <table className={tableClass}>
+              <thead>
+                <tr>
+                  <th scope="col" className={thClass}>{t('connections.detail.rejectedColumns.offer')}</th>
+                  <th scope="col" className={thClass}>{t('connections.detail.rejectedColumns.stock')}</th>
+                  <th scope="col" className={thClass}>{t('connections.detail.rejectedColumns.price')}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rejectedOffers.map((offer) => (
+                  <tr key={offer.id} className={rowClass}>
+                    <th scope="row" className={`${tdClass} font-medium`}>
+                      <Link href={`/products/offers/${offer.id}`} className={linkClass}>
+                        {offer.name}
+                      </Link>
+                      <span className="block font-mono text-xs font-normal text-muted">{offer.externalId}</span>
+                    </th>
+                    {[offer.stockRejection, offer.priceRejection].map((rejection, index) => (
+                      <td key={index} className={tdClass}>
+                        {rejection ? (
+                          <>
+                            <span className="block max-w-xs text-amber-800">{rejectionText(t, rejection)}</span>
+                            <span className="block text-xs text-muted">{format.dateTime(rejection.at)}</span>
+                          </>
+                        ) : (
+                          '—'
+                        )}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Section>
+      ) : null}
 
       {connector && isChannel(connector) ? (
         <>

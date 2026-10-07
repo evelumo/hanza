@@ -1,4 +1,5 @@
 import type { Money } from '@hanza/connector-sdk'
+import { currentRejection, type PushRejection } from '../catalog/offer-push'
 import type { Context } from '../context'
 import { effectivePrice, moneyFromColumns, priceStatus, type PriceStatus } from './price'
 
@@ -11,6 +12,8 @@ export interface OfferPriceView {
   effectivePrice: Money | null
   lastPushedPrice: Money | null
   lastPricePushedAt: Date | null
+  /** The code the Channel refused the last price push with, while nothing newer is waiting. */
+  priceRejection: PushRejection | null
   priceStatus: PriceStatus
 }
 
@@ -26,6 +29,8 @@ export interface OfferPriceColumns {
   lastPricePushedAt: Date | null
   pricePushSeq: number
   pricePushedSeq: number
+  priceRejectedCode: string | null
+  priceRejectedAt: Date | null
 }
 
 /** Select for `describeOfferPrice`. */
@@ -39,6 +44,8 @@ export const offerPriceColumns = {
   lastPricePushedAt: true,
   pricePushSeq: true,
   pricePushedSeq: true,
+  priceRejectedCode: true,
+  priceRejectedAt: true,
 } as const
 
 export function describeOfferPrice(
@@ -50,19 +57,23 @@ export function describeOfferPrice(
   const priceOverride = moneyFromColumns(offer.priceOverrideAmount, offer.priceOverrideCurrency)
   const effective = effectivePrice(priceOverride, product?.basePrice ?? null)
   const lastPushedPrice = moneyFromColumns(offer.lastPushedPriceAmount, offer.lastPushedPriceCurrency)
+  const awaitingPush = offer.pricePushSeq > offer.pricePushedSeq
+  const priceRejection = currentRejection(offer.priceRejectedCode, offer.priceRejectedAt, awaitingPush)
   return {
     channelPrice,
     priceOverride,
     effectivePrice: effective,
     lastPushedPrice,
     lastPricePushedAt: offer.lastPricePushedAt,
+    priceRejection,
     priceStatus: priceStatus({
       linked: product !== null,
       supported: typeof ctx.connectors.get(offer.connectorId)?.capabilities['price.push'] === 'function',
       effective,
       channelCurrency: channelPrice?.currency ?? null,
       lastPushed: lastPushedPrice,
-      awaitingPush: offer.pricePushSeq > offer.pricePushedSeq,
+      awaitingPush,
+      rejected: priceRejection !== null,
     }),
   }
 }

@@ -20,6 +20,14 @@ _Avoid_: Variant attribute, option, property
 The presence of one Product on one Channel — the thing a Buyer actually sees and buys there. Linked to its Product by SKU, or by hand when the SKU does not match.
 _Avoid_: Listing, auction, external product
 
+**Offer publication**:
+Whether an Offer is for sale on its Channel, as the Channel reports it: active, inactive (a draft never published) or ended; unknown while the Channel has not said. An ended Offer stays linked. Not to be confused with an Order status.
+_Avoid_: Offer status, listing state
+
+**Sold out (Offer)**:
+An ended Offer the Channel ended because its stock reached 0, for example after Hanza pushed 0. The only kind of ended Offer Hanza reopens, by pushing a number above 0, and only through a connector that can (ADR 0022); one ended by the seller, an admin or expiry is never reopened.
+_Avoid_: Out of stock, empty
+
 ### Stock
 
 **Stock**:

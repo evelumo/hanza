@@ -118,6 +118,21 @@ describe('describeEvent', () => {
     expect(describeEvent('warehouse.deactivated', {}, pl, formatPl)).toEqual({ title: 'Dezaktywowano magazyn', detail: null })
   })
 
+  it('describes Offer publication changes and push rejections', () => {
+    expect(describeEvent('offer.channel_status_changed', { from: 'active', to: 'ended', endedReason: 'sold_out', source: 'push' }, t, format)).toEqual({
+      title: 'Offer status on the channel changed',
+      detail: 'Active → Ended (sold out)',
+    })
+    expect(describeEvent('offer.channel_status_changed', { from: null, to: 'inactive', endedReason: null }, t, format).detail).toBe('Unknown → Inactive (draft)')
+    expect(describeEvent('offer.push_rejected', { push: 'stock', code: 'OFFER_NOT_FOUND' }, t, format)).toEqual({
+      title: 'The channel rejected an offer',
+      detail: 'stock: OFFER_NOT_FOUND',
+    })
+    expect(describeEvent('offer.push_rejected', { push: 'price', code: 'X' }, translatorFor('pl'), formatPl).detail).toBe('cena: X')
+    expect(describeEvent('offer.push_retried', { push: 'price', actor: { type: 'system' } }, t, format).detail).toBe('price')
+    expect(describeEvent('offer.push_rejected', { push: 7, code: {} }, t, format).detail).toBeNull()
+  })
+
   it('pluralises counts the way each language does', () => {
     expect(describeEvent('stock.reserved', { units: 1 }, t, format).detail).toBe('1 unit')
     expect(describeEvent('stock.reserved', { units: 5 }, t, format).detail).toBe('5 units')

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { buildOrder, orderLine } from '../testing/fixtures'
-import { parseOffersPage, parseOrdersPage } from './pull-result'
+import { parseOffersPage, parseOrdersPage, parsePricePushResults, parseStockPushResults } from './pull-result'
 
 function failure(parse: () => unknown): Error {
   try {
@@ -53,5 +53,40 @@ describe('parseOffersPage', () => {
   it('applies the same paging rule', () => {
     expect(failure(() => parseOffersPage({ items: [], nextCursor: '2', hasMore: true }, '2')).message).toContain('paging contract')
     expect(parseOffersPage({ items: [], nextCursor: '2', hasMore: true }, null).nextCursor).toBe('2')
+  })
+})
+
+describe('push results', () => {
+  const levels = [
+    { offerExternalId: 'a', available: 0 },
+    { offerExternalId: 'b', available: 3 },
+  ]
+
+  it('treats no results as every Offer pushed', () => {
+    expect(parseStockPushResults(undefined, levels).size).toBe(0)
+    expect(parseStockPushResults(null, levels).size).toBe(0)
+    expect(parsePricePushResults(undefined, levels).size).toBe(0)
+  })
+
+  it('returns the results by Offer', () => {
+    const results = parseStockPushResults(
+      [
+        { offerExternalId: 'a', outcome: 'ended' },
+        { offerExternalId: 'b', outcome: 'rejected', code: 'OFFER_NOT_FOUND' },
+      ],
+      levels,
+    )
+    expect(results.get('a')).toEqual({ offerExternalId: 'a', outcome: 'ended' })
+    expect(results.get('b')).toEqual({ offerExternalId: 'b', outcome: 'rejected', code: 'OFFER_NOT_FOUND' })
+  })
+
+  it('refuses results that break the contract, without echoing values', () => {
+    expect(failure(() => parseStockPushResults([{ offerExternalId: 'b', outcome: 'ended' }], levels)).message).toMatch(/ended after a number above 0/)
+    expect(failure(() => parseStockPushResults([{ offerExternalId: 'x', outcome: 'ok' }], levels)).message).toMatch(/not in the call/)
+    expect(failure(() => parseStockPushResults([{ offerExternalId: 'a', outcome: 'ok' }, { offerExternalId: 'a', outcome: 'ok' }], levels)).message).toMatch(/two results/)
+    expect(failure(() => parseStockPushResults({ rejected: [] }, levels)).message).toMatch(/break the contract/)
+    expect(failure(() => parsePricePushResults([{ offerExternalId: 'a', outcome: 'ended' }], levels)).message).toMatch(/break the contract/)
+    const secret = failure(() => parseStockPushResults([{ offerExternalId: 'a', outcome: 'rejected', code: 'x'.repeat(500) }], levels))
+    expect(secret.message).not.toContain('x'.repeat(101))
   })
 })

@@ -108,7 +108,7 @@ describe.skipIf(!databaseUrl)('price sync end to end (real Postgres, in-memory q
     const eu = (await offers())['fake-offer-7']
     expect(eu).toMatchObject({ effectivePrice: pln('45'), channelPrice: eur('9.99'), lastPushedPrice: null, priceStatus: 'currency_mismatch' })
     expect(lastPushedPrices()['fake-offer-7']).toBeUndefined()
-    expect((await priceSyncState()).lastResult).toEqual({ pushed: 2, skipped: 1 })
+    expect((await priceSyncState()).lastResult).toEqual({ pushed: 2, rejected: 0, skipped: 1 })
   })
 
   it('4. an Offer override wins over the base price', async () => {

@@ -96,6 +96,12 @@ describe('priceStatus', () => {
     expect(priceStatus({ ...offer, lastPushed: null })).toBe('pending')
   })
 
+  it('is rejected when the Channel refused the last push, until a newer push is due', () => {
+    expect(priceStatus({ ...offer, lastPushed: pln('9'), rejected: true })).toBe('rejected')
+    expect(priceStatus({ ...offer, rejected: true, awaitingPush: true })).toBe('pending')
+    expect(priceStatus({ ...offer, rejected: true, effective: null })).toBe('no_price')
+  })
+
   it('names why nothing is pushed', () => {
     expect(priceStatus({ ...offer, linked: false })).toBe('not_linked')
     expect(priceStatus({ ...offer, supported: false })).toBe('unsupported')

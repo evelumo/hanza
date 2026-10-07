@@ -3,6 +3,7 @@ import type { ConnectorAuth } from './auth'
 import type { Offer } from './model/offer'
 import type { Order, OrderStatus } from './model/order'
 import type { OfferPrice } from './model/price'
+import type { PricePushResult, StockPushResult } from './model/push-result'
 import type { StockLevel } from './model/stock'
 
 export const CONNECTOR_KINDS = ['marketplace', 'shop', 'courier', 'invoicing'] as const
@@ -46,13 +47,19 @@ export interface Capabilities<TConfig, TCredentials, TApp = unknown> {
    * and a `paid` fact once they are paid.
    */
   'orders.pull'?(ctx: CapabilityContext<TConfig, TCredentials, TApp>, cursor: string | null): Promise<PullResult<Order>>
-  /** Set absolute availability for up to 100 Offers of this Connection. Must be repeatable. */
-  'stock.push'?(ctx: CapabilityContext<TConfig, TCredentials, TApp>, levels: StockLevel[]): Promise<void>
+  /**
+   * Set absolute availability for up to 100 Offers of this Connection, 0 included. Must be repeatable.
+   * May return a result per Offer: `rejected` (with a short Channel error code) when the Channel refused one Offer,
+   * so the others still count as pushed; `ended` when the Channel ended the Offer because it got 0. Offers left out
+   * of the results, or no results at all (nothing, or null), count as `ok`. Throw for a failure of the whole call.
+   */
+  'stock.push'?(ctx: CapabilityContext<TConfig, TCredentials, TApp>, levels: StockLevel[]): Promise<void | StockPushResult[]>
   /**
    * Optional. Set the price of up to 100 Offers of this Connection. Each price is in the currency the
    * Channel reported for that Offer in `offers.pull` (Hanza never converts). Must be repeatable.
+   * May return per-Offer results like `stock.push` (`ok` or `rejected`).
    */
-  'price.push'?(ctx: CapabilityContext<TConfig, TCredentials, TApp>, prices: OfferPrice[]): Promise<void>
+  'price.push'?(ctx: CapabilityContext<TConfig, TCredentials, TApp>, prices: OfferPrice[]): Promise<void | PricePushResult[]>
   /** Translate an Order phase (`status`) to the Channel's own status and set it. Resolve without a call if the Channel has no equivalent. Must be repeatable. */
   'orders.updateStatus'?(
     ctx: CapabilityContext<TConfig, TCredentials, TApp>,
@@ -100,6 +107,13 @@ export interface ConnectorDefinition<
   /** Same shape rules; stored encrypted. Use z.object({}) when there are none. */
   credentialsSchema: TCredentialsSchema
   capabilities: Capabilities<z.output<TConfigSchema>, z.output<TCredentialsSchema>, z.output<TAppSchema>>
+  /**
+   * True when `stock.push` with a number above 0 reactivates an Offer that ended because it sold out
+   * (`endedReason: 'sold_out'`). Without it Hanza never pushes to an ended Offer and reports it rejected (ADR 0022).
+   * Hanza decides from the publication it last pulled, which may be stale: a connector that declares this must check,
+   * at push time, why the Offer ended, reopen it only if it sold out, and report `rejected` otherwise.
+   */
+  reopensSoldOutOffers?: boolean
   /** Optional request limits the core enforces on `ctx.fetch`; none when omitted. */
   rateLimits?: RateLimits
 }
