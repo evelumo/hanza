@@ -1,95 +1,126 @@
 # Hanza
 
-Open-source, self-hosted, AI-native e-commerce integration hub: an alternative to base.com / BaseLinker. Orders, stock and shipments from your marketplaces, shops and couriers, in one place.
+**Your commerce operations, on your infrastructure.**
 
-A small, stable TypeScript core (canonical data model + background sync engine) talks to external systems through **connectors**: replaceable packages that share one layout, so a new marketplace can be added by following a single recipe (by a person or an AI agent) and checked by tests.
+An open-source, self-hosted e-commerce integration hub for Orders, Products, Stock and Connections. Hanza is building an alternative to Base.com / BaseLinker around a small TypeScript core and replaceable connectors.
 
-## Status
+[![CI](https://github.com/evelumo/hanza/actions/workflows/ci.yml/badge.svg)](https://github.com/evelumo/hanza/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Stage: early development](https://img.shields.io/badge/stage-early%20development-orange.svg)](docs/roadmap.md)
 
-Early stage (stage 1 of the roadmap). Working today:
+[Quick start](#quick-start) · [Try the demo](docs/demo.md) · [Documentation](docs/README.md) · [Contributing](CONTRIBUTING.md) · [Roadmap](docs/roadmap.md)
 
-- Email/password sign-up and login (Better Auth); an organization is the tenant, created during onboarding.
-- Multi-tenant data model: every tenant-owned table carries `organizationId`.
-- The domain core: Products, Offers, Stock with Reservations (Hanza owns Stock), prices (a Product's base price and per-Offer overrides; Hanza owns them too), Orders with their own status (fixed Order phases, organization-defined Order statuses within them) and encrypted Buyer data, Connections with encrypted credentials, and an event log.
-- The sync engine in the worker: pulls Offers and Orders from a Channel, pushes each Channel its Channel Available (Available less the Connection's safety buffer, at most its channel limit), prices and Order status back, retries and tracks Connection health.
-- Durable multi-step workflows (`defineWorkflow`): steps run as jobs, state, timers and signals live in Postgres, so a run survives a worker crash or a lost Redis; shaped so Temporal can replace the engine later.
-- The panel (English by default, Polish as a second language; switch it in the header): Products (Stock, Available, prices, linking Offers to Products), Orders (status changes, filters by phase and status, Needs attention, linking Unmatched lines), Connections (add, sync now, sync results, safety buffer and channel limit, which Order status a Channel's Orders get), Privacy (Buyer data retention period, erasure requests) and Settings (the organization's Order statuses).
-- The final-for-now Connector SDK with a conformance test kit and an in-memory **fake connector** ("Test channel") that exercises the whole path without a real Channel.
-- `GET /api/health` (database + queue) and a dependency-boundary check for connectors.
+> **Early development.** The panel, domain core and worker work with a simulated Channel. There are **no real marketplace, shop, courier or invoicing connectors yet**. Use Hanza to evaluate the architecture, try the demo and contribute; connecting a live business is a future milestone.
 
-Not there yet: **no real connectors** (Allegro first, then WooCommerce), no REST API or MCP server; the panel end-to-end tests (`pnpm test:e2e`, Playwright) run locally only, not in CI yet.
+## Why Hanza?
+
+Commerce operations need a consistent view of what was sold, what is still available and what needs a person's attention. Hanza puts those rules in one core and keeps each external system behind a connector.
+
+- **Own your installation.** Run the panel, worker and data stores yourself; the repository is MIT licensed.
+- **One authority for Stock and prices.** Hanza sends them to Channels. Reservations and fulfilment use the same domain rules across connectors.
+- **Extend through a defined contract.** Connectors translate a Channel's API into the canonical model, without accessing the database or importing the core. A conformance kit checks their behaviour.
+- **Build with humans and AI agents.** Task routing, domain glossaries, ADRs, specs and a connector skill give contributors explicit conventions to follow.
+
+“AI-native” currently describes the development approach. An in-panel AI assistant, an MCP server and AI-assisted mapping are **planned**. Running Hanza today requires no AI provider account or model key.
+
+## What works today
+
+| Area | Available in this repository |
+| --- | --- |
+| Panel | English and Polish; dashboard, Products, Product families, Orders, Warehouses, Connections, Privacy and Settings |
+| Catalogue | Products with fixed SKUs, Product families, Offer linking, base prices and per-Offer overrides |
+| Stock | Stock per Warehouse, Reservations, Shortages, Channel warehouse selection, safety buffers and channel limits |
+| Orders | Order feed, Unmatched lines, Needs attention, four fixed Order phases and organization-defined Order statuses |
+| Connections | Encrypted credentials, background synchronisation, Connection health, sync results and per-Offer push rejections |
+| Buyer data | Sealed Buyer snapshots, retention periods and erasure requests for Closed Orders |
+| Runtime | Separate worker, retries, shared request limits and durable workflows with Postgres state, timers and signals |
+| Connector development | SDK, conformance kit, scrubbed HTTP recordings and simulated connectors |
+| Quality | Dependency boundary checks, type checks, Vitest tests and local Playwright panel flows |
+
+The current connectors are **Test channel** (`fake`) and **Test OAuth channel** (`fake-oauth`, requires demo installation settings). Both simulate a Channel. The HTTP reference implementations are tested on recordings and are not registered in the panel. See the [connector catalogue and author guide](packages/connectors/README.md).
 
 ## Quick start
 
-Requirements: Node.js 22+ (CI uses 24), pnpm (version pinned by `packageManager` in `package.json`; use Corepack: `corepack enable`), Docker.
+Requirements: **Node.js 22+** (CI uses 24), **pnpm 10.34.6** (pinned in `package.json`), Docker with Compose, and OpenSSL to generate local secrets.
 
 ```sh
-cp .env.example .env          # then set BETTER_AUTH_SECRET and HANZA_ENCRYPTION_KEY (each: openssl rand -base64 32)
-pnpm install
-pnpm infra:up                 # Postgres on :5442, Redis on :6389
-pnpm db:deploy                # apply migrations (use pnpm db:migrate while changing the schema)
-pnpm dev                      # web + worker
+git clone https://github.com/evelumo/hanza.git
+cd hanza
+corepack enable
+pnpm install --frozen-lockfile
+cp .env.example .env
 ```
 
-Open http://localhost:3000, register and create your company. Then try the whole flow with the fake connector:
-
-1. **Connections** > "Add connection" > "Test channel": any API key works (the key `expired` simulates a Connection that must sign in again). The worker pulls 5 Offers and 4 Orders within seconds; refresh the Connection page to see the results.
-2. **Products** > "Offers without a product": select the Offers and "Create products from selected", then set Stock on a Product.
-3. **Orders**: three Orders need attention (a Shortage until Stock is set; Unmatched lines to link). The fourth Order was cancelled by the buyer, so it needs nothing even though its lines are Unmatched. Link a line, then change an Order to "Shipped": Stock goes down and the new Available is pushed to the Channel.
-
-The dashboard still has a test job that goes through the queue and worker. Stop the infrastructure with `pnpm infra:down`.
-
-Other commands:
+Generate **two separate values**, then paste one into `BETTER_AUTH_SECRET` and the other into `HANZA_ENCRYPTION_KEY` in `.env`:
 
 ```sh
-pnpm db:generate        # generate the Prisma client
-pnpm check:boundaries   # connector dependency rules
+openssl rand -base64 32
+openssl rand -base64 32
+```
+
+Then start the local installation:
+
+```sh
+pnpm infra:up
+pnpm db:generate
+pnpm db:deploy
+pnpm dev
+```
+
+Open **http://localhost:3000**, sign up and create your company. Postgres uses port **5442** and Redis **6389**; the Compose file starts those two services, while `pnpm dev` starts the web app and worker.
+
+Try [the demo](docs/demo.md): add a Test channel, import five Offers and four Orders, create Products from Offers, set Stock and fulfil an Order. No external account is needed.
+
+For configuration, health checks and troubleshooting, read the [full quick start](docs/quick-start.md). For operating an installation, read [self-hosting](docs/self-hosting.md).
+
+## Architecture
+
+```text
+Browser → Next.js panel → Core services → PostgreSQL
+                              │
+                           JobQueue
+                              │
+                            Redis
+                              │
+                         Worker → Connector → Channel API
+```
+
+The apps compose dependencies with `createContext()` and supply connectors from a separate registry. The core owns domain rules and persistence; connectors depend only on the Connector SDK and zod. Long-running work runs in the worker.
+
+| Workspace | Responsibility |
+| --- | --- |
+| [`apps/web`](apps/web/README.md) | Next.js panel, Better Auth routes, health endpoint and translations |
+| [`apps/worker`](apps/worker/README.md) | Background jobs, sync, workflow execution and privacy scheduling |
+| [`apps/e2e`](apps/e2e/README.md) | Playwright panel flows and an isolated local runner |
+| [`packages/core`](packages/core/README.md) | Domain services, context, sync, workflows, queue and request limits |
+| [`packages/db`](packages/db/README.md) | Prisma schema, migrations and client |
+| [`packages/connector-sdk`](packages/connector-sdk/README.md) | Connector contract, canonical schemas and conformance tests |
+| [`packages/connector-registry`](packages/connector-registry/README.md) | Connectors included in this build |
+| [`packages/connectors`](packages/connectors/README.md) | Connector implementations and recorded-fixture guide |
+
+Stack: Next.js + React, TypeScript, Prisma + PostgreSQL, BullMQ + Redis, Better Auth, zod, pnpm + Turborepo, Vitest and Playwright. See [architecture](docs/architecture.md), [domain vocabulary](CONTEXT-MAP.md) and [ADRs](docs/adr/).
+
+## Contribute
+
+Documentation fixes, reproducible bug reports, tests and connectors that fit the current SDK are useful starting points. Larger changes start with a reviewed GitHub issue; the core contracts and Stock rules have explicit review gates.
+
+Read [CONTRIBUTING.md](CONTRIBUTING.md) and [AGENTS.md](AGENTS.md), then choose an [issue](https://github.com/evelumo/hanza/issues). AI-assisted contributions follow the same rules and validation gate.
+
+```sh
 pnpm typecheck
 pnpm test
-pnpm build
-pnpm test:e2e           # panel flows in a browser (once: pnpm --filter @hanza/e2e exec playwright install chromium)
 ```
 
-### Upgrading
+Database tests need `HANZA_TEST_DATABASE_URL`; Redis tests need a reachable Redis. Browser flows run separately with `pnpm test:e2e` and are not in CI yet. The [testing guide](docs/testing.md) explains coverage, prerequisites and skipped runs.
 
-Stop web and worker, run `pnpm db:deploy`, then start the new version. Some migrations rewrite a whole table under an exclusive lock and the code of either side of them fails against the other schema; the Order statuses migration (ADR 0018) is one of them.
+## Direction and community
 
-## Repo layout
+The next product milestone is a real Order-and-Stock flow with Allegro and WooCommerce. Shipping, invoicing, automations and product-facing AI follow later. The [roadmap](docs/roadmap.md) distinguishes implemented foundations from planned work and links to the original Polish architecture plan.
 
-```
-apps/
-  web/                 Next.js panel + API (Products, Orders, Connections, Better Auth routes, /api/health)
-  worker/              BullMQ worker process
-  e2e/                 panel end-to-end flows (Playwright) and the `pnpm test:e2e` runner
-packages/
-  core/                context, domain services, sync engine, workflows, JobQueue, job registry
-  db/                  Prisma schema (split per module), migrations, client
-  connector-sdk/       Connector SDK + canonical model + conformance kit
-  connector-registry/  the connectors this build knows (apps pass them to the core)
-  connectors/<id>/     one package per connector (only `fake` so far)
-scripts/               check-boundaries.mjs
-.ai/                   agent skills
-docs/                  architecture plan (Polish), ADRs, agent docs
-```
+Use [GitHub Issues](https://github.com/evelumo/hanza/issues) for bugs, questions and proposals. Read [SUPPORT.md](SUPPORT.md) for reporting guidance and [SECURITY.md](SECURITY.md) for private vulnerability reports.
 
-Stack: Next.js, Prisma + PostgreSQL, pnpm workspaces + Turborepo, BullMQ + Redis, Better Auth, zod, Vitest, Playwright. No DI container; dependencies are composed in `createContext()`. Temporal is deliberately postponed: workflows run on a small Postgres-backed engine behind an interface Temporal can implement (ADR 0014).
-
-## Roadmap
-
-Summarised from [`docs/plan-architektury.html`](docs/plan-architektury.html) (Polish):
-
-0. **Repo foundation**: monorepo, CI, Docker Compose, `AGENTS.md`, ADRs and glossaries, boundary lint. *(mostly done)*
-1. **Core**: canonical model (Product, Variant, Offer, Order, StockLevel, Shipment, Invoice, Connection), per-table external ids (ADR 0005), event log + outbox, sync jobs (cursors, retry, rate limits, dead-letter), final Connector SDK and conformance tests.
-2. **First vertical slice**: Allegro (orders in, stock out) together with WooCommerce, to validate the SDK against two channels.
-3. **AI-native check**: a third connector written by an agent using the `add-connector` skill and a generator, without touching the core.
-4. **Shipping and invoices**: courier labels, shipment statuses, invoicing as new capabilities.
-5. **Automations + MCP + in-panel assistant**: rules ("order paid, create shipment, send invoice"), an MCP server, AI-assisted mapping.
-6. **Ecosystem**: community connector registry, author docs, wholesale feeds.
-
-## Contributing
-
-Read [`AGENTS.md`](AGENTS.md): repo map, task router, architecture rules, and the Always / Ask first / Never lists. It is written for humans and AI agents alike. Non-trivial changes start with a spec written as a GitHub issue; decisions that are hard to reverse are recorded in [`docs/adr/`](docs/adr/). To add a connector, follow [`.ai/skills/add-connector/SKILL.md`](.ai/skills/add-connector/SKILL.md).
+Hanza is an independent project. [Open Mercato](https://github.com/open-mercato/open-mercato) is an inspiration for explicit architecture conventions and development with AI agents.
 
 ## License
 
-MIT. See [`LICENSE`](LICENSE).
+[MIT](LICENSE) — copyright © 2026 Hanza contributors.

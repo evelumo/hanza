@@ -2,6 +2,13 @@
 
 One directory per connector, each its own package (`@hanza/connector-<id>`).
 
+For an overview of the product, start with the [project README](../../README.md).
+To try a connector in the panel, follow the [demo walkthrough](../../docs/demo.md).
+Authors should read [CONTRIBUTING.md](../../CONTRIBUTING.md), the SDK's
+[README](../connector-sdk/README.md) and [Commerce model glossary](../connector-sdk/CONTEXT.md),
+then follow the [add-connector skill](../../.ai/skills/add-connector/SKILL.md).
+The [fake package README](fake/README.md) introduces the reference implementations below.
+
 A connector may depend only on `@hanza/connector-sdk` and `zod` —
 `pnpm check:boundaries` enforces it. It has no UI, never touches the database,
 and never imports the core or another connector. Layout and rules: see
