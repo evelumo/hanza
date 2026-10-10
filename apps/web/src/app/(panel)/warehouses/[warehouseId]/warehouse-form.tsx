@@ -8,11 +8,17 @@ import { updateWarehouseAction } from '../actions'
 export function WarehouseForm({ warehouseId, name, priority }: { warehouseId: string; name: string; priority: number }) {
   const t = useT()
   return (
-    <ActionForm action={updateWarehouseAction} success={t('warehouses.detail.saved')} className="space-y-4">
+    <ActionForm
+      action={updateWarehouseAction}
+      success={t('warehouses.detail.saved')}
+      className="grid gap-4"
+      // An in-place save, so an outline button: the near-black one is for a page's main action or a form that creates.
+      actions={<ActionButton variant="secondary">{t('warehouses.detail.save')}</ActionButton>}
+    >
       {(state) => (
         <>
           <input type="hidden" name="warehouseId" value={warehouseId} />
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid max-w-2xl gap-4 sm:grid-cols-2">
             <Field
               name="name"
               label={t('warehouses.name')}
@@ -35,7 +41,6 @@ export function WarehouseForm({ warehouseId, name, priority }: { warehouseId: st
               error={state.fieldErrors?.priority}
             />
           </div>
-          <ActionButton>{t('warehouses.detail.save')}</ActionButton>
         </>
       )}
     </ActionForm>

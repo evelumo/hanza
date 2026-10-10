@@ -8,9 +8,11 @@ import type { Messages } from './types'
 export function clientMessages(messages: Messages) {
   return {
     common: messages.common,
+    language: messages.language,
     nav: messages.nav,
+    shell: messages.shell,
+    pagination: messages.pagination,
     auth: messages.auth,
-    dashboard: { sendPing: messages.dashboard.sendPing, sendingPing: messages.dashboard.sendingPing },
     offers: messages.offers,
     prices: { form: messages.prices.form },
     products: { columns: messages.products.columns, detail: messages.products.detail, new: messages.products.new },
@@ -24,7 +26,7 @@ export function clientMessages(messages: Messages) {
     },
     warehouses: messages.warehouses,
     privacy: { retention: messages.privacy.retention, erasure: messages.privacy.erasure },
-    settings: { orderStatuses: messages.settings.orderStatuses },
-    errors: { page: messages.errors.page },
+    settings: { orderStatuses: messages.settings.orderStatuses, system: messages.settings.system },
+    errors: { page: messages.errors.page, notFound: messages.errors.notFound },
   } satisfies Partial<Record<keyof Messages, unknown>>
 }

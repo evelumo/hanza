@@ -11,3 +11,9 @@ packages/db/src/generated
 
 # Recording credentials for connector fixtures (see packages/connectors/README.md)
 .recording/
+
+# Impeccable working files (decision pages, review captures); PRODUCT.md, DESIGN.md and surface briefs are committed
+**/.impeccable/questions/
+**/.impeccable/review/
+**/.impeccable/mocks/
+**/.impeccable/build/

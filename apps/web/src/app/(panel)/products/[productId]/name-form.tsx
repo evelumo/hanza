@@ -8,14 +8,24 @@ import { updateProductAction } from './actions'
 export function NameForm({ productId, name }: { productId: string; name: string }) {
   const t = useT()
   return (
-    <ActionForm action={updateProductAction} success={t('common.saved')} className="flex flex-wrap items-end gap-3">
+    <ActionForm
+      action={updateProductAction}
+      success={t('common.saved')}
+      className="grid gap-3"
+      actions={<ActionButton variant="secondary">{t('products.detail.saveName')}</ActionButton>}
+    >
       {(state) => (
         <>
           <input type="hidden" name="productId" value={productId} />
-          <div className="w-full max-w-md">
-            <Field name="name" label={t('products.detail.name')} required maxLength={200} defaultValue={state.values?.name ?? name} error={state.fieldErrors?.name} />
-          </div>
-          <ActionButton>{t('products.detail.saveName')}</ActionButton>
+          <Field
+            name="name"
+            label={t('products.detail.name')}
+            required
+            maxLength={200}
+            autoComplete="off"
+            defaultValue={state.values?.name ?? name}
+            error={state.fieldErrors?.name}
+          />
         </>
       )}
     </ActionForm>

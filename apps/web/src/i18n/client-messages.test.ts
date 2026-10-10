@@ -45,7 +45,21 @@ describe('clientMessages', () => {
 
   it('carry the groups behind keys built at run time', () => {
     const sent = clientMessages(catalogues.en)
-    for (const key of ['offers.skipReasons.no_sku', 'auth.errors.userExists', 'auth.register.failed', 'auth.onboarding.failed', 'nav.orders', 'common.saving']) {
+    for (const key of [
+      'offers.skipReasons.no_sku',
+      'auth.errors.userExists',
+      'auth.register.failed',
+      'auth.onboarding.failed',
+      'nav.orders',
+      'nav.offers',
+      'common.saving',
+      // The shell builds these from its navigation model and its lists of themes and actions.
+      'shell.groups.sales',
+      'shell.breadcrumb.new',
+      'shell.theme.system',
+      'shell.command.addProduct',
+      'language.label',
+    ]) {
       expect(typeof lookup(sent, key), key).toBe('string')
     }
   })

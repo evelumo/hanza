@@ -1,21 +1,45 @@
 import { listOffers } from '@hanza/core'
+import { CircleCheck, ExternalLink } from 'lucide-react'
 import type { Metadata } from 'next'
-import Link from 'next/link'
 import { redirect } from 'next/navigation'
+import {
+  DataTable,
+  DataTableBody,
+  DataTableCell,
+  DataTableHead,
+  DataTableHeader,
+  DataTableMeta,
+  DataTableMetaItem,
+  DataTableOnly,
+  DataTableRow,
+} from '@/components/data-table'
+import { EmptyState } from '@/components/empty-state'
+import { Identifier } from '@/components/identifier'
+import { NoValue } from '@/components/no-value'
+import { PageHeader } from '@/components/page-header'
+import { Page } from '@/components/page-layout'
 import { Pagination } from '@/components/pagination'
-import { EmptyState, Section, linkClass, rowClass, tableClass, tdClass, thClass } from '@/components/section'
+import { Panel } from '@/components/section'
+import { PublicationBadge } from '@/components/status-badge'
+import { textLinkClass } from '@/components/text-link'
+import { Checkbox } from '@/components/ui/checkbox'
 import { getT } from '@/i18n/server'
 import { getContext } from '@/lib/context'
 import { getFormatters } from '@/lib/formatters'
 import { outOfRangeRedirect, pageWindow, parsePage } from '@/lib/pagination'
-import { publicationLabel } from '@/lib/offer-push-status'
 import { safeHttpUrl } from '@/lib/safe-url'
 import { requireTenant } from '@/lib/session'
-import { CREATE_PRODUCTS_FORM_ID, CreateProductsForm } from './create-products-form'
+import { CreateProductsForm } from './create-products-form'
+import { CREATE_PRODUCTS_FORM_ID } from './form-id'
 import { LinkOfferForm } from './link-offer-form'
 import { SelectAll } from './select-all'
 
 export const dynamic = 'force-dynamic'
+
+// A checkbox has no text, so no baseline for the table to align its row on. The zero-width space in front of
+// it gives its cell a line of text, and the box sits in the middle of that line.
+const boxLine = 'flex h-5 items-center'
+const lineStart = '\u200b'
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getT())('offers.title') }
@@ -28,86 +52,103 @@ export default async function UnlinkedOffersPage({ searchParams }: { searchParam
   const { total, items } = await listOffers(getContext(), organizationId, { linked: false, ...pageWindow(page) })
   const outOfRange = outOfRangeRedirect(page, total, '/products/offers')
   if (outOfRange) redirect(outOfRange)
+  // A Product is created from an Offer's SKU, so only Offers that have one can be selected.
+  const selectableIds = items.filter((offer) => offer.sku).map((offer) => offer.id)
 
   return (
-    <div className="space-y-6">
-      <div>
-        <Link href="/products" className={linkClass}>
-          ← {t('products.title')}
-        </Link>
-        <h1 className="mt-2 text-2xl font-semibold tracking-tight">{t('offers.title')}</h1>
-        <p className="mt-1 text-muted">{t('offers.description')}</p>
-      </div>
+    <Page>
+      {/* A destination of its own in the sidebar, so it has no way "back" to Products. */}
+      <PageHeader title={t('offers.title')} description={t('offers.description')} />
 
-      <Section title={t('offers.createTitle')} description={t('offers.createDescription')}>
-        <div className="px-5 py-4">
-          <CreateProductsForm offers={items.map((offer) => ({ id: offer.id, name: offer.name }))} />
-        </div>
-      </Section>
-
-      <div className="rounded-lg border border-line bg-white">
+      <Panel>
         {total === 0 ? (
-          <EmptyState>{t('offers.empty')}</EmptyState>
+          <EmptyState icon={CircleCheck} title={t('offers.emptyTitle')}>
+            {t('offers.empty')}
+          </EmptyState>
         ) : (
-          <div className="overflow-x-auto">
-            <table className={tableClass}>
-              <thead>
-                <tr>
-                  <th scope="col" className={thClass}>
-                    <SelectAll />
-                  </th>
-                  <th scope="col" className={thClass}>{t('offers.columns.connection')}</th>
-                  <th scope="col" className={thClass}>{t('offers.columns.offer')}</th>
-                  <th scope="col" className={thClass}>{t('offers.columns.sku')}</th>
-                  <th scope="col" className={thClass}>{t('offers.columns.publication')}</th>
-                  <th scope="col" className={thClass}>{t('offers.columns.seen')}</th>
-                  <th scope="col" className={thClass}>{t('offers.columns.link')}</th>
-                </tr>
-              </thead>
-              <tbody>
+          // One query container for the toolbar and the table: on a narrow one "select all" moves from the table's
+          // header row, which is not shown there, into the toolbar.
+          <div className="@container/table">
+            <CreateProductsForm offers={items.map((offer) => ({ id: offer.id, name: offer.name }))} selectableIds={selectableIds} />
+            <DataTable align="top">
+              <DataTableHeader>
+                <DataTableHead className="w-10 pr-0">
+                  <SelectAll selectableIds={selectableIds} />
+                </DataTableHead>
+                <DataTableHead>{t('offers.columns.offer')}</DataTableHead>
+                <DataTableHead hide="medium">{t('offers.columns.sku')}</DataTableHead>
+                <DataTableHead hide="medium">{t('offers.columns.connection')}</DataTableHead>
+                <DataTableHead hide="medium">{t('offers.columns.publication')}</DataTableHead>
+                <DataTableHead hide="medium">{t('offers.columns.seen')}</DataTableHead>
+                <DataTableHead>{t('offers.columns.link')}</DataTableHead>
+              </DataTableHeader>
+              <DataTableBody>
                 {items.map((offer) => {
                   const href = safeHttpUrl(offer.url)
                   return (
-                    <tr key={offer.id} className={rowClass}>
-                      <td className={tdClass}>
-                        {offer.sku ? (
-                          <input
-                            type="checkbox"
-                            name="offerIds"
-                            value={offer.id}
-                            form={CREATE_PRODUCTS_FORM_ID}
-                            aria-label={t('offers.selectOffer', { name: offer.name })}
-                            className="size-4 accent-accent"
-                          />
-                        ) : null}
-                      </td>
-                      <td className={tdClass}>{offer.connectionName}</td>
-                      <td className={tdClass}>
+                    <DataTableRow key={offer.id}>
+                      <DataTableCell narrow="start" className="w-10 pr-0">
+                        <span className={boxLine}>
+                          {lineStart}
+                          {offer.sku ? (
+                            <Checkbox
+                              name="offerIds"
+                              value={offer.id}
+                              form={CREATE_PRODUCTS_FORM_ID}
+                              aria-label={t('offers.selectOffer', { name: offer.name })}
+                            />
+                          ) : (
+                            // Not part of the form: "select all" must not tick it.
+                            <Checkbox disabled aria-label={t('offers.selectOffer', { name: offer.name })} />
+                          )}
+                        </span>
+                      </DataTableCell>
+                      <DataTableCell narrow="primary" className="@4xl/table:min-w-56">
                         {href ? (
-                          <a href={href} target="_blank" rel="noopener noreferrer" className={linkClass}>
+                          <a href={href} target="_blank" rel="noopener noreferrer" className={textLinkClass}>
                             {offer.name}
+                            <ExternalLink className="ml-1 inline size-3.5 align-[-0.125em]" aria-hidden="true" />
+                            <span className="sr-only"> ({t('offers.newTab')})</span>
                           </a>
                         ) : (
-                          offer.name
+                          <span className="font-medium">{offer.name}</span>
                         )}
-                        <span className="block font-mono text-xs text-muted">{offer.externalId}</span>
-                      </td>
-                      <td className={`${tdClass} font-mono`}>{offer.sku ?? <span className="font-sans text-muted">{t('common.none')}</span>}</td>
-                      <td className={tdClass}>{publicationLabel(t, offer.publication)}</td>
-                      <td className={tdClass}>{format.dateTime(offer.lastSeenAt)}</td>
-                      <td className={tdClass}>
+                        <Identifier className="block text-muted-foreground">{offer.externalId}</Identifier>
+                        <DataTableMeta below="medium">
+                          <DataTableMetaItem label={t('offers.columns.sku')}>{offer.sku ? <Identifier>{offer.sku}</Identifier> : <NoValue />}</DataTableMetaItem>
+                          <DataTableMetaItem label={t('offers.columns.connection')} labelHidden>
+                            {offer.connectionName}
+                          </DataTableMetaItem>
+                          <DataTableMetaItem label={t('offers.columns.seen')}>
+                            <span className="whitespace-nowrap">{format.dateTime(offer.lastSeenAt)}</span>
+                          </DataTableMetaItem>
+                        </DataTableMeta>
+                        <DataTableOnly below="medium" className="mt-1.5 flex">
+                          <span className="sr-only">{t('offers.columns.publication')}: </span>
+                          <PublicationBadge publication={offer.publication} />
+                        </DataTableOnly>
+                      </DataTableCell>
+                      <DataTableCell hide="medium">{offer.sku ? <Identifier>{offer.sku}</Identifier> : <NoValue />}</DataTableCell>
+                      <DataTableCell hide="medium">{offer.connectionName}</DataTableCell>
+                      <DataTableCell hide="medium">
+                        <PublicationBadge publication={offer.publication} />
+                      </DataTableCell>
+                      <DataTableCell hide="medium" tabular>
+                        {format.dateTime(offer.lastSeenAt)}
+                      </DataTableCell>
+                      <DataTableCell className="@2xl/table:w-px">
                         <LinkOfferForm offerId={offer.id} />
-                      </td>
-                    </tr>
+                      </DataTableCell>
+                    </DataTableRow>
                   )
                 })}
-              </tbody>
-            </table>
+              </DataTableBody>
+            </DataTable>
           </div>
         )}
-      </div>
+      </Panel>
 
-      <Pagination page={page} total={total} basePath="/products/offers" />
-    </div>
+      {total > 0 ? <Pagination page={page} total={total} basePath="/products/offers" /> : null}
+    </Page>
   )
 }

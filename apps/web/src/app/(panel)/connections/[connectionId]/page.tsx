@@ -9,26 +9,38 @@ import {
   listOrderStatuses,
   listWarehouses,
 } from '@hanza/core'
+import { KeyRound } from 'lucide-react'
 import type { Metadata } from 'next'
-import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { ActionForm } from '@/components/action-form'
+import { DataTable, DataTableBody, DataTableCell, DataTableHead, DataTableHeader, DataTableRow, DataTableRowHeader } from '@/components/data-table'
+import { DescriptionItem, DescriptionList } from '@/components/description-list'
+import { EmptyState } from '@/components/empty-state'
+import { EventTimeline } from '@/components/event-timeline'
 import { ActionButton } from '@/components/form'
-import { EmptyState, Section, linkClass, rowClass, tableClass, tdClass, thClass } from '@/components/section'
+import { Identifier } from '@/components/identifier'
+import { NoValue } from '@/components/no-value'
+import { Notice } from '@/components/notice'
+import { PageHeader } from '@/components/page-header'
+import { Page, PageColumns } from '@/components/page-layout'
+import { PushWarning } from '@/components/push-warning'
+import { Section, SectionContent } from '@/components/section'
 import { HealthBadge } from '@/components/status-badge'
+import { TextLink } from '@/components/text-link'
 import { getActiveLocale, getT } from '@/i18n/server'
 import { getContext } from '@/lib/context'
-import { describeEvent } from '@/lib/events'
 import { getFormatters } from '@/lib/formatters'
-import { orderStatusName, reportedPhaseLabel, streamLabel, syncErrorLabel } from '@/lib/labels'
+import { labelOrRaw, orderStatusName, reportedPhaseLabel, streamLabel } from '@/lib/labels'
 import { rejectionText } from '@/lib/offer-push-status'
 import { requireTenant } from '@/lib/session'
 import { isSyncRunning } from '@/lib/sync-status'
-import { requestSyncAction, signInAgainAction } from '../actions'
+import { signInAgainAction } from '../actions'
+import { SyncStatusBadge } from '../sync-status-badge'
 import { formatSyncResult } from '../sync-summary'
 import { ChannelWarehousesForm } from './channel-warehouses-form'
 import { StatusMappingForm, type MappingRow } from './status-mapping-form'
 import { StockRulesForm } from './stock-rules-form'
+import { SyncNowButton, SyncRequest, SyncRequestResult } from './sync-request'
 
 export const dynamic = 'force-dynamic'
 
@@ -36,10 +48,16 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getT())('connections.detail.title') }
 }
 
+const none = <NoValue />
+
 export default async function ConnectionPage({ params }: { params: Promise<{ connectionId: string }> }) {
   const { user, organizationId } = await requireTenant()
   const [t, format, locale] = await Promise.all([getT(), getFormatters(), getActiveLocale()])
-  const time = (date: Date | null) => (date ? format.dateTime(date) : '—')
+  const time = (date: Date) => (
+    <time dateTime={date.toISOString()} className="whitespace-nowrap tabular-nums">
+      {format.dateTime(date)}
+    </time>
+  )
   const { connectionId } = await params
   const ctx = getContext()
   const connection = await getConnection(ctx, organizationId, connectionId)
@@ -49,9 +67,9 @@ export default async function ConnectionPage({ params }: { params: Promise<{ con
   const canSignIn = connector !== undefined && deviceFlowOf(connector) !== undefined
   const authExpired = connection.health === 'auth_expired'
   const signInAgain = (variant: 'primary' | 'secondary') => (
-    <ActionForm action={signInAgainAction}>
+    <ActionForm action={signInAgainAction} className="grid gap-2">
       <input type="hidden" name="connectionId" value={connection.id} />
-      <ActionButton variant={variant} pendingLabel={t('connections.detail.signInAgainStarting')}>
+      <ActionButton variant={variant} pendingLabel={t('connections.detail.signInAgainStarting')} className="justify-self-start">
         {t('connections.detail.signInAgain')}
       </ActionButton>
     </ActionForm>
@@ -80,182 +98,208 @@ export default async function ConnectionPage({ params }: { params: Promise<{ con
   })
 
   return (
-    <div className="space-y-6">
-      <div>
-        <Link href="/connections" className={linkClass}>
-          ← {t('connections.title')}
-        </Link>
-        <div className="mt-2 flex flex-wrap items-center gap-3">
-          <h1 className="text-2xl font-semibold tracking-tight">{connection.name}</h1>
-          <HealthBadge health={connection.health} />
-        </div>
-        <p className="mt-1 text-sm text-muted">
-          {connection.healthChangedAt
-            ? t('connections.detail.connectorLineChanged', { connector: connectorName, date: format.dateTime(connection.healthChangedAt) })
-            : t('connections.detail.connectorLine', { connector: connectorName })}
-        </p>
-        {connection.accountLabel ? (
-          <p className="mt-1 text-sm text-muted">{t('connections.detail.account', { account: connection.accountLabel })}</p>
-        ) : null}
-      </div>
+    <Page>
+      <SyncRequest>
+        <PageHeader
+          back={{ href: '/connections', label: t('connections.title') }}
+          title={connection.name}
+          badges={<HealthBadge health={connection.health} />}
+          meta={
+            <>
+              {connectorName}
+              {connection.accountLabel ? (
+                <>
+                  {' · '}
+                  <span>{t('connections.detail.account', { account: connection.accountLabel })}</span>
+                </>
+              ) : null}
+            </>
+          }
+          actions={
+            <SyncNowButton
+              connectionId={connection.id}
+              // While the Connection waits for a sign-in, signing in is the one thing to do; a sync would only fail again.
+              variant={canSignIn && authExpired ? 'secondary' : 'primary'}
+              label={t('connections.detail.syncNow')}
+              pendingLabel={t('connections.detail.syncing')}
+            />
+          }
+        />
 
-      {canSignIn && authExpired ? (
-        <section
-          aria-label={t('connections.detail.authExpiredTitle')}
-          className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-amber-300 bg-amber-50 px-5 py-4"
+        <PageColumns
+          aside={
+            <>
+              <Section title={t('connections.detail.detailsTitle')}>
+                <SectionContent className="py-2">
+                  <DescriptionList layout="inline">
+                    <DescriptionItem term={t('connections.columns.connector')}>{connectorName}</DescriptionItem>
+                    {connector ? (
+                      <DescriptionItem term={t('connections.detail.kind')}>{labelOrRaw(t, 'labels.connectorKind', connector.kind)}</DescriptionItem>
+                    ) : null}
+                    {connection.healthChangedAt ? (
+                      <DescriptionItem term={t('connections.detail.healthChanged')}>
+                        <span className="tabular-nums">{format.dateTime(connection.healthChangedAt)}</span>
+                      </DescriptionItem>
+                    ) : null}
+                    <DescriptionItem term={t('connections.detail.added')}>
+                      <span className="tabular-nums">{format.dateTime(connection.createdAt)}</span>
+                    </DescriptionItem>
+                    <DescriptionItem term={t('connections.detail.connectionId')}>
+                      <Identifier wrap>{connection.id}</Identifier>
+                    </DescriptionItem>
+                  </DescriptionList>
+                </SectionContent>
+              </Section>
+
+              {canSignIn && !authExpired ? (
+                <Section title={t('connections.detail.signInTitle')}>
+                  <SectionContent className="grid gap-3">
+                    <p className="text-sm text-muted-foreground">{t('connections.detail.signInHint', { connector: connectorName })}</p>
+                    {signInAgain('secondary')}
+                  </SectionContent>
+                </Section>
+              ) : null}
+            </>
+          }
+          after={
+            <Section title={t('connections.detail.eventsTitle')}>
+              {events.length === 0 ? (
+                <EmptyState>{t('connections.detail.eventsEmpty')}</EmptyState>
+              ) : (
+                <EventTimeline events={events} format={format} current={{ type: 'connection', id: connection.id }} />
+              )}
+            </Section>
+          }
         >
-          <div>
-            <h2 className="font-semibold text-amber-900">{t('connections.detail.authExpiredTitle')}</h2>
-            <p className="text-sm text-amber-900">{t('connections.detail.authExpired', { connector: connectorName })}</p>
-          </div>
-          {signInAgain('primary')}
-        </section>
-      ) : null}
+          {canSignIn && authExpired ? (
+            <Notice tone="warning" icon={KeyRound} title={t('connections.detail.authExpiredTitle')} actions={signInAgain('primary')}>
+              {t('connections.detail.authExpired', { connector: connectorName })}
+            </Notice>
+          ) : null}
 
-      <Section
-        title={t('connections.detail.syncTitle')}
-        description={t('connections.detail.syncDescription')}
-        actions={
-          <div className="flex flex-wrap items-start gap-2">
-            {canSignIn && !authExpired ? signInAgain('secondary') : null}
-            <ActionForm action={requestSyncAction} success={t('connections.detail.syncRequested')}>
-              <ActionButton pendingLabel={t('connections.detail.syncing')}>{t('connections.detail.syncNow')}</ActionButton>
-              <input type="hidden" name="connectionId" value={connection.id} />
-            </ActionForm>
-          </div>
-        }
-      >
-        {connection.syncStates.length === 0 ? (
-          <EmptyState>{t('connections.detail.syncEmpty')}</EmptyState>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className={tableClass}>
-              <thead>
-                <tr>
-                  <th scope="col" className={thClass}>{t('connections.detail.syncColumns.data')}</th>
-                  <th scope="col" className={thClass}>{t('connections.detail.syncColumns.started')}</th>
-                  <th scope="col" className={thClass}>{t('connections.detail.syncColumns.finished')}</th>
-                  <th scope="col" className={thClass}>{t('connections.detail.syncColumns.lastSuccess')}</th>
-                  <th scope="col" className={thClass}>{t('connections.detail.syncColumns.result')}</th>
-                  <th scope="col" className={thClass}>{t('connections.detail.syncColumns.error')}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {connection.syncStates.map((state) => (
-                  <tr key={state.stream} className={rowClass}>
-                    <th scope="row" className={`${tdClass} font-medium`}>{streamLabel(t, state.stream)}</th>
-                    <td className={tdClass}>{time(state.lastStartedAt)}</td>
-                    <td className={tdClass}>{isSyncRunning(state) ? t('connections.running') : time(state.lastFinishedAt)}</td>
-                    <td className={tdClass}>{time(state.lastSucceededAt)}</td>
-                    <td className={tdClass}>{formatSyncResult(state.lastResult, t, locale) ?? '—'}</td>
-                    <td className={tdClass}>
-                      {state.lastErrorKind ? (
-                        <>
-                          <span className="font-medium text-red-800">{syncErrorLabel(t, state.lastErrorKind)}</span>
-                          {state.lastError ? <span className="block text-xs text-muted">{state.lastError}</span> : null}
-                        </>
-                      ) : (
-                        '—'
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </Section>
-
-      {rejectedOffers.length > 0 ? (
-        <Section title={t('connections.detail.rejectedTitle')} description={t('connections.detail.rejectedDescription')}>
-          <div className="overflow-x-auto">
-            <table className={tableClass}>
-              <thead>
-                <tr>
-                  <th scope="col" className={thClass}>{t('connections.detail.rejectedColumns.offer')}</th>
-                  <th scope="col" className={thClass}>{t('connections.detail.rejectedColumns.stock')}</th>
-                  <th scope="col" className={thClass}>{t('connections.detail.rejectedColumns.price')}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rejectedOffers.map((offer) => (
-                  <tr key={offer.id} className={rowClass}>
-                    <th scope="row" className={`${tdClass} font-medium`}>
-                      <Link href={`/products/offers/${offer.id}`} className={linkClass}>
-                        {offer.name}
-                      </Link>
-                      <span className="block font-mono text-xs font-normal text-muted">{offer.externalId}</span>
-                    </th>
-                    {[offer.stockRejection, offer.priceRejection].map((rejection, index) => (
-                      <td key={index} className={tdClass}>
-                        {rejection ? (
-                          <>
-                            <span className="block max-w-xs text-amber-800">{rejectionText(t, rejection)}</span>
-                            <span className="block text-xs text-muted">{format.dateTime(rejection.at)}</span>
-                          </>
-                        ) : (
-                          '—'
-                        )}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </Section>
-      ) : null}
-
-      {connector && isChannel(connector) ? (
-        <>
-          <Section title={t('connections.stockRules.title')} description={t('connections.stockRules.description')}>
-            <div className="px-5 py-4">
-              <StockRulesForm
-                connectionId={connection.id}
-                safetyBuffer={connection.stockRules.safetyBuffer}
-                channelLimit={connection.stockRules.channelLimit}
-              />
-            </div>
+          <Section title={t('connections.detail.syncTitle')} description={t('connections.detail.syncDescription')}>
+            <SyncRequestResult success={t('connections.detail.syncRequested')} />
+            {connection.syncStates.length === 0 ? (
+              <EmptyState>{t('connections.detail.syncEmpty')}</EmptyState>
+            ) : (
+              <DataTable align="top">
+                {/* Four columns, of which only the result wraps: the table fits the page's main column without scrolling. */}
+                <DataTableHeader>
+                  <DataTableHead>{t('connections.detail.syncColumns.data')}</DataTableHead>
+                  <DataTableHead>{t('connections.detail.syncColumns.status')}</DataTableHead>
+                  <DataTableHead>{t('connections.detail.syncColumns.lastRun')}</DataTableHead>
+                  <DataTableHead>{t('connections.detail.syncColumns.result')}</DataTableHead>
+                </DataTableHeader>
+                <DataTableBody>
+                  {connection.syncStates.map((state) => {
+                    const running = isSyncRunning(state)
+                    const result = formatSyncResult(state.lastResult, t, locale)
+                    // A run that succeeded is its own last success; the line is only for a run that was not.
+                    const staleSuccess = !running && state.lastFinishedAt?.getTime() !== state.lastSucceededAt?.getTime()
+                    return (
+                      <DataTableRow key={state.stream}>
+                        <DataTableRowHeader narrow="primary" className="whitespace-nowrap">
+                          {streamLabel(t, state.stream)}
+                        </DataTableRowHeader>
+                        <DataTableCell narrow="end">
+                          <SyncStatusBadge state={state} />
+                        </DataTableCell>
+                        <DataTableCell narrowLabel={t('connections.detail.syncColumns.lastRun')}>
+                          {running && state.lastStartedAt ? (
+                            <>
+                              <span className="text-muted-foreground">{t('connections.detail.syncColumns.started')}</span> {time(state.lastStartedAt)}
+                            </>
+                          ) : state.lastFinishedAt ? (
+                            time(state.lastFinishedAt)
+                          ) : (
+                            none
+                          )}
+                          {staleSuccess && state.lastSucceededAt ? (
+                            <span className="mt-0.5 block text-meta text-muted-foreground">
+                              {t('connections.detail.syncColumns.lastSuccess')} {time(state.lastSucceededAt)}
+                            </span>
+                          ) : null}
+                        </DataTableCell>
+                        <DataTableCell narrowLabel={t('connections.detail.syncColumns.result')} className="break-words @2xl/table:min-w-40">
+                          {result ?? (state.lastError ? null : none)}
+                          {/* What the last run failed with, in the Channel's or the connector's own words. */}
+                          {state.lastError ? <p className="text-meta text-muted-foreground">{state.lastError}</p> : null}
+                        </DataTableCell>
+                      </DataTableRow>
+                    )
+                  })}
+                </DataTableBody>
+              </DataTable>
+            )}
           </Section>
-          <Section title={t('connections.warehouses.title')} description={t('connections.warehouses.description')}>
-            <div className="px-5 py-4">
-              <ChannelWarehousesForm
-                connectionId={connection.id}
-                all={connection.warehouses.all}
-                chosen={connection.warehouses.warehouseIds}
-                warehouses={warehouses.filter((warehouse) => warehouse.active).map(({ id, name }) => ({ id, name }))}
-              />
-            </div>
-          </Section>
-          <Section title={t('connections.detail.statusMapping.title')} description={t('connections.detail.statusMapping.description')}>
-            {canManage ? null : <p className="px-5 pt-4 text-sm font-medium">{t('connections.detail.statusMapping.adminsOnly')}</p>}
-            <StatusMappingForm connectionId={connection.id} rows={mappingRows} disabled={!canManage} />
-          </Section>
-        </>
-      ) : null}
 
-      <Section title={t('connections.detail.eventsTitle')}>
-        {events.length === 0 ? (
-          <EmptyState>{t('connections.detail.eventsEmpty')}</EmptyState>
-        ) : (
-          <ul className="divide-y divide-line">
-            {events.map((event) => {
-              const { title, detail } = describeEvent(event.type, event.payload, t, format)
-              return (
-                <li key={event.id} className="flex flex-wrap items-center justify-between gap-3 px-5 py-3 text-sm">
-                  <span>
-                    {title}
-                    {detail ? <span className="text-muted"> · {detail}</span> : null}
-                  </span>
-                  <time dateTime={event.createdAt.toISOString()} className="text-muted">
-                    {format.dateTime(event.createdAt)}
-                  </time>
-                </li>
-              )
-            })}
-          </ul>
-        )}
-      </Section>
-    </div>
+          {rejectedOffers.length > 0 ? (
+            <Section title={t('connections.detail.rejectedTitle')} description={t('connections.detail.rejectedDescription')}>
+              <DataTable align="top">
+                <DataTableHeader>
+                  <DataTableHead>{t('connections.detail.rejectedColumns.offer')}</DataTableHead>
+                  <DataTableHead>{t('connections.detail.rejectedColumns.stock')}</DataTableHead>
+                  <DataTableHead>{t('connections.detail.rejectedColumns.price')}</DataTableHead>
+                </DataTableHeader>
+                <DataTableBody>
+                  {rejectedOffers.map((offer) => (
+                    <DataTableRow key={offer.id}>
+                      <DataTableRowHeader narrow="primary" className="font-normal">
+                        <TextLink href={`/products/offers/${offer.id}`}>{offer.name}</TextLink>
+                        <Identifier className="block text-muted-foreground">{offer.externalId}</Identifier>
+                      </DataTableRowHeader>
+                      {[offer.stockRejection, offer.priceRejection].map((rejection, index) => (
+                        <DataTableCell key={index} narrowLabel={t(index === 0 ? 'connections.detail.rejectedColumns.stock' : 'connections.detail.rejectedColumns.price')}>
+                          {rejection ? (
+                            <PushWarning>
+                              {rejectionText(t, rejection)}
+                              <time dateTime={rejection.at.toISOString()} className="block text-xs font-normal text-muted-foreground tabular-nums">
+                                {format.dateTime(rejection.at)}
+                              </time>
+                            </PushWarning>
+                          ) : (
+                            none
+                          )}
+                        </DataTableCell>
+                      ))}
+                    </DataTableRow>
+                  ))}
+                </DataTableBody>
+              </DataTable>
+            </Section>
+          ) : null}
+
+          {connector && isChannel(connector) ? (
+            <>
+              <Section title={t('connections.stockRules.title')} description={t('connections.stockRules.description')}>
+                <SectionContent>
+                  <StockRulesForm
+                    connectionId={connection.id}
+                    safetyBuffer={connection.stockRules.safetyBuffer}
+                    channelLimit={connection.stockRules.channelLimit}
+                  />
+                </SectionContent>
+              </Section>
+              <Section title={t('connections.warehouses.title')} description={t('connections.warehouses.description')}>
+                <SectionContent>
+                  <ChannelWarehousesForm
+                    connectionId={connection.id}
+                    all={connection.warehouses.all}
+                    chosen={connection.warehouses.warehouseIds}
+                    warehouses={warehouses.filter((warehouse) => warehouse.active).map(({ id, name }) => ({ id, name }))}
+                  />
+                </SectionContent>
+              </Section>
+              <Section title={t('connections.detail.statusMapping.title')} description={t('connections.detail.statusMapping.description')}>
+                <SectionContent className="grid gap-4">
+                  {canManage ? null : <Notice tone="neutral">{t('connections.detail.statusMapping.adminsOnly')}</Notice>}
+                  <StatusMappingForm connectionId={connection.id} rows={mappingRows} disabled={!canManage} />
+                </SectionContent>
+              </Section>
+            </>
+          ) : null}
+        </PageColumns>
+      </SyncRequest>
+    </Page>
   )
 }

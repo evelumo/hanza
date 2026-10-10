@@ -1,15 +1,472 @@
 @import 'tailwindcss';
+@import 'tw-animate-css';
 
-@theme {
-  --color-ink: #1c1f24;
-  --color-muted: #646b76;
-  --color-line: #dfdcd4;
-  --color-canvas: #f6f5f1;
-  --color-accent: #1f4d5c;
-  --color-accent-strong: #163a46;
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * Tokens. Neutrals carry no hue (the category standard for commerce admins); colour is reserved for
+ * links, focus and state. Every "strong" tone below passes 4.5:1 on its own subtle background, on
+ * cards and on the canvas, in both themes; `--muted-foreground` passes 4.5:1 on canvas, card and sidebar.
+ */
+:root {
+  color-scheme: light;
+  --radius: 0.5rem;
+
+  --background: oklch(0.958 0 0);
+  --foreground: oklch(0.27 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.27 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.27 0 0);
+  --primary: oklch(0.25 0 0);
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.94 0 0);
+  --secondary-foreground: oklch(0.27 0 0);
+  --muted: oklch(0.965 0 0);
+  --muted-foreground: oklch(0.49 0 0);
+  --accent: oklch(0.945 0 0);
+  --accent-foreground: oklch(0.27 0 0);
+  --destructive: oklch(0.55 0.21 27);
+  --destructive-foreground: oklch(1 0 0);
+  --border: oklch(0.9 0 0);
+  --border-strong: oklch(0.82 0 0);
+  --input: oklch(0.63 0 0);
+  --ring: oklch(0.58 0.2 258);
+  --link: oklch(0.5 0.185 258);
+  --selection: oklch(0.58 0.2 258 / 0.22);
+  --scrollbar-thumb: oklch(0.78 0 0);
+  --scroll-shadow: oklch(0 0 0 / 0.14);
+  --overlay: oklch(0 0 0 / 0.4);
+  --card-shadow: 0 1px 0 0 oklch(0 0 0 / 0.04), 0 1px 3px -1px oklch(0 0 0 / 0.08);
+  --overlay-shadow: 0 4px 6px -2px oklch(0 0 0 / 0.06), 0 12px 28px -6px oklch(0 0 0 / 0.16);
+
+  --sidebar: oklch(0.94 0 0);
+  --sidebar-foreground: oklch(0.27 0 0);
+  --sidebar-primary: oklch(0.25 0 0);
+  --sidebar-primary-foreground: oklch(1 0 0);
+  --sidebar-accent: oklch(0.895 0 0);
+  --sidebar-accent-foreground: oklch(0.2 0 0);
+  --sidebar-border: oklch(0.88 0 0);
+  --sidebar-ring: oklch(0.58 0.2 258);
+
+  --status-gray: oklch(0.42 0 0);
+  --status-gray-subtle: oklch(0.955 0 0);
+  --status-gray-border: oklch(0.87 0 0);
+  --status-blue: oklch(0.45 0.15 255);
+  --status-blue-subtle: oklch(0.955 0.025 250);
+  --status-blue-border: oklch(0.86 0.07 250);
+  --status-teal: oklch(0.42 0.075 195);
+  --status-teal-subtle: oklch(0.955 0.03 190);
+  --status-teal-border: oklch(0.85 0.06 190);
+  --status-green: oklch(0.42 0.11 152);
+  --status-green-subtle: oklch(0.955 0.04 155);
+  --status-green-border: oklch(0.85 0.08 155);
+  --status-amber: oklch(0.44 0.095 75);
+  --status-amber-subtle: oklch(0.96 0.05 90);
+  --status-amber-border: oklch(0.86 0.11 85);
+  --status-orange: oklch(0.46 0.125 48);
+  --status-orange-subtle: oklch(0.955 0.03 60);
+  --status-orange-border: oklch(0.86 0.09 58);
+  --status-red: oklch(0.46 0.17 27);
+  --status-red-subtle: oklch(0.955 0.025 20);
+  --status-red-border: oklch(0.86 0.07 22);
+  --status-violet: oklch(0.45 0.16 295);
+  --status-violet-subtle: oklch(0.955 0.025 295);
+  --status-violet-border: oklch(0.86 0.07 295);
 }
 
-body {
-  background: var(--color-canvas);
-  color: var(--color-ink);
+.dark {
+  color-scheme: dark;
+
+  --background: oklch(0.205 0 0);
+  --foreground: oklch(0.94 0 0);
+  --card: oklch(0.25 0 0);
+  --card-foreground: oklch(0.94 0 0);
+  --popover: oklch(0.27 0 0);
+  --popover-foreground: oklch(0.94 0 0);
+  --primary: oklch(0.94 0 0);
+  --primary-foreground: oklch(0.2 0 0);
+  --secondary: oklch(0.31 0 0);
+  --secondary-foreground: oklch(0.94 0 0);
+  --muted: oklch(0.29 0 0);
+  --muted-foreground: oklch(0.74 0 0);
+  --accent: oklch(0.32 0 0);
+  --accent-foreground: oklch(0.94 0 0);
+  --destructive: oklch(0.52 0.19 27);
+  --destructive-foreground: oklch(1 0 0);
+  --border: oklch(0.34 0 0);
+  --border-strong: oklch(0.42 0 0);
+  --input: oklch(0.54 0 0);
+  --ring: oklch(0.7 0.15 255);
+  --link: oklch(0.76 0.12 255);
+  --selection: oklch(0.7 0.15 255 / 0.32);
+  --scrollbar-thumb: oklch(0.42 0 0);
+  --scroll-shadow: oklch(0 0 0 / 0.5);
+  --overlay: oklch(0 0 0 / 0.6);
+  --card-shadow: 0 1px 0 0 oklch(0 0 0 / 0.2);
+  --overlay-shadow: 0 4px 6px -2px oklch(0 0 0 / 0.3), 0 12px 28px -6px oklch(0 0 0 / 0.5);
+
+  --sidebar: oklch(0.18 0 0);
+  --sidebar-foreground: oklch(0.94 0 0);
+  --sidebar-primary: oklch(0.94 0 0);
+  --sidebar-primary-foreground: oklch(0.2 0 0);
+  --sidebar-accent: oklch(0.27 0 0);
+  --sidebar-accent-foreground: oklch(0.97 0 0);
+  --sidebar-border: oklch(0.29 0 0);
+  --sidebar-ring: oklch(0.7 0.15 255);
+
+  --status-gray: oklch(0.86 0 0);
+  --status-gray-subtle: oklch(0.31 0 0);
+  --status-gray-border: oklch(0.43 0 0);
+  --status-blue: oklch(0.84 0.08 250);
+  --status-blue-subtle: oklch(0.31 0.06 255);
+  --status-blue-border: oklch(0.44 0.09 255);
+  --status-teal: oklch(0.85 0.08 190);
+  --status-teal-subtle: oklch(0.31 0.04 195);
+  --status-teal-border: oklch(0.44 0.06 195);
+  --status-green: oklch(0.85 0.11 155);
+  --status-green-subtle: oklch(0.31 0.05 155);
+  --status-green-border: oklch(0.44 0.08 155);
+  --status-amber: oklch(0.87 0.12 88);
+  --status-amber-subtle: oklch(0.32 0.05 80);
+  --status-amber-border: oklch(0.46 0.08 80);
+  --status-orange: oklch(0.85 0.1 60);
+  --status-orange-subtle: oklch(0.32 0.05 50);
+  --status-orange-border: oklch(0.46 0.09 50);
+  --status-red: oklch(0.83 0.09 22);
+  --status-red-subtle: oklch(0.31 0.06 25);
+  --status-red-border: oklch(0.45 0.1 25);
+  --status-violet: oklch(0.84 0.085 295);
+  --status-violet-subtle: oklch(0.31 0.06 295);
+  --status-violet-border: oklch(0.45 0.1 295);
+}
+
+@theme inline {
+  --font-sans: 'Inter Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  /* Only for identifiers: SKUs, external ids, codes. Order numbers are set in the sans face, with proportional figures. */
+  --font-mono: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace;
+
+  /* 13px, between Tailwind's `text-xs` (12px) and `text-sm` (14px, the body size). */
+  --text-meta: 0.8125rem;
+  --text-meta--line-height: 1.125rem;
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  --shadow-card: var(--card-shadow);
+  --shadow-overlay: var(--overlay-shadow);
+
+  --default-transition-duration: 150ms;
+  --default-transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-link: var(--link);
+  --color-overlay: var(--overlay);
+
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Semantic tones, for state only: `text-<tone>` (strong), `bg-<tone>-subtle`, `border-<tone>-border`. */
+  --color-neutral: var(--status-gray);
+  --color-neutral-subtle: var(--status-gray-subtle);
+  --color-neutral-border: var(--status-gray-border);
+  --color-info: var(--status-blue);
+  --color-info-subtle: var(--status-blue-subtle);
+  --color-info-border: var(--status-blue-border);
+  --color-success: var(--status-green);
+  --color-success-subtle: var(--status-green-subtle);
+  --color-success-border: var(--status-green-border);
+  --color-warning: var(--status-amber);
+  --color-warning-subtle: var(--status-amber-subtle);
+  --color-warning-border: var(--status-amber-border);
+  --color-attention: var(--status-orange);
+  --color-attention-subtle: var(--status-orange-subtle);
+  --color-attention-border: var(--status-orange-border);
+  --color-critical: var(--status-red);
+  --color-critical-subtle: var(--status-red-subtle);
+  --color-critical-border: var(--status-red-border);
+
+  /* The eight colours an organization can give an Order status. */
+  --color-status-gray: var(--status-gray);
+  --color-status-gray-subtle: var(--status-gray-subtle);
+  --color-status-gray-border: var(--status-gray-border);
+  --color-status-blue: var(--status-blue);
+  --color-status-blue-subtle: var(--status-blue-subtle);
+  --color-status-blue-border: var(--status-blue-border);
+  --color-status-teal: var(--status-teal);
+  --color-status-teal-subtle: var(--status-teal-subtle);
+  --color-status-teal-border: var(--status-teal-border);
+  --color-status-green: var(--status-green);
+  --color-status-green-subtle: var(--status-green-subtle);
+  --color-status-green-border: var(--status-green-border);
+  --color-status-amber: var(--status-amber);
+  --color-status-amber-subtle: var(--status-amber-subtle);
+  --color-status-amber-border: var(--status-amber-border);
+  --color-status-orange: var(--status-orange);
+  --color-status-orange-subtle: var(--status-orange-subtle);
+  --color-status-orange-border: var(--status-orange-border);
+  --color-status-red: var(--status-red);
+  --color-status-red-subtle: var(--status-red-subtle);
+  --color-status-red-border: var(--status-red-border);
+  --color-status-violet: var(--status-violet);
+  --color-status-violet-subtle: var(--status-violet-subtle);
+  --color-status-violet-border: var(--status-violet-border);
+}
+
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+
+  html {
+    scrollbar-color: var(--scrollbar-thumb) transparent;
+    caret-color: var(--ring);
+    text-underline-offset: 0.2em;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+  }
+
+  ::selection {
+    background-color: var(--selection);
+  }
+
+  /* One focus ring for everything a keyboard can reach; a component overrides it only to move it inside its box. */
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+}
+
+/*
+ * The measure of running text (descriptions, hints, notes): about 70 characters a line. `ch` is the width of
+ * the digit 0, which in Inter is a third wider than the average letter, so 54ch holds some 70 of them.
+ */
+@utility max-w-measure {
+  max-width: 54ch;
+}
+
+/*
+ * For an inline-flex box that may start with an icon (a badge, a button). Such a box takes its baseline from
+ * its first item, and an icon's baseline is its bottom edge, so the box would sit too high in a line of text
+ * or in a table row aligned on baselines. This puts a zero-width piece of text first, which carries the text's
+ * baseline. It is a flex item, so pair it with `before:-mr-*` of the box's own gap.
+ */
+@utility own-baseline {
+  &::before {
+    /* Through Tailwind's own variable: its `before:` utilities set `content` from it and would empty this one. */
+    --tw-content: '\200b';
+    content: var(--tw-content);
+    width: 0;
+  }
+}
+
+/*
+ * For a list that scrolls inside a popover (the command palette): a soft shade on the edge that has more beyond
+ * it, and none on an edge the list has reached. The first two layers move with the content and cover the
+ * shades, which stay put, while the list is at that end.
+ */
+@utility scroll-shadows {
+  background:
+    linear-gradient(var(--popover) 40%, transparent) top / 100% 2rem no-repeat local,
+    linear-gradient(transparent, var(--popover) 60%) bottom / 100% 2rem no-repeat local,
+    linear-gradient(var(--scroll-shadow), transparent) top / 100% 0.625rem no-repeat scroll,
+    linear-gradient(transparent, var(--scroll-shadow)) bottom / 100% 0.625rem no-repeat scroll;
+}
+
+/*
+ * Tables (`components/data-table.tsx`). A table follows the width of the place it is in, so its container is
+ * a query container; the cells' box lives here rather than in utilities so that the narrow layout can undo it,
+ * and a page's own utilities on a cell still win over both.
+ */
+@layer components {
+  [data-slot='table-container'] {
+    container: table / inline-size;
+  }
+
+  [data-slot='table-cell'] {
+    height: 2.75rem;
+    padding: 0.5rem 1rem;
+    vertical-align: middle;
+  }
+
+  [data-slot='table'][data-align='top'] [data-slot='table-cell'] {
+    padding-block: 0.625rem;
+    vertical-align: baseline;
+  }
+
+  /* The wrapper `narrowLabel` puts around a cell's content: nothing but its children until the table is narrow. */
+  [data-slot='table-value'] {
+    display: contents;
+  }
+
+  [data-slot='table-meta'] {
+    display: block;
+    margin-top: 0.125rem;
+    color: var(--muted-foreground);
+    font-size: var(--text-meta);
+    font-weight: 400;
+    line-height: var(--text-meta--line-height);
+  }
+
+  /*
+   * Narrow: every row is a block of three columns. The primary cell is in the middle one, with a checkbox
+   * before it and the row's state or key number after it; every other cell is a line of its own under the
+   * primary cell, its column's name in front of it.
+   */
+  @container table (width < 42rem) {
+    [data-slot='table'],
+    [data-slot='table'] > [data-slot='table-body'] {
+      display: block;
+    }
+
+    [data-slot='table'] > [data-slot='table-body'] > [data-slot='table-row'] {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      row-gap: 0.375rem;
+      align-items: baseline;
+      padding: 0.75rem 1rem;
+    }
+
+    [data-slot='table'] > [data-slot='table-body'] > [data-slot='table-row'] > [data-slot='table-cell'] {
+      display: block;
+      grid-column: 2 / -1;
+      min-width: 0;
+      height: auto;
+      padding: 0;
+      text-align: left;
+    }
+
+    [data-slot='table'] > [data-slot='table-body'] > [data-slot='table-row'] > [data-slot='table-cell'][data-narrow='start'] {
+      grid-row: 1;
+      grid-column: 1;
+      padding-right: 0.75rem;
+    }
+
+    [data-slot='table'] > [data-slot='table-body'] > [data-slot='table-row'] > [data-slot='table-cell'][data-narrow='primary'] {
+      grid-row: 1;
+      grid-column: 2;
+    }
+
+    [data-slot='table'] > [data-slot='table-body'] > [data-slot='table-row'] > [data-slot='table-cell'][data-narrow='end'] {
+      grid-row: 1;
+      grid-column: 3;
+      padding-left: 0.75rem;
+      text-align: right;
+    }
+
+    /* A labelled line: the name of its column, then the cell, as a list of terms and values reads. */
+    [data-slot='table'] > [data-slot='table-body'] > [data-slot='table-row'] > [data-slot='table-cell']:not([data-narrow]):has(> [data-slot='table-label']) {
+      display: grid;
+      grid-template-columns: minmax(5rem, 30%) minmax(0, 1fr);
+      column-gap: 0.75rem;
+      align-items: baseline;
+    }
+
+    [data-slot='table-value'] {
+      display: block;
+      min-width: 0;
+    }
+
+    [data-narrow='end'] > [data-slot='table-value'] {
+      display: inline;
+    }
+
+    [data-slot='table-label'] {
+      color: var(--muted-foreground);
+      font-size: var(--text-meta);
+      font-weight: 400;
+      line-height: var(--text-meta--line-height);
+    }
+
+    [data-narrow='end'] > [data-slot='table-label'] {
+      margin-right: 0.5rem;
+    }
+  }
+}
+
+/*
+ * What is on the page at which width. Outside the layers on purpose: no utility on a cell may bring a hidden
+ * column back, and an identifier in a narrow row has to wrap whatever its component says about one line.
+ */
+@container table (width < 56rem) {
+  [data-hide='medium'] {
+    display: none;
+  }
+}
+
+@container table (width >= 56rem) {
+  [data-show='medium'] {
+    display: none;
+  }
+}
+
+@container table (width >= 42rem) {
+  [data-show='narrow'] {
+    display: none;
+  }
+}
+
+@container table (width < 42rem) {
+  [data-hide],
+  [data-slot='table-header'] {
+    display: none;
+  }
+
+  /* A long SKU or Order number breaks where it must, rather than pushing the row wider than the screen. */
+  [data-slot='table-cell'] [data-slot='identifier'],
+  [data-slot='table-cell'][data-narrow='primary'] a {
+    overflow-wrap: anywhere;
+    white-space: normal;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

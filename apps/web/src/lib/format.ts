@@ -13,13 +13,16 @@ export function formatDateTime(date: Date, locale: Locale): string {
   return format.format(date)
 }
 
+/** The typographic minus (U+2212): as wide as a digit in tabular numerals, unlike the hyphen `Intl` writes. */
+const MINUS = '\u2212'
+
 export function formatNumber(value: number, locale: Locale): string {
   let format = numberFormats.get(locale)
   if (!format) {
     format = new Intl.NumberFormat(formatLocales[locale])
     numberFormats.set(locale, format)
   }
-  return format.format(value)
+  return format.format(value).replace('-', MINUS)
 }
 
 /** Formats the decimal string as is (never a float); up to 4 decimals are shown, so nothing is rounded away on screen. */
@@ -27,7 +30,7 @@ export function formatMoney(money: Money, locale: Locale): string {
   try {
     const format = new Intl.NumberFormat(formatLocales[locale], { style: 'currency', currency: money.currency, maximumFractionDigits: 4 })
       .format as (value: string) => string
-    return format(money.amount)
+    return format(money.amount).replace('-', MINUS)
   } catch {
     return `${money.amount} ${money.currency}`
   }

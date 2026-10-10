@@ -1,7 +1,7 @@
 'use client'
 
 import { ActionForm } from '@/components/action-form'
-import { ActionButton } from '@/components/form'
+import { ActionButton, Field } from '@/components/form'
 import { useT } from '@/i18n/use-t'
 import { setStockAction } from './actions'
 
@@ -18,34 +18,34 @@ export function StockForm({
   stock: number
 }) {
   const t = useT()
-  const inputId = `stock-${warehouseId}`
   return (
-    <ActionForm action={setStockAction} success={t('products.detail.stockSaved')} className="space-y-1">
+    // As wide as its column, so the note that follows a save wraps inside it and the other columns stay put;
+    // in a narrow row, where it has a line of its own, as wide as that line allows.
+    <ActionForm action={setStockAction} success={t('products.detail.stockSaved')} className="grid w-60 gap-2 @max-2xl/table:w-full @max-2xl/table:max-w-60">
       {(state) => (
-        <>
-          <div className="flex flex-wrap items-center gap-2">
-            <input type="hidden" name="productId" value={productId} />
-            <input type="hidden" name="warehouseId" value={warehouseId} />
-            <label className="sr-only" htmlFor={inputId}>
-              {t('products.detail.stockIn', { warehouse: warehouseName })}
-            </label>
-            <input
-              id={inputId}
-              name="stock"
-              type="number"
-              inputMode="numeric"
-              min={0}
-              max={1_000_000}
-              step={1}
-              required
-              defaultValue={state.values?.stock ?? stock}
-              aria-invalid={state.fieldErrors?.stock ? true : undefined}
-              className="w-28 rounded-md border border-line bg-white px-2 py-1.5 text-sm tabular-nums outline-none focus:border-accent focus:ring-2 focus:ring-accent/20"
-            />
-            <ActionButton variant="secondary">{t('products.detail.saveStock')}</ActionButton>
-          </div>
-          {state.fieldErrors?.stock ? <p className="text-xs text-red-700">{state.fieldErrors.stock}</p> : null}
-        </>
+        <div className="flex flex-wrap items-start gap-2">
+          <input type="hidden" name="productId" value={productId} />
+          <input type="hidden" name="warehouseId" value={warehouseId} />
+          <Field
+            id={`stock-${warehouseId}`}
+            name="stock"
+            label={t('products.detail.stockIn', { warehouse: warehouseName })}
+            labelHidden
+            compact
+            type="number"
+            inputMode="numeric"
+            min={0}
+            max={1_000_000}
+            step={1}
+            required
+            defaultValue={state.values?.stock ?? stock}
+            error={state.fieldErrors?.stock}
+            className="w-24 text-right tabular-nums"
+          />
+          <ActionButton variant="secondary" size="sm">
+            {t('products.detail.saveStock')}
+          </ActionButton>
+        </div>
       )}
     </ActionForm>
   )

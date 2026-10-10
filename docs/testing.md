@@ -67,6 +67,6 @@ The directory also contains `logs/`, `test-results/` and `report/`. Review evide
 
 Keep Vitest logic deterministic and network-free. Connector HTTP tests replay scrubbed cassettes; recording is a separate deliberate sandbox operation described in [the connector guide](../packages/connectors/README.md#recorded-fixtures).
 
-Panel flows import fixtures from `apps/e2e/src/fixtures.ts`, create a fresh organization for each test, use roles/accessible names, and wait for observable results rather than fixed sleeps. Follow [the E2E workspace guide](../apps/e2e/README.md). After a panel/flow change, run the browser suite three times before a PR.
+Panel flows import fixtures from `apps/e2e/src/fixtures.ts`, create a fresh organization for each test, use roles/accessible names (scoped to a region, the main navigation or a dialog where the shell repeats a name), and wait for observable results rather than fixed sleeps. Follow [the E2E workspace guide](../apps/e2e/README.md). After a panel/flow change, run the browser suite three times before a PR.
 
 In PRs report the layers run, skipped checks and observed failures. Live marketplace compatibility, physical shipments and production deployment need separate acceptance evidence.

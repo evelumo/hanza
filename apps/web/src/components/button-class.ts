@@ -1,11 +1,18 @@
+import { buttonVariants } from '@/components/ui/button'
+
+// The panel's names for the button looks, mapped onto the variants of `ui/button`.
 const variants = {
-  primary: 'bg-accent text-white hover:bg-accent-strong',
-  secondary: 'border border-line bg-white text-ink hover:bg-canvas',
-  danger: 'border border-red-300 bg-white text-red-800 hover:bg-red-50',
+  primary: 'default',
+  secondary: 'outline',
+  danger: 'destructive-outline',
+  ghost: 'ghost',
 } as const
 
 export type ButtonVariant = keyof typeof variants
+export type ButtonSize = 'sm' | 'default' | 'lg'
 
-/** In its own module (not form.tsx) so server components can call it. */
-export const buttonClass = (variant: ButtonVariant = 'primary') =>
-  `inline-flex items-center rounded-md px-3 py-1.5 text-sm font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 disabled:opacity-60 ${variants[variant]}`
+export const buttonVariantOf = (variant: ButtonVariant) => variants[variant]
+
+/** For links that look like buttons. In its own module (not form.tsx) so server components can call it. */
+export const buttonClass = (variant: ButtonVariant = 'primary', size: ButtonSize = 'default') =>
+  buttonVariants({ variant: variants[variant], size })

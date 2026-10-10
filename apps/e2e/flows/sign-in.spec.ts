@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test'
-import { expect, reloadUntil, signUp, test } from '../src/fixtures'
+import { expect, openUserMenu, reloadUntil, signUp, test } from '../src/fixtures'
 
 const CODE = /^[A-Z]{3} [A-Z]{3} [A-Z]{3}$/
 
@@ -83,8 +83,9 @@ test('a refused sign-in can be tried again, and an open one cancelled', async ({
 })
 
 test('the sign-in page speaks Polish', async ({ page }) => {
-  await signUp(page)
-  await page.getByRole('group', { name: 'Language' }).getByRole('button', { name: 'Polski' }).click()
+  const account = await signUp(page)
+  const menu = await openUserMenu(page, account)
+  await menu.getByRole('menuitemradio', { name: 'Polski' }).click()
   await expect(page.getByRole('heading', { level: 1, name: 'Pulpit' })).toBeVisible()
   await page.goto('/connections/new')
   await page.getByRole('link', { name: /Test OAuth channel/ }).click()

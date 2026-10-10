@@ -1,9 +1,9 @@
 'use client'
 
-import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState, type FormEvent } from 'react'
 import { Field, FormError, SubmitButton } from '@/components/form'
+import { TextLink } from '@/components/text-link'
 import { useT } from '@/i18n/use-t'
 import { authClient } from '@/lib/auth-client'
 
@@ -32,17 +32,17 @@ export function LoginForm() {
   }
 
   return (
-    <form onSubmit={onSubmit} className="space-y-4">
-      <h1 className="text-xl font-semibold">{t('auth.login.title')}</h1>
-      <Field label={t('auth.login.email')} name="email" type="email" autoComplete="email" required />
-      <Field label={t('auth.login.password')} name="password" type="password" autoComplete="current-password" required />
+    <form onSubmit={onSubmit} className="grid gap-4">
+      <h1 className="text-xl leading-7 font-semibold tracking-[-0.01em]">{t('auth.login.title')}</h1>
+      <Field label={t('auth.login.email')} name="email" type="email" autoComplete="email" required className="h-9" />
+      <Field label={t('auth.login.password')} name="password" type="password" autoComplete="current-password" required className="h-9" />
       <FormError message={error} />
       <SubmitButton disabled={pending}>{pending ? t('auth.login.submitting') : t('auth.login.submit')}</SubmitButton>
-      <p className="text-sm text-muted">
+      <p className="text-sm text-muted-foreground">
         {t('auth.login.noAccount')}{' '}
-        <Link href="/register" className="font-medium text-accent underline">
+        <TextLink href="/register" className="underline">
           {t('auth.login.registerLink')}
-        </Link>
+        </TextLink>
       </p>
     </form>
   )

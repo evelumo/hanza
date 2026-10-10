@@ -42,12 +42,12 @@ export function CreateOrganizationForm() {
   }
 
   return (
-    <form onSubmit={onSubmit} className="space-y-4">
+    <form onSubmit={onSubmit} className="grid gap-4">
       <div>
-        <h1 className="text-xl font-semibold">{t('auth.onboarding.title')}</h1>
-        <p className="mt-1 text-sm text-muted">{t('auth.onboarding.description')}</p>
+        <h1 className="text-xl leading-7 font-semibold tracking-[-0.01em]">{t('auth.onboarding.title')}</h1>
+        <p className="mt-1 text-sm text-muted-foreground">{t('auth.onboarding.description')}</p>
       </div>
-      <Field label={t('auth.onboarding.name')} name="name" required />
+      <Field label={t('auth.onboarding.name')} name="name" autoComplete="organization" required className="h-9" />
       <FormError message={error} />
       <SubmitButton disabled={pending}>{pending ? t('common.saving') : t('auth.onboarding.submit')}</SubmitButton>
     </form>

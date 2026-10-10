@@ -1,6 +1,6 @@
 import { randomInt, randomUUID } from 'node:crypto'
 import type { FakeChannel } from '@hanza/connector-fake'
-import { test as base, expect, type Page } from '@playwright/test'
+import { test as base, expect, type Locator, type Page } from '@playwright/test'
 import pg from 'pg'
 import { readRunEnv } from './run-env'
 
@@ -115,6 +115,54 @@ export async function signUpThroughForms(page: Page): Promise<Account> {
   await page.getByRole('button', { name: 'Continue' }).click()
   await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible()
   return account
+}
+
+/** The sidebar's navigation. A page below a list repeats the list's name as a link in the breadcrumb, so navigate through this. */
+export function mainNavigation(page: Page): Locator {
+  return page.getByRole('navigation', { name: 'Main navigation' })
+}
+
+/**
+ * A destination in the sidebar by its name. "Orders" and "Offers" carry a count once something waits behind
+ * them, and the count is part of the link's name ("Orders, 3 need attention"); this finds the link either way.
+ */
+export function navLink(page: Page, name: string): Locator {
+  return mainNavigation(page).getByRole('link', { name: new RegExp(`^${name}(,|$)`) })
+}
+
+/** The command palette, opened with the banner's "Search" button; its `combobox` is the search field. */
+export async function openCommandPalette(page: Page): Promise<Locator> {
+  const palette = page.getByRole('dialog', { name: 'Command palette' })
+  await page.getByRole('banner').getByRole('button', { name: 'Search' }).click()
+  await expect(palette.getByRole('combobox')).toBeFocused()
+  return palette
+}
+
+/**
+ * The button that moves an Order on to its next phase ("Change to: Processing", then "Change to: Shipped"): the
+ * page's primary action, in its header. Every other change of status is in the "Status" section.
+ */
+export function orderPrimaryAction(page: Page, name: string): Locator {
+  return page.getByRole('main').getByRole('button', { name, exact: true })
+}
+
+/**
+ * Opens the user menu at the foot of the sidebar and returns it: the language and theme (radio items) and
+ * "Sign out". Its button is named "<name>, <email>" in every language (the avatar's initial is not part of it).
+ */
+export async function openUserMenu(page: Page, account: Account): Promise<Locator> {
+  await page.getByRole('button', { name: account.email }).click()
+  const menu = page.getByRole('menu', { name: account.email })
+  await expect(menu).toBeVisible()
+  return menu
+}
+
+/**
+ * The dialog that asks before a form with a consequence is sent (shipping or cancelling an Order, a delete, an
+ * erasure). It is named after the button that opened it and holds "Cancel" and a button with that same name.
+ */
+export function confirmation(page: Page, name: string): Locator {
+  return page.getByRole('alertdialog', { name, exact: true })
 }
 
 /**

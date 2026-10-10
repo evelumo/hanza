@@ -1,4 +1,4 @@
-import { addFakeConnection, expect, reloadUntil, signUp, test, waitForSeedOrders, type FakeChannelProbe } from '../src/fixtures'
+import { addFakeConnection, expect, navLink, reloadUntil, signUp, test, waitForSeedOrders, type FakeChannelProbe } from '../src/fixtures'
 
 /** The last Available the fake Channel received for `offerExternalId`, after the first `since` pushes. */
 async function lastPushed(fakeChannel: FakeChannelProbe, offerExternalId: string, since: number): Promise<number | undefined> {
@@ -17,7 +17,7 @@ test('a Product linked to a fake Offer gets its Available pushed to the Channel'
   await waitForSeedOrders(page)
   const before = (await fakeChannel.calls()).stockPushes.length
 
-  await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('link', { name: 'Products' }).click()
+  await navLink(page, 'Products').click()
   await page.getByRole('link', { name: 'Add product' }).click()
   await expect(page.getByRole('heading', { level: 1, name: 'Add product' })).toBeVisible()
   await page.getByLabel('SKU', { exact: true }).fill('FAKE-SKU-1')

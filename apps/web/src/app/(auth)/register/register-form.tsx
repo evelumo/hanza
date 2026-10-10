@@ -1,9 +1,9 @@
 'use client'
 
-import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState, type FormEvent } from 'react'
 import { Field, FormError, SubmitButton } from '@/components/form'
+import { TextLink } from '@/components/text-link'
 import { useT } from '@/i18n/use-t'
 import { authClient } from '@/lib/auth-client'
 import { authErrorKey } from '@/lib/auth-errors'
@@ -34,18 +34,18 @@ export function RegisterForm() {
   }
 
   return (
-    <form onSubmit={onSubmit} className="space-y-4">
-      <h1 className="text-xl font-semibold">{t('auth.register.title')}</h1>
-      <Field label={t('auth.register.name')} name="name" autoComplete="name" required />
-      <Field label={t('auth.login.email')} name="email" type="email" autoComplete="email" required />
-      <Field label={t('auth.login.password')} name="password" type="password" autoComplete="new-password" minLength={8} required />
+    <form onSubmit={onSubmit} className="grid gap-4">
+      <h1 className="text-xl leading-7 font-semibold tracking-[-0.01em]">{t('auth.register.title')}</h1>
+      <Field label={t('auth.register.name')} name="name" autoComplete="name" required className="h-9" />
+      <Field label={t('auth.login.email')} name="email" type="email" autoComplete="email" required className="h-9" />
+      <Field label={t('auth.login.password')} name="password" type="password" autoComplete="new-password" minLength={8} required className="h-9" />
       <FormError message={error} />
       <SubmitButton disabled={pending}>{pending ? t('auth.register.submitting') : t('auth.register.submit')}</SubmitButton>
-      <p className="text-sm text-muted">
+      <p className="text-sm text-muted-foreground">
         {t('auth.register.haveAccount')}{' '}
-        <Link href="/login" className="font-medium text-accent underline">
+        <TextLink href="/login" className="underline">
           {t('auth.register.loginLink')}
-        </Link>
+        </TextLink>
       </p>
     </form>
   )
