@@ -10,10 +10,10 @@ Hanza is in **early development**. This page summarizes the direction in the [or
 - Background sync, Connection health, push rejections, shared request limits and core-owned OAuth token lifetime.
 - Durable workflow primitives with PostgreSQL state, steps, timers and signals.
 - Buyer data sealing, retention and erasure services.
-- Shipments from an Order through a courier Connection: Labels, status tracking, cancelling, and a carrier pickup that ships the Order; an InPost connector tested on cassettes written from its documentation.
+- Shipments from an Order through a courier Connection: Labels, status tracking, cancelling, and a carrier pickup that ships the Order; an InPost connector whose requests and answers were settled against InPost's sandbox on 2026-10-10, with conformance cassettes hand-written in the observed shapes.
 - English/Polish panel, fake connectors, conformance tests, recorded HTTP fixtures and local browser flows.
 
-These foundations work with simulated Channels and a simulated Carrier. The one real connector, InPost, has not been run against a live account, and the SDK has not yet been validated by two real Channel connectors, and a workflow engine is not yet a user-facing automation builder.
+These foundations work with simulated Channels and a simulated Carrier. The one real connector, InPost, has run against InPost's sandbox, but a bought and confirmed shipment with its label, the courier service and cash on delivery are not proven on a live account; the SDK has not yet been validated by two real Channel connectors, and a workflow engine is not yet a user-facing automation builder.
 
 ## Planned milestones
 

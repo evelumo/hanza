@@ -10,7 +10,7 @@ An open-source, self-hosted e-commerce integration hub for Orders, Products, Sto
 
 [Quick start](#quick-start) · [Try the demo](docs/demo.md) · [Documentation](docs/README.md) · [Contributing](CONTRIBUTING.md) · [Roadmap](docs/roadmap.md)
 
-> **Early development.** The panel, domain core and worker work with a simulated Channel. There are **no real marketplace, shop or invoicing connectors yet**, and the one real courier connector (InPost) is written from InPost's documentation and has not been proven on a live account. Use Hanza to evaluate the architecture, try the demo and contribute; connecting a live business is a future milestone.
+> **Early development.** The panel, domain core and worker work with a simulated Channel. There are **no real marketplace, shop or invoicing connectors yet**, and the one real courier connector (InPost) has run against InPost's sandbox only: a bought and confirmed shipment with its label, the courier service and cash on delivery are not proven on a live account yet. Use Hanza to evaluate the architecture, try the demo and contribute; connecting a live business is a future milestone.
 
 ## Why Hanza?
 

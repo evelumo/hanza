@@ -38,9 +38,11 @@ Look at the other Orders to see **Needs attention** and **Unmatched lines**: the
 
 Open **Connections → Add connection → Test courier**, give it a name such as `Demo carrier` and submit. It is an in-memory Carrier with no credentials.
 
-Open an Order that is still new or processing, such as the one for three Sticker sets, and link its line under **Lines** if it shows **Unmatched**: a pickup ships only an Order whose lines are all matched, and marks any other as Needs attention. In **Shipments**, choose the service **Fake courier**, enter the parcel's dimensions and weight, and choose **Create shipment**. The seed Orders carry no phone number, which the pickup point service **Fake locker** refuses, as a real locker network would: try it to see a Shipment fail with the Carrier's code.
+Open an Order that is still new or processing, such as the one for three Sticker sets, and link its line under **Lines** if it shows **Unmatched**: a pickup ships only an Order whose lines are all matched, and marks any other as Needs attention. In **Shipments** the service **Fake locker** is chosen and the pickup point is filled in from the Order. Choose **Create shipment** and confirm: creating a Shipment orders a label from the Carrier.
 
-The Shipment appears as **Waiting for carrier**. The simulated Carrier moves it one status each time it is asked, so choose **Check status** and refresh: at **Ready to send** the **Download label** button gives a PDF. Choose **Check status** again, as if the parcel had been handed over: the Shipment is **In transit**, and the Order moved to **Shipped** on its own, with "The carrier took the parcel" in its history. See [ADR 0024](adr/0024-a-carrier-pickup-ships-the-order.md).
+The Shipment appears as **Waiting for carrier** and, a few seconds later and without a reload, as **Ready to send** with a **Download label** button that gives a PDF. The simulated Carrier moves a Shipment one status each time it is asked: choose **Check status**, as if the parcel had been handed over, and the Shipment is **In transit** while the Order moved to **Shipped** on its own, with "The carrier took the parcel" in its history. See [ADR 0024](adr/0024-a-carrier-pickup-ships-the-order.md).
+
+To see a Carrier refuse a request, open the Order with the unknown product, which has no phone number, choose **Fake locker** and type any pickup point: the Shipment fails with the Carrier's code `receiver_phone_missing`, as a real locker network would refuse it.
 
 ## 6. Try organization-specific statuses
 
