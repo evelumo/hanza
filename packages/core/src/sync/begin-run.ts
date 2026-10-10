@@ -6,6 +6,7 @@ import { failSyncRun, startSyncRun } from '../connections/sync-state'
 import type { Context } from '../context'
 import { describeFailure } from '../describe-failure'
 import type { JobRunInfo } from '../jobs'
+import { isRefusedBeforeSending } from '../rate-limit/limited-fetch'
 import { buildCapabilityContext } from './capability-context'
 import { isRecordedFailure, runConnectorCall, type RunScope } from './run-connector'
 
@@ -17,6 +18,19 @@ export interface SyncRun {
   cursor: string | null
   /** Requests the connector made through `context.fetch` so far: 0 means the Channel was not contacted. */
   channelRequests(): number
+  /**
+   * Of those, the ones that may have changed something at the Channel: any method but GET and HEAD, unless Hanza's
+   * own rate limiter refused it before it was sent. 0 means nothing the run did can have made anything there, however
+   * the call ended; one still in flight counts.
+   */
+  writesSent(): number
+}
+
+const READ_METHODS = new Set(['GET', 'HEAD'])
+
+function isWrite(resource: Parameters<typeof fetch>[0], init: Parameters<typeof fetch>[1]): boolean {
+  const method = init?.method ?? (resource instanceof Request ? resource.method : 'GET')
+  return !READ_METHODS.has(method.toUpperCase())
 }
 
 type SyncRunInput = { organizationId: string; connectionId: string; stream: SyncStream; capability: CapabilityName; run: JobRunInfo }
@@ -44,11 +58,20 @@ async function beginSyncRun(ctx: Context, input: SyncRunInput): Promise<SyncRun 
   const { cursor } = await startSyncRun(ctx, organizationId, connectionId, stream)
   const built = await runConnectorCall(ctx, baseScope, async () => buildCapabilityContext(ctx, opened, connector))
   let requests = 0
+  let writes = 0
   const context: CapabilityContext = {
     ...built,
-    fetch: (resource, init) => {
+    fetch: async (resource, init) => {
       requests++
-      return built.fetch(resource, init)
+      const write = isWrite(resource, init)
+      // Counted before it leaves, so one in flight when another request fails is not missed.
+      if (write) writes++
+      try {
+        return await built.fetch(resource, init)
+      } catch (error) {
+        if (write && isRefusedBeforeSending(error)) writes--
+        throw error
+      }
     },
   }
 
@@ -66,7 +89,7 @@ async function beginSyncRun(ctx: Context, input: SyncRunInput): Promise<SyncRun 
     await runConnectorCall(ctx, baseScope, () => renew(false))
   }
   const scope: RunScope = canRefresh(connector) ? { ...baseScope, reauthorize: () => renew(true) } : baseScope
-  return { connector, context, scope, cursor, channelRequests: () => requests }
+  return { connector, context, scope, cursor, channelRequests: () => requests, writesSent: () => writes }
 }
 
 /**

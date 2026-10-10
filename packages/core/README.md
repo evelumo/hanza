@@ -5,7 +5,7 @@ Hanza's domain services and background execution machinery. Apps supply connecto
 ## Responsibilities
 
 - Environment validation, explicit context composition, logging and secrets.
-- Catalogue, Stock/Reservations, Orders, Order statuses, Warehouses, Connections and privacy services.
+- Catalogue, Stock/Reservations, Orders, Order statuses, Warehouses, Connections, Shipments and privacy services.
 - Sync orchestration, registered jobs, queue abstraction and Connection health.
 - Durable workflows with PostgreSQL state, timers/signals and queue-driven steps.
 - Connector request limits shared across workers through Redis.

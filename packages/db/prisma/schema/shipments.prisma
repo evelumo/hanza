@@ -1,0 +1,80 @@
+// Shipments: parcels handed to a Carrier through a Connection whose connector has the `shipments.*` capabilities.
+
+/// `requested`: the Carrier has not been asked yet, or no answer was stored. The others are the SDK's Shipment statuses.
+enum ShipmentStatus {
+  requested
+  pending
+  ready
+  in_transit
+  awaiting_pickup
+  delivery_problem
+  delivered
+  returned
+  cancelled
+  failed
+
+  @@map("shipment_status")
+}
+
+/// One parcel of one Order. The row is also the request for it: a job asks the Carrier while it is `requested`
+/// (ADR 0023).
+model Shipment {
+  id                String         @id @default(uuid(7))
+  organizationId    String
+  orderId           String
+  /// The Connection the Carrier is asked through.
+  connectionId      String
+  status            ShipmentStatus @default(requested)
+  /// The id of one of the connector's declared shipping services.
+  service           String
+  /// A preset or dimensions and weight, as `shipmentParcelSchema`. Not personal.
+  parcel            Json
+  codAmount         Decimal?       @db.Decimal(19, 4)
+  codCurrency       String?        @db.Char(3)
+  /// The destination type and the pickup point id as a person confirmed them, sealed with HANZA_ENCRYPTION_KEY and
+  /// bound to the organization and this Shipment (ADR 0016, ADR 0023). Null once the Order's Buyer data is erased.
+  destination       String?
+  /// The Carrier's id of the Shipment; null until its answer to the request is stored.
+  externalId        String?
+  trackingNumber    String?
+  /// The Carrier's own status key, a short code, never free text.
+  carrierStatus     String?
+  /// Why the Shipment failed, or the code a Carrier gave when it refused to cancel it (the status then stays).
+  failureCode       String?
+  /// The Label file, base64, sealed like `destination`. Deleted at a final status and with the Order's Buyer data.
+  label             String?
+  labelContentType  String?
+  /// Why no Label is fetched for it any more (`too_large`, `invalid`, `refused`): a person prints it at the Carrier.
+  /// Null while a Label is stored, still awaited or not wanted.
+  labelFailureCode  String?
+  /// Non-null while a job owes this Shipment something: when `sync.tick` may next have it asked for or checked.
+  nextCheckAt       DateTime?
+  /// When it was first seen with the Carrier (in transit or later); the Order is shipped then (ADR 0024).
+  handedOverAt      DateTime?
+  /// Set while a person's request to cancel it has not been put to the Carrier.
+  cancelRequestedAt DateTime?
+  /// How many times the Carrier was asked to create it (a call refused before anything was sent is not counted).
+  createAttempts    Int            @default(0)
+  /// True from the moment the Carrier is asked to create it until its answer is stored. While true without an
+  /// `externalId`, a Shipment may exist at the Carrier that Hanza does not know of: the call threw or the job died.
+  createOutcomeUnknown Boolean     @default(false)
+  /// Until when no job may ask the Carrier to create it: while one is asking, and after a call whose outcome is not
+  /// known for the SDK's retry delay counted from it (`SHIPMENT_CREATE_RETRY_DELAY_MS`). A job that dies leaves it to
+  /// run out.
+  createLeaseUntil  DateTime?
+  createdByUserId   String?
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  order        Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  /// NoAction, not Restrict: a Connection with Shipments cannot be deleted, but the check runs at the end of the
+  /// statement, so deleting an organization can cascade to both tables in any order.
+  connection   Connection   @relation(fields: [connectionId], references: [id], onDelete: NoAction)
+
+  // One row per Shipment at the Carrier; NULLs are distinct, so Shipments not created yet are unaffected.
+  @@unique([connectionId, externalId])
+  @@index([organizationId, orderId])
+  @@index([connectionId, nextCheckAt])
+  @@map("shipment")
+}

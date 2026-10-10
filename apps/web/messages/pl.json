@@ -461,6 +461,7 @@
         "cancelled_while_processing": "Kanał anulował to zamówienie w trakcie przygotowywania, a jego rezerwacje zostały zwolnione. Wstrzymaj realizację i odłóż towar, a potem oznacz zamówienie jako sprawdzone.",
         "channel_fact_conflict": "Kanał zgłosił zmianę już po wysłaniu albo anulowaniu zamówienia i Hanza jej nie zastosowała. Sprawdź, co zgłosił, i wyjaśnij to z kupującym, a potem oznacz zamówienie jako sprawdzone.",
         "status_push_failed": "Kanał nie przyjął ostatniej zmiany fazy i może nadal pokazywać poprzednią. Sprawdź połączenie albo zmień zamówienie w kanale, a potem oznacz je jako sprawdzone.",
+        "shipment_conflict": "Przewoźnik odebrał paczkę tego zamówienia, ale Hanza nie mogła oznaczyć go jako wysłane: jest anulowane, nieopłacone albo ma pozycję niepołączoną z produktem. Wyjaśnij to, w razie potrzeby samodzielnie oznacz zamówienie jako wysłane, a potem oznacz je jako sprawdzone.",
         "toLines": "Przejdź do pozycji",
         "toReservations": "Przejdź do rezerwacji",
         "toProduct": "Produkt",
@@ -706,7 +707,8 @@
       "shortage": "Brak na stanie",
       "cancelled_while_processing": "Anulowane w trakcie realizacji",
       "channel_fact_conflict": "Kanał zgłosił zmianę po zakończeniu",
-      "status_push_failed": "Kanał odrzucił nowy status"
+      "status_push_failed": "Kanał odrzucił nowy status",
+      "shipment_conflict": "Przewoźnik odebrał paczkę zamówienia, którego nie można było wysłać"
     },
     "health": {
       "unknown": "Nie sprawdzono",
@@ -719,7 +721,9 @@
       "orders_pull": "Zamówienia",
       "stock_push": "Stany magazynowe",
       "order_status_push": "Statusy zamówień",
-      "price_push": "Ceny"
+      "price_push": "Ceny",
+      "shipments_create": "Nowe przesyłki",
+      "shipments_track": "Śledzenie przesyłek"
     },
     "payment": {
       "prepaid": "Przedpłata",
@@ -909,6 +913,17 @@
       "not_linked": "Ta oferta nie jest połączona z produktem.",
       "connector_not_configured": "Ten konektor nie jest jeszcze skonfigurowany w tej instalacji. Zapytaj osobę, która utrzymuje Hanzę.",
       "sign_in_required": "To połączenie dodaje się przez logowanie, a nie formularz.",
+      "not_a_carrier": "To połączenie nie może nadawać przesyłek.",
+      "shipment_order_closed": "Przesyłkę można utworzyć tylko dla nowego lub realizowanego zamówienia.",
+      "shipment_service_unknown": "To połączenie nie oferuje już tej usługi. Wybierz inną.",
+      "shipment_request_invalid": "Przesyłka nie pasuje do wybranej usługi. Sprawdź paczkę i kwotę pobrania.",
+      "shipment_pickup_point_required": "Podaj punkt odbioru.",
+      "shipment_buyer_data_erased": "Dane kupującego w tym zamówieniu zostały usunięte, więc nie ma do kogo wysłać paczki.",
+      "shipment_buyer_data_unreadable": "Danych kupującego w tym zamówieniu nie można odczytać, więc nie da się utworzyć przesyłki.",
+      "shipment_already_requested": "Przesyłka dla tego zamówienia u tego przewoźnika i w tej usłudze jest już tworzona. Poczekaj, aż przewoźnik ją przyjmie, albo najpierw ją anuluj.",
+      "shipment_not_cancellable": "Tej przesyłki nie można już tutaj anulować.",
+      "shipment_cancel_unsupported": "Ten przewoźnik nie anuluje przesyłek przez Hanzę. Anuluj ją u przewoźnika.",
+      "shipment_not_checkable": "Nie ma czego sprawdzać: przewoźnik nie przyjął jeszcze zlecenia albo przesyłka jest już zamknięta.",
       "no_sign_in": "Ten konektor nie ma logowania."
     },
     "unexpected": "Coś poszło nie tak. Spróbuj ponownie.",

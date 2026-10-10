@@ -1,17 +1,19 @@
-import type { Address } from '@hanza/connector-sdk'
+import type { Address, Delivery } from '@hanza/connector-sdk'
 import { Prisma, type Tx } from '@hanza/db'
 import type { SecretBox } from '../secrets'
 import { buyerDataSchema, readBuyerData, sealBuyerData, storedBuyerDataSelect } from './buyer-data'
 
-/** Absent = keep the stored address; `billingAddress: null` = the Order has no billing address. */
+/** Absent = keep the stored one; `billingAddress: null` = the Order has no billing address. */
 export interface AddressChange {
   shippingAddress?: Address
   billingAddress?: Address | null
+  delivery?: Delivery
 }
 
 export type AddressReplacement =
-  | { result: 'replaced'; shippingAddress: boolean; billingAddress: boolean }
-  /** The addresses already were these: nothing written. */
+  /** Which parts changed; `pickupPoint` says whether a changed Delivery names another pickup point. */
+  | { result: 'replaced'; shippingAddress: boolean; billingAddress: boolean; delivery: boolean; pickupPoint: boolean }
+  /** The addresses and the Delivery already were these: nothing written. */
   | { result: 'unchanged' }
   /** The Buyer data was erased: it never comes back (ADR 0016). */
   | { result: 'erased' }
@@ -19,9 +21,9 @@ export type AddressReplacement =
   | { result: 'unreadable' }
 
 /**
- * Replaces an Order's addresses inside its sealed Buyer data (ADR 0016): reads the stored snapshot, puts the new
- * addresses in, and seals it again, clearing the legacy plaintext columns as the sweep does. The Buyer is unchanged,
- * so the email index stays. Caller holds the Order lock and decides whether the Order may change its addresses.
+ * Replaces an Order's addresses and Delivery inside its sealed Buyer data (ADR 0016): reads the stored snapshot, puts
+ * the new ones in, and seals it again, clearing the legacy plaintext columns as the sweep does. The Buyer is
+ * unchanged, so the email index stays. Caller holds the Order lock and decides whether the Order may change them.
  */
 export async function replaceBuyerAddresses(
   tx: Tx,
@@ -44,15 +46,20 @@ export async function replaceBuyerAddresses(
   }
   if (current === null) return { result: 'erased' }
 
+  const delivery = change.delivery ?? current.delivery
   const next = buyerDataSchema.parse({
     buyer: current.buyer,
     shippingAddress: change.shippingAddress ?? current.shippingAddress,
     billingAddress: change.billingAddress === undefined ? current.billingAddress : change.billingAddress,
+    // Left out, not undefined, when there is none: the stored value keeps the shape it had.
+    ...(delivery === undefined ? {} : { delivery }),
   })
-  // Both went through the same schema, so equal addresses serialize to equal strings.
-  const shippingAddress = JSON.stringify(next.shippingAddress) !== JSON.stringify(current.shippingAddress)
-  const billingAddress = JSON.stringify(next.billingAddress) !== JSON.stringify(current.billingAddress)
-  if (!shippingAddress && !billingAddress) return { result: 'unchanged' }
+  // Both went through the same schema, so equal values serialize to equal strings.
+  const differs = (a: unknown, b: unknown) => JSON.stringify(a ?? null) !== JSON.stringify(b ?? null)
+  const shippingAddress = differs(next.shippingAddress, current.shippingAddress)
+  const billingAddress = differs(next.billingAddress, current.billingAddress)
+  const deliveryChanged = differs(next.delivery, current.delivery)
+  if (!shippingAddress && !billingAddress && !deliveryChanged) return { result: 'unchanged' }
 
   await tx.order.updateMany({
     where: { id: orderId, organizationId },
@@ -66,5 +73,11 @@ export async function replaceBuyerAddresses(
       billingAddress: Prisma.DbNull,
     },
   })
-  return { result: 'replaced', shippingAddress, billingAddress }
+  return {
+    result: 'replaced',
+    shippingAddress,
+    billingAddress,
+    delivery: deliveryChanged,
+    pickupPoint: differs(next.delivery?.pickupPoint, current.delivery?.pickupPoint),
+  }
 }

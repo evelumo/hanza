@@ -85,7 +85,12 @@ async function insertOrder(
       ...sealBuyerData(
         secrets,
         { organizationId, connectionId, externalId: order.externalId },
-        { buyer: order.buyer, shippingAddress: order.shippingAddress, billingAddress: order.billingAddress },
+        {
+          buyer: order.buyer,
+          shippingAddress: order.shippingAddress,
+          billingAddress: order.billingAddress,
+          ...(order.delivery === undefined ? {} : { delivery: order.delivery }),
+        },
       ),
       lines: {
         create: order.lines.map((line, index) => ({

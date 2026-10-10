@@ -7,6 +7,7 @@ const RANK = {
   cancelled_while_processing: 2,
   channel_fact_conflict: 3,
   status_push_failed: 4,
+  shipment_conflict: 5,
 } as const satisfies Record<AttentionReason, number>
 
 /** Adds reasons in a stable order; `added` holds only the ones that were not present. */
@@ -23,6 +24,8 @@ export function removeReasons(current: AttentionReason[], remove: AttentionReaso
 /**
  * A cancelled Order has nothing left to reserve or ship, so `shortage` and `unmatched_line` stop mattering.
  * Shipped Orders keep `unmatched_line`: an Unmatched line consumed no Stock, and linking it later corrects that.
+ * `shipment_conflict` stays: cancelling does not bring back a parcel a Carrier already has, so a person still has to
+ * settle it (ADR 0024).
  */
 export function reasonsAfterCancel(current: AttentionReason[]): AttentionReason[] {
   return removeReasons(current, ['shortage', 'unmatched_line'])

@@ -34,6 +34,17 @@ const codes: DomainErrorCode[] = [
   'status_name_required',
   'status_pending_deletion',
   'status_is_replacement',
+  'not_a_carrier',
+  'shipment_order_closed',
+  'shipment_service_unknown',
+  'shipment_request_invalid',
+  'shipment_pickup_point_required',
+  'shipment_buyer_data_erased',
+  'shipment_buyer_data_unreadable',
+  'shipment_already_requested',
+  'shipment_not_cancellable',
+  'shipment_cancel_unsupported',
+  'shipment_not_checkable',
 ]
 const t = translatorFor('en')
 

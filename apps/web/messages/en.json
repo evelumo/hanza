@@ -461,6 +461,7 @@
         "cancelled_while_processing": "The channel cancelled this order while it was being prepared, and its reservations were released. Stop the fulfilment and put the goods back, then mark it as reviewed.",
         "channel_fact_conflict": "The channel reported a change after the order was shipped or cancelled, and Hanza did not apply it. Check what it reported and settle it with the buyer, then mark it as reviewed.",
         "status_push_failed": "The channel did not accept the last change of phase and may still show the old one. Check the connection, or change the order on the channel yourself, then mark it as reviewed.",
+        "shipment_conflict": "The carrier took a parcel of this order, but Hanza could not mark the order as shipped: it is cancelled, not paid yet, or has a line linked to no product. Settle it, ship the order yourself if it should be shipped, then mark it as reviewed.",
         "toLines": "Go to Lines",
         "toReservations": "Go to Reservations",
         "toProduct": "Product",
@@ -706,7 +707,8 @@
       "shortage": "Shortage",
       "cancelled_while_processing": "Cancelled while processing",
       "channel_fact_conflict": "The channel reported a change after completion",
-      "status_push_failed": "The channel refused the new status"
+      "status_push_failed": "The channel refused the new status",
+      "shipment_conflict": "The carrier took a parcel of an order that could not be shipped"
     },
     "health": {
       "unknown": "Not checked",
@@ -719,7 +721,9 @@
       "orders_pull": "Orders",
       "stock_push": "Stock levels",
       "order_status_push": "Order statuses",
-      "price_push": "Prices"
+      "price_push": "Prices",
+      "shipments_create": "New shipments",
+      "shipments_track": "Shipment tracking"
     },
     "payment": {
       "prepaid": "Prepaid",
@@ -909,7 +913,18 @@
       "not_linked": "This offer is not linked to a product.",
       "connector_not_configured": "This connector is not set up on this installation yet. Ask whoever runs Hanza.",
       "sign_in_required": "This connector is connected by signing in, not with a form.",
-      "no_sign_in": "This connector has no sign-in."
+      "no_sign_in": "This connector has no sign-in.",
+      "not_a_carrier": "This connection cannot make shipments.",
+      "shipment_order_closed": "A shipment can be made only for a new or processing order.",
+      "shipment_service_unknown": "This connection no longer offers that service. Choose another one.",
+      "shipment_request_invalid": "The shipment does not fit the chosen service. Check the parcel and the cash on delivery.",
+      "shipment_pickup_point_required": "Enter the pickup point.",
+      "shipment_buyer_data_erased": "The buyer data of this order was erased, so there is nobody to send the parcel to.",
+      "shipment_buyer_data_unreadable": "The buyer data of this order cannot be read, so the shipment cannot be made.",
+      "shipment_already_requested": "A shipment for this order with this carrier and service is already being created. Wait until the carrier has it, or cancel it first.",
+      "shipment_not_cancellable": "This shipment can no longer be cancelled here.",
+      "shipment_cancel_unsupported": "This carrier does not cancel shipments through Hanza. Cancel it at the carrier.",
+      "shipment_not_checkable": "There is nothing to check for this shipment: the carrier has not taken the request yet, or the shipment is closed."
     },
     "unexpected": "Something went wrong. Please try again.",
     "invalidInput": "Check the fields.",

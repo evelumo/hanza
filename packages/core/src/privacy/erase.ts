@@ -6,8 +6,10 @@ export type ErasureCause = { cause: 'retention'; retentionDays: number } | { cau
 
 /**
  * Erases the Buyer data of the given Orders that still have it and still match `where`, and records
- * one Event each. Keeps lines, amounts, status, dates and the shipping country. Idempotent: an Order
- * erased already is skipped. Returns the ids it erased.
+ * one Event each. Keeps lines, amounts, status, dates and the shipping country. Their Shipments lose
+ * what they hold of the Buyer: the Label, which prints a name and an address, and the destination a
+ * person confirmed (ADR 0023); status and tracking number stay. Idempotent: an Order erased already
+ * is skipped. Returns the ids it erased.
  */
 export async function eraseBuyerDataOfOrders(
   tx: Tx,
@@ -39,6 +41,10 @@ export async function eraseBuyerDataOfOrders(
 
   // A Channel's free-text note ("Buyer wrote: …") may quote the Buyer.
   await tx.orderChannelFact.updateMany({ where: { organizationId, orderId: { in: ids }, note: { not: null } }, data: { note: null } })
+  await tx.shipment.updateMany({
+    where: { organizationId, orderId: { in: ids } },
+    data: { label: null, labelContentType: null, destination: null },
+  })
   for (const id of ids) {
     await appendEvent(tx, { organizationId, type: 'order.buyer_data_erased', subject: { type: 'order', id }, payload: { ...reason, actor } })
   }

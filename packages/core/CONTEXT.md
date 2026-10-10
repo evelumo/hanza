@@ -58,7 +58,7 @@ _Avoid_: Event (an Event is a record of a change), callback, webhook
 ### Buyer data
 
 **Buyer data**:
-Everything personal an Order holds about its Buyer: name, email, phone, Channel login, shipping and billing address. Stored sealed with the encryption key, read in plaintext only by the panel (ADR 0016).
+Everything personal an Order holds about its Buyer: name, email, phone, Channel login, shipping and billing address, and the Delivery with its Pickup point. Stored sealed with the encryption key, read in plaintext only by the panel and, for a Shipment, by the job that asks the Carrier (ADR 0016, ADR 0023).
 _Avoid_: Customer data, PII, personal info
 
 **Closed Order**:
