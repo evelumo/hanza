@@ -28,19 +28,20 @@ async function createProduct(page: Page, sku: string, name: string, stock: strin
   return lastSegment(page)
 }
 
-/** Creates a Shipment for the Order on the page, through the organization's only carrier Connection, and returns its row. */
+/**
+ * Creates a Shipment for the Order on the page, through the organization's only carrier Connection and to the pickup
+ * point the Order names, and waits until its Carrier has confirmed it: the row with its Label, which no longer changes
+ * by itself.
+ */
 async function createShipment(page: Page) {
+  const path = new URL(page.url()).pathname
   const shipments = page.getByRole('region', { name: 'Shipments', exact: true })
-  // To the address: the seed Orders have no phone, which the fake Carrier's pickup point service needs.
-  await shipments.getByLabel('Service').selectOption('courier')
-  for (const [field, value] of [['Length (cm)', '30'], ['Width (cm)', '20'], ['Height (cm)', '10'], ['Weight (kg)', '1']] as const) {
-    await shipments.getByLabel(field).fill(value)
-  }
   await shipments.getByRole('button', { name: 'Create shipment' }).click()
+  await confirmation(page, 'Create shipment').getByRole('button', { name: 'Create shipment' }).click()
   await expect(shipments.getByRole('status')).toHaveText('Shipment requested. Its label appears above once the carrier confirms it.')
   const row = shipments.getByRole('row').filter({ hasText: 'Fake carrier' })
-  await reloadUntil(page, new URL(page.url()).pathname, async () => {
-    await expect(row).toContainText('Waiting for carrier', { timeout: 1_000 })
+  await reloadUntil(page, path, async () => {
+    await expect(row.getByRole('link', { name: 'Download label' })).toBeVisible({ timeout: 1_000 })
   })
   return row
 }
@@ -60,13 +61,7 @@ test('a second organization sees none of the first one’s data and cannot act o
   const carrierA = await addFakeCourier(page, 'Fake carrier', { stuckAt: 'ready' })
   await page.goto(`/orders/${orderId}`)
   const shipmentA = await createShipment(page)
-  await shipmentA.getByRole('button', { name: 'Check status' }).click()
-  await expect(shipmentA.getByRole('status')).toHaveText('The carrier is being asked. Refresh the page in a moment.')
-  const labelA = shipmentA.getByRole('link', { name: 'Download label' })
-  await reloadUntil(page, `/orders/${orderId}`, async () => {
-    await expect(labelA).toBeVisible({ timeout: 1_000 })
-  })
-  const labelPath = (await labelA.getAttribute('href'))!
+  const labelPath = (await shipmentA.getByRole('link', { name: 'Download label' }).getAttribute('href'))!
   const shipmentId = labelPath.split('/').at(-2)!
   expect((await page.request.get(labelPath)).status()).toBe(200)
 
@@ -118,8 +113,9 @@ test('a second organization sees none of the first one’s data and cannot act o
     expect(answer.status(), path).toBe(404)
     expect(await answer.text(), path).toBe('')
   }
-  // B's own Shipment gives it a "Cancel shipment" form to send A's Shipment id through.
-  await addFakeCourier(other)
+  // B's own Shipment gives it a "Cancel shipment" form to send A's Shipment id through. Held at ready like A's, so
+  // the row is at rest: a page that re-read itself would put the true id back into the form.
+  await addFakeCourier(other, 'Fake carrier', { stuckAt: 'ready' })
   await other.goto(`/orders/${ownOrderId}`)
   const shipmentB = await createShipment(other)
   await shipmentB.locator('input[name="shipmentId"]').evaluateAll((inputs: HTMLInputElement[], id) => inputs.forEach((input) => (input.value = id)), shipmentId)

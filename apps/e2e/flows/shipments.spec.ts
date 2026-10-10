@@ -1,18 +1,6 @@
 import type { Locator, Page } from '@playwright/test'
 import { addFakeConnection, addFakeCourier, confirmation, expect, reloadUntil, signUp, test, waitForSeedOrders } from '../src/fixtures'
 
-/**
- * Chooses the fake Carrier's address service and gives the parcel's dimensions. The seed Orders carry no phone,
- * which the fake Carrier's pickup point service ("Fake locker") refuses, like a real locker network does.
- */
-async function toAddress(shipments: Locator, weight = '1.25') {
-  await shipments.getByLabel('Service').selectOption('courier')
-  await shipments.getByLabel('Length (cm)').fill('30,5')
-  await shipments.getByLabel('Width (cm)').fill('20')
-  await shipments.getByLabel('Height (cm)').fill('10')
-  await shipments.getByLabel('Weight (kg)').fill(weight)
-}
-
 const CREATED = 'Shipment requested. Its label appears above once the carrier confirms it.'
 
 /** Opens a seed Order from the list and returns its path and its "Shipments" section. */
@@ -21,6 +9,12 @@ async function openOrder(page: Page, number: string) {
   await page.getByRole('link', { name: number, exact: true }).click()
   await expect(page.getByRole('heading', { level: 1 })).toContainText(number)
   return { path: new URL(page.url()).pathname, shipments: page.getByRole('region', { name: 'Shipments', exact: true }) }
+}
+
+/** Sends the "Create shipment" form: it orders a label from the Carrier, so it asks first. */
+async function createShipment(page: Page, shipments: Locator) {
+  await shipments.getByRole('button', { name: 'Create shipment' }).click()
+  await confirmation(page, 'Create shipment').getByRole('button', { name: 'Create shipment' }).click()
 }
 
 test('a Shipment is created for an Order, its Label downloads, and the Carrier taking the parcel ships the Order', async ({ page, fakeCarrier }) => {
@@ -35,6 +29,7 @@ test('a Shipment is created for an Order, its Label downloads, and the Carrier t
   await addFakeConnection(page)
   await waitForSeedOrders(page)
   const carrier = await addFakeCourier(page)
+  const mine = async () => (await fakeCarrier.calls()).shipments.filter((shipment) => shipment.account === carrier.account)
 
   const { path, shipments } = await openOrder(page, 'fake-order-1')
   // The Buyer chose a pickup point on the Channel: the page shows it, and the form starts from it.
@@ -46,38 +41,47 @@ test('a Shipment is created for an Order, its Label downloads, and the Carrier t
   await expect(shipments.getByLabel('Pickup point')).toHaveValue('FAKE01')
   // A prepaid Order: nothing for the Carrier to collect.
   await expect(shipments.getByLabel(/Cash on delivery/)).toHaveCount(0)
-  await expect(shipments.getByLabel('Parcel size')).toHaveValue('small')
-  // The fields follow the service: an address service asks for dimensions, and for no pickup point.
-  await toAddress(shipments)
-  await expect(shipments.getByLabel('Pickup point')).toHaveCount(0)
-  await expect(shipments.getByLabel('Parcel size')).toHaveCount(0)
+  await shipments.getByLabel('Parcel size').selectOption('medium')
+
+  // Creating it orders a label, which a Carrier may charge for: backing out of the question orders nothing.
+  const dialog = confirmation(page, 'Create shipment')
   await shipments.getByRole('button', { name: 'Create shipment' }).click()
+  await expect(dialog).toContainText('It orders a label from the carrier, which may charge for it')
+  await dialog.getByRole('button', { name: 'Cancel', exact: true }).click()
+  await expect(dialog).toBeHidden()
+  await expect(shipments.getByRole('row')).toHaveCount(0)
+  expect(await mine()).toEqual([])
+  await expect(shipments.getByLabel('Parcel size')).toHaveValue('medium')
+
+  await createShipment(page, shipments)
   await expect(shipments.getByRole('status')).toHaveText(CREATED)
 
-  // The page re-reads itself while the Carrier is being asked: the worker's answer shows without a reload.
+  // The page re-reads itself while the Carrier's answer is seconds away: first the Carrier has the request, and a few
+  // seconds later, without anybody asking, it has confirmed it and the Label is there.
   const row = shipments.getByRole('row').filter({ hasText: 'Fake carrier' })
   await expect(row).toContainText('Waiting for carrier', { timeout: 30_000 })
-  await expect(row).toContainText('Being arranged with the carrier.')
+  await expect(row).toContainText('The carrier has the request and has not confirmed it yet. It gives this status: created')
   await expect(row.getByRole('link', { name: 'Download label' })).toHaveCount(0)
-  await row.getByRole('button', { name: 'Check status' }).click()
-  await expect(row.getByRole('status')).toHaveText('The carrier is being asked. Refresh the page in a moment.')
   await expect(row).toContainText('Ready to send', { timeout: 30_000 })
   await expect(row).toContainText('The label is ready. Print it and stick it on the parcel.', { timeout: 30_000 })
-  const [mine] = (await fakeCarrier.calls()).shipments.filter((shipment) => shipment.account === carrier.account)
-  expect(mine).toMatchObject({ status: 'ready', trackingNumber: expect.stringMatching(/^FAKE\d{6}$/) })
-  await expect(row).toContainText(mine!.trackingNumber)
+  const [sent] = await mine()
+  expect(sent).toMatchObject({ status: 'ready', trackingNumber: expect.stringMatching(/^FAKE\d{6}$/) })
+  await expect(row).toContainText(sent!.trackingNumber)
+  // To the pickup point the Buyer chose, in the size that was picked.
+  expect((await fakeCarrier.calls()).creates.filter((create) => create.reference === sent!.reference)).toEqual([{ reference: sent!.reference, service: 'locker' }])
 
-  // The Label is a file to print: an attachment named after the tracking number, never cached.
+  // The Label is a file to print: an attachment named after the tracking number, never cached, and inert in a browser.
   const label = row.getByRole('link', { name: 'Download label' })
   const [download] = await Promise.all([page.waitForEvent('download'), label.click()])
-  expect(download.suggestedFilename()).toBe(`label-${mine!.trackingNumber}.pdf`)
+  expect(download.suggestedFilename()).toBe(`label-${sent!.trackingNumber}.pdf`)
   const file = await page.request.get((await label.getAttribute('href'))!)
   expect(file.status()).toBe(200)
   expect(file.headers()).toMatchObject({
     'content-type': 'application/pdf',
-    'content-disposition': `attachment; filename="label-${mine!.trackingNumber}.pdf"`,
+    'content-disposition': `attachment; filename="label-${sent!.trackingNumber}.pdf"`,
     'cache-control': 'no-store',
     'x-content-type-options': 'nosniff',
+    'content-security-policy': "default-src 'none'; sandbox",
   })
   expect((await file.body()).subarray(0, 5).toString('latin1')).toBe('%PDF-')
 
@@ -86,7 +90,7 @@ test('a Shipment is created for an Order, its Label downloads, and the Carrier t
   await expect(page.getByText('Phase: New')).toBeVisible()
   // The parcel is handed over. Hanza would ask the Carrier in a quarter of an hour; the person asks now.
   await row.getByRole('button', { name: 'Check status' }).click()
-  await expect(row.getByRole('status')).toHaveText('The carrier is being asked. Refresh the page in a moment.')
+  await expect(row.getByRole('status')).toHaveText('The carrier is being asked. Its answer shows here in a moment.')
   // The Shipment and its Order change in one transaction, and a page reads them in two queries: both are waited for.
   await reloadUntil(page, path, async () => {
     await expect(row).toContainText('In transit', { timeout: 1_000 })
@@ -97,7 +101,7 @@ test('a Shipment is created for an Order, its Label downloads, and the Carrier t
   await expect(row.getByRole('button', { name: 'Cancel shipment' })).toHaveCount(0)
   await expect(shipments).toContainText('This order is shipped, so no shipment can be created for it.')
   await expect(shipments.getByRole('button', { name: 'Create shipment' })).toHaveCount(0)
-  expect((await fakeCarrier.calls()).shipments.filter((shipment) => shipment.account === carrier.account)).toEqual([{ ...mine, status: 'in_transit' }])
+  expect(await mine()).toEqual([{ ...sent, status: 'in_transit' }])
 })
 
 test('without a carrier Connection an Order says so, and a pickup point the Carrier refuses fails the Shipment with its code', async ({ page, fakeCarrier }) => {
@@ -117,7 +121,7 @@ test('without a carrier Connection an Order says so, and a pickup point the Carr
   const carrier = await addFakeCourier(page, 'Fake carrier', { rejectPickupPoints: 'FAKE01' })
   const { path, shipments } = await openOrder(page, 'fake-order-1')
   await expect(shipments.getByLabel('Pickup point')).toHaveValue('FAKE01')
-  await shipments.getByRole('button', { name: 'Create shipment' }).click()
+  await createShipment(page, shipments)
   await expect(shipments.getByRole('status')).toHaveText(CREATED)
   const row = shipments.getByRole('row').filter({ hasText: 'Fake carrier' })
   await reloadUntil(page, path, async () => {
@@ -141,26 +145,29 @@ test('cancelling a Shipment the Carrier has confirmed asks first, then asks the 
   // Held at ready: however often it is checked, the Carrier never takes the parcel.
   const carrier = await addFakeCourier(page, 'Fake carrier', { stuckAt: 'ready' })
 
+  // To the address this time: the fields follow the service, dimensions instead of a size and no pickup point.
   const { path, shipments } = await openOrder(page, 'fake-order-4')
   await expect(shipments.getByLabel('Pickup point')).toHaveValue('FAKE02')
+  await shipments.getByLabel('Service').selectOption('courier')
+  await expect(shipments.getByLabel('Pickup point')).toHaveCount(0)
+  await expect(shipments.getByLabel('Parcel size')).toHaveCount(0)
+  await shipments.getByLabel('Length (cm)').fill('30,5')
+  await shipments.getByLabel('Width (cm)').fill('20')
+  await shipments.getByLabel('Height (cm)').fill('10')
   // Not a weight: the form says which field, and keeps the service that was chosen and what was typed.
-  await toAddress(shipments, 'heavy')
-  await shipments.getByRole('button', { name: 'Create shipment' }).click()
+  await shipments.getByLabel('Weight (kg)').fill('heavy')
+  await createShipment(page, shipments)
   await expect(shipments.getByRole('alert')).toHaveText('Check the fields.')
   await expect(shipments.getByLabel('Weight (kg)')).toHaveAccessibleDescription('Enter a weight in kilograms above 0, e.g. 2 or 0.5.')
   await expect(shipments.getByLabel('Service')).toHaveValue('courier')
   await expect(shipments.getByLabel('Length (cm)')).toHaveValue('30,5')
   await shipments.getByLabel('Weight (kg)').fill('1.25')
-  await shipments.getByRole('button', { name: 'Create shipment' }).click()
+  await createShipment(page, shipments)
   await expect(shipments.getByRole('status')).toHaveText(CREATED)
 
+  // A few seconds after the Carrier took it, Hanza asks by itself: confirmed, with its Label.
   const row = shipments.getByRole('row').filter({ hasText: 'Fake carrier' })
   await expect(row).toContainText('Fake courier')
-  await reloadUntil(page, path, async () => {
-    await expect(row).toContainText('Waiting for carrier', { timeout: 1_000 })
-  })
-  await row.getByRole('button', { name: 'Check status' }).click()
-  await expect(row.getByRole('status')).toHaveText('The carrier is being asked. Refresh the page in a moment.')
   await reloadUntil(page, path, async () => {
     await expect(row.getByRole('link', { name: 'Download label' })).toBeVisible({ timeout: 1_000 })
   })
