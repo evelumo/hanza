@@ -165,7 +165,12 @@ describe.skipIf(!databaseUrl)('sync engine end to end (real Postgres, in-memory 
     })
   })
 
-  it('3. pushes Available to the fake Channel', async () => {
+  it('3. pushes Available to the fake Channel, the first time already net of the seed Orders', async () => {
+    // Offers, then Orders, then Stock (#125): one push after the Orders are imported, so fake-offer-1 is told 3
+    // (5 on the shelf, 2 reserved by fake-order-1) and never the full 5 first.
+    expect(fake.stockPushes.map((levels) => levels.map((level) => [level.offerExternalId, level.available]).sort())).toEqual([
+      [['fake-offer-1', 3], ['fake-offer-2', 1], ['fake-offer-3', 0]],
+    ])
     expect([lastPushed('fake-offer-1'), lastPushed('fake-offer-2'), lastPushed('fake-offer-3')]).toEqual([3, 1, 0])
     expect(lastPushed('fake-offer-4')).toBeUndefined()
     const offers = await ctx.db.offer.findMany({ where: { organizationId: org, connectionId, productId: { not: null } } })

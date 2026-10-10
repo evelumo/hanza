@@ -100,7 +100,8 @@ describe.skipIf(!databaseUrl)('orders.pull', () => {
       return { items: [], nextCursor: '20', hasMore: false }
     }
     await runPull()
-    expect(waitingFor()).toEqual([])
+    // No further Orders pull; the feed caught up for the first time, so the held stock push goes (#125).
+    expect(waitingFor().map((job) => job.name)).toEqual(['stock.push'])
   })
 
   it('an expired cursor resets the feed to null with an Event, and the same run carries on from the open Orders', async () => {

@@ -48,7 +48,7 @@ A **Channel** (`marketplace` or `shop`) must implement `offers.pull`, `orders.pu
 
 `CapabilityContext` gives you `app` (installation settings, parsed with `appConfigSchema`; `{}` without one), `config` (parsed with `configSchema`), `credentials` (parsed with `credentialsSchema`), `fetch` (global fetch with a 30 s timeout; **you** add the authentication to your requests) and `log`.
 
-Paging: `nextCursor` is the position to resume from; when `hasMore` is true it must be non-null and differ from the input cursor. In `orders.pull` the feed is a journal: a cursor past the last entry returns `{ items: [], hasMore: false }`.
+Paging: `nextCursor` is the position to resume from; when `hasMore` is true it must be non-null and differ from the input cursor. In `orders.pull` the feed is a journal: a cursor past the last entry returns `{ items: [], hasMore: false }`. Hanza pushes no Stock to a Channel until its Order feed has once answered `hasMore: false` since the Connection was created or the feed restarted (#125), so the first numbers already count the open Orders: report `hasMore: false` as soon as the feed is caught up, never keep it true while there is nothing to read.
 
 Status translation is connector code. Inbound: the Channel's statuses and events decide which Orders you return and which **Channel facts** (`facts[]`, types `cancelled`, `shipped` and `paid`, each with an id that is stable for that Order) you attach. Hanza does not mirror the Channel's status. Outbound: `orders.updateStatus` maps the four Order phases to the Channel's statuses. Connectors speak phases only: an organization's own Order statuses are labels within a phase that never reach a connector, and the per-Channel Status mapping is data in the core (ADR 0018).
 
