@@ -34,6 +34,10 @@ _Avoid_: Out of stock, empty
 How many units of a Product physically sit in a Warehouse. Hanza is the only source of truth for Stock; every Channel only receives it.
 _Avoid_: Inventory, quantity, on-hand
 
+**Unset Stock**:
+A Product's Stock before anyone saved it, for example a Product created from an Offer: it has no Stock in any Warehouse. Orders reserve against it as 0 (their lines are Shortages) and shipping takes nothing off it, but no Channel is told any number for the Product's Offers until someone saves its Stock, 0 included (ADR 0023).
+_Avoid_: Zero stock, empty stock, missing stock
+
 **Warehouse**:
 A place where Stock is kept. Every organization has at least one, the default Warehouse, which gets a new Product's initial Stock and is always active. An inactive Warehouse holds nothing and counts for no Channel. Warehouses have a priority: lower is used first when a Reservation is placed.
 _Avoid_: Location, storage, inventory
