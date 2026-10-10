@@ -4,8 +4,10 @@ import {
   CHANNEL_CAPABILITIES,
   CONNECTOR_ID_PATTERN,
   CONNECTOR_KINDS,
+  findShippingService,
   isChannel,
   rateLimitsProblem,
+  shippingProblem,
   type AnyConnectorDefinition,
   type CapabilityContext,
   type PullResult,
@@ -16,6 +18,16 @@ import { offerSchema, type Offer } from '../model/offer'
 import { ORDER_PHASES, orderSchema, orderUpdateSchema, type Order } from '../model/order'
 import { offerPriceSchema, type OfferPrice } from '../model/price'
 import { pricePushResultSchema, stockPushResultSchema } from '../model/push-result'
+import {
+  isFinalShipmentStatus,
+  shipmentCancelResultSchema,
+  shipmentCreateResultSchema,
+  shipmentLabelSchema,
+  shipmentRequestProblem,
+  shipmentRequestSchema,
+  shipmentStateSchema,
+  type ShipmentRequest,
+} from '../model/shipment'
 import { stockLevelSchema, type StockLevel } from '../model/stock'
 
 export interface ConformanceFixtures {
@@ -25,12 +37,16 @@ export interface ConformanceFixtures {
   credentials: unknown
   /** Serves recorded responses. Default: a fetch that rejects with "network disabled in conformance tests". */
   fetch?: typeof fetch
-  /** If given, orders.pull with these overrides must fail with kind 'auth_expired'. */
+  /**
+   * If given, orders.pull with these overrides must fail with kind 'auth_expired' (C11). A connector without
+   * orders.pull that makes Shipments is asked for `shipments.track` of the Shipment S2 created instead.
+   */
   unauthorized?: { credentials?: unknown; fetch?: typeof fetch }
   /**
    * C14: the pulls, run against a Channel that answers every request `403 Forbidden` (no auth signal), must not fail
    * `auth_expired`, and must send a request when `fetch` is given. Default: a fetch answering a bare 403. Pass `false` only if the Channel really uses 403 for
-   * rejected credentials, and say so in the connector's AGENTS.md.
+   * rejected credentials, and say so in the connector's AGENTS.md. A connector without orders.pull that makes
+   * Shipments is checked on `shipments.track` of the Shipment S2 created.
    */
   forbidden?: false | { fetch?: typeof fetch }
   /** C18: if given, orders.pull with this cursor (one the recorded Channel no longer has) must fail with `CursorExpiredError`. */
@@ -50,6 +66,25 @@ export interface ConformanceFixtures {
   refresh?: { fetch?: typeof fetch; refused?: { credentials?: unknown; fetch?: typeof fetch } }
   /** Required when the connector has `auth.deviceFlow` (C16): `start`, then one `poll` of its device code, with this `fetch`. */
   deviceFlow?: { fetch?: typeof fetch }
+  /** Required when the connector has `shipments.create` (S1 to S7). */
+  shipment?: ShipmentFixtures
+}
+
+export interface ShipmentFixtures {
+  /**
+   * A request the Carrier accepts, for one of the connector's declared services (S2). The Shipment it makes is the
+   * one S3 to S5 and S7 use, and C11 and C14 for a connector without orders.pull.
+   */
+  request: ShipmentRequest
+  /** S6: a request the Carrier refuses for good (an unknown pickup point), under another `reference`. */
+  rejected?: { request: ShipmentRequest }
+  /**
+   * S5 asks for the Label again while `shipments.label` fails as 'transient' (the Carrier has none yet), tracking
+   * the Shipment in between: at most this many times. Default 10.
+   */
+  labelAttempts?: number
+  /** Milliseconds S5 waits before it asks again. Default 0; a recording against a real Carrier needs a few seconds. */
+  labelWaitMs?: number
 }
 
 const pullResultSchema = z.object({
@@ -429,6 +464,170 @@ export async function assertConformance(connector: AnyConnectorDefinition, fixtu
     })
   }
 
+  // S1 to S7: a connector that makes Shipments. One Shipment is created and then repeated, tracked, printed and cancelled.
+  const createShipment = capabilities['shipments.create']
+  const trackShipments = capabilities['shipments.track']
+  const labelShipment = capabilities['shipments.label']
+  const cancelShipment = capabilities['shipments.cancel']
+  // `as`, not an annotation: S2 assigns it inside a callback, which the compiler does not follow.
+  let createdId = null as string | null
+
+  // S1, also without shipments.create: services nobody can use are a mistake in the definition.
+  const shipping = shippingProblem(connector)
+  if (shipping !== null) fail('S1', shipping)
+
+  // S2 to S7
+  if (createShipment) {
+    // The core never sends a request that does not fit a declared service, so a fixture that does not proves nothing.
+    const usable = (id: string, label: string, raw: unknown): ShipmentRequest | null => {
+      const request = shipmentRequestSchema.safeParse(raw)
+      if (!request.success) {
+        fail(id, `the ${label} fails shipmentRequestSchema: ${z.prettifyError(request.error)}`)
+        return null
+      }
+      // S1 said why; with services that are not well formed there is nothing to fit the request to.
+      if (shipping !== null) return null
+      const service = findShippingService(connector, request.data.service)
+      if (service === undefined) {
+        fail(id, `the ${label} names the service "${request.data.service}", which the connector does not declare`)
+        return null
+      }
+      const problem = shipmentRequestProblem(service, request.data)
+      if (problem !== null) fail(id, `the ${label} does not fit the service "${service.id}" (${problem}); the core never sends such a request`)
+      return problem === null ? request.data : null
+    }
+    // A new copy for every call, so a connector cannot recognise a repeat by the object.
+    const create = (request: ShipmentRequest) => call('shipments.create', () => createShipment(context, structuredClone(request)))
+    const shipment = fixtures.shipment
+    if (!shipment) fail('S2', 'shipments.create is implemented: pass a shipment fixture')
+    const request = shipment ? usable('S2', 'shipment request fixture', shipment.request) : null
+
+    if (shipment && request) {
+      await check('S2', async () => {
+        const result = shipmentCreateResultSchema.safeParse(await create(request))
+        if (!result.success) {
+          fail('S2', `shipments.create returned an invalid result: ${z.prettifyError(result.error)}`)
+          return
+        }
+        if (result.data.outcome === 'rejected') {
+          fail('S2', `shipments.create rejected the shipment request fixture with code "${result.data.code}"; it must be a request the Carrier accepts`)
+          return
+        }
+        createdId = result.data.externalId
+        const { status } = result.data
+        if (isFinalShipmentStatus(status)) fail('S2', `shipments.create returned a Shipment that is already ${status}; a new Shipment is not in a final status`)
+      })
+    }
+    const shipmentId = createdId
+
+    if (request && shipmentId !== null) {
+      await check('S3', async () => {
+        const again = shipmentCreateResultSchema.safeParse(await create(request))
+        if (!again.success || again.data.outcome !== 'created') {
+          fail('S3', 'shipments.create with the same reference did not return the created Shipment the second time')
+        } else if (again.data.externalId !== shipmentId) {
+          fail('S3', `shipments.create with the same reference returned Shipment "${again.data.externalId}" after "${shipmentId}"; a repeated create must return the Shipment the first one made`)
+        }
+      })
+    }
+
+    if (trackShipments && shipmentId !== null) {
+      await check('S4', async () => {
+        const states = z.array(shipmentStateSchema).safeParse(await call('shipments.track', () => trackShipments(context, [shipmentId])))
+        if (!states.success) {
+          fail('S4', `shipments.track returned something that is not an array of Shipment states: ${z.prettifyError(states.error)}`)
+        } else {
+          for (const state of states.data) {
+            if (state.externalId !== shipmentId) fail('S4', `shipments.track returned a state for Shipment "${state.externalId}", which was not asked for`)
+          }
+          const own = states.data.filter((state) => state.externalId === shipmentId).length
+          if (own === 0) fail('S4', `shipments.track returned no state for Shipment "${shipmentId}", which shipments.create has just made`)
+          if (own > 1) fail('S4', `shipments.track returned ${own} states for Shipment "${shipmentId}"`)
+        }
+        let requests = 0
+        const counting: typeof fetch = (input, init) => {
+          requests++
+          return context.fetch(input, init)
+        }
+        const none: unknown = await call('shipments.track', () => trackShipments({ ...context, fetch: counting }, []))
+        if (!Array.isArray(none) || none.length !== 0) fail('S4', 'shipments.track of no Shipments must return an empty array')
+        if (requests > 0) fail('S4', 'shipments.track of no Shipments made a request; with nothing to track it must not call the Carrier')
+      })
+    }
+
+    if (shipment && labelShipment && shipmentId !== null) {
+      await check('S5', async () => {
+        const attempts = shipment.labelAttempts ?? 10
+        const waitMs = shipment.labelWaitMs ?? 0
+        for (let attempt = 1; ; attempt++) {
+          let label: unknown
+          try {
+            label = await call('shipments.label', () => labelShipment(context, { externalId: shipmentId }))
+          } catch (error) {
+            if (!isConnectorError(error) || classifyConnectorError(error).kind !== 'transient') throw error
+            if (attempt >= attempts) {
+              fail('S5', `shipments.label still failed as 'transient' after ${attempts} attempts, so no Label was ever returned`)
+              return
+            }
+            if (waitMs > 0) await new Promise((resolve) => setTimeout(resolve, waitMs))
+            // What the core does between two attempts; a Carrier double that confirms a Shipment when it is tracked moves on.
+            if (trackShipments) await call('shipments.track', () => trackShipments(context, [shipmentId]))
+            continue
+          }
+          const parsed = shipmentLabelSchema.safeParse(label)
+          if (!parsed.success) fail('S5', `shipments.label returned an invalid Label (it needs a content type and a non-empty file): ${z.prettifyError(parsed.error)}`)
+          return
+        }
+      })
+    }
+
+    const rejected = shipment?.rejected ? usable('S6', 'rejected shipment request fixture', shipment.rejected.request) : null
+    if (rejected) {
+      await check('S6', async () => {
+        if (rejected.reference === request?.reference) {
+          fail('S6', 'the rejected shipment request fixture must not share its reference with the shipment request fixture')
+          return
+        }
+        let raw: unknown
+        try {
+          raw = await create(rejected)
+        } catch (error) {
+          fail('S6', `shipments.create threw ${describeError(error)} for the rejected fixture; a request the Carrier refuses for good is the outcome 'rejected', not an error`)
+          return
+        }
+        const result = shipmentCreateResultSchema.safeParse(raw)
+        if (!result.success) fail('S6', `shipments.create returned an invalid result for the rejected fixture: ${z.prettifyError(result.error)}`)
+        else if (result.data.outcome !== 'rejected') {
+          fail('S6', `shipments.create made Shipment "${result.data.externalId}" for the rejected fixture; it must return the outcome 'rejected' with a code`)
+        }
+      })
+    }
+
+    // Last: the Shipment may be gone afterwards.
+    if (cancelShipment && shipmentId !== null) {
+      await check('S7', async () => {
+        const outcomes: string[] = []
+        for (let attempt = 1; attempt <= 2; attempt++) {
+          const result = shipmentCancelResultSchema.safeParse(await call('shipments.cancel', () => cancelShipment(context, { externalId: shipmentId })))
+          if (!result.success) {
+            fail('S7', `shipments.cancel returned an invalid result (call ${attempt}): ${z.prettifyError(result.error)}`)
+            return
+          }
+          outcomes.push(result.data.outcome)
+        }
+        if (outcomes[0] === 'cancelled' && outcomes[1] !== 'cancelled') {
+          fail('S7', "shipments.cancel returned 'cancelled' and then 'refused' for the same Shipment; a repeated cancel of a cancelled Shipment is 'cancelled'")
+        }
+      })
+    }
+  }
+
+  // C11 and C14 need a call that reaches the API with the Connection's credentials: orders.pull, or for a connector
+  // without it, shipments.track of the Shipment S2 created.
+  const trackedId = createdId
+  const trackCreated =
+    !pullOrders && trackShipments && trackedId !== null ? (ctx: CapabilityContext) => trackShipments(ctx, [trackedId]) : undefined
+
   // C11
   if (fixtures.unauthorized) {
     await check('C11', async () => {
@@ -440,8 +639,12 @@ export async function assertConformance(connector: AnyConnectorDefinition, fixtu
         fail('C11', 'credentialsSchema rejects the unauthorized credentials fixture')
         return
       }
-      if (!pullOrders) {
-        fail('C11', 'orders.pull is missing, so the unauthorized fixture cannot be exercised')
+      const [name, run] = pullOrders
+        ? (['orders.pull', (ctx: CapabilityContext): Promise<unknown> => pullOrders(ctx, null)] as const)
+        : (['shipments.track', trackCreated] as const)
+      if (!run) {
+        // A connector that makes Shipments and has none to track failed S1 or S2, which said why.
+        if (!createShipment) fail('C11', 'orders.pull is missing, so the unauthorized fixture cannot be exercised')
         return
       }
       const unauthorizedContext: CapabilityContext = {
@@ -450,24 +653,22 @@ export async function assertConformance(connector: AnyConnectorDefinition, fixtu
         fetch: overrides.fetch ?? context.fetch,
       }
       try {
-        await pullOrders(unauthorizedContext, null)
+        await run(unauthorizedContext)
       } catch (error) {
         const { kind } = classifyConnectorError(error)
-        if (kind !== 'auth_expired') fail('C11', `orders.pull with bad credentials failed as '${kind}', expected 'auth_expired'`)
+        if (kind !== 'auth_expired') fail('C11', `${name} with bad credentials failed as '${kind}', expected 'auth_expired'`)
         return
       }
-      fail('C11', 'orders.pull with the unauthorized fixture resolved; it must reject')
+      fail('C11', `${name} with the unauthorized fixture resolved; it must reject`)
     })
   }
 
   // C14
-  const forbiddenPulls = (
-    [
-      ['orders.pull', pullOrders],
-      ['offers.pull', pullOffers],
-    ] as const
-  ).filter(([, pull]) => pull !== undefined)
-  if (fixtures.forbidden !== false && forbiddenPulls.length > 0) {
+  const forbiddenCalls: Array<[name: string, run: (ctx: CapabilityContext) => Promise<unknown>]> = []
+  if (pullOrders) forbiddenCalls.push(['orders.pull', (ctx) => pullOrders(ctx, null)])
+  if (pullOffers) forbiddenCalls.push(['offers.pull', (ctx) => pullOffers(ctx, null)])
+  if (trackCreated) forbiddenCalls.push(['shipments.track', trackCreated])
+  if (fixtures.forbidden !== false && forbiddenCalls.length > 0) {
     await check('C14', async () => {
       const answer = (fixtures.forbidden && fixtures.forbidden.fetch) || (async () => new Response(null, { status: 403, statusText: 'Forbidden' }))
       let requests = 0
@@ -475,9 +676,9 @@ export async function assertConformance(connector: AnyConnectorDefinition, fixtu
         requests++
         return answer(input, init)
       }
-      for (const [name, pull] of forbiddenPulls) {
+      for (const [name, run] of forbiddenCalls) {
         try {
-          await call(name, () => (pull as (ctx: CapabilityContext, cursor: string | null) => Promise<unknown>)({ ...context, fetch: forbiddenFetch }, null))
+          await call(name, () => run({ ...context, fetch: forbiddenFetch }))
         } catch (error) {
           const { kind } = classifyConnectorError(error)
           if (kind === 'auth_expired') {
@@ -486,7 +687,7 @@ export async function assertConformance(connector: AnyConnectorDefinition, fixtu
         }
       }
       // A connector that talks HTTP (it was given recorded responses) must have met the 403, or the check proved nothing.
-      if (fixtures.fetch && requests === 0) fail('C14', 'no pull made a request, so the 403 was never seen')
+      if (fixtures.fetch && requests === 0) fail('C14', `no ${trackCreated ? 'call' : 'pull'} made a request, so the 403 was never seen`)
     })
   }
 
