@@ -1,5 +1,5 @@
 import type { OfferPublication, OrderPhase } from '@hanza/core'
-import type { ConnectionHealth, OrderStatusColor } from '@hanza/db'
+import type { ConnectionHealth, OrderStatusColor, ShipmentStatus } from '@hanza/db'
 import {
   Circle,
   CircleAlert,
@@ -9,13 +9,20 @@ import {
   CircleSlash,
   Clock,
   KeyRound,
+  MapPin,
   OctagonAlert,
+  Send,
+  Tag,
+  TriangleAlert,
+  Truck,
+  Undo2,
   type LucideIcon,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { useT } from '@/i18n/use-t'
-import { healthLabel, orderPhaseLabel, orderStatusName } from '@/lib/labels'
+import { healthLabel, orderPhaseLabel, orderStatusName, shipmentStatusLabel } from '@/lib/labels'
 import { publicationLabel } from '@/lib/offer-push-status'
+import { shipmentStatusTone } from '@/lib/shipments'
 import type { Tone } from './tone'
 
 // Whole class names, so Tailwind sees every one of them.
@@ -60,6 +67,20 @@ const publicationIcon: Record<OfferPublication['status'], LucideIcon> = {
   ended: CircleSlash,
 }
 
+// Several statuses share a tone (everything on its way is `info`), so each has a shape of its own.
+const shipmentIcon: Record<ShipmentStatus, LucideIcon> = {
+  requested: Send,
+  pending: Clock,
+  ready: Tag,
+  in_transit: Truck,
+  awaiting_pickup: MapPin,
+  delivery_problem: TriangleAlert,
+  delivered: CircleCheck,
+  returned: Undo2,
+  cancelled: CircleSlash,
+  failed: OctagonAlert,
+}
+
 export function OrderStatusBadge({ status }: { status: { name: string | null; phase: OrderPhase; color: OrderStatusColor | null } }) {
   const t = useT()
   return (
@@ -75,6 +96,16 @@ export function HealthBadge({ health }: { health: ConnectionHealth }) {
   return (
     <Badge tone={tone} icon={icon}>
       {healthLabel(t, health)}
+    </Badge>
+  )
+}
+
+/** Where a Shipment is: one of the fixed Shipment statuses, never the Carrier's own wording. */
+export function ShipmentStatusBadge({ status }: { status: ShipmentStatus }) {
+  const t = useT()
+  return (
+    <Badge tone={shipmentStatusTone[status]} icon={shipmentIcon[status]}>
+      {shipmentStatusLabel(t, status)}
     </Badge>
   )
 }

@@ -17,7 +17,7 @@ export function clientMessages(messages: Messages) {
     prices: { form: messages.prices.form },
     products: { columns: messages.products.columns, detail: messages.products.detail, new: messages.products.new },
     families: { new: messages.families.new, detail: messages.families.detail },
-    orders: { linkLine: messages.orders.linkLine, moveReservation: messages.orders.moveReservation },
+    orders: { linkLine: messages.orders.linkLine, moveReservation: messages.orders.moveReservation, createShipment: messages.orders.createShipment },
     connections: {
       new: messages.connections.new,
       stockRules: messages.connections.stockRules,

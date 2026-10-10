@@ -4,7 +4,7 @@ Hanza is in early development. Community support happens in [GitHub Issues](http
 
 ## Before opening an issue
 
-Read the [quick start](docs/quick-start.md) and [troubleshooting](docs/quick-start.md#troubleshooting), then search existing issues. Real connectors, shipping, invoicing, a public REST API and product-facing AI are planned; see the [roadmap](docs/roadmap.md).
+Read the [quick start](docs/quick-start.md) and [troubleshooting](docs/quick-start.md#troubleshooting), then search existing issues. Shipments exist, with one real connector, InPost (a courier); real Channel connectors, invoicing, a public REST API and product-facing AI are planned; see the [roadmap](docs/roadmap.md).
 
 ## Report a bug
 

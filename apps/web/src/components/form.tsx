@@ -1,14 +1,7 @@
 'use client'
 
 import { CircleAlert, CircleCheck, LoaderCircle, OctagonAlert } from 'lucide-react'
-import {
-  useId,
-  type ButtonHTMLAttributes,
-  type FieldsetHTMLAttributes,
-  type InputHTMLAttributes,
-  type ReactNode,
-  type SelectHTMLAttributes,
-} from 'react'
+import { useId, type ButtonHTMLAttributes, type ComponentProps, type FieldsetHTMLAttributes, type InputHTMLAttributes, type ReactNode } from 'react'
 import { useFormStatus } from 'react-dom'
 import { Alert } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
@@ -82,6 +75,7 @@ export function Field({
   )
 }
 
+/** Takes a `ref` to the <select> itself, for a caller that has to reach the element. */
 export function Select({
   label,
   error,
@@ -92,10 +86,7 @@ export function Select({
   children,
   'aria-describedby': describedByCaller,
   ...select
-}: { label: string; error?: string; hint?: string; labelHidden?: boolean; compact?: boolean; children: ReactNode } & Omit<
-  SelectHTMLAttributes<HTMLSelectElement>,
-  'size'
->) {
+}: { label: string; error?: string; hint?: string; labelHidden?: boolean; compact?: boolean; children: ReactNode } & Omit<ComponentProps<'select'>, 'size'>) {
   const generatedId = useId()
   const id = select.id ?? generatedId
   return (
