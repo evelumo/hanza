@@ -32,6 +32,8 @@ export const FAKE_COURIER_PICKUP_POINT_UNKNOWN = 'pickup_point_unknown'
 export const FAKE_COURIER_PHONE_MISSING = 'receiver_phone_missing'
 /** The code `shipments.cancel` refuses with once the Carrier has the parcel. */
 export const FAKE_COURIER_TOO_LATE = 'too_late'
+/** The code `shipments.cancel` refuses with for a Shipment this Carrier account does not have. */
+export const FAKE_COURIER_SHIPMENT_UNKNOWN = 'shipment_unknown'
 
 export const fakeCourierConfigSchema = z.object({
   account: z
@@ -176,7 +178,9 @@ export function createFakeCourierConnector(state: FakeCourierState, options: { i
       async 'shipments.cancel'(ctx, { externalId }): Promise<ShipmentCancelResult> {
         state.cancels.push(externalId)
         const shipment = find(ctx, externalId)
-        if (!shipment || shipment.status === 'cancelled') return { outcome: 'cancelled' }
+        // Not knowing a Shipment says nothing about what became of the parcel, so it is never "cancelled".
+        if (!shipment) return { outcome: 'refused', code: FAKE_COURIER_SHIPMENT_UNKNOWN }
+        if (shipment.status === 'cancelled') return { outcome: 'cancelled' }
         if (isShipmentHandedOver(shipment.status)) return { outcome: 'refused', code: FAKE_COURIER_TOO_LATE }
         shipment.status = 'cancelled'
         return { outcome: 'cancelled' }

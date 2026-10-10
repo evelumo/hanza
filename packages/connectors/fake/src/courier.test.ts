@@ -19,6 +19,7 @@ import { z } from 'zod'
 import {
   FAKE_COURIER_PHONE_MISSING,
   FAKE_COURIER_PICKUP_POINT_UNKNOWN,
+  FAKE_COURIER_SHIPMENT_UNKNOWN,
   FAKE_COURIER_TOO_LATE,
   createFakeChannel,
   createFakeCourier,
@@ -163,7 +164,7 @@ describe('fake courier', () => {
     })
 
     it('refuses with codes a Shipment may carry', () => {
-      for (const code of [FAKE_COURIER_PICKUP_POINT_UNKNOWN, FAKE_COURIER_PHONE_MISSING, FAKE_COURIER_TOO_LATE]) {
+      for (const code of [FAKE_COURIER_PICKUP_POINT_UNKNOWN, FAKE_COURIER_PHONE_MISSING, FAKE_COURIER_TOO_LATE, FAKE_COURIER_SHIPMENT_UNKNOWN]) {
         expect(code).toMatch(/^[A-Za-z0-9_.:-]{1,100}$/)
       }
     })
@@ -291,13 +292,20 @@ describe('fake courier', () => {
       expect(fake.courier.shipments.map((shipment) => shipment.status)).toEqual(['cancelled', 'cancelled'])
     })
 
-    it('says cancelled again for a cancelled Shipment and for one it does not know', async () => {
+    it('says cancelled again for a Shipment it cancelled', async () => {
       const fake = carrier()
       const { externalId } = await created(fake)
       await fake.cancel(externalId)
       expect(await fake.cancel(externalId)).toEqual({ outcome: 'cancelled' })
-      expect(await fake.cancel('fake-shipment-999999')).toEqual({ outcome: 'cancelled' })
-      expect(fake.courier.cancels).toEqual([externalId, externalId, 'fake-shipment-999999'])
+      expect(fake.courier.cancels).toEqual([externalId, externalId])
+    })
+
+    it('refuses a Shipment it does not know: nothing says that parcel was cancelled', async () => {
+      const fake = carrier()
+      expect(await fake.cancel('fake-shipment-999999')).toEqual({ outcome: 'refused', code: FAKE_COURIER_SHIPMENT_UNKNOWN })
+      expect(await fake.cancel('fake-shipment-999999')).toEqual({ outcome: 'refused', code: FAKE_COURIER_SHIPMENT_UNKNOWN })
+      expect(fake.courier.cancels).toEqual(['fake-shipment-999999', 'fake-shipment-999999'])
+      expect(fake.courier.shipments).toEqual([])
     })
 
     it('refuses with too_late once the Carrier has the parcel', async () => {
@@ -324,7 +332,7 @@ describe('fake courier', () => {
       const fake = carrier()
       const mine = await created(fake, request(), { account: 'one' })
       expect(await fake.track([mine.externalId], { account: 'two' })).toEqual([])
-      expect(await fake.cancel(mine.externalId, { account: 'two' })).toEqual({ outcome: 'cancelled' })
+      expect(await fake.cancel(mine.externalId, { account: 'two' })).toEqual({ outcome: 'refused', code: FAKE_COURIER_SHIPMENT_UNKNOWN })
       await expect(fake.label(mine.externalId, { account: 'two' })).rejects.toBeInstanceOf(PermanentError)
       expect((await fake.track([mine.externalId], { account: 'one' }))[0]!.status).toBe('ready')
       // The same reference on another account is another Shipment.
