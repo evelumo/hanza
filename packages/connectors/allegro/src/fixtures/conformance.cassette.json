@@ -1,0 +1,5658 @@
+{
+  "version": 1,
+  "interactions": [
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/sale/offers?limit=1000&offset=0&publication.status=ACTIVE&publication.status=ACTIVATING&publication.status=ENDED",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/vnd.allegro.public.v1+json",
+          "date": "Sat, 10 Oct 2026 12:00:00 GMT"
+        },
+        "body": {
+          "json": {
+            "offers": [
+              {
+                "id": "7834566007",
+                "name": "Milk jug 0.5 l",
+                "category": {
+                  "id": "257929"
+                },
+                "primaryImage": {
+                  "url": "https://a.allegroimg.com/original/05a2af/929c6dae4fb8721a8539582eb421"
+                },
+                "saleInfo": {
+                  "currentPrice": null,
+                  "biddersCount": 0
+                },
+                "stats": {
+                  "watchersCount": 4,
+                  "visitsCount": 54
+                },
+                "sellingMode": {
+                  "format": "BUY_NOW",
+                  "price": {
+                    "amount": "39.99",
+                    "currency": "PLN"
+                  }
+                },
+                "stock": {
+                  "available": 23,
+                  "sold": 3
+                },
+                "publication": {
+                  "status": "ACTIVE",
+                  "startingAt": null,
+                  "startedAt": "2026-09-01T08:00:00Z",
+                  "endingAt": null,
+                  "endedAt": null,
+                  "marketplaces": {
+                    "base": {
+                      "id": "allegro-pl"
+                    }
+                  }
+                },
+                "external": {
+                  "id": "MUG-350-WHT"
+                },
+                "isFulfillment": true
+              },
+              {
+                "id": "7834566006",
+                "name": "Stoneware plate 27 cm",
+                "category": {
+                  "id": "257929"
+                },
+                "primaryImage": {
+                  "url": "https://a.allegroimg.com/original/05a2af/929c6dae4fb8721a8539582eb421"
+                },
+                "saleInfo": {
+                  "currentPrice": null,
+                  "biddersCount": 0
+                },
+                "stats": {
+                  "watchersCount": 4,
+                  "visitsCount": 54
+                },
+                "sellingMode": {
+                  "format": "BUY_NOW",
+                  "price": {
+                    "amount": "24.0",
+                    "currency": "PLN"
+                  }
+                },
+                "stock": {
+                  "available": 23,
+                  "sold": 3
+                },
+                "publication": {
+                  "status": "ACTIVE",
+                  "startingAt": null,
+                  "startedAt": "2026-09-01T08:00:00Z",
+                  "endingAt": null,
+                  "endedAt": null,
+                  "marketplaces": {
+                    "base": {
+                      "id": "allegro-pl"
+                    }
+                  }
+                },
+                "external": null,
+                "isFulfillment": false
+              },
+              {
+                "id": "7834566005",
+                "name": "Salad bowl 24 cm, grey",
+                "category": {
+                  "id": "257929"
+                },
+                "primaryImage": {
+                  "url": "https://a.allegroimg.com/original/05a2af/929c6dae4fb8721a8539582eb421"
+                },
+                "saleInfo": {
+                  "currentPrice": null,
+                  "biddersCount": 0
+                },
+                "stats": {
+                  "watchersCount": 4,
+                  "visitsCount": 54
+                },
+                "sellingMode": {
+                  "format": "BUY_NOW",
+                  "price": {
+                    "amount": "39.99",
+                    "currency": "PLN"
+                  }
+                },
+                "stock": {
+                  "available": 5
+                },
+                "publication": {
+                  "status": "ENDED"
+                },
+                "external": {
+                  "id": "BOWL-240-GRY"
+                },
+                "isFulfillment": false
+              },
+              {
+                "id": "7834566004",
+                "name": "Espresso cup 90 ml, black",
+                "category": {
+                  "id": "257929"
+                },
+                "primaryImage": {
+                  "url": "https://a.allegroimg.com/original/05a2af/929c6dae4fb8721a8539582eb421"
+                },
+                "saleInfo": {
+                  "currentPrice": null,
+                  "biddersCount": 0
+                },
+                "stats": {
+                  "watchersCount": 4,
+                  "visitsCount": 54
+                },
+                "sellingMode": {
+                  "format": "BUY_NOW",
+                  "price": {
+                    "amount": "39.99",
+                    "currency": "PLN"
+                  }
+                },
+                "stock": {
+                  "available": 0
+                },
+                "publication": {
+                  "status": "ENDED"
+                },
+                "external": {
+                  "id": "CUP-090-BLK"
+                },
+                "isFulfillment": false
+              },
+              {
+                "id": "7834566003",
+                "name": "Vintage tea set, 12 pieces",
+                "category": {
+                  "id": "257929"
+                },
+                "primaryImage": {
+                  "url": "https://a.allegroimg.com/original/05a2af/929c6dae4fb8721a8539582eb421"
+                },
+                "saleInfo": {
+                  "currentPrice": null,
+                  "biddersCount": 0
+                },
+                "stats": {
+                  "watchersCount": 4,
+                  "visitsCount": 54
+                },
+                "sellingMode": {
+                  "format": "AUCTION",
+                  "price": {
+                    "amount": "150.00",
+                    "currency": "PLN"
+                  },
+                  "startingPrice": {
+                    "amount": "50.00",
+                    "currency": "PLN"
+                  }
+                },
+                "stock": {
+                  "available": 1
+                },
+                "publication": {
+                  "status": "ACTIVE",
+                  "startingAt": null,
+                  "startedAt": "2026-09-01T08:00:00Z",
+                  "endingAt": null,
+                  "endedAt": null,
+                  "marketplaces": {
+                    "base": {
+                      "id": "allegro-pl"
+                    }
+                  }
+                },
+                "external": null,
+                "isFulfillment": false
+              },
+              {
+                "id": "7834566001",
+                "name": "Ceramic mug 350 ml, white",
+                "category": {
+                  "id": "257929"
+                },
+                "primaryImage": {
+                  "url": "https://a.allegroimg.com/original/05a2af/929c6dae4fb8721a8539582eb421"
+                },
+                "saleInfo": {
+                  "currentPrice": null,
+                  "biddersCount": 0
+                },
+                "stats": {
+                  "watchersCount": 4,
+                  "visitsCount": 54
+                },
+                "sellingMode": {
+                  "format": "BUY_NOW",
+                  "price": {
+                    "amount": "39.99",
+                    "currency": "PLN"
+                  }
+                },
+                "stock": {
+                  "available": 23,
+                  "sold": 3
+                },
+                "publication": {
+                  "status": "ACTIVE",
+                  "startingAt": null,
+                  "startedAt": "2026-09-01T08:00:00Z",
+                  "endingAt": null,
+                  "endedAt": null,
+                  "marketplaces": {
+                    "base": {
+                      "id": "allegro-pl"
+                    }
+                  }
+                },
+                "external": {
+                  "id": "MUG-350-WHT"
+                },
+                "isFulfillment": false
+              }
+            ],
+            "count": 6,
+            "totalCount": 6
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/sale/product-offers/7834566004",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/vnd.allegro.public.v1+json",
+          "date": "Sat, 10 Oct 2026 12:00:00 GMT"
+        },
+        "body": {
+          "json": {
+            "id": "7834566004",
+            "name": "Espresso cup 90 ml, black",
+            "language": "pl-PL",
+            "category": {
+              "id": "257929"
+            },
+            "external": {
+              "id": "CUP-090-BLK"
+            },
+            "sellingMode": {
+              "format": "BUY_NOW",
+              "price": {
+                "amount": "39.99",
+                "currency": "PLN"
+              }
+            },
+            "stock": {
+              "available": 0,
+              "unit": "UNIT"
+            },
+            "publication": {
+              "status": "ENDED",
+              "endedBy": "EMPTY_STOCK",
+              "republish": false
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/sale/offers?limit=1000&offset=0&publication.status=ACTIVE&publication.status=ACTIVATING&publication.status=ENDED",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/vnd.allegro.public.v1+json",
+          "date": "Sat, 10 Oct 2026 12:00:00 GMT"
+        },
+        "body": {
+          "json": {
+            "offers": [
+              {
+                "id": "7834566007",
+                "name": "Milk jug 0.5 l",
+                "category": {
+                  "id": "257929"
+                },
+                "primaryImage": {
+                  "url": "https://a.allegroimg.com/original/05a2af/929c6dae4fb8721a8539582eb421"
+                },
+                "saleInfo": {
+                  "currentPrice": null,
+                  "biddersCount": 0
+                },
+                "stats": {
+                  "watchersCount": 4,
+                  "visitsCount": 54
+                },
+                "sellingMode": {
+                  "format": "BUY_NOW",
+                  "price": {
+                    "amount": "39.99",
+                    "currency": "PLN"
+                  }
+                },
+                "stock": {
+                  "available": 23,
+                  "sold": 3
+                },
+                "publication": {
+                  "status": "ACTIVE",
+                  "startingAt": null,
+                  "startedAt": "2026-09-01T08:00:00Z",
+                  "endingAt": null,
+                  "endedAt": null,
+                  "marketplaces": {
+                    "base": {
+                      "id": "allegro-pl"
+                    }
+                  }
+                },
+                "external": {
+                  "id": "MUG-350-WHT"
+                },
+                "isFulfillment": true
+              },
+              {
+                "id": "7834566006",
+                "name": "Stoneware plate 27 cm",
+                "category": {
+                  "id": "257929"
+                },
+                "primaryImage": {
+                  "url": "https://a.allegroimg.com/original/05a2af/929c6dae4fb8721a8539582eb421"
+                },
+                "saleInfo": {
+                  "currentPrice": null,
+                  "biddersCount": 0
+                },
+                "stats": {
+                  "watchersCount": 4,
+                  "visitsCount": 54
+                },
+                "sellingMode": {
+                  "format": "BUY_NOW",
+                  "price": {
+                    "amount": "24.0",
+                    "currency": "PLN"
+                  }
+                },
+                "stock": {
+                  "available": 23,
+                  "sold": 3
+                },
+                "publication": {
+                  "status": "ACTIVE",
+                  "startingAt": null,
+                  "startedAt": "2026-09-01T08:00:00Z",
+                  "endingAt": null,
+                  "endedAt": null,
+                  "marketplaces": {
+                    "base": {
+                      "id": "allegro-pl"
+                    }
+                  }
+                },
+                "external": null,
+                "isFulfillment": false
+              },
+              {
+                "id": "7834566005",
+                "name": "Salad bowl 24 cm, grey",
+                "category": {
+                  "id": "257929"
+                },
+                "primaryImage": {
+                  "url": "https://a.allegroimg.com/original/05a2af/929c6dae4fb8721a8539582eb421"
+                },
+                "saleInfo": {
+                  "currentPrice": null,
+                  "biddersCount": 0
+                },
+                "stats": {
+                  "watchersCount": 4,
+                  "visitsCount": 54
+                },
+                "sellingMode": {
+                  "format": "BUY_NOW",
+                  "price": {
+                    "amount": "39.99",
+                    "currency": "PLN"
+                  }
+                },
+                "stock": {
+                  "available": 5
+                },
+                "publication": {
+                  "status": "ENDED"
+                },
+                "external": {
+                  "id": "BOWL-240-GRY"
+                },
+                "isFulfillment": false
+              },
+              {
+                "id": "7834566004",
+                "name": "Espresso cup 90 ml, black",
+                "category": {
+                  "id": "257929"
+                },
+                "primaryImage": {
+                  "url": "https://a.allegroimg.com/original/05a2af/929c6dae4fb8721a8539582eb421"
+                },
+                "saleInfo": {
+                  "currentPrice": null,
+                  "biddersCount": 0
+                },
+                "stats": {
+                  "watchersCount": 4,
+                  "visitsCount": 54
+                },
+                "sellingMode": {
+                  "format": "BUY_NOW",
+                  "price": {
+                    "amount": "39.99",
+                    "currency": "PLN"
+                  }
+                },
+                "stock": {
+                  "available": 0
+                },
+                "publication": {
+                  "status": "ENDED"
+                },
+                "external": {
+                  "id": "CUP-090-BLK"
+                },
+                "isFulfillment": false
+              },
+              {
+                "id": "7834566003",
+                "name": "Vintage tea set, 12 pieces",
+                "category": {
+                  "id": "257929"
+                },
+                "primaryImage": {
+                  "url": "https://a.allegroimg.com/original/05a2af/929c6dae4fb8721a8539582eb421"
+                },
+                "saleInfo": {
+                  "currentPrice": null,
+                  "biddersCount": 0
+                },
+                "stats": {
+                  "watchersCount": 4,
+                  "visitsCount": 54
+                },
+                "sellingMode": {
+                  "format": "AUCTION",
+                  "price": {
+                    "amount": "150.00",
+                    "currency": "PLN"
+                  },
+                  "startingPrice": {
+                    "amount": "50.00",
+                    "currency": "PLN"
+                  }
+                },
+                "stock": {
+                  "available": 1
+                },
+                "publication": {
+                  "status": "ACTIVE",
+                  "startingAt": null,
+                  "startedAt": "2026-09-01T08:00:00Z",
+                  "endingAt": null,
+                  "endedAt": null,
+                  "marketplaces": {
+                    "base": {
+                      "id": "allegro-pl"
+                    }
+                  }
+                },
+                "external": null,
+                "isFulfillment": false
+              },
+              {
+                "id": "7834566001",
+                "name": "Ceramic mug 350 ml, white",
+                "category": {
+                  "id": "257929"
+                },
+                "primaryImage": {
+                  "url": "https://a.allegroimg.com/original/05a2af/929c6dae4fb8721a8539582eb421"
+                },
+                "saleInfo": {
+                  "currentPrice": null,
+                  "biddersCount": 0
+                },
+                "stats": {
+                  "watchersCount": 4,
+                  "visitsCount": 54
+                },
+                "sellingMode": {
+                  "format": "BUY_NOW",
+                  "price": {
+                    "amount": "39.99",
+                    "currency": "PLN"
+                  }
+                },
+                "stock": {
+                  "available": 23,
+                  "sold": 3
+                },
+                "publication": {
+                  "status": "ACTIVE",
+                  "startingAt": null,
+                  "startedAt": "2026-09-01T08:00:00Z",
+                  "endingAt": null,
+                  "endedAt": null,
+                  "marketplaces": {
+                    "base": {
+                      "id": "allegro-pl"
+                    }
+                  }
+                },
+                "external": {
+                  "id": "MUG-350-WHT"
+                },
+                "isFulfillment": false
+              }
+            ],
+            "count": 6,
+            "totalCount": 6
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/sale/product-offers/7834566004",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/vnd.allegro.public.v1+json",
+          "date": "Sat, 10 Oct 2026 12:00:00 GMT"
+        },
+        "body": {
+          "json": {
+            "id": "7834566004",
+            "name": "Espresso cup 90 ml, black",
+            "language": "pl-PL",
+            "category": {
+              "id": "257929"
+            },
+            "external": {
+              "id": "CUP-090-BLK"
+            },
+            "sellingMode": {
+              "format": "BUY_NOW",
+              "price": {
+                "amount": "39.99",
+                "currency": "PLN"
+              }
+            },
+            "stock": {
+              "available": 0,
+              "unit": "UNIT"
+            },
+            "publication": {
+              "status": "ENDED",
+              "endedBy": "EMPTY_STOCK",
+              "republish": false
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/order/event-stats",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/vnd.allegro.public.v1+json",
+          "date": "Sat, 10 Oct 2026 12:00:00 GMT"
+        },
+        "body": {
+          "json": {
+            "latestEvent": {
+              "id": "1791663800016000",
+              "occurredAt": "2026-10-08T09:00:00.000Z"
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/order/checkout-forms?limit=100&sort=lineItems.boughtAt&lineItems.boughtAt.lte=2026-10-10T12%3A00%3A00.000Z&lineItems.boughtAt.gte=2026-09-10T12%3A00%3A00.000Z",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/vnd.allegro.public.v1+json",
+          "date": "Sat, 10 Oct 2026 12:00:00 GMT"
+        },
+        "body": {
+          "json": {
+            "checkoutForms": [
+              {
+                "id": "29738e61-c4e8-11f1-89db-60ede9d61a02",
+                "messageToSeller": "scrubbed-1",
+                "surcharges": [],
+                "note": {
+                  "text": "scrubbed-2"
+                },
+                "buyer": {
+                  "id": "23123123",
+                  "email": "person-1@example.com",
+                  "login": "scrubbed-3",
+                  "firstName": "scrubbed-4",
+                  "lastName": "scrubbed-5",
+                  "guest": false,
+                  "phoneNumber": "+00000000001",
+                  "address": {
+                    "street": "scrubbed-6",
+                    "city": "scrubbed-7",
+                    "postCode": "scrubbed-8",
+                    "countryCode": "PL"
+                  },
+                  "personalIdentity": "scrubbed-9",
+                  "preferences": {
+                    "language": "pl-PL"
+                  }
+                },
+                "payment": {
+                  "type": "ONLINE",
+                  "finishedAt": "2026-10-01T09:10:00.000Z",
+                  "paidAmount": {
+                    "amount": "94.97",
+                    "currency": "PLN"
+                  },
+                  "id": "0f8f1d13-7e9e-41e8-9b00-c5b0dfb78ea6",
+                  "provider": "P24"
+                },
+                "status": "READY_FOR_PROCESSING",
+                "fulfillment": {
+                  "status": "NEW",
+                  "provider": {
+                    "id": "SELLER"
+                  },
+                  "shipmentSummary": {
+                    "lineItemsSent": "NONE"
+                  }
+                },
+                "delivery": {
+                  "address": {
+                    "firstName": "scrubbed-4",
+                    "lastName": "scrubbed-5",
+                    "street": "scrubbed-6",
+                    "city": "scrubbed-7",
+                    "zipCode": "scrubbed-8",
+                    "countryCode": "PL",
+                    "phoneNumber": "+00000000001",
+                    "modifiedAt": "2026-10-01T09:05:00.000Z"
+                  },
+                  "method": {
+                    "id": "1fa56f79-4b6a-4821-a6f2-ca9c16d5c925",
+                    "name": "Allegro Kurier DPD"
+                  },
+                  "cost": {
+                    "amount": "14.99",
+                    "currency": "PLN"
+                  },
+                  "smart": false,
+                  "calculatedNumberOfPackages": 1
+                },
+                "invoice": {
+                  "required": false
+                },
+                "lineItems": [
+                  {
+                    "id": "62ae358b-c4e8-11f1-9c77-bedf604a2e01",
+                    "offer": {
+                      "id": "7834566001",
+                      "name": "Ceramic mug 350 ml, white",
+                      "external": {
+                        "id": "MUG-350-WHT"
+                      }
+                    },
+                    "quantity": 2,
+                    "originalPrice": {
+                      "amount": "39.99",
+                      "currency": "PLN"
+                    },
+                    "price": {
+                      "amount": "39.99",
+                      "currency": "PLN"
+                    },
+                    "boughtAt": "2026-10-01T09:00:00.000Z"
+                  }
+                ],
+                "summary": {
+                  "totalToPay": {
+                    "amount": "94.97",
+                    "currency": "PLN"
+                  }
+                },
+                "marketplace": {
+                  "id": "allegro-pl"
+                },
+                "updatedAt": "2026-10-01T09:10:05.000Z",
+                "revision": "819b5836"
+              },
+              {
+                "id": "29738e61-c4e8-11f1-89db-60ede9d61a03",
+                "messageToSeller": "scrubbed-1",
+                "surcharges": [],
+                "note": {
+                  "text": "scrubbed-2"
+                },
+                "buyer": {
+                  "id": "23123123",
+                  "email": "person-1@example.com",
+                  "login": "scrubbed-3",
+                  "firstName": "scrubbed-4",
+                  "lastName": "scrubbed-5",
+                  "guest": false,
+                  "phoneNumber": "+00000000001",
+                  "address": {
+                    "street": "scrubbed-6",
+                    "city": "scrubbed-7",
+                    "postCode": "scrubbed-8",
+                    "countryCode": "PL"
+                  },
+                  "personalIdentity": "scrubbed-9",
+                  "preferences": {
+                    "language": "pl-PL"
+                  }
+                },
+                "payment": {
+                  "type": "CASH_ON_DELIVERY",
+                  "paidAmount": null,
+                  "id": "0f8f1d13-7e9e-41e8-9b00-c5b0dfb78e03"
+                },
+                "status": "READY_FOR_PROCESSING",
+                "fulfillment": {
+                  "status": "NEW",
+                  "provider": {
+                    "id": "SELLER"
+                  },
+                  "shipmentSummary": {
+                    "lineItemsSent": "NONE"
+                  }
+                },
+                "delivery": {
+                  "address": {
+                    "firstName": "scrubbed-4",
+                    "lastName": "scrubbed-5",
+                    "street": "scrubbed-6",
+                    "city": "scrubbed-7",
+                    "zipCode": "scrubbed-8",
+                    "countryCode": "PL",
+                    "phoneNumber": "+00000000001",
+                    "modifiedAt": "2026-10-01T09:05:00.000Z"
+                  },
+                  "method": {
+                    "id": "1fa56f79-4b6a-4821-a6f2-ca9c16d5c925",
+                    "name": "Allegro Kurier DPD"
+                  },
+                  "cost": {
+                    "amount": "14.99",
+                    "currency": "PLN"
+                  },
+                  "smart": false,
+                  "calculatedNumberOfPackages": 1
+                },
+                "invoice": {
+                  "required": false
+                },
+                "lineItems": [
+                  {
+                    "id": "62ae358b-c4e8-11f1-9c77-bedf604a2e01",
+                    "offer": {
+                      "id": "7834566001",
+                      "name": "Ceramic mug 350 ml, white",
+                      "external": {
+                        "id": "MUG-350-WHT"
+                      }
+                    },
+                    "quantity": 2,
+                    "originalPrice": {
+                      "amount": "39.99",
+                      "currency": "PLN"
+                    },
+                    "price": {
+                      "amount": "39.99",
+                      "currency": "PLN"
+                    },
+                    "boughtAt": "2026-10-01T09:00:00.000Z"
+                  }
+                ],
+                "summary": {
+                  "totalToPay": {
+                    "amount": "94.97",
+                    "currency": "PLN"
+                  }
+                },
+                "marketplace": {
+                  "id": "allegro-pl"
+                },
+                "updatedAt": "2026-10-01T09:10:05.000Z",
+                "revision": "819b5836"
+              },
+              {
+                "id": "29738e61-c4e8-11f1-89db-60ede9d61a04",
+                "messageToSeller": "scrubbed-1",
+                "surcharges": [],
+                "note": {
+                  "text": "scrubbed-2"
+                },
+                "buyer": {
+                  "id": "23123123",
+                  "email": "person-1@example.com",
+                  "login": "scrubbed-3",
+                  "firstName": "scrubbed-4",
+                  "lastName": "scrubbed-5",
+                  "guest": false,
+                  "phoneNumber": "+00000000001",
+                  "address": {
+                    "street": "scrubbed-6",
+                    "city": "scrubbed-7",
+                    "postCode": "scrubbed-8",
+                    "countryCode": "PL"
+                  },
+                  "personalIdentity": "scrubbed-9",
+                  "preferences": {
+                    "language": "pl-PL"
+                  },
+                  "companyName": "scrubbed-10"
+                },
+                "payment": {
+                  "type": "ONLINE",
+                  "finishedAt": "2026-10-01T09:10:00.000Z",
+                  "paidAmount": {
+                    "amount": "94.97",
+                    "currency": "PLN"
+                  },
+                  "id": "0f8f1d13-7e9e-41e8-9b00-c5b0dfb78ea6",
+                  "provider": "P24"
+                },
+                "status": "READY_FOR_PROCESSING",
+                "fulfillment": {
+                  "status": "NEW",
+                  "provider": {
+                    "id": "SELLER"
+                  },
+                  "shipmentSummary": {
+                    "lineItemsSent": "NONE"
+                  }
+                },
+                "delivery": {
+                  "address": {
+                    "firstName": "scrubbed-4",
+                    "lastName": "scrubbed-5",
+                    "street": "scrubbed-6",
+                    "city": "scrubbed-7",
+                    "zipCode": "scrubbed-8",
+                    "countryCode": "PL",
+                    "phoneNumber": "+00000000001",
+                    "modifiedAt": "2026-10-01T09:05:00.000Z"
+                  },
+                  "method": {
+                    "id": "1fa56f79-4b6a-4821-a6f2-ca9c16d5c925",
+                    "name": "Allegro Kurier DPD"
+                  },
+                  "cost": {
+                    "amount": "14.99",
+                    "currency": "PLN"
+                  },
+                  "smart": false,
+                  "calculatedNumberOfPackages": 1
+                },
+                "invoice": {
+                  "required": true,
+                  "address": {
+                    "street": "scrubbed-11",
+                    "city": "scrubbed-7",
+                    "zipCode": "scrubbed-12",
+                    "countryCode": "pl",
+                    "company": {
+                      "name": "scrubbed-10",
+                      "ids": [
+                        {
+                          "type": "VAT_EU",
+                          "value": "scrubbed-13"
+                        },
+                        {
+                          "type": "PL_NIP",
+                          "value": "scrubbed-14"
+                        }
+                      ],
+                      "vatPayerStatus": "ACTIVE"
+                    },
+                    "naturalPerson": null
+                  }
+                },
+                "lineItems": [
+                  {
+                    "id": "62ae358b-c4e8-11f1-9c77-bedf604a2e01",
+                    "offer": {
+                      "id": "7834566001",
+                      "name": "Ceramic mug 350 ml, white",
+                      "external": {
+                        "id": "MUG-350-WHT"
+                      }
+                    },
+                    "quantity": 2,
+                    "originalPrice": {
+                      "amount": "39.99",
+                      "currency": "PLN"
+                    },
+                    "price": {
+                      "amount": "39.99",
+                      "currency": "PLN"
+                    },
+                    "boughtAt": "2026-10-01T09:00:00.000Z"
+                  }
+                ],
+                "summary": {
+                  "totalToPay": {
+                    "amount": "94.97",
+                    "currency": "PLN"
+                  }
+                },
+                "marketplace": {
+                  "id": "allegro-pl"
+                },
+                "updatedAt": "2026-10-01T09:10:05.000Z",
+                "revision": "819b5836"
+              },
+              {
+                "id": "29738e61-c4e8-11f1-89db-60ede9d61a05",
+                "messageToSeller": "scrubbed-1",
+                "surcharges": [],
+                "note": {
+                  "text": "scrubbed-2"
+                },
+                "buyer": {
+                  "id": "23123123",
+                  "email": "person-1@example.com",
+                  "login": "scrubbed-3",
+                  "firstName": "scrubbed-4",
+                  "lastName": "scrubbed-5",
+                  "guest": false,
+                  "phoneNumber": "+00000000001",
+                  "address": {
+                    "street": "scrubbed-6",
+                    "city": "scrubbed-7",
+                    "postCode": "scrubbed-8",
+                    "countryCode": "PL"
+                  },
+                  "personalIdentity": "scrubbed-9",
+                  "preferences": {
+                    "language": "pl-PL"
+                  }
+                },
+                "payment": {
+                  "type": "ONLINE",
+                  "finishedAt": "2026-10-01T09:10:00.000Z",
+                  "paidAmount": {
+                    "amount": "94.97",
+                    "currency": "PLN"
+                  },
+                  "id": "0f8f1d13-7e9e-41e8-9b00-c5b0dfb78ea6",
+                  "provider": "P24"
+                },
+                "status": "READY_FOR_PROCESSING",
+                "fulfillment": {
+                  "status": "NEW",
+                  "provider": {
+                    "id": "SELLER"
+                  },
+                  "shipmentSummary": {
+                    "lineItemsSent": "NONE"
+                  }
+                },
+                "delivery": {
+                  "address": {
+                    "firstName": "scrubbed-4",
+                    "lastName": "scrubbed-5",
+                    "street": "scrubbed-6",
+                    "city": "scrubbed-7",
+                    "zipCode": "scrubbed-8",
+                    "countryCode": "PL",
+                    "phoneNumber": "+00000000001",
+                    "modifiedAt": "2026-10-01T09:05:00.000Z"
+                  },
+                  "method": {
+                    "id": "1fa56f79-4b6a-4821-a6f2-ca9c16d5c925",
+                    "name": "Allegro Kurier DPD"
+                  },
+                  "cost": {
+                    "amount": "14.99",
+                    "currency": "PLN"
+                  },
+                  "smart": false,
+                  "calculatedNumberOfPackages": 1
+                },
+                "invoice": {
+                  "required": true,
+                  "address": {
+                    "street": "scrubbed-6",
+                    "city": "scrubbed-7",
+                    "zipCode": "scrubbed-8",
+                    "countryCode": "PL",
+                    "company": null,
+                    "naturalPerson": {
+                      "firstName": "scrubbed-4",
+                      "lastName": "scrubbed-5"
+                    }
+                  }
+                },
+                "lineItems": [
+                  {
+                    "id": "62ae358b-c4e8-11f1-9c77-bedf604a2e01",
+                    "offer": {
+                      "id": "7834566001",
+                      "name": "Ceramic mug 350 ml, white",
+                      "external": {
+                        "id": "MUG-350-WHT"
+                      }
+                    },
+                    "quantity": 2,
+                    "originalPrice": {
+                      "amount": "39.99",
+                      "currency": "PLN"
+                    },
+                    "price": {
+                      "amount": "39.99",
+                      "currency": "PLN"
+                    },
+                    "boughtAt": "2026-10-01T09:00:00.000Z"
+                  }
+                ],
+                "summary": {
+                  "totalToPay": {
+                    "amount": "94.97",
+                    "currency": "PLN"
+                  }
+                },
+                "marketplace": {
+                  "id": "allegro-pl"
+                },
+                "updatedAt": "2026-10-01T09:10:05.000Z",
+                "revision": "819b5836"
+              },
+              {
+                "id": "29738e61-c4e8-11f1-89db-60ede9d61a06",
+                "messageToSeller": "scrubbed-1",
+                "surcharges": [],
+                "note": {
+                  "text": "scrubbed-2"
+                },
+                "buyer": {
+                  "id": "23123123",
+                  "email": "person-1@example.com",
+                  "login": "scrubbed-3",
+                  "firstName": "scrubbed-4",
+                  "lastName": "scrubbed-5",
+                  "guest": false,
+                  "phoneNumber": "+00000000001",
+                  "address": {
+                    "street": "scrubbed-6",
+                    "city": "scrubbed-7",
+                    "postCode": "scrubbed-8",
+                    "countryCode": "PL"
+                  },
+                  "personalIdentity": "scrubbed-9",
+                  "preferences": {
+                    "language": "pl-PL"
+                  }
+                },
+                "payment": {
+                  "type": "ONLINE",
+                  "finishedAt": "2026-10-01T09:10:00.000Z",
+                  "paidAmount": {
+                    "amount": "94.97",
+                    "currency": "PLN"
+                  },
+                  "id": "0f8f1d13-7e9e-41e8-9b00-c5b0dfb78ea6",
+                  "provider": "P24"
+                },
+                "status": "READY_FOR_PROCESSING",
+                "fulfillment": {
+                  "status": "NEW",
+                  "provider": {
+                    "id": "SELLER"
+                  },
+                  "shipmentSummary": {
+                    "lineItemsSent": "NONE"
+                  }
+                },
+                "delivery": {
+                  "address": {
+                    "firstName": "scrubbed-4",
+                    "lastName": "scrubbed-5",
+                    "street": "scrubbed-6",
+                    "city": "scrubbed-7",
+                    "zipCode": "scrubbed-8",
+                    "countryCode": "PL",
+                    "phoneNumber": "+00000000001",
+                    "modifiedAt": "2026-10-01T09:05:00.000Z"
+                  },
+                  "method": {
+                    "id": "2488f7b7-5d1c-4d65-b85c-4cbcf253fd93",
+                    "name": "Allegro Paczkomaty InPost"
+                  },
+                  "pickupPoint": {
+                    "id": "POZ08A",
+                    "name": "Paczkomat POZ08A",
+                    "description": "Fuel station",
+                    "address": {
+                      "street": "scrubbed-15",
+                      "zipCode": "scrubbed-16",
+                      "city": "scrubbed-7",
+                      "countryCode": "PL"
+                    }
+                  }
+                },
+                "invoice": {
+                  "required": false
+                },
+                "lineItems": [
+                  {
+                    "id": "62ae358b-c4e8-11f1-9c77-bedf604a2e01",
+                    "offer": {
+                      "id": "7834566001",
+                      "name": "Ceramic mug 350 ml, white",
+                      "external": {
+                        "id": "MUG-350-WHT"
+                      }
+                    },
+                    "quantity": 2,
+                    "originalPrice": {
+                      "amount": "39.99",
+                      "currency": "PLN"
+                    },
+                    "price": {
+                      "amount": "39.99",
+                      "currency": "PLN"
+                    },
+                    "boughtAt": "2026-10-01T09:00:00.000Z"
+                  }
+                ],
+                "summary": {
+                  "totalToPay": {
+                    "amount": "94.97",
+                    "currency": "PLN"
+                  }
+                },
+                "marketplace": {
+                  "id": "allegro-pl"
+                },
+                "updatedAt": "2026-10-01T09:10:05.000Z",
+                "revision": "819b5836"
+              },
+              {
+                "id": "29738e61-c4e8-11f1-89db-60ede9d61a09",
+                "messageToSeller": "scrubbed-1",
+                "surcharges": [],
+                "note": {
+                  "text": "scrubbed-2"
+                },
+                "buyer": {
+                  "id": "23123123",
+                  "email": "person-1@example.com",
+                  "login": "scrubbed-3",
+                  "guest": false,
+                  "phoneNumber": "+00000000001",
+                  "address": {
+                    "street": "scrubbed-6",
+                    "city": "scrubbed-7",
+                    "postCode": "scrubbed-8",
+                    "countryCode": "PL"
+                  },
+                  "personalIdentity": "scrubbed-9",
+                  "preferences": {
+                    "language": "pl-PL"
+                  }
+                },
+                "payment": {
+                  "type": "ONLINE",
+                  "finishedAt": "2026-10-01T09:10:00.000Z",
+                  "paidAmount": {
+                    "amount": "94.97",
+                    "currency": "PLN"
+                  },
+                  "id": "0f8f1d13-7e9e-41e8-9b00-c5b0dfb78ea6",
+                  "provider": "P24"
+                },
+                "status": "READY_FOR_PROCESSING",
+                "fulfillment": {
+                  "status": "NEW",
+                  "provider": {
+                    "id": "SELLER"
+                  },
+                  "shipmentSummary": {
+                    "lineItemsSent": "NONE"
+                  }
+                },
+                "delivery": {
+                  "address": {
+                    "firstName": "scrubbed-17",
+                    "lastName": "scrubbed-17",
+                    "street": "scrubbed-6",
+                    "city": "scrubbed-7",
+                    "zipCode": "scrubbed-8",
+                    "countryCode": "PL",
+                    "phoneNumber": "+00000000001",
+                    "modifiedAt": "2026-10-01T09:05:00.000Z"
+                  }
+                },
+                "invoice": {
+                  "required": false
+                },
+                "lineItems": [
+                  {
+                    "id": "62ae358b-c4e8-11f1-9c77-bedf604a2e01",
+                    "offer": {
+                      "id": "7834566001",
+                      "name": "Ceramic mug 350 ml, white",
+                      "external": {
+                        "id": "MUG-350-WHT"
+                      }
+                    },
+                    "quantity": 2,
+                    "originalPrice": {
+                      "amount": "39.99",
+                      "currency": "PLN"
+                    },
+                    "price": {
+                      "amount": "39.99",
+                      "currency": "PLN"
+                    },
+                    "boughtAt": "2026-10-01T09:00:00.000Z"
+                  }
+                ],
+                "summary": {
+                  "totalToPay": {
+                    "amount": "94.97",
+                    "currency": "PLN"
+                  }
+                },
+                "marketplace": {
+                  "id": "allegro-pl"
+                },
+                "updatedAt": "2026-10-01T09:10:05.000Z",
+                "revision": "819b5836"
+              },
+              {
+                "id": "29738e61-c4e8-11f1-89db-60ede9d61a10",
+                "messageToSeller": "scrubbed-1",
+                "surcharges": [],
+                "note": {
+                  "text": "scrubbed-2"
+                },
+                "buyer": {
+                  "id": "23123123",
+                  "email": "person-1@example.com",
+                  "login": "scrubbed-3",
+                  "firstName": "scrubbed-4",
+                  "lastName": "scrubbed-5",
+                  "guest": false,
+                  "phoneNumber": "+00000000001",
+                  "address": {
+                    "street": "scrubbed-6",
+                    "city": "scrubbed-7",
+                    "postCode": "scrubbed-8",
+                    "countryCode": "PL"
+                  },
+                  "personalIdentity": "scrubbed-9",
+                  "preferences": {
+                    "language": "pl-PL"
+                  }
+                },
+                "payment": {
+                  "type": "ONLINE",
+                  "finishedAt": "2026-10-01T09:10:00.000Z",
+                  "paidAmount": {
+                    "amount": "94.97",
+                    "currency": "PLN"
+                  },
+                  "id": "0f8f1d13-7e9e-41e8-9b00-c5b0dfb78ea6",
+                  "provider": "P24"
+                },
+                "status": "CANCELLED",
+                "fulfillment": {
+                  "status": "NEW",
+                  "provider": {
+                    "id": "SELLER"
+                  },
+                  "shipmentSummary": {
+                    "lineItemsSent": "NONE"
+                  }
+                },
+                "delivery": {
+                  "address": {
+                    "firstName": "scrubbed-4",
+                    "lastName": "scrubbed-5",
+                    "street": "scrubbed-6",
+                    "city": "scrubbed-7",
+                    "zipCode": "scrubbed-8",
+                    "countryCode": "PL",
+                    "phoneNumber": "+00000000001",
+                    "modifiedAt": "2026-10-01T09:05:00.000Z"
+                  },
+                  "method": {
+                    "id": "1fa56f79-4b6a-4821-a6f2-ca9c16d5c925",
+                    "name": "Allegro Kurier DPD"
+                  },
+                  "cost": {
+                    "amount": "14.99",
+                    "currency": "PLN"
+                  },
+                  "smart": false,
+                  "calculatedNumberOfPackages": 1
+                },
+                "invoice": {
+                  "required": false
+                },
+                "lineItems": [
+                  {
+                    "id": "62ae358b-c4e8-11f1-9c77-bedf604a2e01",
+                    "offer": {
+                      "id": "7834566001",
+                      "name": "Ceramic mug 350 ml, white",
+                      "external": {
+                        "id": "MUG-350-WHT"
+                      }
+                    },
+                    "quantity": 2,
+                    "originalPrice": {
+                      "amount": "39.99",
+                      "currency": "PLN"
+                    },
+                    "price": {
+                      "amount": "39.99",
+                      "currency": "PLN"
+                    },
+                    "boughtAt": "2026-10-01T09:00:00.000Z"
+                  }
+                ],
+                "summary": {
+                  "totalToPay": {
+                    "amount": "94.97",
+                    "currency": "PLN"
+                  }
+                },
+                "marketplace": {
+                  "id": "allegro-pl"
+                },
+                "updatedAt": "2026-10-02T11:00:00.000Z",
+                "revision": "819b5836"
+              },
+              {
+                "id": "29738e61-c4e8-11f1-89db-60ede9d61a11",
+                "messageToSeller": "scrubbed-1",
+                "surcharges": [],
+                "note": {
+                  "text": "scrubbed-2"
+                },
+                "buyer": {
+                  "id": "23123123",
+                  "email": "person-1@example.com",
+                  "login": "scrubbed-3",
+                  "firstName": "scrubbed-4",
+                  "lastName": "scrubbed-5",
+                  "guest": false,
+                  "phoneNumber": "+00000000001",
+                  "address": {
+                    "street": "scrubbed-6",
+                    "city": "scrubbed-7",
+                    "postCode": "scrubbed-8",
+                    "countryCode": "PL"
+                  },
+                  "personalIdentity": "scrubbed-9",
+                  "preferences": {
+                    "language": "pl-PL"
+                  }
+                },
+                "payment": {
+                  "type": "ONLINE",
+                  "id": "0f8f1d13-7e9e-41e8-9b00-c5b0dfb78e11"
+                },
+                "status": "CANCELLED",
+                "fulfillment": {
+                  "status": "NEW",
+                  "provider": {
+                    "id": "SELLER"
+                  },
+                  "shipmentSummary": {
+                    "lineItemsSent": "NONE"
+                  }
+                },
+                "delivery": {
+                  "address": {
+                    "firstName": "scrubbed-4",
+                    "lastName": "scrubbed-5",
+                    "street": "scrubbed-6",
+                    "city": "scrubbed-7",
+                    "zipCode": "scrubbed-8",
+                    "countryCode": "PL",
+                    "phoneNumber": "+00000000001",
+                    "modifiedAt": "2026-10-01T09:05:00.000Z"
+                  },
+                  "method": {
+                    "id": "1fa56f79-4b6a-4821-a6f2-ca9c16d5c925",
+                    "name": "Allegro Kurier DPD"
+                  },
+                  "cost": {
+                    "amount": "14.99",
+                    "currency": "PLN"
+                  },
+                  "smart": false,
+                  "calculatedNumberOfPackages": 1
+                },
+                "invoice": {
+                  "required": false
+                },
+                "lineItems": [
+                  {
+                    "id": "62ae358b-c4e8-11f1-9c77-bedf604a2e01",
+                    "offer": {
+                      "id": "7834566001",
+                      "name": "Ceramic mug 350 ml, white",
+                      "external": {
+                        "id": "MUG-350-WHT"
+                      }
+                    },
+                    "quantity": 2,
+                    "originalPrice": {
+                      "amount": "39.99",
+                      "currency": "PLN"
+                    },
+                    "price": {
+                      "amount": "39.99",
+                      "currency": "PLN"
+                    },
+                    "boughtAt": "2026-10-01T09:00:00.000Z"
+                  }
+                ],
+                "summary": {
+                  "totalToPay": {
+                    "amount": "94.97",
+                    "currency": "PLN"
+                  }
+                },
+                "marketplace": {
+                  "id": "allegro-pl"
+                },
+                "updatedAt": "2026-10-08T09:00:00.000Z",
+                "revision": "819b5836"
+              },
+              {
+                "id": "29738e61-c4e8-11f1-89db-60ede9d61a12",
+                "messageToSeller": "scrubbed-1",
+                "surcharges": [],
+                "note": {
+                  "text": "scrubbed-2"
+                },
+                "buyer": {
+                  "id": "23123123",
+                  "email": "person-1@example.com",
+                  "login": "scrubbed-3",
+                  "firstName": "scrubbed-4",
+                  "lastName": "scrubbed-5",
+                  "guest": false,
+                  "phoneNumber": "+00000000001",
+                  "address": {
+                    "street": "scrubbed-6",
+                    "city": "scrubbed-7",
+                    "postCode": "scrubbed-8",
+                    "countryCode": "PL"
+                  },
+                  "personalIdentity": "scrubbed-9",
+                  "preferences": {
+                    "language": "pl-PL"
+                  }
+                },
+                "payment": {
+                  "type": "ONLINE",
+                  "id": "0f8f1d13-7e9e-41e8-9b00-c5b0dfb78e12"
+                },
+                "status": "FILLED_IN",
+                "fulfillment": {
+                  "status": "NEW",
+                  "provider": {
+                    "id": "SELLER"
+                  },
+                  "shipmentSummary": {
+                    "lineItemsSent": "NONE"
+                  }
+                },
+                "delivery": {
+                  "address": {
+                    "firstName": "scrubbed-4",
+                    "lastName": "scrubbed-5",
+                    "street": "scrubbed-6",
+                    "city": "scrubbed-7",
+                    "zipCode": "scrubbed-8",
+                    "countryCode": "PL",
+                    "phoneNumber": "+00000000001",
+                    "modifiedAt": "2026-10-01T09:05:00.000Z"
+                  },
+                  "method": {
+                    "id": "1fa56f79-4b6a-4821-a6f2-ca9c16d5c925",
+                    "name": "Allegro Kurier DPD"
+                  },
+                  "cost": {
+                    "amount": "14.99",
+                    "currency": "PLN"
+                  },
+                  "smart": false,
+                  "calculatedNumberOfPackages": 1
+                },
+                "invoice": {
+                  "required": false
+                },
+                "lineItems": [
+                  {
+                    "id": "62ae358b-c4e8-11f1-9c77-bedf604a2e01",
+                    "offer": {
+                      "id": "7834566001",
+                      "name": "Ceramic mug 350 ml, white",
+                      "external": {
+                        "id": "MUG-350-WHT"
+                      }
+                    },
+                    "quantity": 2,
+                    "originalPrice": {
+                      "amount": "39.99",
+                      "currency": "PLN"
+                    },
+                    "price": {
+                      "amount": "39.99",
+                      "currency": "PLN"
+                    },
+                    "boughtAt": "2026-10-01T09:00:00.000Z"
+                  }
+                ],
+                "summary": {
+                  "totalToPay": {
+                    "amount": "94.97",
+                    "currency": "PLN"
+                  }
+                },
+                "marketplace": {
+                  "id": "allegro-pl"
+                },
+                "updatedAt": "2026-10-01T09:03:00.000Z",
+                "revision": "819b5836"
+              },
+              {
+                "id": "29738e61-c4e8-11f1-89db-60ede9d61a13",
+                "messageToSeller": "scrubbed-1",
+                "surcharges": [],
+                "note": {
+                  "text": "scrubbed-2"
+                },
+                "buyer": {
+                  "id": "23123123",
+                  "email": "person-1@example.com",
+                  "login": "scrubbed-3",
+                  "firstName": "scrubbed-4",
+                  "lastName": "scrubbed-5",
+                  "guest": false,
+                  "phoneNumber": "+00000000001",
+                  "address": null,
+                  "personalIdentity": "scrubbed-9",
+                  "preferences": {
+                    "language": "pl-PL"
+                  }
+                },
+                "payment": null,
+                "status": "BOUGHT",
+                "fulfillment": {
+                  "status": "NEW",
+                  "provider": {
+                    "id": "SELLER"
+                  },
+                  "shipmentSummary": {
+                    "lineItemsSent": "NONE"
+                  }
+                },
+                "delivery": null,
+                "invoice": {
+                  "required": false
+                },
+                "lineItems": [
+                  {
+                    "id": "62ae358b-c4e8-11f1-9c77-bedf604a2e01",
+                    "offer": {
+                      "id": "7834566001",
+                      "name": "Ceramic mug 350 ml, white",
+                      "external": {
+                        "id": "MUG-350-WHT"
+                      }
+                    },
+                    "quantity": 2,
+                    "originalPrice": {
+                      "amount": "39.99",
+                      "currency": "PLN"
+                    },
+                    "price": {
+                      "amount": "39.99",
+                      "currency": "PLN"
+                    },
+                    "boughtAt": "2026-10-01T09:00:00.000Z"
+                  }
+                ],
+                "summary": {
+                  "totalToPay": {
+                    "amount": "94.97",
+                    "currency": "PLN"
+                  }
+                },
+                "marketplace": {
+                  "id": "allegro-pl"
+                },
+                "updatedAt": "2026-10-01T09:00:01.000Z",
+                "revision": "819b5836"
+              },
+              {
+                "id": "29738e61-c4e8-11f1-89db-60ede9d61a14",
+                "messageToSeller": "scrubbed-1",
+                "surcharges": [],
+                "note": {
+                  "text": "scrubbed-2"
+                },
+                "buyer": {
+                  "id": "23123123",
+                  "email": "person-1@example.com",
+                  "login": "scrubbed-3",
+                  "firstName": "scrubbed-4",
+                  "lastName": "scrubbed-5",
+                  "guest": false,
+                  "phoneNumber": "+00000000001",
+                  "address": {
+                    "street": "scrubbed-6",
+                    "city": "scrubbed-7",
+                    "postCode": "scrubbed-8",
+                    "countryCode": "PL"
+                  },
+                  "personalIdentity": "scrubbed-9",
+                  "preferences": {
+                    "language": "pl-PL"
+                  }
+                },
+                "payment": null,
+                "status": "BOUGHT",
+                "fulfillment": {
+                  "status": "NEW",
+                  "provider": {
+                    "id": "SELLER"
+                  },
+                  "shipmentSummary": {
+                    "lineItemsSent": "NONE"
+                  }
+                },
+                "delivery": null,
+                "invoice": {
+                  "required": false
+                },
+                "lineItems": [
+                  {
+                    "id": "62ae358b-c4e8-11f1-9c77-bedf604a2e01",
+                    "offer": {
+                      "id": "7834566001",
+                      "name": "Ceramic mug 350 ml, white",
+                      "external": {
+                        "id": "MUG-350-WHT"
+                      }
+                    },
+                    "quantity": 2,
+                    "originalPrice": {
+                      "amount": "39.99",
+                      "currency": "PLN"
+                    },
+                    "price": {
+                      "amount": "39.99",
+                      "currency": "PLN"
+                    },
+                    "boughtAt": "2026-10-01T09:00:00.000Z"
+                  }
+                ],
+                "summary": {
+                  "totalToPay": {
+                    "amount": "94.97",
+                    "currency": "PLN"
+                  }
+                },
+                "marketplace": {
+                  "id": "allegro-pl"
+                },
+                "updatedAt": "2026-10-01T09:00:01.000Z",
+                "revision": "819b5836"
+              },
+              {
+                "id": "29738e61-c4e8-11f1-89db-60ede9d61a15",
+                "messageToSeller": "scrubbed-1",
+                "surcharges": [],
+                "note": {
+                  "text": "scrubbed-2"
+                },
+                "buyer": {
+                  "id": "23123123",
+                  "email": "person-1@example.com",
+                  "login": "scrubbed-3",
+                  "firstName": "scrubbed-4",
+                  "lastName": "scrubbed-5",
+                  "guest": false,
+                  "phoneNumber": "+00000000001",
+                  "address": {
+                    "street": "scrubbed-6",
+                    "city": "scrubbed-7",
+                    "postCode": "scrubbed-8",
+                    "countryCode": "PL"
+                  },
+                  "personalIdentity": "scrubbed-9",
+                  "preferences": {
+                    "language": "pl-PL"
+                  }
+                },
+                "payment": {
+                  "type": "ONLINE",
+                  "finishedAt": "2026-10-01T09:10:00.000Z",
+                  "paidAmount": {
+                    "amount": "94.97",
+                    "currency": "PLN"
+                  },
+                  "id": "0f8f1d13-7e9e-41e8-9b00-c5b0dfb78ea6",
+                  "provider": "P24"
+                },
+                "status": "READY_FOR_PROCESSING",
+                "fulfillment": {
+                  "status": "SENT",
+                  "provider": {
+                    "id": "SELLER"
+                  }
+                },
+                "delivery": {
+                  "address": {
+                    "firstName": "scrubbed-4",
+                    "lastName": "scrubbed-5",
+                    "street": "scrubbed-6",
+                    "city": "scrubbed-7",
+                    "zipCode": "scrubbed-8",
+                    "countryCode": "PL",
+                    "phoneNumber": "+00000000001",
+                    "modifiedAt": "2026-10-01T09:05:00.000Z"
+                  },
+                  "method": {
+                    "id": "1fa56f79-4b6a-4821-a6f2-ca9c16d5c925",
+                    "name": "Allegro Kurier DPD"
+                  },
+                  "cost": {
+                    "amount": "14.99",
+                    "currency": "PLN"
+                  },
+                  "smart": false,
+                  "calculatedNumberOfPackages": 1
+                },
+                "invoice": {
+                  "required": false
+                },
+                "lineItems": [
+                  {
+                    "id": "62ae358b-c4e8-11f1-9c77-bedf604a2e01",
+                    "offer": {
+                      "id": "7834566001",
+                      "name": "Ceramic mug 350 ml, white",
+                      "external": {
+                        "id": "MUG-350-WHT"
+                      }
+                    },
+                    "quantity": 2,
+                    "originalPrice": {
+                      "amount": "39.99",
+                      "currency": "PLN"
+                    },
+                    "price": {
+                      "amount": "39.99",
+                      "currency": "PLN"
+                    },
+                    "boughtAt": "2026-10-01T09:00:00.000Z"
+                  }
+                ],
+                "summary": {
+                  "totalToPay": {
+                    "amount": "94.97",
+                    "currency": "PLN"
+                  }
+                },
+                "marketplace": {
+                  "id": "allegro-pl"
+                },
+                "updatedAt": "2026-10-02T15:30:00.000Z",
+                "revision": "819b5836"
+              },
+              {
+                "id": "29738e61-c4e8-11f1-89db-60ede9d61a16",
+                "messageToSeller": "scrubbed-1",
+                "surcharges": [],
+                "note": {
+                  "text": "scrubbed-2"
+                },
+                "buyer": {
+                  "id": "23123123",
+                  "email": "person-1@example.com",
+                  "login": "scrubbed-3",
+                  "firstName": "scrubbed-4",
+                  "lastName": "scrubbed-5",
+                  "guest": false,
+                  "phoneNumber": "+00000000001",
+                  "address": {
+                    "street": "scrubbed-6",
+                    "city": "scrubbed-7",
+                    "postCode": "scrubbed-8",
+                    "countryCode": "PL"
+                  },
+                  "personalIdentity": "scrubbed-9",
+                  "preferences": {
+                    "language": "pl-PL"
+                  }
+                },
+                "payment": {
+                  "type": "ONLINE",
+                  "finishedAt": "2026-10-01T09:10:00.000Z",
+                  "paidAmount": {
+                    "amount": "94.97",
+                    "currency": "PLN"
+                  },
+                  "id": "0f8f1d13-7e9e-41e8-9b00-c5b0dfb78ea6",
+                  "provider": "P24"
+                },
+                "status": "READY_FOR_PROCESSING",
+                "fulfillment": {
+                  "status": "CANCELLED",
+                  "provider": {
+                    "id": "SELLER"
+                  }
+                },
+                "delivery": {
+                  "address": {
+                    "firstName": "scrubbed-4",
+                    "lastName": "scrubbed-5",
+                    "street": "scrubbed-6",
+                    "city": "scrubbed-7",
+                    "zipCode": "scrubbed-8",
+                    "countryCode": "PL",
+                    "phoneNumber": "+00000000001",
+                    "modifiedAt": "2026-10-01T09:05:00.000Z"
+                  },
+                  "method": {
+                    "id": "1fa56f79-4b6a-4821-a6f2-ca9c16d5c925",
+                    "name": "Allegro Kurier DPD"
+                  },
+                  "cost": {
+                    "amount": "14.99",
+                    "currency": "PLN"
+                  },
+                  "smart": false,
+                  "calculatedNumberOfPackages": 1
+                },
+                "invoice": {
+                  "required": false
+                },
+                "lineItems": [
+                  {
+                    "id": "62ae358b-c4e8-11f1-9c77-bedf604a2e01",
+                    "offer": {
+                      "id": "7834566001",
+                      "name": "Ceramic mug 350 ml, white",
+                      "external": {
+                        "id": "MUG-350-WHT"
+                      }
+                    },
+                    "quantity": 2,
+                    "originalPrice": {
+                      "amount": "39.99",
+                      "currency": "PLN"
+                    },
+                    "price": {
+                      "amount": "39.99",
+                      "currency": "PLN"
+                    },
+                    "boughtAt": "2026-10-01T09:00:00.000Z"
+                  }
+                ],
+                "summary": {
+                  "totalToPay": {
+                    "amount": "94.97",
+                    "currency": "PLN"
+                  }
+                },
+                "marketplace": {
+                  "id": "allegro-pl"
+                },
+                "updatedAt": "2026-10-02T08:00:00.000Z",
+                "revision": "819b5836"
+              },
+              {
+                "id": "29738e61-c4e8-11f1-89db-60ede9d61a17",
+                "messageToSeller": "scrubbed-1",
+                "surcharges": [],
+                "note": {
+                  "text": "scrubbed-2"
+                },
+                "buyer": {
+                  "id": "23123123",
+                  "email": "person-2@example.com",
+                  "login": "scrubbed-18",
+                  "firstName": "scrubbed-19",
+                  "lastName": "scrubbed-20",
+                  "guest": false,
+                  "phoneNumber": "+00000000002",
+                  "address": {
+                    "street": "scrubbed-21",
+                    "city": "scrubbed-22",
+                    "postCode": "scrubbed-23",
+                    "countryCode": "CZ"
+                  },
+                  "personalIdentity": "scrubbed-9",
+                  "preferences": {
+                    "language": "pl-PL"
+                  }
+                },
+                "payment": {
+                  "type": "ONLINE",
+                  "finishedAt": "2026-10-01T09:10:00.000Z",
+                  "paidAmount": {
+                    "amount": "1089.00",
+                    "currency": "CZK"
+                  },
+                  "id": "0f8f1d13-7e9e-41e8-9b00-c5b0dfb78e17"
+                },
+                "status": "READY_FOR_PROCESSING",
+                "fulfillment": {
+                  "status": "NEW",
+                  "provider": {
+                    "id": "SELLER"
+                  },
+                  "shipmentSummary": {
+                    "lineItemsSent": "NONE"
+                  }
+                },
+                "delivery": {
+                  "address": {
+                    "firstName": "scrubbed-19",
+                    "lastName": "scrubbed-20",
+                    "street": "scrubbed-21",
+                    "city": "scrubbed-22",
+                    "zipCode": "scrubbed-23",
+                    "countryCode": "CZ",
+                    "phoneNumber": "+00000000002"
+                  }
+                },
+                "invoice": {
+                  "required": false
+                },
+                "lineItems": [
+                  {
+                    "id": "62ae358b-c4e8-11f1-9c77-bedf604a2e17",
+                    "offer": {
+                      "id": "7834566001",
+                      "name": "Ceramic mug 350 ml, white",
+                      "external": {
+                        "id": "MUG-350-WHT"
+                      }
+                    },
+                    "quantity": 1,
+                    "originalPrice": {
+                      "amount": "990.00",
+                      "currency": "CZK"
+                    },
+                    "price": {
+                      "amount": "990.00",
+                      "currency": "CZK"
+                    },
+                    "boughtAt": "2026-10-01T09:00:00.000Z"
+                  }
+                ],
+                "summary": {
+                  "totalToPay": {
+                    "amount": "1089.00",
+                    "currency": "CZK"
+                  }
+                },
+                "marketplace": {
+                  "id": "allegro-cz"
+                },
+                "updatedAt": "2026-10-01T09:10:05.000Z",
+                "revision": "819b5836"
+              },
+              {
+                "id": "29738e61-c4e8-11f1-89db-60ede9d61a18",
+                "messageToSeller": "scrubbed-1",
+                "surcharges": [],
+                "note": {
+                  "text": "scrubbed-2"
+                },
+                "buyer": {
+                  "id": "23123123",
+                  "email": "person-1@example.com",
+                  "login": "scrubbed-3",
+                  "firstName": "scrubbed-4",
+                  "lastName": "scrubbed-5",
+                  "guest": false,
+                  "phoneNumber": "+00000000001",
+                  "address": {
+                    "street": "scrubbed-6",
+                    "city": "scrubbed-7",
+                    "postCode": "scrubbed-8",
+                    "countryCode": "PL"
+                  },
+                  "personalIdentity": "scrubbed-9",
+                  "preferences": {
+                    "language": "pl-PL"
+                  }
+                },
+                "payment": {
+                  "type": "ONLINE",
+                  "finishedAt": "2026-10-01T09:10:00.000Z",
+                  "paidAmount": {
+                    "amount": "94.97",
+                    "currency": "PLN"
+                  },
+                  "id": "0f8f1d13-7e9e-41e8-9b00-c5b0dfb78ea6",
+                  "provider": "P24"
+                },
+                "status": "READY_FOR_PROCESSING",
+                "fulfillment": {
+                  "status": "NEW",
+                  "provider": {
+                    "id": "ALLEGRO"
+                  }
+                },
+                "delivery": {
+                  "address": {
+                    "firstName": "scrubbed-4",
+                    "lastName": "scrubbed-5",
+                    "street": "scrubbed-6",
+                    "city": "scrubbed-7",
+                    "zipCode": "scrubbed-8",
+                    "countryCode": "PL",
+                    "phoneNumber": "+00000000001",
+                    "modifiedAt": "2026-10-01T09:05:00.000Z"
+                  },
+                  "method": {
+                    "id": "1fa56f79-4b6a-4821-a6f2-ca9c16d5c925",
+                    "name": "Allegro Kurier DPD"
+                  },
+                  "cost": {
+                    "amount": "14.99",
+                    "currency": "PLN"
+                  },
+                  "smart": false,
+                  "calculatedNumberOfPackages": 1
+                },
+                "invoice": {
+                  "required": false
+                },
+                "lineItems": [
+                  {
+                    "id": "62ae358b-c4e8-11f1-9c77-bedf604a2e01",
+                    "offer": {
+                      "id": "7834566001",
+                      "name": "Ceramic mug 350 ml, white",
+                      "external": {
+                        "id": "MUG-350-WHT"
+                      }
+                    },
+                    "quantity": 2,
+                    "originalPrice": {
+                      "amount": "39.99",
+                      "currency": "PLN"
+                    },
+                    "price": {
+                      "amount": "39.99",
+                      "currency": "PLN"
+                    },
+                    "boughtAt": "2026-10-01T09:00:00.000Z"
+                  }
+                ],
+                "summary": {
+                  "totalToPay": {
+                    "amount": "94.97",
+                    "currency": "PLN"
+                  }
+                },
+                "marketplace": {
+                  "id": "allegro-pl"
+                },
+                "updatedAt": "2026-10-01T09:10:05.000Z",
+                "revision": "819b5836"
+              },
+              {
+                "id": "29738e61-c4e8-11f1-89db-60ede9d61a07",
+                "messageToSeller": "scrubbed-1",
+                "surcharges": [],
+                "note": {
+                  "text": "scrubbed-2"
+                },
+                "buyer": {
+                  "id": "23123123",
+                  "email": "person-1@example.com",
+                  "login": "scrubbed-3",
+                  "firstName": "scrubbed-4",
+                  "lastName": "scrubbed-5",
+                  "guest": false,
+                  "phoneNumber": "+00000000001",
+                  "address": {
+                    "street": "scrubbed-6",
+                    "city": "scrubbed-7",
+                    "postCode": "scrubbed-8",
+                    "countryCode": "PL"
+                  },
+                  "personalIdentity": "scrubbed-9",
+                  "preferences": {
+                    "language": "pl-PL"
+                  }
+                },
+                "payment": {
+                  "type": "ONLINE",
+                  "finishedAt": "2026-10-01T09:10:00.000Z",
+                  "paidAmount": {
+                    "amount": "94.97",
+                    "currency": "PLN"
+                  },
+                  "id": "0f8f1d13-7e9e-41e8-9b00-c5b0dfb78ea6",
+                  "provider": "P24"
+                },
+                "status": "READY_FOR_PROCESSING",
+                "fulfillment": {
+                  "status": "NEW",
+                  "provider": {
+                    "id": "SELLER"
+                  },
+                  "shipmentSummary": {
+                    "lineItemsSent": "NONE"
+                  }
+                },
+                "delivery": {
+                  "address": {
+                    "firstName": "scrubbed-4",
+                    "lastName": "scrubbed-5",
+                    "street": "scrubbed-6",
+                    "city": "scrubbed-7",
+                    "zipCode": "scrubbed-8",
+                    "countryCode": "PL",
+                    "phoneNumber": "+00000000001",
+                    "modifiedAt": "2026-10-01T09:05:00.000Z"
+                  },
+                  "method": {
+                    "id": "1fa56f79-4b6a-4821-a6f2-ca9c16d5c925",
+                    "name": "Allegro Kurier DPD"
+                  },
+                  "cost": {
+                    "amount": "14.99",
+                    "currency": "PLN"
+                  },
+                  "smart": false,
+                  "calculatedNumberOfPackages": 1
+                },
+                "invoice": {
+                  "required": false
+                },
+                "lineItems": [
+                  {
+                    "id": "62ae358b-c4e8-11f1-9c77-bedf604a2e07",
+                    "offer": {
+                      "id": "7834566001",
+                      "name": "Ceramic mug 350 ml, white",
+                      "external": {
+                        "id": "MUG-350-WHT"
+                      }
+                    },
+                    "quantity": 2,
+                    "originalPrice": {
+                      "amount": "39.99",
+                      "currency": "PLN"
+                    },
+                    "price": {
+                      "amount": "39.99",
+                      "currency": "PLN"
+                    },
+                    "boughtAt": "2026-10-01T09:02:00.000Z"
+                  },
+                  {
+                    "id": "62ae358b-c4e8-11f1-9c77-bedf604a2e08",
+                    "offer": {
+                      "id": "7834566002",
+                      "name": "Teapot 1 l, blue glaze"
+                    },
+                    "quantity": 1,
+                    "originalPrice": {
+                      "amount": "129.00",
+                      "currency": "PLN"
+                    },
+                    "price": {
+                      "amount": "119.90",
+                      "currency": "PLN"
+                    },
+                    "boughtAt": "2026-10-01T08:58:30.000Z"
+                  }
+                ],
+                "summary": {
+                  "totalToPay": {
+                    "amount": "214.87",
+                    "currency": "PLN"
+                  }
+                },
+                "marketplace": {
+                  "id": "allegro-pl"
+                },
+                "updatedAt": "2026-10-01T09:10:05.000Z",
+                "revision": "819b5836"
+              }
+            ],
+            "count": 16,
+            "totalCount": 16
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/order/events?from=1791663800016000&limit=100",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/vnd.allegro.public.v1+json",
+          "date": "Sat, 10 Oct 2026 12:00:00 GMT"
+        },
+        "body": {
+          "json": {
+            "events": []
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/order/event-stats",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/vnd.allegro.public.v1+json",
+          "date": "Sat, 10 Oct 2026 12:00:00 GMT"
+        },
+        "body": {
+          "json": {
+            "latestEvent": {
+              "id": "1791663800016000",
+              "occurredAt": "2026-10-08T09:00:00.000Z"
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/order/checkout-forms?limit=100&sort=lineItems.boughtAt&lineItems.boughtAt.lte=2026-10-10T12%3A00%3A00.000Z&lineItems.boughtAt.gte=2026-09-10T12%3A00%3A00.000Z",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/vnd.allegro.public.v1+json",
+          "date": "Sat, 10 Oct 2026 12:00:00 GMT"
+        },
+        "body": {
+          "json": {
+            "checkoutForms": [
+              {
+                "id": "29738e61-c4e8-11f1-89db-60ede9d61a02",
+                "messageToSeller": "scrubbed-1",
+                "surcharges": [],
+                "note": {
+                  "text": "scrubbed-2"
+                },
+                "buyer": {
+                  "id": "23123123",
+                  "email": "person-1@example.com",
+                  "login": "scrubbed-3",
+                  "firstName": "scrubbed-4",
+                  "lastName": "scrubbed-5",
+                  "guest": false,
+                  "phoneNumber": "+00000000001",
+                  "address": {
+                    "street": "scrubbed-6",
+                    "city": "scrubbed-7",
+                    "postCode": "scrubbed-8",
+                    "countryCode": "PL"
+                  },
+                  "personalIdentity": "scrubbed-9",
+                  "preferences": {
+                    "language": "pl-PL"
+                  }
+                },
+                "payment": {
+                  "type": "ONLINE",
+                  "finishedAt": "2026-10-01T09:10:00.000Z",
+                  "paidAmount": {
+                    "amount": "94.97",
+                    "currency": "PLN"
+                  },
+                  "id": "0f8f1d13-7e9e-41e8-9b00-c5b0dfb78ea6",
+                  "provider": "P24"
+                },
+                "status": "READY_FOR_PROCESSING",
+                "fulfillment": {
+                  "status": "NEW",
+                  "provider": {
+                    "id": "SELLER"
+                  },
+                  "shipmentSummary": {
+                    "lineItemsSent": "NONE"
+                  }
+                },
+                "delivery": {
+                  "address": {
+                    "firstName": "scrubbed-4",
+                    "lastName": "scrubbed-5",
+                    "street": "scrubbed-6",
+                    "city": "scrubbed-7",
+                    "zipCode": "scrubbed-8",
+                    "countryCode": "PL",
+                    "phoneNumber": "+00000000001",
+                    "modifiedAt": "2026-10-01T09:05:00.000Z"
+                  },
+                  "method": {
+                    "id": "1fa56f79-4b6a-4821-a6f2-ca9c16d5c925",
+                    "name": "Allegro Kurier DPD"
+                  },
+                  "cost": {
+                    "amount": "14.99",
+                    "currency": "PLN"
+                  },
+                  "smart": false,
+                  "calculatedNumberOfPackages": 1
+                },
+                "invoice": {
+                  "required": false
+                },
+                "lineItems": [
+                  {
+                    "id": "62ae358b-c4e8-11f1-9c77-bedf604a2e01",
+                    "offer": {
+                      "id": "7834566001",
+                      "name": "Ceramic mug 350 ml, white",
+                      "external": {
+                        "id": "MUG-350-WHT"
+                      }
+                    },
+                    "quantity": 2,
+                    "originalPrice": {
+                      "amount": "39.99",
+                      "currency": "PLN"
+                    },
+                    "price": {
+                      "amount": "39.99",
+                      "currency": "PLN"
+                    },
+                    "boughtAt": "2026-10-01T09:00:00.000Z"
+                  }
+                ],
+                "summary": {
+                  "totalToPay": {
+                    "amount": "94.97",
+                    "currency": "PLN"
+                  }
+                },
+                "marketplace": {
+                  "id": "allegro-pl"
+                },
+                "updatedAt": "2026-10-01T09:10:05.000Z",
+                "revision": "819b5836"
+              },
+              {
+                "id": "29738e61-c4e8-11f1-89db-60ede9d61a03",
+                "messageToSeller": "scrubbed-1",
+                "surcharges": [],
+                "note": {
+                  "text": "scrubbed-2"
+                },
+                "buyer": {
+                  "id": "23123123",
+                  "email": "person-1@example.com",
+                  "login": "scrubbed-3",
+                  "firstName": "scrubbed-4",
+                  "lastName": "scrubbed-5",
+                  "guest": false,
+                  "phoneNumber": "+00000000001",
+                  "address": {
+                    "street": "scrubbed-6",
+                    "city": "scrubbed-7",
+                    "postCode": "scrubbed-8",
+                    "countryCode": "PL"
+                  },
+                  "personalIdentity": "scrubbed-9",
+                  "preferences": {
+                    "language": "pl-PL"
+                  }
+                },
+                "payment": {
+                  "type": "CASH_ON_DELIVERY",
+                  "paidAmount": null,
+                  "id": "0f8f1d13-7e9e-41e8-9b00-c5b0dfb78e03"
+                },
+                "status": "READY_FOR_PROCESSING",
+                "fulfillment": {
+                  "status": "NEW",
+                  "provider": {
+                    "id": "SELLER"
+                  },
+                  "shipmentSummary": {
+                    "lineItemsSent": "NONE"
+                  }
+                },
+                "delivery": {
+                  "address": {
+                    "firstName": "scrubbed-4",
+                    "lastName": "scrubbed-5",
+                    "street": "scrubbed-6",
+                    "city": "scrubbed-7",
+                    "zipCode": "scrubbed-8",
+                    "countryCode": "PL",
+                    "phoneNumber": "+00000000001",
+                    "modifiedAt": "2026-10-01T09:05:00.000Z"
+                  },
+                  "method": {
+                    "id": "1fa56f79-4b6a-4821-a6f2-ca9c16d5c925",
+                    "name": "Allegro Kurier DPD"
+                  },
+                  "cost": {
+                    "amount": "14.99",
+                    "currency": "PLN"
+                  },
+                  "smart": false,
+                  "calculatedNumberOfPackages": 1
+                },
+                "invoice": {
+                  "required": false
+                },
+                "lineItems": [
+                  {
+                    "id": "62ae358b-c4e8-11f1-9c77-bedf604a2e01",
+                    "offer": {
+                      "id": "7834566001",
+                      "name": "Ceramic mug 350 ml, white",
+                      "external": {
+                        "id": "MUG-350-WHT"
+                      }
+                    },
+                    "quantity": 2,
+                    "originalPrice": {
+                      "amount": "39.99",
+                      "currency": "PLN"
+                    },
+                    "price": {
+                      "amount": "39.99",
+                      "currency": "PLN"
+                    },
+                    "boughtAt": "2026-10-01T09:00:00.000Z"
+                  }
+                ],
+                "summary": {
+                  "totalToPay": {
+                    "amount": "94.97",
+                    "currency": "PLN"
+                  }
+                },
+                "marketplace": {
+                  "id": "allegro-pl"
+                },
+                "updatedAt": "2026-10-01T09:10:05.000Z",
+                "revision": "819b5836"
+              },
+              {
+                "id": "29738e61-c4e8-11f1-89db-60ede9d61a04",
+                "messageToSeller": "scrubbed-1",
+                "surcharges": [],
+                "note": {
+                  "text": "scrubbed-2"
+                },
+                "buyer": {
+                  "id": "23123123",
+                  "email": "person-1@example.com",
+                  "login": "scrubbed-3",
+                  "firstName": "scrubbed-4",
+                  "lastName": "scrubbed-5",
+                  "guest": false,
+                  "phoneNumber": "+00000000001",
+                  "address": {
+                    "street": "scrubbed-6",
+                    "city": "scrubbed-7",
+                    "postCode": "scrubbed-8",
+                    "countryCode": "PL"
+                  },
+                  "personalIdentity": "scrubbed-9",
+                  "preferences": {
+                    "language": "pl-PL"
+                  },
+                  "companyName": "scrubbed-10"
+                },
+                "payment": {
+                  "type": "ONLINE",
+                  "finishedAt": "2026-10-01T09:10:00.000Z",
+                  "paidAmount": {
+                    "amount": "94.97",
+                    "currency": "PLN"
+                  },
+                  "id": "0f8f1d13-7e9e-41e8-9b00-c5b0dfb78ea6",
+                  "provider": "P24"
+                },
+                "status": "READY_FOR_PROCESSING",
+                "fulfillment": {
+                  "status": "NEW",
+                  "provider": {
+                    "id": "SELLER"
+                  },
+                  "shipmentSummary": {
+                    "lineItemsSent": "NONE"
+                  }
+                },
+                "delivery": {
+                  "address": {
+                    "firstName": "scrubbed-4",
+                    "lastName": "scrubbed-5",
+                    "street": "scrubbed-6",
+                    "city": "scrubbed-7",
+                    "zipCode": "scrubbed-8",
+                    "countryCode": "PL",
+                    "phoneNumber": "+00000000001",
+                    "modifiedAt": "2026-10-01T09:05:00.000Z"
+                  },
+                  "method": {
+                    "id": "1fa56f79-4b6a-4821-a6f2-ca9c16d5c925",
+                    "name": "Allegro Kurier DPD"
+                  },
+                  "cost": {
+                    "amount": "14.99",
+                    "currency": "PLN"
+                  },
+                  "smart": false,
+                  "calculatedNumberOfPackages": 1
+                },
+                "invoice": {
+                  "required": true,
+                  "address": {
+                    "street": "scrubbed-11",
+                    "city": "scrubbed-7",
+                    "zipCode": "scrubbed-12",
+                    "countryCode": "pl",
+                    "company": {
+                      "name": "scrubbed-10",
+                      "ids": [
+                        {
+                          "type": "VAT_EU",
+                          "value": "scrubbed-13"
+                        },
+                        {
+                          "type": "PL_NIP",
+                          "value": "scrubbed-14"
+                        }
+                      ],
+                      "vatPayerStatus": "ACTIVE"
+                    },
+                    "naturalPerson": null
+                  }
+                },
+                "lineItems": [
+                  {
+                    "id": "62ae358b-c4e8-11f1-9c77-bedf604a2e01",
+                    "offer": {
+                      "id": "7834566001",
+                      "name": "Ceramic mug 350 ml, white",
+                      "external": {
+                        "id": "MUG-350-WHT"
+                      }
+                    },
+                    "quantity": 2,
+                    "originalPrice": {
+                      "amount": "39.99",
+                      "currency": "PLN"
+                    },
+                    "price": {
+                      "amount": "39.99",
+                      "currency": "PLN"
+                    },
+                    "boughtAt": "2026-10-01T09:00:00.000Z"
+                  }
+                ],
+                "summary": {
+                  "totalToPay": {
+                    "amount": "94.97",
+                    "currency": "PLN"
+                  }
+                },
+                "marketplace": {
+                  "id": "allegro-pl"
+                },
+                "updatedAt": "2026-10-01T09:10:05.000Z",
+                "revision": "819b5836"
+              },
+              {
+                "id": "29738e61-c4e8-11f1-89db-60ede9d61a05",
+                "messageToSeller": "scrubbed-1",
+                "surcharges": [],
+                "note": {
+                  "text": "scrubbed-2"
+                },
+                "buyer": {
+                  "id": "23123123",
+                  "email": "person-1@example.com",
+                  "login": "scrubbed-3",
+                  "firstName": "scrubbed-4",
+                  "lastName": "scrubbed-5",
+                  "guest": false,
+                  "phoneNumber": "+00000000001",
+                  "address": {
+                    "street": "scrubbed-6",
+                    "city": "scrubbed-7",
+                    "postCode": "scrubbed-8",
+                    "countryCode": "PL"
+                  },
+                  "personalIdentity": "scrubbed-9",
+                  "preferences": {
+                    "language": "pl-PL"
+                  }
+                },
+                "payment": {
+                  "type": "ONLINE",
+                  "finishedAt": "2026-10-01T09:10:00.000Z",
+                  "paidAmount": {
+                    "amount": "94.97",
+                    "currency": "PLN"
+                  },
+                  "id": "0f8f1d13-7e9e-41e8-9b00-c5b0dfb78ea6",
+                  "provider": "P24"
+                },
+                "status": "READY_FOR_PROCESSING",
+                "fulfillment": {
+                  "status": "NEW",
+                  "provider": {
+                    "id": "SELLER"
+                  },
+                  "shipmentSummary": {
+                    "lineItemsSent": "NONE"
+                  }
+                },
+                "delivery": {
+                  "address": {
+                    "firstName": "scrubbed-4",
+                    "lastName": "scrubbed-5",
+                    "street": "scrubbed-6",
+                    "city": "scrubbed-7",
+                    "zipCode": "scrubbed-8",
+                    "countryCode": "PL",
+                    "phoneNumber": "+00000000001",
+                    "modifiedAt": "2026-10-01T09:05:00.000Z"
+                  },
+                  "method": {
+                    "id": "1fa56f79-4b6a-4821-a6f2-ca9c16d5c925",
+                    "name": "Allegro Kurier DPD"
+                  },
+                  "cost": {
+                    "amount": "14.99",
+                    "currency": "PLN"
+                  },
+                  "smart": false,
+                  "calculatedNumberOfPackages": 1
+                },
+                "invoice": {
+                  "required": true,
+                  "address": {
+                    "street": "scrubbed-6",
+                    "city": "scrubbed-7",
+                    "zipCode": "scrubbed-8",
+                    "countryCode": "PL",
+                    "company": null,
+                    "naturalPerson": {
+                      "firstName": "scrubbed-4",
+                      "lastName": "scrubbed-5"
+                    }
+                  }
+                },
+                "lineItems": [
+                  {
+                    "id": "62ae358b-c4e8-11f1-9c77-bedf604a2e01",
+                    "offer": {
+                      "id": "7834566001",
+                      "name": "Ceramic mug 350 ml, white",
+                      "external": {
+                        "id": "MUG-350-WHT"
+                      }
+                    },
+                    "quantity": 2,
+                    "originalPrice": {
+                      "amount": "39.99",
+                      "currency": "PLN"
+                    },
+                    "price": {
+                      "amount": "39.99",
+                      "currency": "PLN"
+                    },
+                    "boughtAt": "2026-10-01T09:00:00.000Z"
+                  }
+                ],
+                "summary": {
+                  "totalToPay": {
+                    "amount": "94.97",
+                    "currency": "PLN"
+                  }
+                },
+                "marketplace": {
+                  "id": "allegro-pl"
+                },
+                "updatedAt": "2026-10-01T09:10:05.000Z",
+                "revision": "819b5836"
+              },
+              {
+                "id": "29738e61-c4e8-11f1-89db-60ede9d61a06",
+                "messageToSeller": "scrubbed-1",
+                "surcharges": [],
+                "note": {
+                  "text": "scrubbed-2"
+                },
+                "buyer": {
+                  "id": "23123123",
+                  "email": "person-1@example.com",
+                  "login": "scrubbed-3",
+                  "firstName": "scrubbed-4",
+                  "lastName": "scrubbed-5",
+                  "guest": false,
+                  "phoneNumber": "+00000000001",
+                  "address": {
+                    "street": "scrubbed-6",
+                    "city": "scrubbed-7",
+                    "postCode": "scrubbed-8",
+                    "countryCode": "PL"
+                  },
+                  "personalIdentity": "scrubbed-9",
+                  "preferences": {
+                    "language": "pl-PL"
+                  }
+                },
+                "payment": {
+                  "type": "ONLINE",
+                  "finishedAt": "2026-10-01T09:10:00.000Z",
+                  "paidAmount": {
+                    "amount": "94.97",
+                    "currency": "PLN"
+                  },
+                  "id": "0f8f1d13-7e9e-41e8-9b00-c5b0dfb78ea6",
+                  "provider": "P24"
+                },
+                "status": "READY_FOR_PROCESSING",
+                "fulfillment": {
+                  "status": "NEW",
+                  "provider": {
+                    "id": "SELLER"
+                  },
+                  "shipmentSummary": {
+                    "lineItemsSent": "NONE"
+                  }
+                },
+                "delivery": {
+                  "address": {
+                    "firstName": "scrubbed-4",
+                    "lastName": "scrubbed-5",
+                    "street": "scrubbed-6",
+                    "city": "scrubbed-7",
+                    "zipCode": "scrubbed-8",
+                    "countryCode": "PL",
+                    "phoneNumber": "+00000000001",
+                    "modifiedAt": "2026-10-01T09:05:00.000Z"
+                  },
+                  "method": {
+                    "id": "2488f7b7-5d1c-4d65-b85c-4cbcf253fd93",
+                    "name": "Allegro Paczkomaty InPost"
+                  },
+                  "pickupPoint": {
+                    "id": "POZ08A",
+                    "name": "Paczkomat POZ08A",
+                    "description": "Fuel station",
+                    "address": {
+                      "street": "scrubbed-15",
+                      "zipCode": "scrubbed-16",
+                      "city": "scrubbed-7",
+                      "countryCode": "PL"
+                    }
+                  }
+                },
+                "invoice": {
+                  "required": false
+                },
+                "lineItems": [
+                  {
+                    "id": "62ae358b-c4e8-11f1-9c77-bedf604a2e01",
+                    "offer": {
+                      "id": "7834566001",
+                      "name": "Ceramic mug 350 ml, white",
+                      "external": {
+                        "id": "MUG-350-WHT"
+                      }
+                    },
+                    "quantity": 2,
+                    "originalPrice": {
+                      "amount": "39.99",
+                      "currency": "PLN"
+                    },
+                    "price": {
+                      "amount": "39.99",
+                      "currency": "PLN"
+                    },
+                    "boughtAt": "2026-10-01T09:00:00.000Z"
+                  }
+                ],
+                "summary": {
+                  "totalToPay": {
+                    "amount": "94.97",
+                    "currency": "PLN"
+                  }
+                },
+                "marketplace": {
+                  "id": "allegro-pl"
+                },
+                "updatedAt": "2026-10-01T09:10:05.000Z",
+                "revision": "819b5836"
+              },
+              {
+                "id": "29738e61-c4e8-11f1-89db-60ede9d61a09",
+                "messageToSeller": "scrubbed-1",
+                "surcharges": [],
+                "note": {
+                  "text": "scrubbed-2"
+                },
+                "buyer": {
+                  "id": "23123123",
+                  "email": "person-1@example.com",
+                  "login": "scrubbed-3",
+                  "guest": false,
+                  "phoneNumber": "+00000000001",
+                  "address": {
+                    "street": "scrubbed-6",
+                    "city": "scrubbed-7",
+                    "postCode": "scrubbed-8",
+                    "countryCode": "PL"
+                  },
+                  "personalIdentity": "scrubbed-9",
+                  "preferences": {
+                    "language": "pl-PL"
+                  }
+                },
+                "payment": {
+                  "type": "ONLINE",
+                  "finishedAt": "2026-10-01T09:10:00.000Z",
+                  "paidAmount": {
+                    "amount": "94.97",
+                    "currency": "PLN"
+                  },
+                  "id": "0f8f1d13-7e9e-41e8-9b00-c5b0dfb78ea6",
+                  "provider": "P24"
+                },
+                "status": "READY_FOR_PROCESSING",
+                "fulfillment": {
+                  "status": "NEW",
+                  "provider": {
+                    "id": "SELLER"
+                  },
+                  "shipmentSummary": {
+                    "lineItemsSent": "NONE"
+                  }
+                },
+                "delivery": {
+                  "address": {
+                    "firstName": "scrubbed-17",
+                    "lastName": "scrubbed-17",
+                    "street": "scrubbed-6",
+                    "city": "scrubbed-7",
+                    "zipCode": "scrubbed-8",
+                    "countryCode": "PL",
+                    "phoneNumber": "+00000000001",
+                    "modifiedAt": "2026-10-01T09:05:00.000Z"
+                  }
+                },
+                "invoice": {
+                  "required": false
+                },
+                "lineItems": [
+                  {
+                    "id": "62ae358b-c4e8-11f1-9c77-bedf604a2e01",
+                    "offer": {
+                      "id": "7834566001",
+                      "name": "Ceramic mug 350 ml, white",
+                      "external": {
+                        "id": "MUG-350-WHT"
+                      }
+                    },
+                    "quantity": 2,
+                    "originalPrice": {
+                      "amount": "39.99",
+                      "currency": "PLN"
+                    },
+                    "price": {
+                      "amount": "39.99",
+                      "currency": "PLN"
+                    },
+                    "boughtAt": "2026-10-01T09:00:00.000Z"
+                  }
+                ],
+                "summary": {
+                  "totalToPay": {
+                    "amount": "94.97",
+                    "currency": "PLN"
+                  }
+                },
+                "marketplace": {
+                  "id": "allegro-pl"
+                },
+                "updatedAt": "2026-10-01T09:10:05.000Z",
+                "revision": "819b5836"
+              },
+              {
+                "id": "29738e61-c4e8-11f1-89db-60ede9d61a10",
+                "messageToSeller": "scrubbed-1",
+                "surcharges": [],
+                "note": {
+                  "text": "scrubbed-2"
+                },
+                "buyer": {
+                  "id": "23123123",
+                  "email": "person-1@example.com",
+                  "login": "scrubbed-3",
+                  "firstName": "scrubbed-4",
+                  "lastName": "scrubbed-5",
+                  "guest": false,
+                  "phoneNumber": "+00000000001",
+                  "address": {
+                    "street": "scrubbed-6",
+                    "city": "scrubbed-7",
+                    "postCode": "scrubbed-8",
+                    "countryCode": "PL"
+                  },
+                  "personalIdentity": "scrubbed-9",
+                  "preferences": {
+                    "language": "pl-PL"
+                  }
+                },
+                "payment": {
+                  "type": "ONLINE",
+                  "finishedAt": "2026-10-01T09:10:00.000Z",
+                  "paidAmount": {
+                    "amount": "94.97",
+                    "currency": "PLN"
+                  },
+                  "id": "0f8f1d13-7e9e-41e8-9b00-c5b0dfb78ea6",
+                  "provider": "P24"
+                },
+                "status": "CANCELLED",
+                "fulfillment": {
+                  "status": "NEW",
+                  "provider": {
+                    "id": "SELLER"
+                  },
+                  "shipmentSummary": {
+                    "lineItemsSent": "NONE"
+                  }
+                },
+                "delivery": {
+                  "address": {
+                    "firstName": "scrubbed-4",
+                    "lastName": "scrubbed-5",
+                    "street": "scrubbed-6",
+                    "city": "scrubbed-7",
+                    "zipCode": "scrubbed-8",
+                    "countryCode": "PL",
+                    "phoneNumber": "+00000000001",
+                    "modifiedAt": "2026-10-01T09:05:00.000Z"
+                  },
+                  "method": {
+                    "id": "1fa56f79-4b6a-4821-a6f2-ca9c16d5c925",
+                    "name": "Allegro Kurier DPD"
+                  },
+                  "cost": {
+                    "amount": "14.99",
+                    "currency": "PLN"
+                  },
+                  "smart": false,
+                  "calculatedNumberOfPackages": 1
+                },
+                "invoice": {
+                  "required": false
+                },
+                "lineItems": [
+                  {
+                    "id": "62ae358b-c4e8-11f1-9c77-bedf604a2e01",
+                    "offer": {
+                      "id": "7834566001",
+                      "name": "Ceramic mug 350 ml, white",
+                      "external": {
+                        "id": "MUG-350-WHT"
+                      }
+                    },
+                    "quantity": 2,
+                    "originalPrice": {
+                      "amount": "39.99",
+                      "currency": "PLN"
+                    },
+                    "price": {
+                      "amount": "39.99",
+                      "currency": "PLN"
+                    },
+                    "boughtAt": "2026-10-01T09:00:00.000Z"
+                  }
+                ],
+                "summary": {
+                  "totalToPay": {
+                    "amount": "94.97",
+                    "currency": "PLN"
+                  }
+                },
+                "marketplace": {
+                  "id": "allegro-pl"
+                },
+                "updatedAt": "2026-10-02T11:00:00.000Z",
+                "revision": "819b5836"
+              },
+              {
+                "id": "29738e61-c4e8-11f1-89db-60ede9d61a11",
+                "messageToSeller": "scrubbed-1",
+                "surcharges": [],
+                "note": {
+                  "text": "scrubbed-2"
+                },
+                "buyer": {
+                  "id": "23123123",
+                  "email": "person-1@example.com",
+                  "login": "scrubbed-3",
+                  "firstName": "scrubbed-4",
+                  "lastName": "scrubbed-5",
+                  "guest": false,
+                  "phoneNumber": "+00000000001",
+                  "address": {
+                    "street": "scrubbed-6",
+                    "city": "scrubbed-7",
+                    "postCode": "scrubbed-8",
+                    "countryCode": "PL"
+                  },
+                  "personalIdentity": "scrubbed-9",
+                  "preferences": {
+                    "language": "pl-PL"
+                  }
+                },
+                "payment": {
+                  "type": "ONLINE",
+                  "id": "0f8f1d13-7e9e-41e8-9b00-c5b0dfb78e11"
+                },
+                "status": "CANCELLED",
+                "fulfillment": {
+                  "status": "NEW",
+                  "provider": {
+                    "id": "SELLER"
+                  },
+                  "shipmentSummary": {
+                    "lineItemsSent": "NONE"
+                  }
+                },
+                "delivery": {
+                  "address": {
+                    "firstName": "scrubbed-4",
+                    "lastName": "scrubbed-5",
+                    "street": "scrubbed-6",
+                    "city": "scrubbed-7",
+                    "zipCode": "scrubbed-8",
+                    "countryCode": "PL",
+                    "phoneNumber": "+00000000001",
+                    "modifiedAt": "2026-10-01T09:05:00.000Z"
+                  },
+                  "method": {
+                    "id": "1fa56f79-4b6a-4821-a6f2-ca9c16d5c925",
+                    "name": "Allegro Kurier DPD"
+                  },
+                  "cost": {
+                    "amount": "14.99",
+                    "currency": "PLN"
+                  },
+                  "smart": false,
+                  "calculatedNumberOfPackages": 1
+                },
+                "invoice": {
+                  "required": false
+                },
+                "lineItems": [
+                  {
+                    "id": "62ae358b-c4e8-11f1-9c77-bedf604a2e01",
+                    "offer": {
+                      "id": "7834566001",
+                      "name": "Ceramic mug 350 ml, white",
+                      "external": {
+                        "id": "MUG-350-WHT"
+                      }
+                    },
+                    "quantity": 2,
+                    "originalPrice": {
+                      "amount": "39.99",
+                      "currency": "PLN"
+                    },
+                    "price": {
+                      "amount": "39.99",
+                      "currency": "PLN"
+                    },
+                    "boughtAt": "2026-10-01T09:00:00.000Z"
+                  }
+                ],
+                "summary": {
+                  "totalToPay": {
+                    "amount": "94.97",
+                    "currency": "PLN"
+                  }
+                },
+                "marketplace": {
+                  "id": "allegro-pl"
+                },
+                "updatedAt": "2026-10-08T09:00:00.000Z",
+                "revision": "819b5836"
+              },
+              {
+                "id": "29738e61-c4e8-11f1-89db-60ede9d61a12",
+                "messageToSeller": "scrubbed-1",
+                "surcharges": [],
+                "note": {
+                  "text": "scrubbed-2"
+                },
+                "buyer": {
+                  "id": "23123123",
+                  "email": "person-1@example.com",
+                  "login": "scrubbed-3",
+                  "firstName": "scrubbed-4",
+                  "lastName": "scrubbed-5",
+                  "guest": false,
+                  "phoneNumber": "+00000000001",
+                  "address": {
+                    "street": "scrubbed-6",
+                    "city": "scrubbed-7",
+                    "postCode": "scrubbed-8",
+                    "countryCode": "PL"
+                  },
+                  "personalIdentity": "scrubbed-9",
+                  "preferences": {
+                    "language": "pl-PL"
+                  }
+                },
+                "payment": {
+                  "type": "ONLINE",
+                  "id": "0f8f1d13-7e9e-41e8-9b00-c5b0dfb78e12"
+                },
+                "status": "FILLED_IN",
+                "fulfillment": {
+                  "status": "NEW",
+                  "provider": {
+                    "id": "SELLER"
+                  },
+                  "shipmentSummary": {
+                    "lineItemsSent": "NONE"
+                  }
+                },
+                "delivery": {
+                  "address": {
+                    "firstName": "scrubbed-4",
+                    "lastName": "scrubbed-5",
+                    "street": "scrubbed-6",
+                    "city": "scrubbed-7",
+                    "zipCode": "scrubbed-8",
+                    "countryCode": "PL",
+                    "phoneNumber": "+00000000001",
+                    "modifiedAt": "2026-10-01T09:05:00.000Z"
+                  },
+                  "method": {
+                    "id": "1fa56f79-4b6a-4821-a6f2-ca9c16d5c925",
+                    "name": "Allegro Kurier DPD"
+                  },
+                  "cost": {
+                    "amount": "14.99",
+                    "currency": "PLN"
+                  },
+                  "smart": false,
+                  "calculatedNumberOfPackages": 1
+                },
+                "invoice": {
+                  "required": false
+                },
+                "lineItems": [
+                  {
+                    "id": "62ae358b-c4e8-11f1-9c77-bedf604a2e01",
+                    "offer": {
+                      "id": "7834566001",
+                      "name": "Ceramic mug 350 ml, white",
+                      "external": {
+                        "id": "MUG-350-WHT"
+                      }
+                    },
+                    "quantity": 2,
+                    "originalPrice": {
+                      "amount": "39.99",
+                      "currency": "PLN"
+                    },
+                    "price": {
+                      "amount": "39.99",
+                      "currency": "PLN"
+                    },
+                    "boughtAt": "2026-10-01T09:00:00.000Z"
+                  }
+                ],
+                "summary": {
+                  "totalToPay": {
+                    "amount": "94.97",
+                    "currency": "PLN"
+                  }
+                },
+                "marketplace": {
+                  "id": "allegro-pl"
+                },
+                "updatedAt": "2026-10-01T09:03:00.000Z",
+                "revision": "819b5836"
+              },
+              {
+                "id": "29738e61-c4e8-11f1-89db-60ede9d61a13",
+                "messageToSeller": "scrubbed-1",
+                "surcharges": [],
+                "note": {
+                  "text": "scrubbed-2"
+                },
+                "buyer": {
+                  "id": "23123123",
+                  "email": "person-1@example.com",
+                  "login": "scrubbed-3",
+                  "firstName": "scrubbed-4",
+                  "lastName": "scrubbed-5",
+                  "guest": false,
+                  "phoneNumber": "+00000000001",
+                  "address": null,
+                  "personalIdentity": "scrubbed-9",
+                  "preferences": {
+                    "language": "pl-PL"
+                  }
+                },
+                "payment": null,
+                "status": "BOUGHT",
+                "fulfillment": {
+                  "status": "NEW",
+                  "provider": {
+                    "id": "SELLER"
+                  },
+                  "shipmentSummary": {
+                    "lineItemsSent": "NONE"
+                  }
+                },
+                "delivery": null,
+                "invoice": {
+                  "required": false
+                },
+                "lineItems": [
+                  {
+                    "id": "62ae358b-c4e8-11f1-9c77-bedf604a2e01",
+                    "offer": {
+                      "id": "7834566001",
+                      "name": "Ceramic mug 350 ml, white",
+                      "external": {
+                        "id": "MUG-350-WHT"
+                      }
+                    },
+                    "quantity": 2,
+                    "originalPrice": {
+                      "amount": "39.99",
+                      "currency": "PLN"
+                    },
+                    "price": {
+                      "amount": "39.99",
+                      "currency": "PLN"
+                    },
+                    "boughtAt": "2026-10-01T09:00:00.000Z"
+                  }
+                ],
+                "summary": {
+                  "totalToPay": {
+                    "amount": "94.97",
+                    "currency": "PLN"
+                  }
+                },
+                "marketplace": {
+                  "id": "allegro-pl"
+                },
+                "updatedAt": "2026-10-01T09:00:01.000Z",
+                "revision": "819b5836"
+              },
+              {
+                "id": "29738e61-c4e8-11f1-89db-60ede9d61a14",
+                "messageToSeller": "scrubbed-1",
+                "surcharges": [],
+                "note": {
+                  "text": "scrubbed-2"
+                },
+                "buyer": {
+                  "id": "23123123",
+                  "email": "person-1@example.com",
+                  "login": "scrubbed-3",
+                  "firstName": "scrubbed-4",
+                  "lastName": "scrubbed-5",
+                  "guest": false,
+                  "phoneNumber": "+00000000001",
+                  "address": {
+                    "street": "scrubbed-6",
+                    "city": "scrubbed-7",
+                    "postCode": "scrubbed-8",
+                    "countryCode": "PL"
+                  },
+                  "personalIdentity": "scrubbed-9",
+                  "preferences": {
+                    "language": "pl-PL"
+                  }
+                },
+                "payment": null,
+                "status": "BOUGHT",
+                "fulfillment": {
+                  "status": "NEW",
+                  "provider": {
+                    "id": "SELLER"
+                  },
+                  "shipmentSummary": {
+                    "lineItemsSent": "NONE"
+                  }
+                },
+                "delivery": null,
+                "invoice": {
+                  "required": false
+                },
+                "lineItems": [
+                  {
+                    "id": "62ae358b-c4e8-11f1-9c77-bedf604a2e01",
+                    "offer": {
+                      "id": "7834566001",
+                      "name": "Ceramic mug 350 ml, white",
+                      "external": {
+                        "id": "MUG-350-WHT"
+                      }
+                    },
+                    "quantity": 2,
+                    "originalPrice": {
+                      "amount": "39.99",
+                      "currency": "PLN"
+                    },
+                    "price": {
+                      "amount": "39.99",
+                      "currency": "PLN"
+                    },
+                    "boughtAt": "2026-10-01T09:00:00.000Z"
+                  }
+                ],
+                "summary": {
+                  "totalToPay": {
+                    "amount": "94.97",
+                    "currency": "PLN"
+                  }
+                },
+                "marketplace": {
+                  "id": "allegro-pl"
+                },
+                "updatedAt": "2026-10-01T09:00:01.000Z",
+                "revision": "819b5836"
+              },
+              {
+                "id": "29738e61-c4e8-11f1-89db-60ede9d61a15",
+                "messageToSeller": "scrubbed-1",
+                "surcharges": [],
+                "note": {
+                  "text": "scrubbed-2"
+                },
+                "buyer": {
+                  "id": "23123123",
+                  "email": "person-1@example.com",
+                  "login": "scrubbed-3",
+                  "firstName": "scrubbed-4",
+                  "lastName": "scrubbed-5",
+                  "guest": false,
+                  "phoneNumber": "+00000000001",
+                  "address": {
+                    "street": "scrubbed-6",
+                    "city": "scrubbed-7",
+                    "postCode": "scrubbed-8",
+                    "countryCode": "PL"
+                  },
+                  "personalIdentity": "scrubbed-9",
+                  "preferences": {
+                    "language": "pl-PL"
+                  }
+                },
+                "payment": {
+                  "type": "ONLINE",
+                  "finishedAt": "2026-10-01T09:10:00.000Z",
+                  "paidAmount": {
+                    "amount": "94.97",
+                    "currency": "PLN"
+                  },
+                  "id": "0f8f1d13-7e9e-41e8-9b00-c5b0dfb78ea6",
+                  "provider": "P24"
+                },
+                "status": "READY_FOR_PROCESSING",
+                "fulfillment": {
+                  "status": "SENT",
+                  "provider": {
+                    "id": "SELLER"
+                  }
+                },
+                "delivery": {
+                  "address": {
+                    "firstName": "scrubbed-4",
+                    "lastName": "scrubbed-5",
+                    "street": "scrubbed-6",
+                    "city": "scrubbed-7",
+                    "zipCode": "scrubbed-8",
+                    "countryCode": "PL",
+                    "phoneNumber": "+00000000001",
+                    "modifiedAt": "2026-10-01T09:05:00.000Z"
+                  },
+                  "method": {
+                    "id": "1fa56f79-4b6a-4821-a6f2-ca9c16d5c925",
+                    "name": "Allegro Kurier DPD"
+                  },
+                  "cost": {
+                    "amount": "14.99",
+                    "currency": "PLN"
+                  },
+                  "smart": false,
+                  "calculatedNumberOfPackages": 1
+                },
+                "invoice": {
+                  "required": false
+                },
+                "lineItems": [
+                  {
+                    "id": "62ae358b-c4e8-11f1-9c77-bedf604a2e01",
+                    "offer": {
+                      "id": "7834566001",
+                      "name": "Ceramic mug 350 ml, white",
+                      "external": {
+                        "id": "MUG-350-WHT"
+                      }
+                    },
+                    "quantity": 2,
+                    "originalPrice": {
+                      "amount": "39.99",
+                      "currency": "PLN"
+                    },
+                    "price": {
+                      "amount": "39.99",
+                      "currency": "PLN"
+                    },
+                    "boughtAt": "2026-10-01T09:00:00.000Z"
+                  }
+                ],
+                "summary": {
+                  "totalToPay": {
+                    "amount": "94.97",
+                    "currency": "PLN"
+                  }
+                },
+                "marketplace": {
+                  "id": "allegro-pl"
+                },
+                "updatedAt": "2026-10-02T15:30:00.000Z",
+                "revision": "819b5836"
+              },
+              {
+                "id": "29738e61-c4e8-11f1-89db-60ede9d61a16",
+                "messageToSeller": "scrubbed-1",
+                "surcharges": [],
+                "note": {
+                  "text": "scrubbed-2"
+                },
+                "buyer": {
+                  "id": "23123123",
+                  "email": "person-1@example.com",
+                  "login": "scrubbed-3",
+                  "firstName": "scrubbed-4",
+                  "lastName": "scrubbed-5",
+                  "guest": false,
+                  "phoneNumber": "+00000000001",
+                  "address": {
+                    "street": "scrubbed-6",
+                    "city": "scrubbed-7",
+                    "postCode": "scrubbed-8",
+                    "countryCode": "PL"
+                  },
+                  "personalIdentity": "scrubbed-9",
+                  "preferences": {
+                    "language": "pl-PL"
+                  }
+                },
+                "payment": {
+                  "type": "ONLINE",
+                  "finishedAt": "2026-10-01T09:10:00.000Z",
+                  "paidAmount": {
+                    "amount": "94.97",
+                    "currency": "PLN"
+                  },
+                  "id": "0f8f1d13-7e9e-41e8-9b00-c5b0dfb78ea6",
+                  "provider": "P24"
+                },
+                "status": "READY_FOR_PROCESSING",
+                "fulfillment": {
+                  "status": "CANCELLED",
+                  "provider": {
+                    "id": "SELLER"
+                  }
+                },
+                "delivery": {
+                  "address": {
+                    "firstName": "scrubbed-4",
+                    "lastName": "scrubbed-5",
+                    "street": "scrubbed-6",
+                    "city": "scrubbed-7",
+                    "zipCode": "scrubbed-8",
+                    "countryCode": "PL",
+                    "phoneNumber": "+00000000001",
+                    "modifiedAt": "2026-10-01T09:05:00.000Z"
+                  },
+                  "method": {
+                    "id": "1fa56f79-4b6a-4821-a6f2-ca9c16d5c925",
+                    "name": "Allegro Kurier DPD"
+                  },
+                  "cost": {
+                    "amount": "14.99",
+                    "currency": "PLN"
+                  },
+                  "smart": false,
+                  "calculatedNumberOfPackages": 1
+                },
+                "invoice": {
+                  "required": false
+                },
+                "lineItems": [
+                  {
+                    "id": "62ae358b-c4e8-11f1-9c77-bedf604a2e01",
+                    "offer": {
+                      "id": "7834566001",
+                      "name": "Ceramic mug 350 ml, white",
+                      "external": {
+                        "id": "MUG-350-WHT"
+                      }
+                    },
+                    "quantity": 2,
+                    "originalPrice": {
+                      "amount": "39.99",
+                      "currency": "PLN"
+                    },
+                    "price": {
+                      "amount": "39.99",
+                      "currency": "PLN"
+                    },
+                    "boughtAt": "2026-10-01T09:00:00.000Z"
+                  }
+                ],
+                "summary": {
+                  "totalToPay": {
+                    "amount": "94.97",
+                    "currency": "PLN"
+                  }
+                },
+                "marketplace": {
+                  "id": "allegro-pl"
+                },
+                "updatedAt": "2026-10-02T08:00:00.000Z",
+                "revision": "819b5836"
+              },
+              {
+                "id": "29738e61-c4e8-11f1-89db-60ede9d61a17",
+                "messageToSeller": "scrubbed-1",
+                "surcharges": [],
+                "note": {
+                  "text": "scrubbed-2"
+                },
+                "buyer": {
+                  "id": "23123123",
+                  "email": "person-2@example.com",
+                  "login": "scrubbed-18",
+                  "firstName": "scrubbed-19",
+                  "lastName": "scrubbed-20",
+                  "guest": false,
+                  "phoneNumber": "+00000000002",
+                  "address": {
+                    "street": "scrubbed-21",
+                    "city": "scrubbed-22",
+                    "postCode": "scrubbed-23",
+                    "countryCode": "CZ"
+                  },
+                  "personalIdentity": "scrubbed-9",
+                  "preferences": {
+                    "language": "pl-PL"
+                  }
+                },
+                "payment": {
+                  "type": "ONLINE",
+                  "finishedAt": "2026-10-01T09:10:00.000Z",
+                  "paidAmount": {
+                    "amount": "1089.00",
+                    "currency": "CZK"
+                  },
+                  "id": "0f8f1d13-7e9e-41e8-9b00-c5b0dfb78e17"
+                },
+                "status": "READY_FOR_PROCESSING",
+                "fulfillment": {
+                  "status": "NEW",
+                  "provider": {
+                    "id": "SELLER"
+                  },
+                  "shipmentSummary": {
+                    "lineItemsSent": "NONE"
+                  }
+                },
+                "delivery": {
+                  "address": {
+                    "firstName": "scrubbed-19",
+                    "lastName": "scrubbed-20",
+                    "street": "scrubbed-21",
+                    "city": "scrubbed-22",
+                    "zipCode": "scrubbed-23",
+                    "countryCode": "CZ",
+                    "phoneNumber": "+00000000002"
+                  }
+                },
+                "invoice": {
+                  "required": false
+                },
+                "lineItems": [
+                  {
+                    "id": "62ae358b-c4e8-11f1-9c77-bedf604a2e17",
+                    "offer": {
+                      "id": "7834566001",
+                      "name": "Ceramic mug 350 ml, white",
+                      "external": {
+                        "id": "MUG-350-WHT"
+                      }
+                    },
+                    "quantity": 1,
+                    "originalPrice": {
+                      "amount": "990.00",
+                      "currency": "CZK"
+                    },
+                    "price": {
+                      "amount": "990.00",
+                      "currency": "CZK"
+                    },
+                    "boughtAt": "2026-10-01T09:00:00.000Z"
+                  }
+                ],
+                "summary": {
+                  "totalToPay": {
+                    "amount": "1089.00",
+                    "currency": "CZK"
+                  }
+                },
+                "marketplace": {
+                  "id": "allegro-cz"
+                },
+                "updatedAt": "2026-10-01T09:10:05.000Z",
+                "revision": "819b5836"
+              },
+              {
+                "id": "29738e61-c4e8-11f1-89db-60ede9d61a18",
+                "messageToSeller": "scrubbed-1",
+                "surcharges": [],
+                "note": {
+                  "text": "scrubbed-2"
+                },
+                "buyer": {
+                  "id": "23123123",
+                  "email": "person-1@example.com",
+                  "login": "scrubbed-3",
+                  "firstName": "scrubbed-4",
+                  "lastName": "scrubbed-5",
+                  "guest": false,
+                  "phoneNumber": "+00000000001",
+                  "address": {
+                    "street": "scrubbed-6",
+                    "city": "scrubbed-7",
+                    "postCode": "scrubbed-8",
+                    "countryCode": "PL"
+                  },
+                  "personalIdentity": "scrubbed-9",
+                  "preferences": {
+                    "language": "pl-PL"
+                  }
+                },
+                "payment": {
+                  "type": "ONLINE",
+                  "finishedAt": "2026-10-01T09:10:00.000Z",
+                  "paidAmount": {
+                    "amount": "94.97",
+                    "currency": "PLN"
+                  },
+                  "id": "0f8f1d13-7e9e-41e8-9b00-c5b0dfb78ea6",
+                  "provider": "P24"
+                },
+                "status": "READY_FOR_PROCESSING",
+                "fulfillment": {
+                  "status": "NEW",
+                  "provider": {
+                    "id": "ALLEGRO"
+                  }
+                },
+                "delivery": {
+                  "address": {
+                    "firstName": "scrubbed-4",
+                    "lastName": "scrubbed-5",
+                    "street": "scrubbed-6",
+                    "city": "scrubbed-7",
+                    "zipCode": "scrubbed-8",
+                    "countryCode": "PL",
+                    "phoneNumber": "+00000000001",
+                    "modifiedAt": "2026-10-01T09:05:00.000Z"
+                  },
+                  "method": {
+                    "id": "1fa56f79-4b6a-4821-a6f2-ca9c16d5c925",
+                    "name": "Allegro Kurier DPD"
+                  },
+                  "cost": {
+                    "amount": "14.99",
+                    "currency": "PLN"
+                  },
+                  "smart": false,
+                  "calculatedNumberOfPackages": 1
+                },
+                "invoice": {
+                  "required": false
+                },
+                "lineItems": [
+                  {
+                    "id": "62ae358b-c4e8-11f1-9c77-bedf604a2e01",
+                    "offer": {
+                      "id": "7834566001",
+                      "name": "Ceramic mug 350 ml, white",
+                      "external": {
+                        "id": "MUG-350-WHT"
+                      }
+                    },
+                    "quantity": 2,
+                    "originalPrice": {
+                      "amount": "39.99",
+                      "currency": "PLN"
+                    },
+                    "price": {
+                      "amount": "39.99",
+                      "currency": "PLN"
+                    },
+                    "boughtAt": "2026-10-01T09:00:00.000Z"
+                  }
+                ],
+                "summary": {
+                  "totalToPay": {
+                    "amount": "94.97",
+                    "currency": "PLN"
+                  }
+                },
+                "marketplace": {
+                  "id": "allegro-pl"
+                },
+                "updatedAt": "2026-10-01T09:10:05.000Z",
+                "revision": "819b5836"
+              },
+              {
+                "id": "29738e61-c4e8-11f1-89db-60ede9d61a07",
+                "messageToSeller": "scrubbed-1",
+                "surcharges": [],
+                "note": {
+                  "text": "scrubbed-2"
+                },
+                "buyer": {
+                  "id": "23123123",
+                  "email": "person-1@example.com",
+                  "login": "scrubbed-3",
+                  "firstName": "scrubbed-4",
+                  "lastName": "scrubbed-5",
+                  "guest": false,
+                  "phoneNumber": "+00000000001",
+                  "address": {
+                    "street": "scrubbed-6",
+                    "city": "scrubbed-7",
+                    "postCode": "scrubbed-8",
+                    "countryCode": "PL"
+                  },
+                  "personalIdentity": "scrubbed-9",
+                  "preferences": {
+                    "language": "pl-PL"
+                  }
+                },
+                "payment": {
+                  "type": "ONLINE",
+                  "finishedAt": "2026-10-01T09:10:00.000Z",
+                  "paidAmount": {
+                    "amount": "94.97",
+                    "currency": "PLN"
+                  },
+                  "id": "0f8f1d13-7e9e-41e8-9b00-c5b0dfb78ea6",
+                  "provider": "P24"
+                },
+                "status": "READY_FOR_PROCESSING",
+                "fulfillment": {
+                  "status": "NEW",
+                  "provider": {
+                    "id": "SELLER"
+                  },
+                  "shipmentSummary": {
+                    "lineItemsSent": "NONE"
+                  }
+                },
+                "delivery": {
+                  "address": {
+                    "firstName": "scrubbed-4",
+                    "lastName": "scrubbed-5",
+                    "street": "scrubbed-6",
+                    "city": "scrubbed-7",
+                    "zipCode": "scrubbed-8",
+                    "countryCode": "PL",
+                    "phoneNumber": "+00000000001",
+                    "modifiedAt": "2026-10-01T09:05:00.000Z"
+                  },
+                  "method": {
+                    "id": "1fa56f79-4b6a-4821-a6f2-ca9c16d5c925",
+                    "name": "Allegro Kurier DPD"
+                  },
+                  "cost": {
+                    "amount": "14.99",
+                    "currency": "PLN"
+                  },
+                  "smart": false,
+                  "calculatedNumberOfPackages": 1
+                },
+                "invoice": {
+                  "required": false
+                },
+                "lineItems": [
+                  {
+                    "id": "62ae358b-c4e8-11f1-9c77-bedf604a2e07",
+                    "offer": {
+                      "id": "7834566001",
+                      "name": "Ceramic mug 350 ml, white",
+                      "external": {
+                        "id": "MUG-350-WHT"
+                      }
+                    },
+                    "quantity": 2,
+                    "originalPrice": {
+                      "amount": "39.99",
+                      "currency": "PLN"
+                    },
+                    "price": {
+                      "amount": "39.99",
+                      "currency": "PLN"
+                    },
+                    "boughtAt": "2026-10-01T09:02:00.000Z"
+                  },
+                  {
+                    "id": "62ae358b-c4e8-11f1-9c77-bedf604a2e08",
+                    "offer": {
+                      "id": "7834566002",
+                      "name": "Teapot 1 l, blue glaze"
+                    },
+                    "quantity": 1,
+                    "originalPrice": {
+                      "amount": "129.00",
+                      "currency": "PLN"
+                    },
+                    "price": {
+                      "amount": "119.90",
+                      "currency": "PLN"
+                    },
+                    "boughtAt": "2026-10-01T08:58:30.000Z"
+                  }
+                ],
+                "summary": {
+                  "totalToPay": {
+                    "amount": "214.87",
+                    "currency": "PLN"
+                  }
+                },
+                "marketplace": {
+                  "id": "allegro-pl"
+                },
+                "updatedAt": "2026-10-01T09:10:05.000Z",
+                "revision": "819b5836"
+              }
+            ],
+            "count": 16,
+            "totalCount": 16
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/order/events?from=1791663800016000&limit=100",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/vnd.allegro.public.v1+json",
+          "date": "Sat, 10 Oct 2026 12:00:00 GMT"
+        },
+        "body": {
+          "json": {
+            "events": []
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/order/events?from=1791663800016000&limit=100",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/vnd.allegro.public.v1+json",
+          "date": "Sat, 10 Oct 2026 12:00:00 GMT"
+        },
+        "body": {
+          "json": {
+            "events": []
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/order/events?from=00000000-0000-0000-0000-000000000000&limit=100",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 422,
+        "headers": {
+          "content-type": "application/vnd.allegro.public.v1+json",
+          "date": "Sat, 10 Oct 2026 12:00:00 GMT"
+        },
+        "body": {
+          "json": {
+            "errors": [
+              {
+                "code": "VALIDATION_ERROR",
+                "message": "must be greater than or equal to 0",
+                "details": null,
+                "path": "getOrderEvents.from",
+                "userMessage": "must be greater than or equal to 0",
+                "metadata": {}
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "PATCH",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/sale/product-offers/7834566006",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json",
+          "content-type": "application/vnd.allegro.public.v1+json"
+        },
+        "body": {
+          "json": {
+            "stock": {
+              "available": 0
+            }
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/vnd.allegro.public.v1+json",
+          "date": "Sat, 10 Oct 2026 12:00:00 GMT"
+        },
+        "body": {
+          "json": {
+            "id": "7834566006",
+            "name": "Stoneware plate 27 cm",
+            "language": "pl-PL",
+            "category": {
+              "id": "257929"
+            },
+            "external": null,
+            "sellingMode": {
+              "format": "BUY_NOW",
+              "price": {
+                "amount": "24.0",
+                "currency": "PLN"
+              }
+            },
+            "stock": {
+              "available": 0,
+              "unit": "UNIT"
+            },
+            "publication": {
+              "status": "ACTIVE",
+              "endedBy": null,
+              "republish": false
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "PATCH",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/sale/product-offers/7834566005",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json",
+          "content-type": "application/vnd.allegro.public.v1+json"
+        },
+        "body": {
+          "json": {
+            "stock": {
+              "available": 0
+            }
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/vnd.allegro.public.v1+json",
+          "date": "Sat, 10 Oct 2026 12:00:00 GMT"
+        },
+        "body": {
+          "json": {
+            "id": "7834566005",
+            "name": "Salad bowl 24 cm, grey",
+            "language": "pl-PL",
+            "category": {
+              "id": "257929"
+            },
+            "external": {
+              "id": "BOWL-240-GRY"
+            },
+            "sellingMode": {
+              "format": "BUY_NOW",
+              "price": {
+                "amount": "39.99",
+                "currency": "PLN"
+              }
+            },
+            "stock": {
+              "available": 0,
+              "unit": "UNIT"
+            },
+            "publication": {
+              "status": "ENDED",
+              "endedBy": "USER",
+              "republish": false
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "PATCH",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/sale/product-offers/7834566004",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json",
+          "content-type": "application/vnd.allegro.public.v1+json"
+        },
+        "body": {
+          "json": {
+            "stock": {
+              "available": 0
+            }
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/vnd.allegro.public.v1+json",
+          "date": "Sat, 10 Oct 2026 12:00:00 GMT"
+        },
+        "body": {
+          "json": {
+            "id": "7834566004",
+            "name": "Espresso cup 90 ml, black",
+            "language": "pl-PL",
+            "category": {
+              "id": "257929"
+            },
+            "external": {
+              "id": "CUP-090-BLK"
+            },
+            "sellingMode": {
+              "format": "BUY_NOW",
+              "price": {
+                "amount": "39.99",
+                "currency": "PLN"
+              }
+            },
+            "stock": {
+              "available": 0,
+              "unit": "UNIT"
+            },
+            "publication": {
+              "status": "ENDED",
+              "endedBy": "EMPTY_STOCK",
+              "republish": false
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "PATCH",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/sale/product-offers/7834566006",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json",
+          "content-type": "application/vnd.allegro.public.v1+json"
+        },
+        "body": {
+          "json": {
+            "stock": {
+              "available": 0
+            }
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/vnd.allegro.public.v1+json",
+          "date": "Sat, 10 Oct 2026 12:00:00 GMT"
+        },
+        "body": {
+          "json": {
+            "id": "7834566006",
+            "name": "Stoneware plate 27 cm",
+            "language": "pl-PL",
+            "category": {
+              "id": "257929"
+            },
+            "external": null,
+            "sellingMode": {
+              "format": "BUY_NOW",
+              "price": {
+                "amount": "24.0",
+                "currency": "PLN"
+              }
+            },
+            "stock": {
+              "available": 0,
+              "unit": "UNIT"
+            },
+            "publication": {
+              "status": "ENDED",
+              "endedBy": "EMPTY_STOCK",
+              "republish": false
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "PATCH",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/sale/product-offers/7834566005",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json",
+          "content-type": "application/vnd.allegro.public.v1+json"
+        },
+        "body": {
+          "json": {
+            "stock": {
+              "available": 0
+            }
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/vnd.allegro.public.v1+json",
+          "date": "Sat, 10 Oct 2026 12:00:00 GMT"
+        },
+        "body": {
+          "json": {
+            "id": "7834566005",
+            "name": "Salad bowl 24 cm, grey",
+            "language": "pl-PL",
+            "category": {
+              "id": "257929"
+            },
+            "external": {
+              "id": "BOWL-240-GRY"
+            },
+            "sellingMode": {
+              "format": "BUY_NOW",
+              "price": {
+                "amount": "39.99",
+                "currency": "PLN"
+              }
+            },
+            "stock": {
+              "available": 0,
+              "unit": "UNIT"
+            },
+            "publication": {
+              "status": "ENDED",
+              "endedBy": "USER",
+              "republish": false
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "PATCH",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/sale/product-offers/7834566004",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json",
+          "content-type": "application/vnd.allegro.public.v1+json"
+        },
+        "body": {
+          "json": {
+            "stock": {
+              "available": 0
+            }
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/vnd.allegro.public.v1+json",
+          "date": "Sat, 10 Oct 2026 12:00:00 GMT"
+        },
+        "body": {
+          "json": {
+            "id": "7834566004",
+            "name": "Espresso cup 90 ml, black",
+            "language": "pl-PL",
+            "category": {
+              "id": "257929"
+            },
+            "external": {
+              "id": "CUP-090-BLK"
+            },
+            "sellingMode": {
+              "format": "BUY_NOW",
+              "price": {
+                "amount": "39.99",
+                "currency": "PLN"
+              }
+            },
+            "stock": {
+              "available": 0,
+              "unit": "UNIT"
+            },
+            "publication": {
+              "status": "ENDED",
+              "endedBy": "EMPTY_STOCK",
+              "republish": false
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "PATCH",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/sale/product-offers/7834566006",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json",
+          "content-type": "application/vnd.allegro.public.v1+json"
+        },
+        "body": {
+          "json": {
+            "stock": {
+              "available": 5
+            }
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/vnd.allegro.public.v1+json",
+          "date": "Sat, 10 Oct 2026 12:00:00 GMT"
+        },
+        "body": {
+          "json": {
+            "id": "7834566006",
+            "name": "Stoneware plate 27 cm",
+            "language": "pl-PL",
+            "category": {
+              "id": "257929"
+            },
+            "external": null,
+            "sellingMode": {
+              "format": "BUY_NOW",
+              "price": {
+                "amount": "24.0",
+                "currency": "PLN"
+              }
+            },
+            "stock": {
+              "available": 5,
+              "unit": "UNIT"
+            },
+            "publication": {
+              "status": "ENDED",
+              "endedBy": "EMPTY_STOCK",
+              "republish": false
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "PATCH",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/sale/product-offers/7834566005",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json",
+          "content-type": "application/vnd.allegro.public.v1+json"
+        },
+        "body": {
+          "json": {
+            "stock": {
+              "available": 5
+            }
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/vnd.allegro.public.v1+json",
+          "date": "Sat, 10 Oct 2026 12:00:00 GMT"
+        },
+        "body": {
+          "json": {
+            "id": "7834566005",
+            "name": "Salad bowl 24 cm, grey",
+            "language": "pl-PL",
+            "category": {
+              "id": "257929"
+            },
+            "external": {
+              "id": "BOWL-240-GRY"
+            },
+            "sellingMode": {
+              "format": "BUY_NOW",
+              "price": {
+                "amount": "39.99",
+                "currency": "PLN"
+              }
+            },
+            "stock": {
+              "available": 5,
+              "unit": "UNIT"
+            },
+            "publication": {
+              "status": "ENDED",
+              "endedBy": "USER",
+              "republish": false
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "PATCH",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/sale/product-offers/7834566004",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json",
+          "content-type": "application/vnd.allegro.public.v1+json"
+        },
+        "body": {
+          "json": {
+            "stock": {
+              "available": 5
+            }
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/vnd.allegro.public.v1+json",
+          "date": "Sat, 10 Oct 2026 12:00:00 GMT"
+        },
+        "body": {
+          "json": {
+            "id": "7834566004",
+            "name": "Espresso cup 90 ml, black",
+            "language": "pl-PL",
+            "category": {
+              "id": "257929"
+            },
+            "external": {
+              "id": "CUP-090-BLK"
+            },
+            "sellingMode": {
+              "format": "BUY_NOW",
+              "price": {
+                "amount": "39.99",
+                "currency": "PLN"
+              }
+            },
+            "stock": {
+              "available": 5,
+              "unit": "UNIT"
+            },
+            "publication": {
+              "status": "ENDED",
+              "endedBy": "EMPTY_STOCK",
+              "republish": false
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "PATCH",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/sale/product-offers/7834566006",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json",
+          "content-type": "application/vnd.allegro.public.v1+json"
+        },
+        "body": {
+          "json": {
+            "publication": {
+              "status": "ACTIVE"
+            }
+          }
+        }
+      },
+      "response": {
+        "status": 202,
+        "headers": {
+          "content-type": "application/vnd.allegro.public.v1+json",
+          "date": "Sat, 10 Oct 2026 12:00:00 GMT",
+          "location": "https://api.allegro.pl.allegrosandbox.pl/sale/product-offers/7834566006/operations/00000000-0000-4000-8000-000000000001",
+          "retry-after": "120"
+        },
+        "body": {
+          "json": {
+            "id": "7834566006",
+            "name": "Stoneware plate 27 cm",
+            "language": "pl-PL",
+            "category": {
+              "id": "257929"
+            },
+            "external": null,
+            "sellingMode": {
+              "format": "BUY_NOW",
+              "price": {
+                "amount": "24.0",
+                "currency": "PLN"
+              }
+            },
+            "stock": {
+              "available": 5,
+              "unit": "UNIT"
+            },
+            "publication": {
+              "status": "ENDED",
+              "endedBy": "EMPTY_STOCK",
+              "republish": false
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "PATCH",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/sale/product-offers/7834566004",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json",
+          "content-type": "application/vnd.allegro.public.v1+json"
+        },
+        "body": {
+          "json": {
+            "publication": {
+              "status": "ACTIVE"
+            }
+          }
+        }
+      },
+      "response": {
+        "status": 202,
+        "headers": {
+          "content-type": "application/vnd.allegro.public.v1+json",
+          "date": "Sat, 10 Oct 2026 12:00:00 GMT",
+          "location": "https://api.allegro.pl.allegrosandbox.pl/sale/product-offers/7834566004/operations/00000000-0000-4000-8000-000000000002",
+          "retry-after": "120"
+        },
+        "body": {
+          "json": {
+            "id": "7834566004",
+            "name": "Espresso cup 90 ml, black",
+            "language": "pl-PL",
+            "category": {
+              "id": "257929"
+            },
+            "external": {
+              "id": "CUP-090-BLK"
+            },
+            "sellingMode": {
+              "format": "BUY_NOW",
+              "price": {
+                "amount": "39.99",
+                "currency": "PLN"
+              }
+            },
+            "stock": {
+              "available": 5,
+              "unit": "UNIT"
+            },
+            "publication": {
+              "status": "ENDED",
+              "endedBy": "EMPTY_STOCK",
+              "republish": false
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "PATCH",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/sale/product-offers/7834566006",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json",
+          "content-type": "application/vnd.allegro.public.v1+json"
+        },
+        "body": {
+          "json": {
+            "stock": {
+              "available": 5
+            }
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/vnd.allegro.public.v1+json",
+          "date": "Sat, 10 Oct 2026 12:00:00 GMT"
+        },
+        "body": {
+          "json": {
+            "id": "7834566006",
+            "name": "Stoneware plate 27 cm",
+            "language": "pl-PL",
+            "category": {
+              "id": "257929"
+            },
+            "external": null,
+            "sellingMode": {
+              "format": "BUY_NOW",
+              "price": {
+                "amount": "24.0",
+                "currency": "PLN"
+              }
+            },
+            "stock": {
+              "available": 5,
+              "unit": "UNIT"
+            },
+            "publication": {
+              "status": "ACTIVE",
+              "endedBy": null,
+              "republish": false
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "PATCH",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/sale/product-offers/7834566005",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json",
+          "content-type": "application/vnd.allegro.public.v1+json"
+        },
+        "body": {
+          "json": {
+            "stock": {
+              "available": 5
+            }
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/vnd.allegro.public.v1+json",
+          "date": "Sat, 10 Oct 2026 12:00:00 GMT"
+        },
+        "body": {
+          "json": {
+            "id": "7834566005",
+            "name": "Salad bowl 24 cm, grey",
+            "language": "pl-PL",
+            "category": {
+              "id": "257929"
+            },
+            "external": {
+              "id": "BOWL-240-GRY"
+            },
+            "sellingMode": {
+              "format": "BUY_NOW",
+              "price": {
+                "amount": "39.99",
+                "currency": "PLN"
+              }
+            },
+            "stock": {
+              "available": 5,
+              "unit": "UNIT"
+            },
+            "publication": {
+              "status": "ENDED",
+              "endedBy": "USER",
+              "republish": false
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "PATCH",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/sale/product-offers/7834566004",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json",
+          "content-type": "application/vnd.allegro.public.v1+json"
+        },
+        "body": {
+          "json": {
+            "stock": {
+              "available": 5
+            }
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/vnd.allegro.public.v1+json",
+          "date": "Sat, 10 Oct 2026 12:00:00 GMT"
+        },
+        "body": {
+          "json": {
+            "id": "7834566004",
+            "name": "Espresso cup 90 ml, black",
+            "language": "pl-PL",
+            "category": {
+              "id": "257929"
+            },
+            "external": {
+              "id": "CUP-090-BLK"
+            },
+            "sellingMode": {
+              "format": "BUY_NOW",
+              "price": {
+                "amount": "39.99",
+                "currency": "PLN"
+              }
+            },
+            "stock": {
+              "available": 5,
+              "unit": "UNIT"
+            },
+            "publication": {
+              "status": "ACTIVE",
+              "endedBy": null,
+              "republish": false
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "PUT",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/order/checkout-forms/29738e61-c4e8-11f1-89db-60ede9d61a02/fulfillment",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json",
+          "content-type": "application/vnd.allegro.public.v1+json"
+        },
+        "body": {
+          "json": {
+            "status": "NEW"
+          }
+        }
+      },
+      "response": {
+        "status": 204,
+        "headers": {
+          "date": "Sat, 10 Oct 2026 12:00:00 GMT"
+        },
+        "body": null
+      }
+    },
+    {
+      "request": {
+        "method": "PUT",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/order/checkout-forms/29738e61-c4e8-11f1-89db-60ede9d61a02/fulfillment",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json",
+          "content-type": "application/vnd.allegro.public.v1+json"
+        },
+        "body": {
+          "json": {
+            "status": "NEW"
+          }
+        }
+      },
+      "response": {
+        "status": 204,
+        "headers": {
+          "date": "Sat, 10 Oct 2026 12:00:00 GMT"
+        },
+        "body": null
+      }
+    },
+    {
+      "request": {
+        "method": "PUT",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/order/checkout-forms/29738e61-c4e8-11f1-89db-60ede9d61a02/fulfillment",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json",
+          "content-type": "application/vnd.allegro.public.v1+json"
+        },
+        "body": {
+          "json": {
+            "status": "PROCESSING"
+          }
+        }
+      },
+      "response": {
+        "status": 204,
+        "headers": {
+          "date": "Sat, 10 Oct 2026 12:00:00 GMT"
+        },
+        "body": null
+      }
+    },
+    {
+      "request": {
+        "method": "PUT",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/order/checkout-forms/29738e61-c4e8-11f1-89db-60ede9d61a02/fulfillment",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json",
+          "content-type": "application/vnd.allegro.public.v1+json"
+        },
+        "body": {
+          "json": {
+            "status": "PROCESSING"
+          }
+        }
+      },
+      "response": {
+        "status": 204,
+        "headers": {
+          "date": "Sat, 10 Oct 2026 12:00:00 GMT"
+        },
+        "body": null
+      }
+    },
+    {
+      "request": {
+        "method": "PUT",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/order/checkout-forms/29738e61-c4e8-11f1-89db-60ede9d61a02/fulfillment",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json",
+          "content-type": "application/vnd.allegro.public.v1+json"
+        },
+        "body": {
+          "json": {
+            "status": "SENT"
+          }
+        }
+      },
+      "response": {
+        "status": 204,
+        "headers": {
+          "date": "Sat, 10 Oct 2026 12:00:00 GMT"
+        },
+        "body": null
+      }
+    },
+    {
+      "request": {
+        "method": "PUT",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/order/checkout-forms/29738e61-c4e8-11f1-89db-60ede9d61a02/fulfillment",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json",
+          "content-type": "application/vnd.allegro.public.v1+json"
+        },
+        "body": {
+          "json": {
+            "status": "SENT"
+          }
+        }
+      },
+      "response": {
+        "status": 204,
+        "headers": {
+          "date": "Sat, 10 Oct 2026 12:00:00 GMT"
+        },
+        "body": null
+      }
+    },
+    {
+      "request": {
+        "method": "PUT",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/order/checkout-forms/29738e61-c4e8-11f1-89db-60ede9d61a02/fulfillment",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json",
+          "content-type": "application/vnd.allegro.public.v1+json"
+        },
+        "body": {
+          "json": {
+            "status": "CANCELLED"
+          }
+        }
+      },
+      "response": {
+        "status": 204,
+        "headers": {
+          "date": "Sat, 10 Oct 2026 12:00:00 GMT"
+        },
+        "body": null
+      }
+    },
+    {
+      "request": {
+        "method": "PUT",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/order/checkout-forms/29738e61-c4e8-11f1-89db-60ede9d61a02/fulfillment",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json",
+          "content-type": "application/vnd.allegro.public.v1+json"
+        },
+        "body": {
+          "json": {
+            "status": "CANCELLED"
+          }
+        }
+      },
+      "response": {
+        "status": 204,
+        "headers": {
+          "date": "Sat, 10 Oct 2026 12:00:00 GMT"
+        },
+        "body": null
+      }
+    },
+    {
+      "request": {
+        "method": "PATCH",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/sale/product-offers/7834566006",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json",
+          "content-type": "application/vnd.allegro.public.v1+json"
+        },
+        "body": {
+          "json": {
+            "sellingMode": {
+              "price": {
+                "amount": "19.99",
+                "currency": "PLN"
+              }
+            }
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/vnd.allegro.public.v1+json",
+          "date": "Sat, 10 Oct 2026 12:00:00 GMT"
+        },
+        "body": {
+          "json": {
+            "id": "7834566006",
+            "name": "Stoneware plate 27 cm",
+            "language": "pl-PL",
+            "category": {
+              "id": "257929"
+            },
+            "external": null,
+            "sellingMode": {
+              "format": "BUY_NOW",
+              "price": {
+                "amount": "19.99",
+                "currency": "PLN"
+              }
+            },
+            "stock": {
+              "available": 5,
+              "unit": "UNIT"
+            },
+            "publication": {
+              "status": "ACTIVE",
+              "endedBy": null,
+              "republish": false
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "PATCH",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/sale/product-offers/7834566005",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json",
+          "content-type": "application/vnd.allegro.public.v1+json"
+        },
+        "body": {
+          "json": {
+            "sellingMode": {
+              "price": {
+                "amount": "19.99",
+                "currency": "PLN"
+              }
+            }
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/vnd.allegro.public.v1+json",
+          "date": "Sat, 10 Oct 2026 12:00:00 GMT"
+        },
+        "body": {
+          "json": {
+            "id": "7834566005",
+            "name": "Salad bowl 24 cm, grey",
+            "language": "pl-PL",
+            "category": {
+              "id": "257929"
+            },
+            "external": {
+              "id": "BOWL-240-GRY"
+            },
+            "sellingMode": {
+              "format": "BUY_NOW",
+              "price": {
+                "amount": "19.99",
+                "currency": "PLN"
+              }
+            },
+            "stock": {
+              "available": 5,
+              "unit": "UNIT"
+            },
+            "publication": {
+              "status": "ENDED",
+              "endedBy": "USER",
+              "republish": false
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "PATCH",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/sale/product-offers/7834566004",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json",
+          "content-type": "application/vnd.allegro.public.v1+json"
+        },
+        "body": {
+          "json": {
+            "sellingMode": {
+              "price": {
+                "amount": "19.99",
+                "currency": "PLN"
+              }
+            }
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/vnd.allegro.public.v1+json",
+          "date": "Sat, 10 Oct 2026 12:00:00 GMT"
+        },
+        "body": {
+          "json": {
+            "id": "7834566004",
+            "name": "Espresso cup 90 ml, black",
+            "language": "pl-PL",
+            "category": {
+              "id": "257929"
+            },
+            "external": {
+              "id": "CUP-090-BLK"
+            },
+            "sellingMode": {
+              "format": "BUY_NOW",
+              "price": {
+                "amount": "19.99",
+                "currency": "PLN"
+              }
+            },
+            "stock": {
+              "available": 5,
+              "unit": "UNIT"
+            },
+            "publication": {
+              "status": "ACTIVE",
+              "endedBy": null,
+              "republish": false
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "PATCH",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/sale/product-offers/7834566006",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json",
+          "content-type": "application/vnd.allegro.public.v1+json"
+        },
+        "body": {
+          "json": {
+            "sellingMode": {
+              "price": {
+                "amount": "19.99",
+                "currency": "PLN"
+              }
+            }
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/vnd.allegro.public.v1+json",
+          "date": "Sat, 10 Oct 2026 12:00:00 GMT"
+        },
+        "body": {
+          "json": {
+            "id": "7834566006",
+            "name": "Stoneware plate 27 cm",
+            "language": "pl-PL",
+            "category": {
+              "id": "257929"
+            },
+            "external": null,
+            "sellingMode": {
+              "format": "BUY_NOW",
+              "price": {
+                "amount": "19.99",
+                "currency": "PLN"
+              }
+            },
+            "stock": {
+              "available": 5,
+              "unit": "UNIT"
+            },
+            "publication": {
+              "status": "ACTIVE",
+              "endedBy": null,
+              "republish": false
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "PATCH",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/sale/product-offers/7834566005",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json",
+          "content-type": "application/vnd.allegro.public.v1+json"
+        },
+        "body": {
+          "json": {
+            "sellingMode": {
+              "price": {
+                "amount": "19.99",
+                "currency": "PLN"
+              }
+            }
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/vnd.allegro.public.v1+json",
+          "date": "Sat, 10 Oct 2026 12:00:00 GMT"
+        },
+        "body": {
+          "json": {
+            "id": "7834566005",
+            "name": "Salad bowl 24 cm, grey",
+            "language": "pl-PL",
+            "category": {
+              "id": "257929"
+            },
+            "external": {
+              "id": "BOWL-240-GRY"
+            },
+            "sellingMode": {
+              "format": "BUY_NOW",
+              "price": {
+                "amount": "19.99",
+                "currency": "PLN"
+              }
+            },
+            "stock": {
+              "available": 5,
+              "unit": "UNIT"
+            },
+            "publication": {
+              "status": "ENDED",
+              "endedBy": "USER",
+              "republish": false
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "PATCH",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/sale/product-offers/7834566004",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json",
+          "content-type": "application/vnd.allegro.public.v1+json"
+        },
+        "body": {
+          "json": {
+            "sellingMode": {
+              "price": {
+                "amount": "19.99",
+                "currency": "PLN"
+              }
+            }
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/vnd.allegro.public.v1+json",
+          "date": "Sat, 10 Oct 2026 12:00:00 GMT"
+        },
+        "body": {
+          "json": {
+            "id": "7834566004",
+            "name": "Espresso cup 90 ml, black",
+            "language": "pl-PL",
+            "category": {
+              "id": "257929"
+            },
+            "external": {
+              "id": "CUP-090-BLK"
+            },
+            "sellingMode": {
+              "format": "BUY_NOW",
+              "price": {
+                "amount": "19.99",
+                "currency": "PLN"
+              }
+            },
+            "stock": {
+              "available": 5,
+              "unit": "UNIT"
+            },
+            "publication": {
+              "status": "ACTIVE",
+              "endedBy": null,
+              "republish": false
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "PATCH",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/sale/product-offers/7834566006",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json",
+          "content-type": "application/vnd.allegro.public.v1+json"
+        },
+        "body": {
+          "json": {
+            "sellingMode": {
+              "price": {
+                "amount": "25",
+                "currency": "PLN"
+              }
+            }
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/vnd.allegro.public.v1+json",
+          "date": "Sat, 10 Oct 2026 12:00:00 GMT"
+        },
+        "body": {
+          "json": {
+            "id": "7834566006",
+            "name": "Stoneware plate 27 cm",
+            "language": "pl-PL",
+            "category": {
+              "id": "257929"
+            },
+            "external": null,
+            "sellingMode": {
+              "format": "BUY_NOW",
+              "price": {
+                "amount": "25.00",
+                "currency": "PLN"
+              }
+            },
+            "stock": {
+              "available": 5,
+              "unit": "UNIT"
+            },
+            "publication": {
+              "status": "ACTIVE",
+              "endedBy": null,
+              "republish": false
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "PATCH",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/sale/product-offers/7834566005",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json",
+          "content-type": "application/vnd.allegro.public.v1+json"
+        },
+        "body": {
+          "json": {
+            "sellingMode": {
+              "price": {
+                "amount": "25",
+                "currency": "PLN"
+              }
+            }
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/vnd.allegro.public.v1+json",
+          "date": "Sat, 10 Oct 2026 12:00:00 GMT"
+        },
+        "body": {
+          "json": {
+            "id": "7834566005",
+            "name": "Salad bowl 24 cm, grey",
+            "language": "pl-PL",
+            "category": {
+              "id": "257929"
+            },
+            "external": {
+              "id": "BOWL-240-GRY"
+            },
+            "sellingMode": {
+              "format": "BUY_NOW",
+              "price": {
+                "amount": "25.00",
+                "currency": "PLN"
+              }
+            },
+            "stock": {
+              "available": 5,
+              "unit": "UNIT"
+            },
+            "publication": {
+              "status": "ENDED",
+              "endedBy": "USER",
+              "republish": false
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "PATCH",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/sale/product-offers/7834566004",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json",
+          "content-type": "application/vnd.allegro.public.v1+json"
+        },
+        "body": {
+          "json": {
+            "sellingMode": {
+              "price": {
+                "amount": "25",
+                "currency": "PLN"
+              }
+            }
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/vnd.allegro.public.v1+json",
+          "date": "Sat, 10 Oct 2026 12:00:00 GMT"
+        },
+        "body": {
+          "json": {
+            "id": "7834566004",
+            "name": "Espresso cup 90 ml, black",
+            "language": "pl-PL",
+            "category": {
+              "id": "257929"
+            },
+            "external": {
+              "id": "CUP-090-BLK"
+            },
+            "sellingMode": {
+              "format": "BUY_NOW",
+              "price": {
+                "amount": "25.00",
+                "currency": "PLN"
+              }
+            },
+            "stock": {
+              "available": 5,
+              "unit": "UNIT"
+            },
+            "publication": {
+              "status": "ACTIVE",
+              "endedBy": null,
+              "republish": false
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "PATCH",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/sale/product-offers/7834566006",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json",
+          "content-type": "application/vnd.allegro.public.v1+json"
+        },
+        "body": {
+          "json": {
+            "sellingMode": {
+              "price": {
+                "amount": "25",
+                "currency": "PLN"
+              }
+            }
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/vnd.allegro.public.v1+json",
+          "date": "Sat, 10 Oct 2026 12:00:00 GMT"
+        },
+        "body": {
+          "json": {
+            "id": "7834566006",
+            "name": "Stoneware plate 27 cm",
+            "language": "pl-PL",
+            "category": {
+              "id": "257929"
+            },
+            "external": null,
+            "sellingMode": {
+              "format": "BUY_NOW",
+              "price": {
+                "amount": "25.00",
+                "currency": "PLN"
+              }
+            },
+            "stock": {
+              "available": 5,
+              "unit": "UNIT"
+            },
+            "publication": {
+              "status": "ACTIVE",
+              "endedBy": null,
+              "republish": false
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "PATCH",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/sale/product-offers/7834566005",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json",
+          "content-type": "application/vnd.allegro.public.v1+json"
+        },
+        "body": {
+          "json": {
+            "sellingMode": {
+              "price": {
+                "amount": "25",
+                "currency": "PLN"
+              }
+            }
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/vnd.allegro.public.v1+json",
+          "date": "Sat, 10 Oct 2026 12:00:00 GMT"
+        },
+        "body": {
+          "json": {
+            "id": "7834566005",
+            "name": "Salad bowl 24 cm, grey",
+            "language": "pl-PL",
+            "category": {
+              "id": "257929"
+            },
+            "external": {
+              "id": "BOWL-240-GRY"
+            },
+            "sellingMode": {
+              "format": "BUY_NOW",
+              "price": {
+                "amount": "25.00",
+                "currency": "PLN"
+              }
+            },
+            "stock": {
+              "available": 5,
+              "unit": "UNIT"
+            },
+            "publication": {
+              "status": "ENDED",
+              "endedBy": "USER",
+              "republish": false
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "PATCH",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/sale/product-offers/7834566004",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json",
+          "content-type": "application/vnd.allegro.public.v1+json"
+        },
+        "body": {
+          "json": {
+            "sellingMode": {
+              "price": {
+                "amount": "25",
+                "currency": "PLN"
+              }
+            }
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/vnd.allegro.public.v1+json",
+          "date": "Sat, 10 Oct 2026 12:00:00 GMT"
+        },
+        "body": {
+          "json": {
+            "id": "7834566004",
+            "name": "Espresso cup 90 ml, black",
+            "language": "pl-PL",
+            "category": {
+              "id": "257929"
+            },
+            "external": {
+              "id": "CUP-090-BLK"
+            },
+            "sellingMode": {
+              "format": "BUY_NOW",
+              "price": {
+                "amount": "25.00",
+                "currency": "PLN"
+              }
+            },
+            "stock": {
+              "available": 5,
+              "unit": "UNIT"
+            },
+            "publication": {
+              "status": "ACTIVE",
+              "endedBy": null,
+              "republish": false
+            }
+          }
+        }
+      }
+    }
+  ]
+}

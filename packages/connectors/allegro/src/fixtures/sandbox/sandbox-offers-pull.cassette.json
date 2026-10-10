@@ -1,0 +1,595 @@
+{
+  "version": 1,
+  "interactions": [
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/sale/offers?limit=1000&offset=0&publication.status=ACTIVE&publication.status=ACTIVATING&publication.status=ENDED",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/vnd.allegro.public.v1+json",
+          "date": "Sat, 10 Oct 2026 21:48:55 GMT"
+        },
+        "body": {
+          "json": {
+            "offers": [
+              {
+                "id": "7782361660",
+                "name": "Kubek ceramiczny Forma 300 ml - kremowy",
+                "category": {
+                  "id": "110886"
+                },
+                "primaryImage": {
+                  "url": "https://a.allegroimg.allegrosandbox.pl/original/113eda/33180359415aaecb0279cabdb2e7"
+                },
+                "sellingMode": {
+                  "format": "BUY_NOW",
+                  "price": {
+                    "amount": "19.9",
+                    "currency": "PLN"
+                  },
+                  "minimalPrice": null,
+                  "startingPrice": null,
+                  "priceAutomation": null
+                },
+                "saleInfo": {
+                  "currentPrice": null,
+                  "biddersCount": 0
+                },
+                "stats": {
+                  "watchersCount": 0,
+                  "visitsCount": 0
+                },
+                "stock": {
+                  "available": 5,
+                  "sold": 0
+                },
+                "publication": {
+                  "status": "ENDED",
+                  "startingAt": null,
+                  "startedAt": "2026-10-10T20:22:51.000Z",
+                  "endingAt": null,
+                  "endedAt": "2026-10-10T20:25:06.000Z",
+                  "marketplaces": {
+                    "base": {
+                      "id": "allegro-pl"
+                    },
+                    "additional": [
+                      {
+                        "id": "allegro-business-pl"
+                      }
+                    ]
+                  }
+                },
+                "afterSalesServices": {
+                  "warranty": null,
+                  "returnPolicy": {
+                    "id": "810f576a-c2d6-495b-a343-720711096634"
+                  },
+                  "impliedWarranty": {
+                    "id": "c5ad53a4-9d01-4b9f-aefa-cc3345477988"
+                  }
+                },
+                "additionalServices": null,
+                "external": {
+                  "id": "HANZA-MUG-WHITE"
+                },
+                "delivery": {
+                  "shippingRates": {
+                    "id": "17b0bfa8-acfd-4968-936c-3c532a41e728"
+                  }
+                },
+                "b2b": {
+                  "buyableOnlyByBusiness": false
+                },
+                "fundraisingCampaign": null,
+                "isFulfillment": false,
+                "additionalMarketplaces": {
+                  "allegro-business-pl": {
+                    "publication": {
+                      "state": "REFUSED"
+                    },
+                    "sellingMode": {
+                      "price": {
+                        "amount": "19.9",
+                        "currency": "PLN"
+                      },
+                      "priceAutomation": null
+                    },
+                    "stats": {
+                      "watchersCount": 0,
+                      "visitsCount": 0
+                    },
+                    "stock": {
+                      "sold": 0
+                    }
+                  },
+                  "allegro-cz": {
+                    "publication": {
+                      "state": "NOT_REQUESTED"
+                    }
+                  },
+                  "allegro-business-cz": {
+                    "publication": {
+                      "state": "NOT_REQUESTED"
+                    }
+                  },
+                  "allegro-sk": {
+                    "publication": {
+                      "state": "NOT_REQUESTED"
+                    }
+                  },
+                  "allegro-hu": {
+                    "publication": {
+                      "state": "NOT_REQUESTED"
+                    }
+                  }
+                }
+              },
+              {
+                "id": "7782361659",
+                "name": "Kubek emaliowany niebieski 350 ml",
+                "category": {
+                  "id": "110886"
+                },
+                "primaryImage": {
+                  "url": "https://a.allegroimg.allegrosandbox.pl/original/11371e/0eb4aa94464aad0c4d2378d485f8"
+                },
+                "sellingMode": {
+                  "format": "BUY_NOW",
+                  "price": {
+                    "amount": "19.9",
+                    "currency": "PLN"
+                  },
+                  "minimalPrice": null,
+                  "startingPrice": null,
+                  "priceAutomation": null
+                },
+                "saleInfo": {
+                  "currentPrice": null,
+                  "biddersCount": 0
+                },
+                "stats": {
+                  "watchersCount": 0,
+                  "visitsCount": 0
+                },
+                "stock": {
+                  "available": 5,
+                  "sold": 0
+                },
+                "publication": {
+                  "status": "ACTIVE",
+                  "startingAt": null,
+                  "startedAt": "2026-10-10T20:22:49.000Z",
+                  "endingAt": null,
+                  "endedAt": null,
+                  "marketplaces": {
+                    "base": {
+                      "id": "allegro-pl"
+                    },
+                    "additional": [
+                      {
+                        "id": "allegro-business-pl"
+                      }
+                    ]
+                  }
+                },
+                "afterSalesServices": {
+                  "warranty": null,
+                  "returnPolicy": {
+                    "id": "810f576a-c2d6-495b-a343-720711096634"
+                  },
+                  "impliedWarranty": {
+                    "id": "c5ad53a4-9d01-4b9f-aefa-cc3345477988"
+                  }
+                },
+                "additionalServices": null,
+                "external": {
+                  "id": "HANZA-MUG-WHITE"
+                },
+                "delivery": {
+                  "shippingRates": {
+                    "id": "17b0bfa8-acfd-4968-936c-3c532a41e728"
+                  }
+                },
+                "b2b": {
+                  "buyableOnlyByBusiness": false
+                },
+                "fundraisingCampaign": null,
+                "isFulfillment": false,
+                "additionalMarketplaces": {
+                  "allegro-business-pl": {
+                    "publication": {
+                      "state": "REFUSED"
+                    },
+                    "sellingMode": {
+                      "price": {
+                        "amount": "19.9",
+                        "currency": "PLN"
+                      },
+                      "priceAutomation": null
+                    },
+                    "stats": {
+                      "watchersCount": 0,
+                      "visitsCount": 0
+                    },
+                    "stock": {
+                      "sold": 0
+                    }
+                  },
+                  "allegro-cz": {
+                    "publication": {
+                      "state": "NOT_REQUESTED"
+                    }
+                  },
+                  "allegro-business-cz": {
+                    "publication": {
+                      "state": "NOT_REQUESTED"
+                    }
+                  },
+                  "allegro-sk": {
+                    "publication": {
+                      "state": "NOT_REQUESTED"
+                    }
+                  },
+                  "allegro-hu": {
+                    "publication": {
+                      "state": "NOT_REQUESTED"
+                    }
+                  }
+                }
+              },
+              {
+                "id": "7782361658",
+                "name": "Produkt 1 - Talerz porcelanowy biały",
+                "category": {
+                  "id": "110904"
+                },
+                "primaryImage": {
+                  "url": "https://a.allegroimg.allegrosandbox.pl/original/11f0ed/a1f045054b81b692650acbcd74bf"
+                },
+                "sellingMode": {
+                  "format": "BUY_NOW",
+                  "price": {
+                    "amount": "24.0",
+                    "currency": "PLN"
+                  },
+                  "minimalPrice": null,
+                  "startingPrice": null,
+                  "priceAutomation": null
+                },
+                "saleInfo": {
+                  "currentPrice": null,
+                  "biddersCount": 0
+                },
+                "stats": {
+                  "watchersCount": 0,
+                  "visitsCount": 0
+                },
+                "stock": {
+                  "available": 5,
+                  "sold": 1
+                },
+                "publication": {
+                  "status": "ACTIVE",
+                  "startingAt": null,
+                  "startedAt": "2026-10-10T20:20:16.000Z",
+                  "endingAt": null,
+                  "endedAt": null,
+                  "marketplaces": {
+                    "base": {
+                      "id": "allegro-pl"
+                    },
+                    "additional": [
+                      {
+                        "id": "allegro-business-pl"
+                      }
+                    ]
+                  }
+                },
+                "afterSalesServices": {
+                  "warranty": null,
+                  "returnPolicy": {
+                    "id": "810f576a-c2d6-495b-a343-720711096634"
+                  },
+                  "impliedWarranty": {
+                    "id": "c5ad53a4-9d01-4b9f-aefa-cc3345477988"
+                  }
+                },
+                "additionalServices": null,
+                "external": {
+                  "id": "HANZA-PLATE-WHITE"
+                },
+                "delivery": {
+                  "shippingRates": {
+                    "id": "17b0bfa8-acfd-4968-936c-3c532a41e728"
+                  }
+                },
+                "b2b": {
+                  "buyableOnlyByBusiness": false
+                },
+                "fundraisingCampaign": null,
+                "isFulfillment": false,
+                "additionalMarketplaces": {
+                  "allegro-business-pl": {
+                    "publication": {
+                      "state": "REFUSED"
+                    },
+                    "sellingMode": {
+                      "price": {
+                        "amount": "24.0",
+                        "currency": "PLN"
+                      },
+                      "priceAutomation": null
+                    },
+                    "stats": {
+                      "watchersCount": 0,
+                      "visitsCount": 0
+                    },
+                    "stock": {
+                      "sold": 0
+                    }
+                  },
+                  "allegro-cz": {
+                    "publication": {
+                      "state": "NOT_REQUESTED"
+                    }
+                  },
+                  "allegro-business-cz": {
+                    "publication": {
+                      "state": "NOT_REQUESTED"
+                    }
+                  },
+                  "allegro-sk": {
+                    "publication": {
+                      "state": "NOT_REQUESTED"
+                    }
+                  },
+                  "allegro-hu": {
+                    "publication": {
+                      "state": "NOT_REQUESTED"
+                    }
+                  }
+                }
+              },
+              {
+                "id": "7782361657",
+                "name": "Kubek niebieski ceramiczny",
+                "category": {
+                  "id": "110886"
+                },
+                "primaryImage": {
+                  "url": "https://a.allegroimg.allegrosandbox.pl/original/11eeea/edca9a30408d8d96b55eeab6cdb4"
+                },
+                "sellingMode": {
+                  "format": "BUY_NOW",
+                  "price": {
+                    "amount": "34.5",
+                    "currency": "PLN"
+                  },
+                  "minimalPrice": null,
+                  "startingPrice": null,
+                  "priceAutomation": null
+                },
+                "saleInfo": {
+                  "currentPrice": null,
+                  "biddersCount": 0
+                },
+                "stats": {
+                  "watchersCount": 0,
+                  "visitsCount": 0
+                },
+                "stock": {
+                  "available": 4,
+                  "sold": 1
+                },
+                "publication": {
+                  "status": "ACTIVE",
+                  "startingAt": null,
+                  "startedAt": "2026-10-10T20:20:15.000Z",
+                  "endingAt": null,
+                  "endedAt": null,
+                  "marketplaces": {
+                    "base": {
+                      "id": "allegro-pl"
+                    },
+                    "additional": [
+                      {
+                        "id": "allegro-business-pl"
+                      }
+                    ]
+                  }
+                },
+                "afterSalesServices": {
+                  "warranty": null,
+                  "returnPolicy": {
+                    "id": "810f576a-c2d6-495b-a343-720711096634"
+                  },
+                  "impliedWarranty": {
+                    "id": "c5ad53a4-9d01-4b9f-aefa-cc3345477988"
+                  }
+                },
+                "additionalServices": null,
+                "external": {
+                  "id": "HANZA-MUG-BLUE"
+                },
+                "delivery": {
+                  "shippingRates": {
+                    "id": "17b0bfa8-acfd-4968-936c-3c532a41e728"
+                  }
+                },
+                "b2b": {
+                  "buyableOnlyByBusiness": false
+                },
+                "fundraisingCampaign": null,
+                "isFulfillment": false,
+                "additionalMarketplaces": {
+                  "allegro-business-pl": {
+                    "publication": {
+                      "state": "REFUSED"
+                    },
+                    "sellingMode": {
+                      "price": {
+                        "amount": "34.5",
+                        "currency": "PLN"
+                      },
+                      "priceAutomation": null
+                    },
+                    "stats": {
+                      "watchersCount": 0,
+                      "visitsCount": 0
+                    },
+                    "stock": {
+                      "sold": 0
+                    }
+                  },
+                  "allegro-cz": {
+                    "publication": {
+                      "state": "NOT_REQUESTED"
+                    }
+                  },
+                  "allegro-business-cz": {
+                    "publication": {
+                      "state": "NOT_REQUESTED"
+                    }
+                  },
+                  "allegro-sk": {
+                    "publication": {
+                      "state": "NOT_REQUESTED"
+                    }
+                  },
+                  "allegro-hu": {
+                    "publication": {
+                      "state": "NOT_REQUESTED"
+                    }
+                  }
+                }
+              },
+              {
+                "id": "7782361656",
+                "name": "Kubek czerwony ceramiczny",
+                "category": {
+                  "id": "110886"
+                },
+                "primaryImage": {
+                  "url": "https://a.allegroimg.allegrosandbox.pl/original/112da7/0381fed3439990bc267c51d0f740"
+                },
+                "sellingMode": {
+                  "format": "BUY_NOW",
+                  "price": {
+                    "amount": "39.99",
+                    "currency": "PLN"
+                  },
+                  "minimalPrice": null,
+                  "startingPrice": null,
+                  "priceAutomation": null
+                },
+                "saleInfo": {
+                  "currentPrice": null,
+                  "biddersCount": 0
+                },
+                "stats": {
+                  "watchersCount": 0,
+                  "visitsCount": 0
+                },
+                "stock": {
+                  "available": 8,
+                  "sold": 2
+                },
+                "publication": {
+                  "status": "ACTIVE",
+                  "startingAt": null,
+                  "startedAt": "2026-10-10T20:20:13.000Z",
+                  "endingAt": null,
+                  "endedAt": null,
+                  "marketplaces": {
+                    "base": {
+                      "id": "allegro-pl"
+                    },
+                    "additional": [
+                      {
+                        "id": "allegro-business-pl"
+                      }
+                    ]
+                  }
+                },
+                "afterSalesServices": {
+                  "warranty": null,
+                  "returnPolicy": {
+                    "id": "810f576a-c2d6-495b-a343-720711096634"
+                  },
+                  "impliedWarranty": {
+                    "id": "c5ad53a4-9d01-4b9f-aefa-cc3345477988"
+                  }
+                },
+                "additionalServices": null,
+                "external": {
+                  "id": "HANZA-MUG-RED"
+                },
+                "delivery": {
+                  "shippingRates": {
+                    "id": "17b0bfa8-acfd-4968-936c-3c532a41e728"
+                  }
+                },
+                "b2b": {
+                  "buyableOnlyByBusiness": false
+                },
+                "fundraisingCampaign": null,
+                "isFulfillment": false,
+                "additionalMarketplaces": {
+                  "allegro-business-pl": {
+                    "publication": {
+                      "state": "REFUSED"
+                    },
+                    "sellingMode": {
+                      "price": {
+                        "amount": "39.99",
+                        "currency": "PLN"
+                      },
+                      "priceAutomation": null
+                    },
+                    "stats": {
+                      "watchersCount": 0,
+                      "visitsCount": 0
+                    },
+                    "stock": {
+                      "sold": 0
+                    }
+                  },
+                  "allegro-cz": {
+                    "publication": {
+                      "state": "NOT_REQUESTED"
+                    }
+                  },
+                  "allegro-business-cz": {
+                    "publication": {
+                      "state": "NOT_REQUESTED"
+                    }
+                  },
+                  "allegro-sk": {
+                    "publication": {
+                      "state": "NOT_REQUESTED"
+                    }
+                  },
+                  "allegro-hu": {
+                    "publication": {
+                      "state": "NOT_REQUESTED"
+                    }
+                  }
+                }
+              }
+            ],
+            "count": 5,
+            "totalCount": 5
+          }
+        }
+      }
+    }
+  ]
+}

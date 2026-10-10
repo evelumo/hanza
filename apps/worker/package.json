@@ -15,6 +15,7 @@
     "tsx": "^4.23.15"
   },
   "devDependencies": {
+    "@hanza/connector-allegro": "workspace:*",
     "@hanza/connector-fake": "workspace:*",
     "@hanza/connector-sdk": "workspace:*",
     "@hanza/db": "workspace:*",

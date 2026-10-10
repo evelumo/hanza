@@ -9,7 +9,7 @@ if (existsSync(rootEnv)) process.loadEnvFile(rootEnv)
 
 const nextConfig: NextConfig = {
   // Workspace packages ship TypeScript sources.
-  transpilePackages: ['@hanza/core', '@hanza/db', '@hanza/connector-sdk', '@hanza/connector-registry', '@hanza/connector-fake'],
+  transpilePackages: ['@hanza/core', '@hanza/db', '@hanza/connector-sdk', '@hanza/connector-registry', '@hanza/connector-fake', '@hanza/connector-allegro'],
 }
 
 // Finds src/i18n/request.ts, which resolves the locale of each request.
