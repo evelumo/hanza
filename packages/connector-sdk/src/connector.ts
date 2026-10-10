@@ -109,23 +109,39 @@ export interface Capabilities<TConfig, TCredentials, TApp = unknown> {
    * Shipments made since `requestedAt` (the same on every repeat) for the `reference`, and ask for a new one only
    * when none has it.
    *
+   * What the core promises in return: it never runs two creates of one Shipment at once, and it never repeats a
+   * create whose outcome it does not know (the call threw, or its answer could not be stored) sooner than
+   * `SHIPMENT_CREATE_RETRY_DELAY_MS` (5 minutes) after that call started. A Carrier's list may lag behind its own
+   * create, so a lookup made at once would find nothing and the repeat would buy a second parcel; the lookup may
+   * rely on that delay, and on nothing shorter. Only a failure that provably came before any request was sent (the
+   * core's own rate limiter refusing) is repeated sooner.
+   *
    * The request names one of the connector's `shipping.services` and fits it (destination type, parcel preset or
    * dimensions, cash on delivery only where the service takes it): the core refuses anything else before the call.
    * What the Carrier needs beyond that is the connector's to check, such as a phone, or a currency it collects.
    *
-   * Returns `created` with the Shipment's state (`pending` or `ready` for a new one; a repeat returns the Shipment
-   * as it is now), or `rejected` with a short code when the Carrier refuses this request for good (an unknown pickup
-   * point, a missing phone): the Shipment then fails and is never asked for again. Throw only for a failure of the
-   * call (auth, rate limit, network), which the core retries. The receiver and the address are Buyer data: never log
-   * them, and never put them in an error message or a code.
+   * Returns `created` with the Shipment's state: `pending` or `ready` for a new one, never a status that means the
+   * Carrier has the parcel. A repeat returns the Shipment as it is now; when it finds the earlier Shipment in a state
+   * it cannot translate, it returns a lower bound (`ready` when the Shipment has a tracking number, else `pending`)
+   * and never throws, because the answer the core needs is the Carrier's id.
+   *
+   * Returns `rejected` with a short code when the Carrier refuses this request for good (an unknown pickup point, a
+   * missing phone): the Shipment then fails and is never asked for again. So `rejected` is only for what is wrong
+   * with this one request. A refusal of the account (no contract for the service, no funds, unpaid invoices) is a
+   * thrown `PermanentError`: the Connection is marked failing and the Shipment waits for a person to fix the account.
+   * Throw for every failure of the call (auth, rate limit, network, a 5xx), which the core retries under the rule
+   * above. The receiver and the address are Buyer data: never log them, and never put them in an error message or a
+   * code.
    */
   'shipments.create'?(ctx: CapabilityContext<TConfig, TCredentials, TApp>, request: ShipmentRequest): Promise<ShipmentCreateResult>
   /**
    * The current state of up to 100 Shipments of this Connection, by the ids `shipments.create` returned. Must be
    * repeatable. A Shipment left out of the answer is unchanged, so leave out one whose Carrier status the connector
    * cannot translate instead of guessing; never answer for an id that was not asked. An empty list resolves to an
-   * empty list without a request. Report `failed` (with the reason as `carrierStatus`) when the Carrier will never
-   * confirm a Shipment. Throw for a failure of the whole call.
+   * empty list without a request. An id the Carrier does not know (any more) is left out like any other; it never
+   * fails the call for the Shipments beside it. Report `failed` (with the reason as `carrierStatus`) when the Carrier
+   * will never confirm a Shipment, and `delivery_problem` only for a parcel the Carrier has. Throw for a failure of
+   * the whole call.
    */
   'shipments.track'?(ctx: CapabilityContext<TConfig, TCredentials, TApp>, externalIds: string[]): Promise<ShipmentState[]>
   /**
@@ -134,9 +150,11 @@ export interface Capabilities<TConfig, TCredentials, TApp = unknown> {
    */
   'shipments.label'?(ctx: CapabilityContext<TConfig, TCredentials, TApp>, input: { externalId: string }): Promise<ShipmentLabel>
   /**
-   * Optional. Ask the Carrier to cancel a Shipment it has not taken. Returns `cancelled`, also for a Shipment that
-   * is already cancelled or gone, or `refused` with a short code when it is too late. Must be repeatable. Throw for a
-   * failure of the call.
+   * Optional. Ask the Carrier to cancel a Shipment it has not taken. Returns `cancelled` when the Carrier confirmed
+   * the cancel, or itself reports the Shipment as cancelled (a repeat of a cancel that worked). Returns `refused`
+   * with a short code in every other case the Carrier answers: it is too late, or the Carrier does not know the
+   * Shipment (a 404 says nothing about what happened to the parcel). Must be repeatable. Throw for a failure of the
+   * call.
    */
   'shipments.cancel'?(ctx: CapabilityContext<TConfig, TCredentials, TApp>, input: { externalId: string }): Promise<ShipmentCancelResult>
 }

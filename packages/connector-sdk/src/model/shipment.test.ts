@@ -12,6 +12,7 @@ import {
   shipmentStateSchema,
   shipmentStatusSchema,
   shippingServiceSchema,
+  SHIPMENT_CREATE_RETRY_DELAY_MS,
   SHIPMENT_STATUSES,
   type ShipmentRequest,
   type ShippingService,
@@ -92,6 +93,15 @@ describe('shipmentRequestSchema', () => {
     expect(shipmentRequestSchema.safeParse({ ...request, requestedAt: '2026-10-10T11:00:00+02:00' }).success).toBe(true)
   })
 
+  it('takes a reference of at most 64 letters, digits, underscores and dashes, which the core\'s Shipment id is', () => {
+    for (const reference of ['0199c3a2-7b1e-7f3a-9c55-0123456789ab', 'shp_1', 'hanza-conformance-1760000000000', 'A', 'x'.repeat(64)]) {
+      expect(shipmentRequestSchema.safeParse({ ...request, reference }).success, reference).toBe(true)
+    }
+    for (const reference of ['', 'x'.repeat(65), 'shp 1', 'shp/1', 'shp.1', 'shp:1', 'shp#1', 'zamówienie-1', 'a&b=c', 'jan@example.com']) {
+      expect(shipmentRequestSchema.safeParse({ ...request, reference }).success, reference).toBe(false)
+    }
+  })
+
   it('needs a named receiver whose other fields are null or non-empty', () => {
     expect(shipmentRequestSchema.safeParse({ ...request, receiver: { ...request.receiver, name: '' } }).success).toBe(false)
     expect(shipmentRequestSchema.safeParse({ ...request, receiver: { ...request.receiver, phone: '' } }).success).toBe(false)
@@ -136,6 +146,25 @@ describe('shipmentStateSchema', () => {
     expect(shipmentStateSchema.safeParse({ ...state, trackingNumber: '' }).success).toBe(false)
   })
 
+  it('takes the Carrier\'s id as a short id: the fake Carrier\'s and InPost\'s pass, free text and a long value do not', () => {
+    for (const externalId of ['fake-shipment-000001', '1234567890', 'carrier-1', 'a', 'SHP_1.2:3-4', 'x'.repeat(100)]) {
+      expect(shipmentStateSchema.safeParse({ ...state, externalId }).success, externalId).toBe(true)
+    }
+    // 8 KB is what broke the unique index on the stored id.
+    for (const externalId of ['', 'x'.repeat(101), 'x'.repeat(8192), 'Jan Kowalski', 'id 1', 'a/b', 'jan@example.com', 'ul. Długa 1', 'przesyłka', '1\n2']) {
+      expect(shipmentStateSchema.safeParse({ ...state, externalId }).success, externalId).toBe(false)
+    }
+  })
+
+  it('takes a tracking number as the same with a space and a slash: the fake Carrier\'s and a 24-digit InPost one pass', () => {
+    for (const trackingNumber of ['FAKE000001', '520000012345678901234567', 'JJD 0001 2345 6789', '1Z/999-AA1', 'TRACK-carrier-1', 'x'.repeat(100)]) {
+      expect(shipmentStateSchema.safeParse({ ...state, trackingNumber }).success, trackingNumber).toBe(true)
+    }
+    for (const trackingNumber of ['', 'x'.repeat(101), 'Jan Kowalski, ul. Długa 1', 'jan@example.com', '<b>1</b>', '1\n2', 'paczka?x=1', 'numer: żółw']) {
+      expect(shipmentStateSchema.safeParse({ ...state, trackingNumber }).success, trackingNumber).toBe(false)
+    }
+  })
+
   it('takes the Carrier status as a short code, like a push rejection code, never free text', () => {
     for (const carrierStatus of ['ready_to_pickup', 'offers.unavailable:no_funds', 'A-1']) {
       expect(shipmentStateSchema.safeParse({ ...state, carrierStatus }).success).toBe(true)
@@ -143,6 +172,12 @@ describe('shipmentStateSchema', () => {
     for (const carrierStatus of ['', 'Out for delivery', 'jan@example.com', 'ul. Testowa 1', 'x'.repeat(101), 'DORĘCZONA']) {
       expect(shipmentStateSchema.safeParse({ ...state, carrierStatus }).success).toBe(false)
     }
+  })
+})
+
+describe('the create retry delay', () => {
+  it('is five minutes, the one number the core waits and the contract names', () => {
+    expect(SHIPMENT_CREATE_RETRY_DELAY_MS).toBe(5 * 60_000)
   })
 })
 
