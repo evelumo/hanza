@@ -8,6 +8,7 @@ import { createTestOrganization } from '../testing/context'
 import { databaseUrl, useTestContext } from '../testing/db-test'
 import { buildOrder, createCarrierConnection, createTestConnection, jobRun, lockerShipment, orderLine, secondsUntilDue, testChannel, user } from '../testing/fixtures'
 import { cancelShipment } from './cancel'
+import { listOrderShipments } from './queries'
 import { requestShipmentCheck } from './check'
 import { requestShipment } from './request'
 import { SHIPMENT_FOLLOW_MS } from './schedule'
@@ -46,13 +47,16 @@ describe.skipIf(!databaseUrl)('requestShipmentCheck', () => {
       return externalId
     }
     const shipment = () => ctx.db.shipment.findFirstOrThrow({ where: { id: shipmentId, organizationId: org } })
+    /** What the panel is told about it. */
+    const row = async () => (await listOrderShipments(ctx, org, orderId))[0]!
     const trackJob = { name: 'shipments.track', payload: { organizationId: org, connectionId: carrierId }, options: { coalesceKey: `shipments.track:${carrierId}` } }
-    return { ctx, org, orderId, shipmentId, track, confirmed, shipment, trackJob }
+    return { ctx, org, orderId, shipmentId, track, confirmed, shipment, row, trackJob }
   }
 
   it('makes a confirmed Shipment due at once and asks its Carrier through the Connection’s track job', async () => {
-    const { ctx, org, orderId, shipmentId, track, confirmed, shipment, trackJob } = await setup()
+    const { ctx, org, orderId, shipmentId, track, confirmed, shipment, row, trackJob } = await setup()
     const externalId = await confirmed()
+    expect(await row()).toMatchObject({ status: 'ready', canCheck: true })
     // Confirmed a moment ago: on its own it would be asked again in 15 minutes, and a run now finds nothing due.
     expect(await secondsUntilDue(ctx, shipmentId)).toBeGreaterThan(60)
     await track()
@@ -73,6 +77,8 @@ describe.skipIf(!databaseUrl)('requestShipmentCheck', () => {
     await track()
     expect(carrier.calls.track).toEqual([[externalId]])
     expect(await shipment()).toMatchObject({ status: 'in_transit' })
+    // Still to be asked about: the Carrier has it, and has more to say until it is delivered.
+    expect(await row()).toMatchObject({ status: 'in_transit', canCheck: true })
     expect(await ctx.db.order.findFirstOrThrow({ where: { id: orderId, organizationId: org } })).toMatchObject({ phase: 'shipped' })
     // The job wrote the real next check: an hour ahead once the Carrier has the parcel.
     expect(await secondsUntilDue(ctx, shipmentId)).toBeGreaterThan(60)
@@ -100,8 +106,10 @@ describe.skipIf(!databaseUrl)('requestShipmentCheck', () => {
   })
 
   it('refuses a Shipment the Carrier does not know yet', async () => {
-    const { ctx, org, shipmentId, shipment } = await setup()
+    const { ctx, org, shipmentId, shipment, row } = await setup()
     const before = await shipment()
+    // The row says the same as the service does, so the panel offers no check it would be refused.
+    expect(await row()).toMatchObject({ status: 'requested', canCheck: false })
 
     await expect(requestShipmentCheck(ctx, org, shipmentId)).rejects.toMatchObject({ name: 'DomainError', code: 'shipment_not_checkable' })
 
@@ -110,11 +118,12 @@ describe.skipIf(!databaseUrl)('requestShipmentCheck', () => {
   })
 
   it('refuses a Shipment that is final', async () => {
-    const { ctx, org, shipmentId, track, confirmed, shipment } = await setup()
+    const { ctx, org, shipmentId, track, confirmed, shipment, row } = await setup()
     await confirmed()
     await cancelShipment(ctx, org, shipmentId, user)
     await track()
     expect(await shipment()).toMatchObject({ status: 'cancelled', nextCheckAt: null })
+    expect(await row()).toMatchObject({ status: 'cancelled', canCheck: false })
     ctx.queue.waiting.length = 0
 
     await expect(requestShipmentCheck(ctx, org, shipmentId)).rejects.toMatchObject({ name: 'DomainError', code: 'shipment_not_checkable' })

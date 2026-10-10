@@ -3,7 +3,15 @@ import { afterCommit } from '../after-commit'
 import type { Context } from '../context'
 import { DomainError } from '../errors'
 import { coalesceKeys, shipmentsTrackRef } from '../jobs/refs'
-import { isFinalStatus } from './statuses'
+import { isFinalStatus, type ShipmentStatus } from './statuses'
+
+/**
+ * Whether a Carrier can be asked where a Shipment is: it knows the Shipment (its answer to the request is stored), and
+ * the Shipment is not final. The one rule behind `requestShipmentCheck` and `ShipmentRow.canCheck`.
+ */
+export function isCheckable(shipment: { status: ShipmentStatus; externalId: string | null }): boolean {
+  return shipment.externalId !== null && !isFinalStatus(shipment.status)
+}
 
 /**
  * A person asks where a Shipment is now, instead of at its next scheduled check (15 minutes after the Carrier
@@ -20,7 +28,7 @@ export async function requestShipmentCheck(ctx: Context, organizationId: string,
     select: { connectionId: true, status: true, externalId: true },
   })
   if (!shipment) throw new DomainError('not_found')
-  if (isFinalStatus(shipment.status) || shipment.externalId === null) throw new DomainError('shipment_not_checkable')
+  if (!isCheckable(shipment)) throw new DomainError('shipment_not_checkable')
 
   // The conditions again, in the statement: a Shipment that became final since the read above stays owed nothing.
   // No Order lock: only the due time moves, never later than it was, and the job writes the real one under the lock.

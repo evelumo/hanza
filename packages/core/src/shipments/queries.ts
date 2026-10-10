@@ -2,6 +2,7 @@ import { canShip, findShippingService, shipmentParcelSchema, type Money, type Sh
 import type { ConnectionHealth, Prisma } from '@hanza/db'
 import type { Context } from '../context'
 import { moneyFromColumns } from '../prices/price'
+import { isCheckable } from './check'
 import { isShipmentLabelFailure, type ShipmentLabelFailure } from './label'
 import { isFinalStatus, isHandedOver, type ShipmentStatus } from './statuses'
 
@@ -34,6 +35,8 @@ export interface ShipmentRow {
   cancelRequestedAt: Date | null
   /** Whether a person may ask to cancel it now (`cancelShipment` decides for good). */
   canCancel: boolean
+  /** Whether a person may ask where it is now (`requestShipmentCheck`): its Carrier knows it and it is not final. */
+  canCheck: boolean
   /** Whether `getShipmentLabel` has a file to serve. */
   hasLabel: boolean
   /**
@@ -107,6 +110,7 @@ export async function listOrderShipments(ctx: Context, organizationId: string, o
       cancelRefusedCode: failed ? null : row.failureCode,
       cancelRequestedAt: row.cancelRequestedAt,
       canCancel: open && row.cancelRequestedAt === null && (row.externalId === null || connector?.capabilities['shipments.cancel'] !== undefined),
+      canCheck: isCheckable(row),
       // Set and cleared together with the sealed file (a CHECK on the table).
       hasLabel: row.labelContentType !== null,
       labelFailureCode: isShipmentLabelFailure(row.labelFailureCode) ? row.labelFailureCode : null,
