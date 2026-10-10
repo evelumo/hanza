@@ -1,0 +1,121 @@
+{
+  "version": 1,
+  "interactions": [
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?id=1600000901&page=1&per_page=100",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "json": {
+            "status": 401,
+            "error": "token_invalid",
+            "message": "Token is missing or invalid.",
+            "details": {}
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?id=1600000902&page=1&per_page=100",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 403,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "json": {
+            "status": 403,
+            "error": "access_forbidden",
+            "message": "Access to the specified resource is denied.",
+            "details": {}
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?id=1600000903&page=1&per_page=100",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 404,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "json": {
+            "status": 404,
+            "error": "resource_not_found",
+            "message": "Resource you are looking for are not found",
+            "details": {}
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?id=1600000904&page=1&per_page=100",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 429,
+        "headers": {
+          "content-type": "text/plain; charset=UTF-8",
+          "retry-after": "7"
+        },
+        "body": {
+          "text": "error code: 1015"
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?id=1600000905&page=1&per_page=100",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 500,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "json": {
+            "status": 500,
+            "error": "internal_server_error",
+            "message": "Unexpected error occurred.",
+            "details": {}
+          }
+        }
+      }
+    }
+  ]
+}

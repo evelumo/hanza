@@ -1,0 +1,44 @@
+{
+  "version": 1,
+  "interactions": [
+    {
+      "request": {
+        "method": "DELETE",
+        "url": "https://sandbox-api-shipx-pl.easypack24.net/v1/shipments/1600000601",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 204,
+        "headers": {},
+        "body": null
+      }
+    },
+    {
+      "request": {
+        "method": "DELETE",
+        "url": "https://sandbox-api-shipx-pl.easypack24.net/v1/shipments/1600000601",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 404,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "json": {
+            "status": 404,
+            "error": "resource_not_found",
+            "message": "Resource you are looking for are not found",
+            "details": {}
+          }
+        }
+      }
+    }
+  ]
+}

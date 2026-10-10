@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "interactions": [
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://sandbox-api-shipx-pl.easypack24.net/v1/shipments/1600000501/label?format=pdf&type=normal",
+        "headers": {
+          "accept": "application/pdf, application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 400,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "json": {
+            "status": 400,
+            "error": "invalid_action",
+            "message": "Action is not allowed in the current shipment status.",
+            "details": {}
+          }
+        }
+      }
+    }
+  ]
+}
