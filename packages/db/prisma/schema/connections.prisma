@@ -15,6 +15,8 @@ enum SyncStream {
   stock_push
   order_status_push
   price_push
+  shipments_create
+  shipments_track
 
   @@map("sync_stream")
 }
@@ -64,6 +66,7 @@ model Connection {
   warehouses     ConnectionWarehouse[]
   statusMappings ChannelStatusMapping[]
   signIns        ConnectionSignIn[]
+  shipments      Shipment[]
 
   @@index([organizationId, connectorId])
   // One Connection per Channel account in an organization; NULLs are distinct, so Connections without an account are unaffected.

@@ -29,6 +29,7 @@ const REASON_ORDER = {
   cancelled_while_processing: 2,
   channel_fact_conflict: 3,
   status_push_failed: 4,
+  shipment_conflict: 5,
 } as const satisfies Record<AttentionReason, number>
 
 export interface AttentionOrders {

@@ -461,6 +461,7 @@
         "cancelled_while_processing": "Kanał anulował to zamówienie w trakcie przygotowywania, a jego rezerwacje zostały zwolnione. Wstrzymaj realizację i odłóż towar, a potem oznacz zamówienie jako sprawdzone.",
         "channel_fact_conflict": "Kanał zgłosił zmianę już po wysłaniu albo anulowaniu zamówienia i Hanza jej nie zastosowała. Sprawdź, co zgłosił, i wyjaśnij to z kupującym, a potem oznacz zamówienie jako sprawdzone.",
         "status_push_failed": "Kanał nie przyjął ostatniej zmiany fazy i może nadal pokazywać poprzednią. Sprawdź połączenie albo zmień zamówienie w kanale, a potem oznacz je jako sprawdzone.",
+        "shipment_conflict": "Przewoźnik odebrał paczkę tego zamówienia, ale Hanza nie mogła oznaczyć go jako wysłane: jest anulowane, nieopłacone albo ma pozycję niepołączoną z produktem. Wyjaśnij to, w razie potrzeby samodzielnie oznacz zamówienie jako wysłane, a potem oznacz je jako sprawdzone.",
         "toLines": "Przejdź do pozycji",
         "toReservations": "Przejdź do rezerwacji",
         "toProduct": "Produkt",
@@ -706,7 +707,8 @@
       "shortage": "Brak na stanie",
       "cancelled_while_processing": "Anulowane w trakcie realizacji",
       "channel_fact_conflict": "Kanał zgłosił zmianę po zakończeniu",
-      "status_push_failed": "Kanał odrzucił nowy status"
+      "status_push_failed": "Kanał odrzucił nowy status",
+      "shipment_conflict": "Przewoźnik odebrał paczkę zamówienia, którego nie można było wysłać"
     },
     "health": {
       "unknown": "Nie sprawdzono",
@@ -719,7 +721,9 @@
       "orders_pull": "Zamówienia",
       "stock_push": "Stany magazynowe",
       "order_status_push": "Statusy zamówień",
-      "price_push": "Ceny"
+      "price_push": "Ceny",
+      "shipments_create": "Nowe przesyłki",
+      "shipments_track": "Śledzenie przesyłek"
     },
     "payment": {
       "prepaid": "Przedpłata",
