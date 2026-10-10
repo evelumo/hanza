@@ -165,8 +165,9 @@ Closed is `completed`, `cancelled`, `refunded`, `failed`, `trash`. `checkout-dra
 - **A trashed order is never written to**: on HPOS a `PUT` to an order in the trash would take it out again. The read is what notices it.
 - **The window is unavoidable:** between the read and the write the Buyer can pay or an admin can complete the order, and the `PUT` then overwrites it. WooCommerce has no conditional write.
 - An order deleted for good is a `PermanentError` ("no longer exists in the shop"; a `GET` answers 404 with a WooCommerce code); one deleted between the read and the write answers **400** to the `PUT` (`woocommerce_rest_shop_order_invalid_id`), permanent as well. An external id that is not a WooCommerce order id is permanent.
-- Per the design record (#118), `completed` e-mails the Buyer and `cancelled` restores WooCommerce's own stock; that is WooCommerce's behaviour, not ours.
-- On HPOS the push bumps `date_modified`, so the order comes back once through the feed. Harmless.
+- Per the design record (#118), `completed` e-mails the Buyer and `cancelled` restores WooCommerce's own stock; that is WooCommerce's behaviour, not ours. WooCommerce also takes an unpaid order's units off its stock when the order is paid. The connector does nothing about either: the core sends the Order's Offers their number again after every status push that reached the shop and after every new Channel fact (ADR 0023), and the engine test (`apps/worker/src/woocommerce.db.test.ts`, steps 7 and 11) checks the shop's own stock against Channel Available while it is recorded.
+- A new Connection's stock is first pushed after its first Orders pull reached the end of the feed (ADR 0023), so the shop is never told Stock without its own open orders.
+- On HPOS the push bumps `date_modified`, so the order comes back once through the feed. It brings no new fact when the order is still open, and its `shipped` or `cancelled` fact once when Hanza closed it, which costs one more stock push of its Offers.
 
 ## Known gaps
 

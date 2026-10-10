@@ -51,7 +51,7 @@ Stock minus open Reservations, per Warehouse (for a Product's total, the sum ove
 _Avoid_: Free stock, sellable quantity
 
 **Channel Available**:
-The number Hanza tells one Channel for a Product: what one of its Channel Warehouses can cover (the largest single Available among them, and never more than their total), minus its Safety buffer, at most its Channel limit. Never below zero. A line is never split, so any line up to this number fits in one Warehouse. Orders reserve against Available, not against this number (ADR 0013, ADR 0017).
+The number Hanza tells one Channel for a Product: what one of its Channel Warehouses can cover (the largest single Available among them, and never more than their total), minus its Safety buffer, at most its Channel limit. Never below zero. A line is never split, so any line up to this number fits in one Warehouse. Orders reserve against Available, not against this number (ADR 0013, ADR 0017). It is sent when it changes, and again whenever the Channel may have moved its own count of an Order's Offers: after Hanza told it that Order's status, and when it reports a Channel fact Hanza had not recorded. A Channel is told nothing before Hanza has read the Orders open there (ADR 0023).
 _Avoid_: Channel stock, advertised stock, allocation
 
 **Safety buffer**:
