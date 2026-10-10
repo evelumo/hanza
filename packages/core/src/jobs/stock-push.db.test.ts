@@ -9,7 +9,7 @@ import { failSyncRun } from '../connections/sync-state'
 import { importOrder } from '../orders/import'
 import { createTestOrganization } from '../testing/context'
 import { databaseUrl, useTestContext } from '../testing/db-test'
-import { buildOrder, orderLine, uniqueSku, user } from '../testing/fixtures'
+import { buildOrder, orderLine, readOrderFeed, uniqueSku, user } from '../testing/fixtures'
 import { stockPushJob } from './stock-push'
 
 const pushes: StockLevel[][] = []
@@ -53,6 +53,8 @@ describe.skipIf(!databaseUrl)('stock.push', () => {
       { connectorId: 'push-channel', name: 'Channel', config: {}, credentials: {} },
       user,
     )
+    // A Channel is told nothing before its Order feed has been read (see `stock-push-first-pull.db.test.ts`).
+    await readOrderFeed(ctx, organizationId, connectionId)
     return { ctx, organizationId, connectionId }
   }
 
@@ -211,6 +213,6 @@ describe.skipIf(!databaseUrl)('stock.push', () => {
     pushes.length = 0
     await stockPushJob.handler(ctx, { organizationId: other, connectionId }, run)
     expect(pushes).toEqual([])
-    expect(await ctx.db.syncState.count({ where: { connectionId } })).toBe(0)
+    expect(await ctx.db.syncState.count({ where: { connectionId, stream: 'stock_push' } })).toBe(0)
   })
 })

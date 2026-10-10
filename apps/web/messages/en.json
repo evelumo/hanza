@@ -789,6 +789,7 @@
       "skipped": "not sent",
       "updatesIgnored": "changes to orders not in Hanza",
       "feedRestarts": "order feed restarted",
+      "more": "continues in the next run",
       "rejected": "rejected"
     }
   },

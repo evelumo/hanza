@@ -3,6 +3,7 @@ import { defineConnector, type ChannelFact, type Order, type OrderLine } from '@
 import { z } from 'zod'
 import type { Actor } from '../actor'
 import { createConnection } from '../connections/connections'
+import { ordersPullJob } from '../jobs/orders-pull'
 import type { OrderPhase } from '../orders/phases'
 import type { TestContext } from './context'
 
@@ -51,6 +52,14 @@ export async function createTestConnection(ctx: TestContext, organizationId: str
     user,
   )
   return connectionId
+}
+
+/**
+ * Runs the Connection's Orders pull, as its first sync does. A test that pushes Stock needs it: a Channel is told
+ * nothing before its Order feed has been read to its end (ADR 0023).
+ */
+export async function readOrderFeed(ctx: TestContext, organizationId: string, connectionId: string): Promise<void> {
+  await ordersPullJob.handler(ctx, { organizationId, connectionId, trigger: 'schedule' }, { attempt: 1, maxAttempts: 5, retriedLater: 0 })
 }
 
 export function orderLine(externalId: string, overrides: Partial<OrderLine> = {}): OrderLine {

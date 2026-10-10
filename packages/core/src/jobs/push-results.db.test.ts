@@ -5,12 +5,13 @@ import { retryOfferPush } from '../catalog/offer-push'
 import { getOffer, upsertOffers } from '../catalog/offers'
 import { createProduct } from '../catalog/products'
 import { createConnection } from '../connections/connections'
+import { failSyncRun } from '../connections/sync-state'
 import { PermanentJobError } from '../jobs'
 import { setBasePrice } from '../prices/set-price'
 import { setStock } from '../stock/set-stock'
 import { createTestOrganization } from '../testing/context'
 import { databaseUrl, useTestContext } from '../testing/db-test'
-import { uniqueSku, user } from '../testing/fixtures'
+import { readOrderFeed, uniqueSku, user } from '../testing/fixtures'
 import { pricePushJob } from './price-push'
 import { stockPushJob } from './stock-push'
 
@@ -49,6 +50,7 @@ describe.skipIf(!databaseUrl)('per-Offer push results', () => {
     const ctx = context()
     const organizationId = await createTestOrganization(ctx.db)
     const { connectionId } = await createConnection(ctx, organizationId, { connectorId, name: 'Channel', config: {}, credentials: {} }, user)
+    await readOrderFeed(ctx, organizationId, connectionId)
     const products: Record<string, string> = {}
     for (const offer of offers) {
       const sku = uniqueSku()
@@ -142,6 +144,8 @@ describe.skipIf(!databaseUrl)('per-Offer push results', () => {
   it('an Offer ended by the seller is rejected without a Channel call; 0 to an ended Offer is not sent', async () => {
     const t = await setup('results-reopening', [{ id: 'by-seller', status: 'ended', endedReason: 'other' }, { id: 'sold-out', status: 'ended', endedReason: 'sold_out' }])
     await setStock(t.ctx, t.organizationId, t.products['sold-out']!, 0, user)
+    // The Orders pull of the setup left the Connection ok; a run that reached the Channel would clear this again.
+    await failSyncRun(t.ctx, t.organizationId, t.connectionId, 'offers_pull', { kind: 'transient', message: 'down', health: 'failing' })
     await t.pushStock()
 
     expect(stockCalls).toEqual([])
@@ -149,7 +153,7 @@ describe.skipIf(!databaseUrl)('per-Offer push results', () => {
     expect(await t.offerRow('sold-out')).toMatchObject({ stockRejectedCode: null, lastPushedAt: null })
     expect((await t.offerRow('sold-out')).stockPushedSeq).toBe((await t.offerRow('sold-out')).stockPushSeq)
     // Nothing reached the Channel, so the run proves nothing about the Connection.
-    expect(await t.health()).toBe('unknown')
+    expect(await t.health()).toBe('failing')
   })
 
   it("Hanza's own offer_ended is recorded as one Event, not again on every change of Stock", async () => {

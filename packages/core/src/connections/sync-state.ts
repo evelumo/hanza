@@ -108,6 +108,28 @@ export async function restartOrderFeed(ctx: Context, organizationId: string, con
   }, TX_OPTIONS)
 }
 
+/** In the result of an Orders pull that stopped at its page limit: the feed has more to read, and the next run carries on. */
+export const ORDER_FEED_MORE = 'more'
+
+/**
+ * Whether the Connection's Channel may be told Stock (ADR 0023). Not before its Order feed has been read to its
+ * end: until then Hanza does not know the Orders open there and would send Stock without their Reservations, on
+ * top of a number the Channel counted right. Read from what the runs record anyway:
+ * - the last successful Orders pull reached the end of the feed (its result has no `more`), or
+ * - a stock push reached the Channel before. A Channel that was told numbers stays on them, because they also
+ *   carry what other Channels sold: a feed that restarted (ADR 0021) or fell behind by more than one run does not
+ *   stop its pushes, nor does a Connection older than this rule whose Orders pull never succeeded.
+ * So a Channel never told a number gets none while its Orders pull keeps failing: the Connection shows failing (or
+ * waiting for sign-in) with the Orders pull's error, and its Offers show their stock as waiting to be sent.
+ */
+export async function mayPushStock(ctx: Context, organizationId: string, connectionId: string): Promise<boolean> {
+  const states = await ctx.db.syncState.findMany({
+    where: { organizationId, connectionId, stream: { in: ['orders_pull', 'stock_push'] }, lastSucceededAt: { not: null } },
+    select: { stream: true, lastResult: true },
+  })
+  return states.some((state) => state.stream === 'stock_push' || !((state.lastResult ?? {}) as Record<string, unknown>)[ORDER_FEED_MORE])
+}
+
 export async function finishSyncRun(
   ctx: Context,
   organizationId: string,

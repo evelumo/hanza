@@ -1,7 +1,7 @@
 import type { StockLevel } from '@hanza/connector-sdk'
 import { decideStockPush, OFFER_ENDED_CODE } from '../catalog/offer-push'
 import { listOffersAwaitingStockPush, recordStockPushOutcomes, type StockPushOutcome } from '../catalog/offers'
-import { finishSyncRun } from '../connections/sync-state'
+import { finishSyncRun, mayPushStock } from '../connections/sync-state'
 import { defineJob } from '../jobs'
 import { getChannelAvailability } from '../stock/channel-available'
 import { withSyncRun } from '../sync/begin-run'
@@ -20,6 +20,10 @@ const MAX_BATCHES = 10
  * Offers the Channel reports ended follow ADR 0022 (see `decideStockPush`). An Offer the Channel refuses
  * on its own is recorded as rejected and counts as handled; the others of the call count as pushed and the
  * Connection stays healthy. Only a failure of the whole call fails the run.
+ *
+ * Whoever asked for the push (a link, a Stock edit, a Retry, the tick), a Channel is told nothing before its Order
+ * feed has been read to its end (`mayPushStock`, ADR 0023): its Offers stay pending, the Channel keeps its own
+ * number, and the Orders pull that reaches the end requests the push.
  */
 export const stockPushJob = defineJob({
   ...stockPushRef,
@@ -27,6 +31,12 @@ export const stockPushJob = defineJob({
     const { organizationId, connectionId } = payload
     const input = { organizationId, connectionId, stream: 'stock_push', capability: 'stock.push', run } as const
     await withSyncRun(ctx, input, async ({ connector, context, scope }) => {
+      // A connector without an Order feed has nothing to wait for (no Channel is one: `defineConnector` refuses it).
+      if (connector.capabilities['orders.pull'] && !(await mayPushStock(ctx, organizationId, connectionId))) {
+        ctx.log.info('stock push waits: the Order feed has not been read to its end yet', { organizationId, connectionId })
+        await finishSyncRun(ctx, organizationId, connectionId, 'stock_push', {}, { calledChannel: false })
+        return
+      }
       const reopensSoldOutOffers = connector.reopensSoldOutOffers === true
       const totals = { pushed: 0, rejected: 0, skipped: 0 }
       let calledChannel = false

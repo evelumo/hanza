@@ -8,6 +8,7 @@ import { failSyncRun, finishSyncRun } from '../connections/sync-state'
 import { stockPushJob } from '../jobs/stock-push'
 import { changeOrderStatus } from '../orders/change-status'
 import { importOrder } from '../orders/import'
+import { applyOrderUpdate } from '../orders/update'
 import { createTestOrganization } from '../testing/context'
 import { databaseUrl, useTestContext } from '../testing/db-test'
 import { buildOrder, createTestConnection, fact, orderLine, testChannel, user } from '../testing/fixtures'
@@ -15,6 +16,7 @@ import { uniqueApplicationName, untilLockWait, watchLockWaits } from '../testing
 import { TX_OPTIONS } from '../transaction'
 import { getAvailability } from './availability'
 import { channelAvailable } from './channel-available'
+import { reassertOrderStock } from './push'
 import { setStock } from './set-stock'
 
 // Real parallel transactions against Postgres: every call below runs on its own
@@ -185,5 +187,67 @@ describe.skipIf(!databaseUrl)('Stock and Reservations under concurrency', () => 
     }
     // Something was oversold along the way, so the clamp to zero was exercised too.
     expect([...availability.values()].some((value) => value.available < 0)).toBe(true)
+  })
+
+  it('(7) facts for Orders Hanza has, the marks of status pushes, stock pushes and Offer pulls at once: no deadlock, and every Offer ends at its Channel Available', async () => {
+    const ctx = context()
+    const org = await createTestOrganization(ctx.db)
+    const connections = [await createTestConnection(ctx, org, 'A'), await createTestConnection(ctx, org, 'B')]
+    const skus = ['RE-1', 'RE-2', 'RE-3', 'RE-4']
+    const productIds: string[] = []
+    for (const sku of skus) productIds.push((await createProduct(ctx, org, { sku, name: sku, stock: 40 }, user)).productId)
+    const offers = (reverse: boolean) =>
+      (reverse ? [...skus].reverse() : skus).map((sku) => ({ externalId: `offer-${sku}`, sku, name: sku, url: null }))
+    for (const connectionId of connections) {
+      await upsertOffers(ctx, org, connectionId, offers(false), new Date())
+      // The Order feed counts as read, so the stock pushes below really push (ADR 0023).
+      await finishSyncRun(ctx, org, connectionId, 'orders_pull', {})
+    }
+    // Lines in reverse SKU order, each naming its Offer: the marks must still lock Offers in id order.
+    const lines = () => [...skus].reverse().map((sku, i) => orderLine(`l${i}`, { offerExternalId: `offer-${sku}`, sku }))
+    const run = { attempt: 1, maxAttempts: 5, retriedLater: 0 }
+    const watcher = watchLockWaits(databaseUrl!, applicationName)
+
+    for (let round = 0; round < 6; round++) {
+      // Orders Hanza has, four per Channel; each is reported again, or has its status pushed, in this round.
+      const known: Array<{ connectionId: string; order: ReturnType<typeof buildOrder>; orderId: string }> = []
+      for (const connectionId of connections) {
+        for (let i = 0; i < 4; i++) {
+          const order = buildOrder({ lines: lines(), awaitingPayment: i === 0 })
+          known.push({ connectionId, order, orderId: (await importOrder(ctx, org, connectionId, order)).orderId })
+        }
+      }
+      await Promise.all([
+        ...known.flatMap(({ connectionId, order, orderId }, i): Array<Promise<unknown>> => {
+          // A payment (no Stock moves), a cancellation by the Channel, a status push after a cancellation by a
+          // person, and a status push next to the Channel's own shipment.
+          if (i % 4 === 0) return [importOrder(ctx, org, connectionId, { ...order, awaitingPayment: false, facts: [fact('paid', 'paid')] })]
+          const cancelled = fact('cancelled', 'cancelled')
+          if (i % 4 === 1) return [applyOrderUpdate(ctx, org, connectionId, { kind: 'update', externalId: order.externalId, facts: [cancelled] })]
+          if (i % 4 === 2) return [changeOrderStatus(ctx, org, orderId, 'cancelled', user), reassertOrderStock(ctx, org, orderId)]
+          return [importOrder(ctx, org, connectionId, { ...order, facts: [fact('shipped', 'shipped')] }), reassertOrderStock(ctx, org, orderId)]
+        }),
+        ...connections.map((connectionId) => importOrder(ctx, org, connectionId, buildOrder({ lines: lines() }))),
+        ...connections.map((connectionId) => stockPushJob.handler(ctx, { organizationId: org, connectionId }, run)),
+        ...connections.map((connectionId) => upsertOffers(ctx, org, connectionId, offers(true), new Date())),
+        updateChannelStockRules(ctx, org, connections[round % 2]!, { safetyBuffer: round % 3, channelLimit: round % 2 ? 30 : null }, user),
+        setStock(ctx, org, productIds[round % skus.length]!, 40 + round, user),
+      ])
+    }
+
+    expect(await watcher.stop()).toBeGreaterThan(0)
+    ctx.queue.waiting.length = 0
+    for (const connectionId of connections) await stockPushJob.handler(ctx, { organizationId: org, connectionId }, run)
+
+    const availability = await getAvailability(ctx.db, org, productIds)
+    const rules = await ctx.db.connection.findMany({ where: { organizationId: org }, select: { id: true, safetyBuffer: true, channelLimit: true } })
+    const linked = await ctx.db.offer.findMany({ where: { organizationId: org, productId: { not: null } } })
+    expect(linked).toHaveLength(connections.length * skus.length)
+    for (const offer of linked) {
+      expect(offer.stockPushedSeq).toBe(offer.stockPushSeq)
+      expect(offer.lastPushedAvailable).toBe(
+        channelAvailable(availability.get(offer.productId!)!.available, rules.find((connection) => connection.id === offer.connectionId)!),
+      )
+    }
   })
 })
