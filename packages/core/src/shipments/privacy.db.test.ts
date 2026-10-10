@@ -12,7 +12,7 @@ import { applyBuyerDataRetention } from '../privacy/sweep'
 import { createTestCarrier } from '../testing/carrier'
 import { createTestOrganization, type TestContext } from '../testing/context'
 import { databaseUrl, useTestContext } from '../testing/db-test'
-import { addMember, buildOrder, courierShipment, createCarrierConnection, createTestConnection, jobRun, lockerShipment, orderLine, testChannel, user } from '../testing/fixtures'
+import { addMember, buildOrder, courierShipment, createCarrierConnection, createTestConnection, createWaitPasses, jobRun, lockerShipment, orderLine, testChannel, user } from '../testing/fixtures'
 import { cancelShipment } from './cancel'
 import { getShipmentLabel } from './label'
 import { listOrderShipments } from './queries'
@@ -102,6 +102,7 @@ describe.skipIf(!databaseUrl)('Shipments and Buyer data', () => {
     // A lost answer, a failed call, then success: the failure paths log and record too.
     carrier.loseAnswers = 1
     await expect(create(locker.shipmentId)).rejects.toBeInstanceOf(TransientError)
+    await createWaitPasses(base, locker.shipmentId)
     await create(locker.shipmentId)
     await create(courier.shipmentId)
     const lockerAt = carrier.byReference(locker.shipmentId)!
@@ -142,7 +143,7 @@ describe.skipIf(!databaseUrl)('Shipments and Buyer data', () => {
       expect(types).toContain(type)
     }
     expect(base.queue.enqueued.slice(enqueuedFrom).map((job) => job.name)).toEqual(expect.arrayContaining(['shipments.create', 'shipments.track', 'orders.updateStatus']))
-    expect(logged).toEqual([{ message: 'shipment label not stored: too large', organizationId: org, shipmentId: locker.shipmentId, bytes: MAX_LABEL_BYTES + 1 }])
+    expect(logged).toEqual([{ message: 'shipment label given up on', organizationId: org, shipmentId: locker.shipmentId, code: 'too_large', bytes: MAX_LABEL_BYTES + 1 }])
     expect((await getShipmentLabel(ctx, org, locker.shipmentId))).toBeNull()
 
     const everything = await written()

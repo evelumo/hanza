@@ -40,6 +40,7 @@ export type EventType =
   | 'order.delivery_updated'
   | 'shipment.requested'
   | 'shipment.status_changed'
+  | 'shipment.carrier_status_changed'
   | 'shipment.failed'
   | 'shipment.cancel_requested'
   | 'shipment.cancel_refused'

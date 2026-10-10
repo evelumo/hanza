@@ -174,7 +174,7 @@ describe.skipIf(!databaseUrl)('tenant isolation: another organization\'s ids', (
     await shipmentsCreateJob.handler(ctx, { organizationId: b, shipmentId: shipmentA }, jobRun)
     await shipmentsTrackJob.handler(ctx, { organizationId: b, connectionId: carrierA }, jobRun)
     const delivered = { externalId: atCarrier.externalId, status: 'delivered', trackingNumber: null, carrierStatus: null } as const
-    expect(await applyShipmentState(ctx, b, shipmentA, delivered, 'tracked')).toEqual({ applied: false })
+    expect(await applyShipmentState(ctx, b, shipmentA, delivered, 'tracked')).toEqual({ applied: false, reason: 'not_found' })
     expect(await failShipment(ctx, b, shipmentA, 'forged')).toBe(false)
     expect(await ctx.db.shipment.count({ where: { organizationId: b } })).toBe(0)
 

@@ -23,3 +23,13 @@ export function isHandedOver(status: ShipmentStatus): boolean {
 export function isUnconfirmed(status: ShipmentStatus): boolean {
   return status === 'requested' || status === 'pending'
 }
+
+/**
+ * How far a Shipment has got: 0 not confirmed, 1 confirmed (`ready`), 2 with the Carrier, 3 final. What a Carrier
+ * reports never moves a Shipment to an earlier stage (see `applyShipmentState`); within a stage it moves freely.
+ */
+export function statusStage(status: ShipmentStatus): 0 | 1 | 2 | 3 {
+  if (isUnconfirmed(status)) return 0
+  if (isFinalStatus(status)) return 3
+  return isHandedOver(status) ? 2 : 1
+}

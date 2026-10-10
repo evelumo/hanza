@@ -240,4 +240,39 @@ describe.skipIf(!databaseUrl)('shipments end to end (real Postgres, in-memory qu
     expect((await shipmentsOf('fake-order-3'))[1]).toMatchObject({ id: second.shipmentId, status: 'cancelled', canCancel: false })
     expect(await getOrder(ctx, org, id)).toMatchObject({ phase: 'new' })
   })
+
+  it('8. a create whose answer is lost is not repeated by the queue; the tick asks again once the delay is over and gets the same Shipment', async () => {
+    const id = await orderId('fake-order-3')
+    const asked = carrier.calls.create.length
+    const row = async () => (await shipmentsOf('fake-order-3')).at(-1)!
+    // The Carrier makes the Shipment and its answer never arrives.
+    carrier.loseAnswers = 1
+    const { shipmentId } = await requestShipment(ctx, org, id, locker(), user)
+
+    // The queue retries the failed job at once (BullMQ: seconds later). The retry does not reach the Carrier.
+    const drained = await drain()
+    expect(drained.ran).toBe(2)
+    expect(carrier.calls.create).toHaveLength(asked + 1)
+    const made = carrier.byReference(shipmentId)!
+    expect(await row()).toMatchObject({ id: shipmentId, status: 'requested', externalId: null, mayExistAtCarrier: true })
+    expect(await stream(carrierId, 'shipments_create')).toMatchObject({ lastErrorKind: 'transient' })
+    expect(await health(carrierId)).toBe('failing')
+    // A second click meanwhile buys nothing.
+    await expect(requestShipment(ctx, org, id, locker(), user)).rejects.toMatchObject({ code: 'shipment_already_requested' })
+
+    // Nor does the tick take it while the delay runs.
+    expect(await tick()).not.toContain('shipments.create')
+    expect(carrier.calls.create).toHaveLength(asked + 1)
+
+    // The delay is over: the tick has it asked for again, and the Carrier returns the Shipment the lost call made.
+    await ctx.db.$executeRaw`
+      UPDATE "shipment" SET "createLeaseUntil" = now() - interval '1 second', "nextCheckAt" = now() - interval '1 second'
+      WHERE "id" = ${shipmentId} AND "organizationId" = ${org}`
+    expect(await tick()).toContain('shipments.create')
+    expect(carrier.calls.create).toHaveLength(asked + 2)
+    expect(carrier.calls.create.filter((request) => request.reference === shipmentId)).toHaveLength(2)
+    expect([...carrier.shipments.values()].filter((shipment) => shipment.reference === shipmentId)).toHaveLength(1)
+    expect(await row()).toMatchObject({ id: shipmentId, status: 'pending', externalId: made.externalId, mayExistAtCarrier: false })
+    expect(await health(carrierId)).toBe('ok')
+  })
 })

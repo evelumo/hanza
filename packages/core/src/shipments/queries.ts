@@ -2,6 +2,7 @@ import { canShip, findShippingService, shipmentParcelSchema, type Money, type Sh
 import type { ConnectionHealth, Prisma } from '@hanza/db'
 import type { Context } from '../context'
 import { moneyFromColumns } from '../prices/price'
+import { isShipmentLabelFailure, type ShipmentLabelFailure } from './label'
 import { isFinalStatus, isHandedOver, type ShipmentStatus } from './statuses'
 
 /** A Shipment as the panel shows it. Nothing sealed is in it: not the destination, and of the Label only whether one is stored. */
@@ -20,7 +21,10 @@ export interface ShipmentRow {
   /** The Carrier's id of the Shipment; null until its answer to the request is stored. */
   externalId: string | null
   trackingNumber: string | null
-  /** The Carrier's own status key, a short code. */
+  /**
+   * The Carrier's own status key, a short code. Also on a Shipment that is still `pending`, where it may be the only
+   * thing that says what it waits for (funds on the Carrier account, say).
+   */
   carrierStatus: string | null
   /** Why it failed (a Carrier's code, `carrier_timeout`, `buyer_data_erased`, …); null unless `status` is `failed`. */
   failureCode: string | null
@@ -32,6 +36,18 @@ export interface ShipmentRow {
   canCancel: boolean
   /** Whether `getShipmentLabel` has a file to serve. */
   hasLabel: boolean
+  /**
+   * Set when no Label will be fetched for it any more, with why (`too_large`, `invalid`, `refused`): no label could
+   * be fetched, and a person prints it at the Carrier. Null while one is stored, still awaited or not wanted.
+   */
+  labelFailureCode: ShipmentLabelFailure | null
+  /**
+   * True when the Carrier was asked for it and no answer was stored, so there is no `externalId`: the call failed or
+   * the job died, and a Shipment (a bought label) may exist at the Carrier that Hanza does not know of. A person
+   * checks at the Carrier. It stays true on a Shipment that was then cancelled here or timed out; a Shipment the
+   * Carrier refused (`failed` with the Carrier's code) is not one.
+   */
+  mayExistAtCarrier: boolean
   /** When the Carrier was first seen to have the parcel. */
   handedOverAt: Date | null
   createdAt: Date
@@ -53,6 +69,8 @@ const rowSelect = {
   carrierStatus: true,
   failureCode: true,
   labelContentType: true,
+  labelFailureCode: true,
+  createOutcomeUnknown: true,
   cancelRequestedAt: true,
   handedOverAt: true,
   createdAt: true,
@@ -91,6 +109,8 @@ export async function listOrderShipments(ctx: Context, organizationId: string, o
       canCancel: open && row.cancelRequestedAt === null && (row.externalId === null || connector?.capabilities['shipments.cancel'] !== undefined),
       // Set and cleared together with the sealed file (a CHECK on the table).
       hasLabel: row.labelContentType !== null,
+      labelFailureCode: isShipmentLabelFailure(row.labelFailureCode) ? row.labelFailureCode : null,
+      mayExistAtCarrier: row.externalId === null && row.createOutcomeUnknown,
       handedOverAt: row.handedOverAt,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,

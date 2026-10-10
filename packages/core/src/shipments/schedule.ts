@@ -20,6 +20,13 @@ export const SHIPMENT_CHECK_MS = {
 /** How long after it was requested an unconfirmed Shipment counts as fresh. */
 export const SHIPMENT_FRESH_MS = 600_000
 
+/**
+ * How long after it was requested a confirmed Shipment without a Label is checked every tick: a person is waiting to
+ * print it, and a Carrier issues it moments after it confirms. After that the Label is asked for at the usual
+ * interval of a confirmed Shipment, so a Carrier that never has one is not asked every minute for 60 days.
+ */
+export const SHIPMENT_LABEL_WAIT_MS = 3_600_000
+
 /** An unconfirmed Shipment this old fails with `carrier_timeout`: the Carrier will not confirm it any more. */
 export const SHIPMENT_CONFIRM_TIMEOUT_MS = 24 * 3_600_000
 
@@ -46,8 +53,11 @@ export function confirmationTimedOut(status: ShipmentStatus, createdAt: Date, no
   return isUnconfirmed(status) && now.getTime() - createdAt.getTime() >= SHIPMENT_CONFIRM_TIMEOUT_MS
 }
 
-/** When a Shipment just seen in `status` is due again; null when nothing more is owed to it. */
-export function nextShipmentCheck(status: ShipmentStatus, createdAt: Date, now: Date): Date | null {
+/**
+ * When a Shipment just seen in `status` is due again; null when nothing more is owed to it. `awaitsLabel`: it is
+ * confirmed, has no Label, and one is still to be fetched.
+ */
+export function nextShipmentCheck(status: ShipmentStatus, createdAt: Date, now: Date, options: { awaitsLabel?: boolean } = {}): Date | null {
   if (isFinalStatus(status)) return null
   const age = now.getTime() - createdAt.getTime()
   if (age >= SHIPMENT_FOLLOW_MS) return null
@@ -56,7 +66,9 @@ export function nextShipmentCheck(status: ShipmentStatus, createdAt: Date, now: 
       ? SHIPMENT_CHECK_MS.fresh
       : SHIPMENT_CHECK_MS.unconfirmed
     : status === 'ready'
-      ? SHIPMENT_CHECK_MS.ready
+      ? options.awaitsLabel && age < SHIPMENT_LABEL_WAIT_MS
+        ? SHIPMENT_CHECK_MS.fresh
+        : SHIPMENT_CHECK_MS.ready
       : SHIPMENT_CHECK_MS.handedOver
   return new Date(now.getTime() + wait)
 }

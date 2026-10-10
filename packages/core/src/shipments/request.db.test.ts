@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { createProduct } from '../catalog/products'
+import { shipmentsCreateJob } from '../jobs/shipments-create'
 import { createConnection } from '../connections/connections'
 import type { Context } from '../context'
 import { changeOrderStatus } from '../orders/change-status'
@@ -7,7 +8,8 @@ import { importOrder } from '../orders/import'
 import { createTestCarrier, TEST_CARRIER_SERVICES } from '../testing/carrier'
 import { createTestOrganization } from '../testing/context'
 import { databaseUrl, useTestContext } from '../testing/db-test'
-import { buildOrder, courierShipment, createCarrierConnection, createTestConnection, lockerShipment, orderLine, secondsUntilDue, testChannel, user } from '../testing/fixtures'
+import { buildOrder, courierShipment, createCarrierConnection, createTestConnection, jobRun, lockerShipment, orderLine, secondsUntilDue, testChannel, user } from '../testing/fixtures'
+import { cancelShipment } from './cancel'
 import { requestShipment, type ShipmentInput } from './request'
 import { openDestination } from './sealed'
 
@@ -110,6 +112,61 @@ describe.skipIf(!databaseUrl)('requestShipment', () => {
     await requestShipment(ctx, org, orderId, lockerShipment(carrierId), user)
     await requestShipment(ctx, org, orderId, courierShipment(carrierId), user)
     expect(await shipments()).toHaveLength(2)
+  })
+
+  describe('a second request for the same Order, Connection and service', () => {
+    it('is refused while the first still waits for the Carrier: a double click buys one label', async () => {
+      const { ctx, org, carrierId, orderId, shipments, shipmentEvents } = await setup()
+      const first = await requestShipment(ctx, org, orderId, lockerShipment(carrierId), user)
+      const enqueued = ctx.queue.enqueued.length
+
+      // The same form sent again, and the same service to another point by another member: neither makes a row.
+      await expect(requestShipment(ctx, org, orderId, lockerShipment(carrierId), user)).rejects.toMatchObject({
+        name: 'DomainError',
+        code: 'shipment_already_requested',
+        details: { shipmentId: first.shipmentId },
+      })
+      const other = lockerShipment(carrierId, { parcel: { preset: 'large' }, destination: { type: 'pickup_point', pointId: 'WAW22A' } })
+      await expect(requestShipment(ctx, org, orderId, other, { type: 'user', userId: 'user-2' })).rejects.toMatchObject({ code: 'shipment_already_requested' })
+
+      expect((await shipments()).map((row) => row.id)).toEqual([first.shipmentId])
+      expect(await shipmentEvents()).toHaveLength(1)
+      expect(ctx.queue.enqueued).toHaveLength(enqueued)
+    })
+
+    it('two requests sent at the same moment make one Shipment', async () => {
+      const { ctx, org, carrierId, orderId, shipments } = await setup()
+      const results = await Promise.allSettled([
+        requestShipment(ctx, org, orderId, lockerShipment(carrierId), user),
+        requestShipment(ctx, org, orderId, lockerShipment(carrierId), user),
+      ])
+      expect(results.map((result) => result.status).sort()).toEqual(['fulfilled', 'rejected'])
+      expect(results.find((result) => result.status === 'rejected')).toMatchObject({ reason: { code: 'shipment_already_requested' } })
+      expect(await shipments()).toHaveLength(1)
+    })
+
+    it('is taken once the first is at the Carrier, or cancelled, and for another service or Connection at any time', async () => {
+      const { ctx, org, carrierId, orderId, shipments } = await setup()
+      const first = await requestShipment(ctx, org, orderId, lockerShipment(carrierId), user)
+      // Another service, and the same service through another Connection, are other parcels.
+      await requestShipment(ctx, org, orderId, courierShipment(carrierId), user)
+      const secondCarrier = await createCarrierConnection(ctx, org, 'request-carrier')
+      await requestShipment(ctx, org, orderId, lockerShipment(secondCarrier), user)
+      // Another Order is not concerned either.
+      const channelId = (await ctx.db.order.findFirstOrThrow({ where: { id: orderId } })).connectionId
+      const { orderId: otherOrder } = await importOrder(ctx, org, channelId, buildOrder({ lines: [orderLine('l1', { sku: 'P', quantity: 1 })] }))
+      await requestShipment(ctx, org, otherOrder, lockerShipment(carrierId), user)
+
+      // The Carrier has the first one: an Order may have several Shipments.
+      await shipmentsCreateJob.handler(ctx, { organizationId: org, shipmentId: first.shipmentId }, jobRun)
+      expect(await ctx.db.shipment.findFirstOrThrow({ where: { id: first.shipmentId } })).toMatchObject({ status: 'pending' })
+      const second = await requestShipment(ctx, org, orderId, lockerShipment(carrierId), user)
+
+      // And a requested one that was cancelled no longer stands in the way.
+      expect(await cancelShipment(ctx, org, second.shipmentId, user)).toEqual({ outcome: 'cancelled' })
+      await requestShipment(ctx, org, orderId, lockerShipment(carrierId), user)
+      expect((await shipments()).filter((row) => row.orderId === orderId)).toHaveLength(5)
+    })
   })
 
   it('trims the pickup point a person typed', async () => {

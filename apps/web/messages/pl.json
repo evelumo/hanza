@@ -920,6 +920,7 @@
       "shipment_pickup_point_required": "Podaj punkt odbioru.",
       "shipment_buyer_data_erased": "Dane kupującego w tym zamówieniu zostały usunięte, więc nie ma do kogo wysłać paczki.",
       "shipment_buyer_data_unreadable": "Danych kupującego w tym zamówieniu nie można odczytać, więc nie da się utworzyć przesyłki.",
+      "shipment_already_requested": "Przesyłka dla tego zamówienia u tego przewoźnika i w tej usłudze jest już tworzona. Poczekaj, aż przewoźnik ją przyjmie, albo najpierw ją anuluj.",
       "shipment_not_cancellable": "Tej przesyłki nie można już tutaj anulować.",
       "shipment_cancel_unsupported": "Ten przewoźnik nie anuluje przesyłek przez Hanzę. Anuluj ją u przewoźnika.",
       "no_sign_in": "Ten konektor nie ma logowania."

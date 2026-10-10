@@ -149,6 +149,23 @@ export function courierShipment(connectionId: string, overrides: Partial<Shipmen
 }
 
 /**
+ * The wait after a create call whose outcome is not known is over (`SHIPMENT_CREATE_RETRY_DELAY_MS` has passed): the
+ * Shipment's create lease has run out and it is due, as the sweep of `sync.tick` finds it.
+ */
+export async function createWaitPasses(ctx: TestContext, shipmentId: string): Promise<void> {
+  await ctx.db.$executeRaw`
+    UPDATE "shipment" SET "createLeaseUntil" = now() - interval '1 second', "nextCheckAt" = now() - interval '1 second'
+    WHERE "id" = ${shipmentId} AND "createLeaseUntil" IS NOT NULL`
+}
+
+/** Seconds until the Shipment's create lease runs out, on the database's clock; null when none is held. */
+export async function secondsOfCreateLease(ctx: TestContext, shipmentId: string): Promise<number | null> {
+  const rows = await ctx.db.$queryRaw<Array<{ seconds: number | null }>>`
+    SELECT EXTRACT(EPOCH FROM ("createLeaseUntil" - now()))::float8 AS "seconds" FROM "shipment" WHERE "id" = ${shipmentId}`
+  return rows[0]?.seconds ?? null
+}
+
+/**
  * Seconds until the Shipment is due (negative when overdue), null when nothing is owed to it. Read on the database's
  * clock, which is the one `nextCheckAt` is written and compared on: the test machine's clock may differ from it.
  */

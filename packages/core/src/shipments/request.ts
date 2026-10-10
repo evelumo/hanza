@@ -64,6 +64,11 @@ function codAmount(cashOnDelivery: Money | null): Money | null {
  * (`shipment_request_invalid`, with `details.problem`), so a connector only ever sees a request that fits a service it
  * declared; and when the Order's Buyer data is erased or does not open (`shipment_buyer_data_erased`,
  * `shipment_buyer_data_unreadable`): there is nobody to send it to.
+ *
+ * Refused with `shipment_already_requested` while the Order has another Shipment through the same Connection and
+ * service that is still `requested`: a second click, or a second member, would buy a second label for the same
+ * parcel. Once the earlier one is at the Carrier (or is cancelled or failed), another may be asked for: an Order can
+ * have several Shipments.
  */
 export async function requestShipment(
   ctx: Context,
@@ -113,6 +118,13 @@ export async function requestShipment(
       confirmed.type === 'pickup_point' ? confirmed : { type: 'address', address: buyerData.data.shippingAddress }
     const problem = shipmentRequestProblem(service, { destination, parcel, cashOnDelivery })
     if (problem !== null) throw new DomainError('shipment_request_invalid', `The request does not fit the service: ${problem}`, { problem })
+
+    // Under the Order lock, so two requests at the same moment see each other.
+    const waiting = await tx.shipment.findFirst({
+      where: { organizationId, orderId, connectionId, service: service.id, status: 'requested' },
+      select: { id: true },
+    })
+    if (waiting) throw new DomainError('shipment_already_requested', undefined, { shipmentId: waiting.id })
 
     const now = await databaseNow(tx)
     const created = await tx.shipment.create({

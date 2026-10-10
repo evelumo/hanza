@@ -7,24 +7,24 @@ import { DomainError } from '../errors'
 import { appendEvent } from '../events'
 import { coalesceKeys, shipmentsTrackRef } from '../jobs/refs'
 import { TX_OPTIONS } from '../transaction'
-import { lockShipment, writeShipmentStatus } from './apply-state'
+import { lockShipment, mayExistAtCarrier, writeShipmentStatus, type LockedShipment } from './apply-state'
 import { databaseNow } from './schedule'
 import { isFinalStatus, isHandedOver } from './statuses'
 
-type LockedShipment = NonNullable<Awaited<ReturnType<typeof lockShipment>>>
-
 /**
- * Cancels, without asking anybody, a Shipment whose Carrier holds no answered request and is not being asked right
- * now. One statement, so it and a job taking the create lease cannot both win. Caller holds the lock of `lockShipment`.
+ * Cancels, without asking anybody, a Shipment whose Carrier holds no answered request, and for which no create lease
+ * is in force: no job is asking right now, and the wait after a call whose outcome is not known has passed. One
+ * statement, so it and a job taking the lease cannot both win. Caller holds the lock of `lockShipment`.
  *
- * An earlier attempt may have reached the Carrier and lost its answer (`createAttempts` above 0). The SDK has no way
- * to look a Shipment up by `reference` without creating it, so the Event says an attempt was made and a person can
- * check the Carrier's own panel.
+ * An earlier attempt may have reached the Carrier and lost its answer. The SDK has no way to look a Shipment up by
+ * `reference` without creating it, so the row and the Event say an attempt was made (`createOutcomeUnknown`,
+ * `createAttempted`) and a person can check the Carrier's own panel.
  */
 async function cancelLocally(tx: Tx, organizationId: string, shipment: LockedShipment, actor: Actor): Promise<boolean> {
   const cancelled = await tx.$executeRaw`
     UPDATE "shipment"
-    SET "status" = 'cancelled', "nextCheckAt" = NULL, "cancelRequestedAt" = NULL, "createLeaseUntil" = NULL, "updatedAt" = now()
+    SET "status" = 'cancelled', "nextCheckAt" = NULL, "cancelRequestedAt" = NULL, "createLeaseUntil" = NULL,
+      "createOutcomeUnknown" = "createOutcomeUnknown" OR "createAttempts" > 0, "updatedAt" = now()
     WHERE "id" = ${shipment.id} AND "organizationId" = ${organizationId}
       AND "status" = 'requested' AND "externalId" IS NULL
       AND ("createLeaseUntil" IS NULL OR "createLeaseUntil" <= now())`
@@ -39,15 +39,15 @@ async function cancelLocally(tx: Tx, organizationId: string, shipment: LockedShi
       to: 'cancelled',
       carrierStatus: null,
       actor,
-      ...(shipment.createAttempts > 0 ? { createAttempted: true } : {}),
+      ...(mayExistAtCarrier(shipment) ? { createAttempted: true } : {}),
     },
   })
   return true
 }
 
 /**
- * A person cancels a Shipment. One the Carrier was never successfully asked for, and is not being asked for right now,
- * is cancelled at once (`cancelled`). Any other is the Carrier's to cancel: the request is marked on the row and the
+ * A person cancels a Shipment. One the Carrier was never successfully asked for, with no create lease in force, is
+ * cancelled at once (`cancelled`). Any other is the Carrier's to cancel: the request is marked on the row and the
  * Connection's `shipments.track` job puts it to the Carrier (`requested`), which either cancels it or refuses, and a
  * refusal is kept as the Shipment's `failureCode` while its status goes on.
  *

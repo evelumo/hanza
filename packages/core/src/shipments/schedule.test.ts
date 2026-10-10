@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { confirmationTimedOut, nextShipmentCheck, SHIPMENT_CHECK_MS } from './schedule'
-import type { ShipmentStatus } from './statuses'
+import { statusStage, type ShipmentStatus } from './statuses'
 
 const createdAt = new Date('2026-10-10T08:00:00Z')
 const after = (ms: number) => new Date(createdAt.getTime() + ms)
@@ -36,6 +36,21 @@ describe('nextShipmentCheck', () => {
     }
   })
 
+  it('checks a ready Shipment whose Label is awaited every tick during its first hour, and no other status sooner for it', () => {
+    const awaiting = (status: ShipmentStatus, age: number) => {
+      const now = after(age)
+      return nextShipmentCheck(status, createdAt, now, { awaitsLabel: true })!.getTime() - now.getTime()
+    }
+    expect(awaiting('ready', MINUTE)).toBe(30_000)
+    // Confirmed late, the Label a moment after: still within the hour.
+    expect(awaiting('ready', 45 * MINUTE)).toBe(30_000)
+    expect(awaiting('ready', HOUR - 1)).toBe(30_000)
+    expect(awaiting('ready', HOUR)).toBe(15 * MINUTE)
+    expect(awaiting('pending', 20 * MINUTE)).toBe(10 * MINUTE)
+    expect(awaiting('in_transit', MINUTE)).toBe(HOUR)
+    expect(nextShipmentCheck('delivered', createdAt, after(MINUTE), { awaitsLabel: true })).toBeNull()
+  })
+
   it('owes a final Shipment nothing', () => {
     for (const status of ['delivered', 'returned', 'cancelled', 'failed'] as const) expect(wait(status, MINUTE)).toBeNull()
   })
@@ -44,6 +59,29 @@ describe('nextShipmentCheck', () => {
     expect(wait('in_transit', 60 * DAY - 1)).toBe(HOUR)
     expect(wait('in_transit', 60 * DAY)).toBeNull()
     expect(wait('ready', 61 * DAY)).toBeNull()
+  })
+})
+
+describe('statusStage', () => {
+  it('orders the statuses by how far a Shipment has got, so a report can be told to go backwards', () => {
+    const stages = Object.fromEntries(
+      (['requested', 'pending', 'ready', 'in_transit', 'awaiting_pickup', 'delivery_problem', 'delivered', 'returned', 'cancelled', 'failed'] as const).map((status) => [
+        status,
+        statusStage(status),
+      ]),
+    )
+    expect(stages).toEqual({
+      requested: 0,
+      pending: 0,
+      ready: 1,
+      in_transit: 2,
+      awaiting_pickup: 2,
+      delivery_problem: 2,
+      delivered: 3,
+      returned: 3,
+      cancelled: 3,
+      failed: 3,
+    })
   })
 })
 

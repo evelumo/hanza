@@ -13,7 +13,7 @@ import { getAvailability } from '../stock/availability'
 import { createTestCarrier } from '../testing/carrier'
 import { createTestOrganization } from '../testing/context'
 import { databaseUrl, useTestContext } from '../testing/db-test'
-import { addMember, buildOrder, createCarrierConnection, createTestConnection, defaultStatusId, fact, jobRun, lockerShipment, orderLine, testChannel, user } from '../testing/fixtures'
+import { addMember, buildOrder, createCarrierConnection, createTestConnection, createWaitPasses, defaultStatusId, fact, jobRun, lockerShipment, orderLine, testChannel, user } from '../testing/fixtures'
 import { countLockWaits, uniqueApplicationName } from '../testing/lock-waits'
 import { TX_OPTIONS } from '../transaction'
 import { requestShipment } from './request'
@@ -294,6 +294,7 @@ describe.skipIf(!databaseUrl)('a carrier pickup ships the Order', () => {
     await expect(shipmentsCreateJob.handler(ctx, { organizationId: org, shipmentId }, jobRun)).rejects.toThrow()
     // Hanza was down for a while; the Carrier took the parcel meanwhile. The repeat returns the Shipment as it is now.
     carrier.advance(carrier.byReference(shipmentId)!.externalId, 'in_transit')
+    await createWaitPasses(ctx, shipmentId)
 
     await shipmentsCreateJob.handler(ctx, { organizationId: org, shipmentId }, jobRun)
 

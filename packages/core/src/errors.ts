@@ -41,6 +41,7 @@ export type DomainErrorCode =
   | 'shipment_pickup_point_required'
   | 'shipment_buyer_data_erased'
   | 'shipment_buyer_data_unreadable'
+  | 'shipment_already_requested'
   | 'shipment_not_cancellable'
   | 'shipment_cancel_unsupported'
 

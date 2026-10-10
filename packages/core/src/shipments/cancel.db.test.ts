@@ -7,7 +7,7 @@ import { importOrder } from '../orders/import'
 import { createTestCarrier } from '../testing/carrier'
 import { createTestOrganization } from '../testing/context'
 import { databaseUrl, useTestContext } from '../testing/db-test'
-import { buildOrder, createCarrierConnection, createTestConnection, jobRun, lockerShipment, orderLine, secondsUntilDue, testChannel, user } from '../testing/fixtures'
+import { buildOrder, createCarrierConnection, createTestConnection, createWaitPasses, jobRun, lockerShipment, orderLine, secondsUntilDue, testChannel, user } from '../testing/fixtures'
 import { cancelShipment } from './cancel'
 import { listOrderShipments } from './queries'
 import { requestShipment } from './request'
@@ -26,6 +26,7 @@ describe.skipIf(!databaseUrl)('cancelShipment', () => {
       double.duringCreate = null
       double.calls.cancel.length = 0
       double.calls.track.length = 0
+      double.cancelFailures.clear()
     }
     context().queue.waiting.length = 0
   })
@@ -212,8 +213,8 @@ describe.skipIf(!databaseUrl)('cancelShipment', () => {
       ])
     })
 
-    it('and that create fails: the next run cancels it instead of asking again, and says an attempt was made', async () => {
-      const { shipmentId, create, cancel, shipment, events } = await setup()
+    it('and that create fails: once the delay is over the next run cancels it instead of asking again, and says an attempt was made', async () => {
+      const { ctx, shipmentId, create, cancel, shipment, view, events } = await setup()
       const held = holdCreate()
       const creating = create()
       await held.inFlight
@@ -222,14 +223,22 @@ describe.skipIf(!databaseUrl)('cancelShipment', () => {
       carrier.loseAnswers = 1
       held.answer()
       await expect(creating).rejects.toBeInstanceOf(TransientError)
-      expect(await shipment()).toMatchObject({ status: 'requested', createAttempts: 1, createLeaseUntil: null })
+      expect(await shipment()).toMatchObject({ status: 'requested', createAttempts: 1, createOutcomeUnknown: true })
+      expect((await shipment()).createLeaseUntil).not.toBeNull()
 
       carrier.duringCreate = null
       const asked = carrier.calls.create.length
+      // While the delay runs nothing touches it: not the queue's retry, not a cancel without asking.
+      await create()
+      expect(await shipment()).toMatchObject({ status: 'requested' })
+      expect((await shipment()).cancelRequestedAt).not.toBeNull()
+
+      await createWaitPasses(ctx, shipmentId)
       await create()
 
       expect(carrier.calls.create).toHaveLength(asked)
-      expect(await shipment()).toMatchObject({ status: 'cancelled', nextCheckAt: null, cancelRequestedAt: null })
+      expect(await shipment()).toMatchObject({ status: 'cancelled', nextCheckAt: null, cancelRequestedAt: null, createOutcomeUnknown: true })
+      expect(await view()).toMatchObject({ status: 'cancelled', mayExistAtCarrier: true })
       // The Carrier may hold a Shipment whose answer was lost: the trail says so, for a person to check there.
       expect((await events()).at(-1)).toEqual([
         'shipment.status_changed',
@@ -238,14 +247,33 @@ describe.skipIf(!databaseUrl)('cancelShipment', () => {
     })
   })
 
-  it('a Shipment whose create lost its answer is cancelled locally, with the attempt on record', async () => {
-    const { create, cancel, shipment, events } = await setup()
+  it('a Shipment whose create lost its answer is cancelled locally once the delay is over, with the attempt on record', async () => {
+    const { ctx, shipmentId, create, cancel, shipment, view, events } = await setup()
     carrier.loseAnswers = 1
     await expect(create()).rejects.toBeInstanceOf(TransientError)
+    await createWaitPasses(ctx, shipmentId)
 
     expect(await cancel()).toEqual({ outcome: 'cancelled' })
 
-    expect(await shipment()).toMatchObject({ status: 'cancelled', externalId: null, createAttempts: 1 })
+    expect(await shipment()).toMatchObject({ status: 'cancelled', externalId: null, createAttempts: 1, createOutcomeUnknown: true })
     expect((await events()).at(-1)![1]).toMatchObject({ to: 'cancelled', actor: user, createAttempted: true })
+    expect(await view()).toMatchObject({ status: 'cancelled', mayExistAtCarrier: true })
+  })
+
+  it('a cancel asked for while that delay runs is marked, and carried out by the create job when the delay is over', async () => {
+    const { ctx, shipmentId, create, cancel, shipment, events } = await setup()
+    carrier.loseAnswers = 1
+    await expect(create()).rejects.toBeInstanceOf(TransientError)
+
+    // Not cancelled without asking: the Carrier may be answering a repeat of the lost call right now.
+    expect(await cancel()).toEqual({ outcome: 'requested' })
+    expect(await shipment()).toMatchObject({ status: 'requested' })
+
+    await createWaitPasses(ctx, shipmentId)
+    const asked = carrier.calls.create.length
+    await create()
+    expect(carrier.calls.create).toHaveLength(asked)
+    expect(await shipment()).toMatchObject({ status: 'cancelled', createOutcomeUnknown: true })
+    expect((await events()).at(-1)![1]).toMatchObject({ to: 'cancelled', actor: { type: 'system' }, createAttempted: true })
   })
 })

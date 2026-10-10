@@ -2,6 +2,7 @@ import {
   defineConnector,
   TransientError,
   type AnyConnectorDefinition,
+  type CapabilityContext,
   type ShipmentLabel,
   type ShipmentRequest,
   type ShipmentState,
@@ -35,8 +36,19 @@ export interface TestCarrier {
   /** States added to every `track` answer whatever was asked: a connector answering for another Shipment. */
   unasked: ShipmentState[]
   label: ShipmentLabel
-  /** Runs inside `create`, after the request arrived and before the Carrier acts. */
-  duringCreate: (() => Promise<void>) | null
+  /**
+   * Runs inside `create`, after the request arrived and before the Carrier acts. It gets the capability's context, so
+   * a test can send requests through `ctx.fetch` as a connector over HTTP would, and what it throws fails the call.
+   */
+  duringCreate: ((ctx: CapabilityContext) => Promise<void>) | null
+  /** Runs inside `track`, after the ids arrived and before the Carrier answers. */
+  duringTrack: (() => Promise<void>) | null
+  /** While set, `cancel` of these Carrier ids throws it; the others are answered. */
+  cancelFailures: Map<string, Error>
+  /** While set, `label` of these Carrier ids throws it; the others get `label`. */
+  labelFailures: Map<string, Error>
+  /** The Label of these Carrier ids, in place of `label`. */
+  labels: Map<string, ShipmentLabel>
   /** Moves a Shipment to `status`, giving it a tracking number once it is confirmed. */
   advance(externalId: string, status: ShipmentStatus, carrierStatus?: string | null): void
   /** The Carrier's Shipment made for a Hanza Shipment id. */
@@ -70,6 +82,10 @@ export function createTestCarrier(options: { id?: string; cancel?: boolean } = {
     cancelRefusal: null,
     silent: new Set(),
     unasked: [],
+    duringTrack: null,
+    cancelFailures: new Map(),
+    labelFailures: new Map(),
+    labels: new Map(),
     label: { contentType: 'application/pdf', data: new TextEncoder().encode('%PDF-1.7 label of a test parcel') },
     duringCreate: null,
     advance(externalId, status, carrierStatus = null) {
@@ -102,10 +118,10 @@ export function createTestCarrier(options: { id?: string; cancel?: boolean } = {
         ],
       },
       capabilities: {
-        async 'shipments.create'(_ctx, request) {
+        async 'shipments.create'(ctx, request) {
           carrier.calls.create.push(request)
           failIf('create')
-          await carrier.duringCreate?.()
+          await carrier.duringCreate?.(ctx)
           if (carrier.rejectWith !== null) return { outcome: 'rejected', code: carrier.rejectWith }
           let shipment = carrier.byReference(request.reference)
           if (!shipment) {
@@ -121,6 +137,7 @@ export function createTestCarrier(options: { id?: string; cancel?: boolean } = {
         async 'shipments.track'(_ctx, externalIds) {
           carrier.calls.track.push(externalIds)
           failIf('track')
+          await carrier.duringTrack?.()
           const known = externalIds.flatMap((externalId) => {
             const shipment = shipments.get(externalId)
             return shipment && !carrier.silent.has(externalId) ? [stateOf(shipment)] : []
@@ -130,7 +147,9 @@ export function createTestCarrier(options: { id?: string; cancel?: boolean } = {
         async 'shipments.label'(_ctx, { externalId }) {
           carrier.calls.label.push(externalId)
           failIf('label')
-          return carrier.label
+          const failure = carrier.labelFailures.get(externalId)
+          if (failure) throw failure
+          return carrier.labels.get(externalId) ?? carrier.label
         },
         ...(options.cancel === false
           ? {}
@@ -138,6 +157,8 @@ export function createTestCarrier(options: { id?: string; cancel?: boolean } = {
               async 'shipments.cancel'(_ctx: unknown, { externalId }: { externalId: string }) {
                 carrier.calls.cancel.push(externalId)
                 failIf('cancel')
+                const failure = carrier.cancelFailures.get(externalId)
+                if (failure) throw failure
                 if (carrier.cancelRefusal !== null) return { outcome: 'refused' as const, code: carrier.cancelRefusal }
                 const shipment = shipments.get(externalId)
                 if (shipment) shipment.status = 'cancelled'

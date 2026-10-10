@@ -156,8 +156,12 @@ describe.skipIf(!databaseUrl)('sync.tick', () => {
           },
         },
       }
-      const request = async () => (await requestShipment(queueDown, org, orderId, lockerShipment(carrierId), user)).shipmentId
-      const shipmentId = await request()
+      // Each for an Order of its own: an Order takes no second Shipment of the same kind while the first still waits.
+      const request = async (forOrder?: string) => {
+        const target = forOrder ?? (await importOrder(ctx, org, channelId, buildOrder())).orderId
+        return (await requestShipment(queueDown, org, target, lockerShipment(carrierId), user)).shipmentId
+      }
+      const shipmentId = await request(orderId)
       return { ctx, org, channelId, carrierId, orderId, shipmentId, request }
     }
 
