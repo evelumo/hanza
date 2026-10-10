@@ -4,7 +4,63 @@
     {
       "request": {
         "method": "GET",
-        "url": "https://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?created_at_gteq=1791621900&sort_by=created_at&sort_order=asc&page=1&per_page=100",
+        "url": "https://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?id=1600000711%2C1600000712%2C1600000713&page=1&per_page=100",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 400,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "json": {
+            "status": 400,
+            "error": "validation_failed",
+            "message": "There are some validation errors. Check details object for more info.",
+            "details": {
+              "shipment": [
+                "id_1600000712_does_not_exist"
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?id=1600000711%2C1600000712&page=1&per_page=100",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 400,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "json": {
+            "status": 400,
+            "error": "validation_failed",
+            "message": "There are some validation errors. Check details object for more info.",
+            "details": {
+              "shipment": [
+                "id_1600000712_does_not_exist"
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?id=1600000713&page=1&per_page=100",
         "headers": {
           "accept": "application/json"
         },
@@ -14,20 +70,20 @@
         "status": 200,
         "headers": {
           "content-type": "application/json; charset=utf-8",
-          "link": "<http://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?created_at_gteq=1791621900&owner_id=54321&per_page=100&sort_by=created_at&sort_order=asc>; rel=\"next\", <http://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?created_at_gteq=1791621900&owner_id=54321&per_page=100&sort_by=created_at&sort_order=asc>; rel=\"last\", <http://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?created_at_gteq=1791621900&owner_id=54321&per_page=100&sort_by=created_at&sort_order=asc>; rel=\"previous\", <http://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?created_at_gteq=1791621900&owner_id=54321&page=1&per_page=100&sort_by=created_at&sort_order=asc>; rel=\"first\""
+          "link": "<http://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?id=1600000713&owner_id=54321&per_page=100&sort_by=id&sort_order=desc>; rel=\"next\", <http://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?id=1600000713&owner_id=54321&per_page=100&sort_by=id&sort_order=desc>; rel=\"last\", <http://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?id=1600000713&owner_id=54321&per_page=100&sort_by=id&sort_order=desc>; rel=\"previous\", <http://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?id=1600000713&owner_id=54321&page=1&per_page=100&sort_by=id&sort_order=desc>; rel=\"first\""
         },
         "body": {
           "json": {
-            "href": "http://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?created_at_gteq=1791621900&owner_id=54321&page=1&per_page=100&sort_by=created_at&sort_order=asc",
-            "count": 5,
+            "href": "http://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?id=1600000713&page=1&per_page=100&sort_by=id&sort_order=desc",
+            "count": 1,
             "page": 1,
             "per_page": 100,
             "items": [
               {
-                "href": "https://sandbox-api-shipx-pl.easypack24.net/v1/shipments/1600000211",
-                "id": 1600000211,
-                "status": "confirmed",
-                "tracking_number": "620999548227330124500211",
+                "href": "https://sandbox-api-shipx-pl.easypack24.net/v1/shipments/1600000713",
+                "id": 1600000713,
+                "status": "ready_to_pickup",
+                "tracking_number": "620999548227330124500713",
                 "return_tracking_number": null,
                 "service": "inpost_locker_standard",
                 "reference": "scrubbed-1",
@@ -72,7 +128,7 @@
                   }
                 },
                 "receiver": {
-                  "id": 1600300211,
+                  "id": 1600300713,
                   "name": null,
                   "company_name": null,
                   "first_name": "scrubbed-12",
@@ -82,7 +138,7 @@
                   "address": null
                 },
                 "selected_offer": {
-                  "id": 1600700211,
+                  "id": 1600700713,
                   "status": "bought",
                   "expires_at": "2026-10-10T11:05:02.807+02:00",
                   "rate": null,
@@ -102,7 +158,7 @@
                 },
                 "offers": [
                   {
-                    "id": 1600700211,
+                    "id": 1600700713,
                     "status": "bought",
                     "expires_at": "2026-10-10T11:05:02.807+02:00",
                     "rate": null,
@@ -123,9 +179,9 @@
                 ],
                 "transactions": [
                   {
-                    "id": 1600900211,
+                    "id": 1600900713,
                     "status": "success",
-                    "offer_id": 1600700211,
+                    "offer_id": 1600700713,
                     "details": {},
                     "created_at": "2026-10-10T11:00:03.108+02:00",
                     "updated_at": "2026-10-10T11:00:03.552+02:00"
@@ -133,9 +189,9 @@
                 ],
                 "parcels": [
                   {
-                    "id": 1600500211,
+                    "id": 1600500713,
                     "identify_number": null,
-                    "tracking_number": "620999548227330124500211",
+                    "tracking_number": "620999548227330124500713",
                     "is_non_standard": false,
                     "template": "small",
                     "dimensions": {
@@ -152,12 +208,39 @@
                 ],
                 "created_at": "2026-10-10T11:00:02.375+02:00",
                 "updated_at": "2026-10-10T11:00:03.552+02:00"
-              },
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?id=1600000711&page=1&per_page=100",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8",
+          "link": "<http://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?id=1600000711&owner_id=54321&per_page=100&sort_by=id&sort_order=desc>; rel=\"next\", <http://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?id=1600000711&owner_id=54321&per_page=100&sort_by=id&sort_order=desc>; rel=\"last\", <http://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?id=1600000711&owner_id=54321&per_page=100&sort_by=id&sort_order=desc>; rel=\"previous\", <http://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?id=1600000711&owner_id=54321&page=1&per_page=100&sort_by=id&sort_order=desc>; rel=\"first\""
+        },
+        "body": {
+          "json": {
+            "href": "http://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?id=1600000711&page=1&per_page=100&sort_by=id&sort_order=desc",
+            "count": 1,
+            "page": 1,
+            "per_page": 100,
+            "items": [
               {
-                "href": "https://sandbox-api-shipx-pl.easypack24.net/v1/shipments/1600000212",
-                "id": 1600000212,
+                "href": "https://sandbox-api-shipx-pl.easypack24.net/v1/shipments/1600000711",
+                "id": 1600000711,
                 "status": "confirmed",
-                "tracking_number": "620999548227330124500212",
+                "tracking_number": "620999548227330124500711",
                 "return_tracking_number": null,
                 "service": "inpost_locker_standard",
                 "reference": "scrubbed-14",
@@ -202,7 +285,7 @@
                   }
                 },
                 "receiver": {
-                  "id": 1600300212,
+                  "id": 1600300711,
                   "name": null,
                   "company_name": null,
                   "first_name": "scrubbed-12",
@@ -212,7 +295,7 @@
                   "address": null
                 },
                 "selected_offer": {
-                  "id": 1600700212,
+                  "id": 1600700711,
                   "status": "bought",
                   "expires_at": "2026-10-10T11:05:02.807+02:00",
                   "rate": null,
@@ -232,7 +315,7 @@
                 },
                 "offers": [
                   {
-                    "id": 1600700212,
+                    "id": 1600700711,
                     "status": "bought",
                     "expires_at": "2026-10-10T11:05:02.807+02:00",
                     "rate": null,
@@ -253,9 +336,9 @@
                 ],
                 "transactions": [
                   {
-                    "id": 1600900212,
+                    "id": 1600900711,
                     "status": "success",
-                    "offer_id": 1600700212,
+                    "offer_id": 1600700711,
                     "details": {},
                     "created_at": "2026-10-10T11:00:03.108+02:00",
                     "updated_at": "2026-10-10T11:00:03.552+02:00"
@@ -263,9 +346,9 @@
                 ],
                 "parcels": [
                   {
-                    "id": 1600500212,
+                    "id": 1600500711,
                     "identify_number": null,
-                    "tracking_number": "620999548227330124500212",
+                    "tracking_number": "620999548227330124500711",
                     "is_non_standard": false,
                     "template": "small",
                     "dimensions": {
@@ -284,6 +367,34 @@
                 "updated_at": "2026-10-10T11:00:03.552+02:00"
               }
             ]
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?id=1600000712&page=1&per_page=100",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 400,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "json": {
+            "status": 400,
+            "error": "validation_failed",
+            "message": "There are some validation errors. Check details object for more info.",
+            "details": {
+              "shipment": [
+                "id_1600000712_does_not_exist"
+              ]
+            }
           }
         }
       }

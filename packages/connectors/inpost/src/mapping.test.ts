@@ -271,8 +271,6 @@ describe('toShipxShipment', () => {
     ['cash on delivery below 1 PLN', { ...lockerRequest, cashOnDelivery: { amount: '0.99', currency: 'PLN' } }, 'cod_amount_too_small'],
     ['cash on delivery of nothing', { ...courierRequest, cashOnDelivery: { amount: '0.00', currency: 'PLN' } }, 'cod_amount_too_small'],
     ['a reference ShipX would refuse as too short', { ...lockerRequest, reference: 'ab' }, 'reference_unsupported'],
-    ['a reference ShipX would cut', { ...lockerRequest, reference: 'r'.repeat(101) }, 'reference_unsupported'],
-    ['a reference ShipX could trim', { ...lockerRequest, reference: ' shp_1 ' }, 'reference_unsupported'],
     ['a service this connector does not offer', { ...lockerRequest, service: 'inpost_locker_allegro' }, 'service_unsupported'],
     ['a locker Shipment to an address', { ...lockerRequest, destination: courierRequest.destination }, 'destination_unsupported'],
     ['a locker Shipment with dimensions', { ...lockerRequest, parcel: courierRequest.parcel }, 'parcel_unsupported'],
@@ -280,6 +278,11 @@ describe('toShipxShipment', () => {
     ['a courier Shipment with a preset', { ...courierRequest, parcel: lockerRequest.parcel }, 'parcel_unsupported'],
   ] as Array<[string, ShipmentRequest, string]>)('refuses %s', (_what, request, code) => {
     expect(refusal(request)).toBe(code)
+  })
+
+  it('takes every reference the SDK lets through that ShipX takes: three characters and up', () => {
+    for (const reference of ['abc', 'a-b', '3f2a9c1e-7b54-4d0a-9e6f-2c8b1a5d4e7f', 'r'.repeat(64)]) expect(body({ ...lockerRequest, reference }).reference).toBe(reference)
+    for (const reference of ['a', 'ab']) expect(refusal({ ...lockerRequest, reference })).toBe('reference_unsupported')
   })
 
   it('does not ask a courier Shipment for an e-mail', () => {

@@ -148,9 +148,9 @@ function insuredCashOnDelivery(cod: ShipxMoney | null): Pick<ShipxShipmentBody, 
  */
 export function toShipxShipment(request: ShipmentRequest, config: Pick<InpostConfig, 'lockerSendingMethod' | 'courierSendingMethod'>): Mapped<ShipxShipmentBody> {
   const { reference, destination, parcel } = request
-  // ShipX takes 3 to 100 characters; one it would trim or cut could never be found again.
-  // TODO(#126): the SDK is to guarantee at most 64 letters, digits, `_` and `-`; only the lower bound is left then.
-  if (reference.length < 3 || reference.length > 100 || reference !== reference.trim()) return refuse('reference_unsupported')
+  // ShipX takes 3 to 100 characters. The SDK's request has at most 64 letters, digits, `_` and `-`, so nothing ShipX
+  // would cut or trim (an altered reference is never found again); only its lower bound is left to check.
+  if (reference.length < 3) return refuse('reference_unsupported')
   if (request.service !== LOCKER_SERVICE && request.service !== COURIER_SERVICE) return refuse('service_unsupported')
 
   const receiver = receiverOf(request)

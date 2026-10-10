@@ -2,7 +2,7 @@ import { readFile } from 'node:fs/promises'
 import { SHIPMENT_STATUSES, type ShipmentStatus } from '@hanza/connector-sdk'
 import { describe, expect, it } from 'vitest'
 import { z } from 'zod'
-import { CANCELLED_STATUS, INPOST_STATUSES, PURCHASE_STATUSES } from './statuses'
+import { INPOST_STATUSES, PURCHASE_STATUSES } from './statuses'
 
 // `GET /v1/statuses?lang=en_GB` as production answered on 2026-10-10 (the sandbox lists the same names).
 const liveSchema = z.object({ items: z.array(z.object({ name: z.string().min(1), title: z.string(), description: z.string() })) })
@@ -104,7 +104,7 @@ describe('the InPost status table', () => {
   })
 
   it('keeps the statuses the capabilities name in the table', () => {
-    for (const name of [...PURCHASE_STATUSES, CANCELLED_STATUS]) expect(live).toContain(name)
+    for (const name of PURCHASE_STATUSES) expect(live).toContain(name)
     expect(PURCHASE_STATUSES.map((name) => INPOST_STATUSES[name])).toEqual(['pending', 'pending', 'pending'])
   })
 })

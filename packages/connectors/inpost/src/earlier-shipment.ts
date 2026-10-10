@@ -6,10 +6,12 @@ import type { InpostContext } from './config'
 /**
  * How far before `requestedAt` the search starts. `requestedAt` is Hanza's clock and `created_at` InPost's: with
  * Hanza's ahead by more than this, the earlier shipment falls outside the search and the repeat posts again.
+ * Three times what the clock check below lets through, and short enough that a busy seller does not page through
+ * an hour of shipments on every create.
  */
-export const SEARCH_MARGIN_SECONDS = 60 * 60
+export const SEARCH_MARGIN_SECONDS = 15 * 60
 /**
- * How far this server's clock may be from the `Date` of InPost's answer. Far below the margin, so the margin also
+ * How far this server's clock may be from the `Date` of InPost's answer. A third of the margin, so the margin also
  * covers what cannot be checked here: a `requestedAt` stamped by another machine than the one that asks.
  */
 export const MAX_CLOCK_DIFFERENCE_MS = 5 * 60_000
@@ -32,7 +34,7 @@ function clockProblem(serverTime: number | null): PermanentError | null {
  * The shipment an earlier `shipments.create` made for this request, or null when there is none.
  *
  * ShipX has no idempotency key and cannot filter by `reference`, and in simplified mode it buys the label within
- * seconds of the `POST`. So a create first lists what the organization made since an hour before Hanza first asked
+ * seconds of the `POST`. So a create first lists what the organization made since 15 minutes before Hanza first asked
  * (`requestedAt`, the same on every repeat) and compares references. Oldest first: shipments made meanwhile only
  * append, so a page does not shift under the search.
  *
@@ -40,7 +42,8 @@ function clockProblem(serverTime: number | null): PermanentError | null {
  * two clocks in agreement. Anything short of that throws, and the caller posts nothing.
  *
  * What it cannot see: a shipment younger than the listing's lag (up to 5.4 s after its `POST`, see AGENTS.md). The
- * core does not repeat a create whose outcome it does not know sooner than 5 minutes after the earlier call began.
+ * core does not repeat a create whose outcome it does not know sooner than `SHIPMENT_CREATE_RETRY_DELAY_MS` (5
+ * minutes) after the earlier call began, which is the SDK's contract and what this search stands on.
  *
  * The one place that knows how a repeat is found.
  */
@@ -73,6 +76,6 @@ export async function findEarlierShipment(ctx: InpostContext, request: Pick<Ship
   }
   // Never post blindly: a second paid parcel is worse than a Shipment that waits for a person.
   throw new PermanentError(
-    `InPost lists more than ${MAX_SEARCH_PAGES * PAGE_SIZE} shipments since an hour before this Shipment was requested, so an earlier attempt cannot be ruled out and no new one was sent`,
+    `InPost lists more than ${MAX_SEARCH_PAGES * PAGE_SIZE} shipments since ${SEARCH_MARGIN_SECONDS / 60} minutes before this Shipment was requested, so an earlier attempt cannot be ruled out and no new one was sent`,
   )
 }

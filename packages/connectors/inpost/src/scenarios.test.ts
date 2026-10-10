@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { ZodError } from 'zod'
 import { MAX_LABEL_BYTES } from './capabilities/shipments-label'
 import { inpostConfigSchema, type InpostConfig } from './config'
+import { MAX_ID_LISTS } from './client'
 import { findEarlierShipment, MAX_SEARCH_PAGES } from './earlier-shipment'
 import { inpostConnector } from './index'
 import { inpostMatch, inpostScrub } from './testing'
@@ -13,7 +14,6 @@ const { capabilities } = inpostConnector
 const create = capabilities['shipments.create']!
 const track = capabilities['shipments.track']!
 const label = capabilities['shipments.label']!
-const cancel = capabilities['shipments.cancel']!
 
 interface Sent {
   method: string
@@ -133,7 +133,7 @@ describe('InPost scenarios', { skip: isRecording() }, () => {
       expect(cassette.unused()).toEqual([])
     })
 
-    it('searches since an hour before the request was first made, oldest first, a hundred to a page', async () => {
+    it('searches since 15 minutes before the request was first made, oldest first, a hundred to a page', async () => {
       const searched: string[] = []
       const { ctx, methods } = context(async (input, init) => {
         if (isPost(init)) return json(201, item(9, { status: 'created', reference: 'shp_search' }))
@@ -145,8 +145,8 @@ describe('InPost scenarios', { skip: isRecording() }, () => {
       const search = new URL(searched[0]!)
       expect(search.origin).toBe('https://sandbox-api-shipx-pl.easypack24.net')
       expect(Object.fromEntries(search.searchParams)).toEqual({
-        // 2026-10-10T08:00:00Z as a Unix time: the request was first made at 09:00 UTC.
-        created_at_gteq: String(Date.UTC(2026, 9, 10, 8, 0, 0) / 1000),
+        // 2026-10-10T08:45:00Z as a Unix time: the request was first made at 09:00 UTC.
+        created_at_gteq: String(Date.UTC(2026, 9, 10, 8, 45, 0) / 1000),
         sort_by: 'created_at',
         sort_order: 'asc',
         page: '1',
@@ -239,12 +239,13 @@ describe('InPost scenarios', { skip: isRecording() }, () => {
       const at = (iso: string) => vi.useFakeTimers({ toFake: ['Date'], now: new Date(iso) })
 
       it('posts nothing when this server and InPost disagree about the time', async () => {
-        // The cassette's answer is dated 08:00:30 GMT; requestedAt was stamped by a clock an hour ahead of that.
+        // The cassette's answer is dated 08:50:30 GMT, and this server believes it is ten minutes later: inside the
+        // margin of the search, and still refused, because nothing says the next skew will be.
         at('2026-10-10T09:00:31Z')
         const { ctx, cassette, methods } = await scenario('create-clock-skew')
         const error = await caught(create(ctx, lockerRequest('shp_clock')))
         expect(error).toBeInstanceOf(PermanentError)
-        expect(error?.message).toMatch(/clock of this Hanza server is 60 minutes away/)
+        expect(error?.message).toMatch(/clock of this Hanza server is 10 minutes away/)
         expect(methods()).toEqual(['GET'])
         expect(cassette.misses).toEqual([])
       })
@@ -321,26 +322,21 @@ describe('InPost scenarios', { skip: isRecording() }, () => {
     })
 
     it.each([
-      ['carrier_unavailable', { status: 400, error: 'carrier_unavailable', message: 'No carrier offers this service.', details: {} }, 'carrier_unavailable'],
+      ['debt_collection', 400, { status: 400, error: 'debt_collection', message: 'Unpaid invoices.', details: {} }, 'debt_collection'],
+      ['debt_collection', 422, { status: 422, error: 'debt_collection', message: 'Unpaid invoices.', details: {} }, 'debt_collection'],
+      ['no_carriers', 400, { status: 400, error: 'no_carriers', message: 'Unpaid invoices.', details: {} }, 'no_carriers'],
+      ['carrier_unavailable', 400, { status: 400, error: 'carrier_unavailable', message: 'No carrier offers this service.', details: {} }, 'carrier_unavailable'],
       // Word for word what the sandbox answers `inpost_courier_standard` on an account without a courier contract.
-      ['missing_trucker_id', { status: 400, error: 'missing_trucker_id', message: 'trucker_ID_is_not_set_for_organization', details: null }, 'missing_trucker_id'],
-      ['the key as the FAQ spells it', { status: 400, error: 'trucker_ID_is_not_set_for_organization', details: {} }, 'missing_trucker_id'],
-    ])('rejects a request for a service the account has no contract for (%s)', async (_what, body, code) => {
-      const { ctx } = posting(() => json(400, body))
-      await expect(create(ctx, lockerRequest('shp_refused'))).resolves.toEqual({ outcome: 'rejected', code })
-    })
-
-    it.each([
-      ['debt_collection', 400],
-      ['debt_collection', 422],
-      ['no_carriers', 400],
-    ])('fails the call, and rejects nothing, when InPost refuses the account with %s (%i)', async (key, status) => {
-      const { ctx } = posting(() => json(status, { status, error: key, message: 'Unpaid invoices.', details: {} }))
+      ['missing_trucker_id', 400, { status: 400, error: 'missing_trucker_id', message: 'trucker_ID_is_not_set_for_organization', details: null }, 'missing_trucker_id'],
+      ['the same as the FAQ spells it', 400, { status: 400, error: 'trucker_ID_is_not_set_for_organization', details: {} }, 'missing_trucker_id'],
+    ])('fails the call, and rejects nothing, when InPost refuses the account with %s (%i)', async (_key, status, body, named) => {
+      const { ctx, methods } = posting(() => json(status, body))
       const error = await caught(create(ctx, lockerRequest('shp_blocked')))
       expect(error).toBeInstanceOf(PermanentError)
-      // InPost's key, which is this connector's own constant; never its message.
-      expect(error?.message).toContain(key)
-      expect(error?.message).not.toMatch(/invoice/i)
+      // The key as this connector's own constant; never InPost's message.
+      expect(error?.message).toContain(`(${named})`)
+      expect(error?.message).not.toMatch(/invoice|No carrier offers|trucker_ID/)
+      expect(methods()).toEqual(['GET', 'POST'])
     })
 
     it.each([
@@ -388,6 +384,56 @@ describe('InPost scenarios', { skip: isRecording() }, () => {
       })
     })
 
+    // The conformance kit cannot get here: its 401, 403 and 500 are answered to the search, which comes first.
+    describe('the POST itself fails, after a search that found nothing', () => {
+      const timeout = () => new DOMException('The operation was aborted due to timeout', 'TimeoutError')
+      const failures: Array<[string, () => Response | Promise<Response>, new (...args: never[]) => Error, string]> = [
+        ['a 401', () => json(401, { status: 401, error: 'token_invalid', message: 'Token is missing or invalid.', details: {} }), AuthExpiredError, 'auth_expired'],
+        ['a 403', () => json(403, { status: 403, error: 'forbidden', message: 'Access forbidden for this token.', details: {} }), PermanentError, 'permanent'],
+        ['a 500', () => json(500, { status: 500, error: 'internal_server_error', message: 'Unexpected error occurred.', details: {} }), TransientError, 'transient'],
+        ['a timeout', () => Promise.reject(timeout()), TransientError, 'transient'],
+      ]
+
+      it.each(failures)('throws for %s: the Shipment is not rejected, and nothing is posted again', async (_what, answer, expected, kind) => {
+        const { ctx, requests } = posting(() => answer() as Response)
+        const outcome = await create(ctx, lockerRequest('shp_post_fails')).then(
+          (result) => ({ result, error: null }),
+          (error: unknown) => ({ result: null, error }),
+        )
+        expect(outcome.result).toBeNull()
+        expect(outcome.error).toBeInstanceOf(expected)
+        expect((outcome.error as { kind: string }).kind).toBe(kind)
+        // One search, one POST: the connector does not try the POST a second time by itself.
+        expect(requests()).toEqual([`GET ${searchPage(1)}`, `POST ${CREATE}`])
+      })
+
+      it.each(failures)('after %s, the repeat searches again and posts once more only because InPost made nothing', async (_what, answer) => {
+        let posts = 0
+        const { ctx, methods } = context(async (_input, init) => {
+          if (!isPost(init)) return emptyList()
+          return ++posts === 1 ? answer() : json(201, item(9, { status: 'created', reference: 'shp_post_fails' }))
+        })
+        await expect(create(ctx, lockerRequest('shp_post_fails'))).rejects.toBeInstanceOf(Error)
+        await expect(create(ctx, lockerRequest('shp_post_fails'))).resolves.toMatchObject({ outcome: 'created', externalId: '9' })
+        expect(methods()).toEqual(['GET', 'POST', 'GET', 'POST'])
+      })
+
+      it('after a POST that timed out although InPost made the shipment, the repeat finds it and posts nothing', async () => {
+        // The answer was lost, not the request. By the time the core repeats (5 minutes), the listing has it.
+        let made = false
+        const { ctx, methods } = context(async (_input, init) => {
+          if (isPost(init)) {
+            made = true
+            throw timeout()
+          }
+          return made ? list([item(9, { status: 'confirmed', tracking_number: '620999548227330124500009', reference: 'shp_post_fails' })]) : emptyList()
+        })
+        await expect(create(ctx, lockerRequest('shp_post_fails'))).rejects.toBeInstanceOf(TransientError)
+        await expect(create(ctx, lockerRequest('shp_post_fails'))).resolves.toMatchObject({ outcome: 'created', externalId: '9', status: 'ready' })
+        expect(methods()).toEqual(['GET', 'POST', 'GET'])
+      })
+    })
+
     describe('a repeat that finds the earlier shipment in a status it cannot translate', () => {
       it('answers with the least that is true, and posts nothing', async () => {
         const { ctx, cassette, methods, logs } = await scenario('create-untranslatable-status')
@@ -428,9 +474,8 @@ describe('InPost scenarios', { skip: isRecording() }, () => {
         await create(ctx, lockerRequest('shp_redirect'))
         await track(ctx, ['9'])
         await label(ctx, { externalId: '9' }).catch(() => {})
-        await cancel(ctx, { externalId: '9' }).catch(() => {})
-        // The search and the POST, a track, a label, and a cancel with the look at the shipment that follows it.
-        expect(sent.map((request) => request.method)).toEqual(['GET', 'POST', 'GET', 'GET', 'DELETE', 'GET'])
+        // The search and the POST, a track and a label.
+        expect(sent.map((request) => request.method)).toEqual(['GET', 'POST', 'GET', 'GET'])
         expect(new Set(sent.map((request) => request.redirect))).toEqual(new Set(['error']))
       })
 
@@ -527,15 +572,84 @@ describe('InPost scenarios', { skip: isRecording() }, () => {
       expect(methods()).toEqual(['GET'])
     })
 
-    it('never sends an id that is not digits', async () => {
+    it('leaves out an id InPost does not have, and answers for the one beside it', async () => {
+      // As on the sandbox: an id of ShipX's own form that the account does not have is simply not listed.
+      const { ctx, cassette, requests, logs } = await scenario('track-unknown-id')
+      const states = await track(ctx, ['1600000701', '999999999999'])
+      expect(states).toEqual([{ externalId: '1600000701', status: 'ready', trackingNumber: '620999548227330124500701', carrierStatus: 'confirmed' }])
+      expect(requests()).toEqual([`GET ${byId(['1600000701', '999999999999'])}`])
+      expect(logs).toEqual([])
+      expect(cassette.misses).toEqual([])
+    })
+
+    it('never asks for an id that is not of the form of InPost ids: one of them fails the list for all', async () => {
+      // `0`, `00`, a word and a number near 2^63 were each answered 400 for the whole list on the sandbox.
+      const foreign = ['0', '00', '014588072', '99999999999999999999', '9223372036854775807', '..', 'abc', '1,2', '-1', '1.5', ' 16000001', '']
       const { ctx, requests, logs } = context(async () => list([item(16000001)]))
-      await expect(track(ctx, ['..', '16000001', 'abc', '1,2'])).resolves.toMatchObject([{ externalId: '16000001' }])
+      await expect(track(ctx, [...foreign.slice(0, 6), '16000001', ...foreign.slice(6)])).resolves.toMatchObject([{ externalId: '16000001' }])
       expect(requests()).toEqual([`GET ${byId(['16000001'])}`])
-      expect(logs).toEqual([{ message: 'Shipments whose id is not an InPost shipment id were left out of tracking', fields: { count: 3 } }])
+      expect(logs).toEqual([{ message: 'Shipments whose id is not an InPost shipment id were left out of tracking', fields: { count: foreign.length } }])
 
       const none = context(async () => json(500, {}))
-      await expect(track(none.ctx, ['../x'])).resolves.toEqual([])
+      await expect(track(none.ctx, foreign)).resolves.toEqual([])
       expect(none.methods()).toEqual([])
+    })
+
+    describe('a list InPost refuses for one of its ids', () => {
+      const echoing = (id: string) => json(400, { status: 400, error: 'validation_failed', message: `Shipment ${id} of Jan Kowalski does not exist`, details: { shipment: [`id_${id}_does_not_exist`] } })
+      const idsOf = (input: RequestInfo | URL) => new URL(new Request(input).url).searchParams.get('id')!.split(',')
+
+      it('asks again in halves, leaves that id out, and answers for the others', async () => {
+        const { ctx, cassette, requests, logs } = await scenario('track-id-refused')
+        const states = await track(ctx, ['1600000711', '1600000712', '1600000713'])
+        expect(states.map((state) => [state.externalId, state.status])).toEqual([
+          ['1600000713', 'awaiting_pickup'],
+          ['1600000711', 'ready'],
+        ])
+        expect(requests()).toEqual([
+          `GET ${byId(['1600000711', '1600000712', '1600000713'])}`,
+          `GET ${byId(['1600000711', '1600000712'])}`,
+          `GET ${byId(['1600000713'])}`,
+          `GET ${byId(['1600000711'])}`,
+          `GET ${byId(['1600000712'])}`,
+        ])
+        // How many, never which: the answer that names the id is not repeated anywhere.
+        expect(logs).toEqual([{ message: 'InPost refused a list of shipment ids; the ids it would not take were left out of tracking', fields: { refused: 1, unanswered: 0 } }])
+        expect(JSON.stringify([states, logs])).not.toContain('does_not_exist')
+        expect(cassette.misses).toEqual([])
+        expect(cassette.unused()).toEqual([])
+      })
+
+      it('finds one such id among a hundred in 15 lists', async () => {
+        const ids = Array.from({ length: 100 }, (_, index) => String(7000 + index))
+        const { ctx, methods, logs } = context(async (input) => {
+          const asked = idsOf(input)
+          return asked.includes('7042') ? echoing('7042') : list(asked.map((id) => item(Number(id))))
+        })
+        const states = await track(ctx, ids)
+        expect(states.map((state) => state.externalId).sort()).toEqual(ids.filter((id) => id !== '7042'))
+        expect(methods()).toHaveLength(15)
+        expect(logs.map((entry) => entry.fields)).toEqual([{ refused: 1, unanswered: 0 }])
+      })
+
+      it('stops at a bound when InPost refuses every list, and repeats nothing of what it answered', async () => {
+        const ids = Array.from({ length: 100 }, (_, index) => String(7000 + index))
+        const { ctx, methods, logs } = context(async (input) => echoing(idsOf(input)[0]!))
+        await expect(track(ctx, ids)).resolves.toEqual([])
+        expect(methods()).toHaveLength(MAX_ID_LISTS)
+        expect(logs).toHaveLength(1)
+        expect(logs[0]!.fields).toEqual({ refused: 0, unanswered: expect.any(Number) })
+        expect(JSON.stringify(logs)).not.toMatch(/does_not_exist|Kowalski|70\d\d/)
+      })
+
+      it('still fails the call for any other 400, and for a refusal that is not about the request', async () => {
+        const other = context(async () => json(400, { status: 400, error: 'invalid_action', details: {} }))
+        await expect(track(other.ctx, ['1', '2'])).rejects.toBeInstanceOf(PermanentError)
+        expect(other.methods()).toEqual(['GET'])
+        const forbidden = context(async () => json(403, { status: 403, error: 'validation_failed', details: {} }))
+        await expect(track(forbidden.ctx, ['1', '2'])).rejects.toBeInstanceOf(PermanentError)
+        expect(forbidden.methods()).toEqual(['GET'])
+      })
     })
   })
 
@@ -622,69 +736,10 @@ describe('InPost scenarios', { skip: isRecording() }, () => {
       expect(pulled).toBeLessThanOrEqual(7)
     })
 
-    it.each(['..', '../organizations/1', '12 34', 'abc', ''])('makes no request for the id "%s", which is not digits', async (externalId) => {
+    it.each(['..', '../organizations/1', '12 34', 'abc', '', '0', '014588072'])('makes no request for the id "%s", which is not an InPost id', async (externalId) => {
       const { ctx, methods } = context(async () => new Response(pdfBytes))
       const error = await caught(label(ctx, { externalId }))
       expect(error).toBeInstanceOf(PermanentError)
-      expect(methods()).toEqual([])
-    })
-  })
-
-  describe('shipments.cancel', () => {
-    it('cancels before the purchase, and again when the first answer was lost', async () => {
-      const { ctx, cassette, requests } = await scenario('cancel-in-time')
-      await expect(cancel(ctx, { externalId: '1600000601' })).resolves.toEqual({ outcome: 'cancelled' })
-      // The repeat: InPost keeps the shipment as `canceled` and refuses the action; its status says it is cancelled.
-      await expect(cancel(ctx, { externalId: '1600000601' })).resolves.toEqual({ outcome: 'cancelled' })
-      expect(requests()).toEqual(['DELETE /v1/shipments/1600000601', 'DELETE /v1/shipments/1600000601', `GET ${byId(['1600000601'])}`])
-      expect(cassette.misses).toEqual([])
-      expect(cassette.unused()).toEqual([])
-    })
-
-    it('is refused as too late once InPost has gone on to the purchase', async () => {
-      const { ctx, cassette, requests } = await scenario('cancel-too-late')
-      await expect(cancel(ctx, { externalId: '1600000602' })).resolves.toEqual({ outcome: 'refused', code: 'too_late' })
-      expect(requests()).toEqual(['DELETE /v1/shipments/1600000602', `GET ${byId(['1600000602'])}`])
-      expect(cassette.misses).toEqual([])
-    })
-
-    it('is refused, not cancelled, when InPost does not know the shipment', async () => {
-      const { ctx, cassette, methods } = await scenario('cancel-not-found')
-      await expect(cancel(ctx, { externalId: '1600000604' })).resolves.toEqual({ outcome: 'refused', code: 'not_found' })
-      expect(methods()).toEqual(['DELETE'])
-      expect(cassette.misses).toEqual([])
-
-      // Not ShipX's own 404 either: an error page of the edge proves a cancel even less.
-      const page = context(async () => new Response('<html>Not Found</html>', { status: 404, headers: { 'content-type': 'text/html' } }))
-      await expect(cancel(page.ctx, { externalId: '1600000604' })).resolves.toEqual({ outcome: 'refused', code: 'not_found' })
-    })
-
-    it('is refused when the action is invalid and InPost does not list the shipment', async () => {
-      const { ctx } = context(async (_input, init) => (init?.method === 'DELETE' ? json(400, { status: 400, error: 'invalid_action', details: {} }) : emptyList()))
-      await expect(cancel(ctx, { externalId: '1600000605' })).resolves.toEqual({ outcome: 'refused', code: 'not_found' })
-    })
-
-    it('trusts only a 204: any other success is checked against the status of the shipment', async () => {
-      const answering = (status: string) =>
-        context(async (_input, init) => (init?.method === 'DELETE' ? new Response('<html>OK</html>', { status: 200 }) : list([item(1600000606, { status })])))
-      await expect(cancel(answering('canceled').ctx, { externalId: '1600000606' })).resolves.toEqual({ outcome: 'cancelled' })
-      await expect(cancel(answering('offer_selected').ctx, { externalId: '1600000606' })).rejects.toBeInstanceOf(TransientError)
-    })
-
-    it.each([
-      [401, AuthExpiredError],
-      [403, PermanentError],
-      [429, RateLimitedError],
-      [500, TransientError],
-    ])('throws for a %i, whatever its body says', async (status, expected) => {
-      const { ctx, methods } = context(async () => json(status, { status, error: 'invalid_action', details: {} }))
-      await expect(cancel(ctx, { externalId: '1' })).rejects.toBeInstanceOf(expected)
-      expect(methods()).toEqual(['DELETE'])
-    })
-
-    it.each(['..', '../organizations/1', 'abc', ''])('makes no request for the id "%s": InPost cannot know it', async (externalId) => {
-      const { ctx, methods } = context(async () => new Response(null, { status: 204 }))
-      await expect(cancel(ctx, { externalId })).resolves.toEqual({ outcome: 'refused', code: 'not_found' })
       expect(methods()).toEqual([])
     })
   })

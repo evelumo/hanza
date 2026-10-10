@@ -79,6 +79,3 @@ export const INPOST_STATUSES: Readonly<Record<string, ShipmentStatus | null>> = 
 
 /** The statuses in which InPost is still preparing and buying the offer, so a purchase can still fail. */
 export const PURCHASE_STATUSES: readonly string[] = ['created', 'offers_prepared', 'offer_selected']
-
-/** The ShipX status after a cancellation. */
-export const CANCELLED_STATUS = 'canceled'

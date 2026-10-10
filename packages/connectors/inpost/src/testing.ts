@@ -35,9 +35,8 @@ export const inpostScrub: ScrubConfig = {
  * How a replay matches. The search for an earlier create starts at a time taken from the request, which a recording
  * sets to "now", so that parameter is not compared. And every recorded answer is served once: a request the
  * recording did not make, above all a second `POST` of the same Shipment, is a miss instead of the last answer again.
- *
- * TODO(#126): the kit is to serve every recorded `POST` and `DELETE` once by itself; `exhausted` then stays only
- * for what it adds here, the `GET`s (a search served twice would hide a create that searched again).
+ * The kit does that for writes by itself (`repeat-reads`); `error` adds the reads, so a create that searched once
+ * more than the recording did is a miss as well.
  */
 export const inpostMatch: MatchOptions = { ignoreQueryParams: ['created_at_gteq'], exhausted: 'error' }
 

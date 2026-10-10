@@ -15,8 +15,8 @@ export function organizationShipmentsPath(ctx: InpostContext): string {
 }
 
 /**
- * The path of one shipment. Digits only: `..` in its place would turn the label request into `GET /v1/label` and
- * the cancel into `DELETE /v1/`. The id is not put in the message, since whatever it is, it is not an id.
+ * The path of one shipment. An id of ShipX's own form only: `..` in its place would turn the label request into
+ * `GET /v1/label`. The id is not put in the message, since whatever it is, it is not an id.
  */
 export function shipmentPath(externalId: string): string {
   if (!isShipmentId(externalId)) throw new PermanentError('This Shipment does not carry an InPost shipment id, so InPost cannot be asked about it')
@@ -96,33 +96,41 @@ export interface ShipmentPage extends ShipxShipmentList {
   serverTime: number | null
 }
 
-/** One page of the organization's shipments, each a full shipment resource. */
-export async function listShipments(ctx: InpostContext, query: Record<string, string>, page: number): Promise<ShipmentPage> {
+async function shipmentPage(ctx: InpostContext, query: Record<string, string>, page: number): Promise<Response> {
   const params = new URLSearchParams({ ...query, page: String(page), per_page: String(PAGE_SIZE) })
-  const response = await send(ctx, `${organizationShipmentsPath(ctx)}?${params}`)
+  return send(ctx, `${organizationShipmentsPath(ctx)}?${params}`)
+}
+
+async function readPage(response: Response): Promise<ShipmentPage> {
   if (!response.ok) throw await failure(response, 'organization')
   const serverTime = Date.parse(response.headers.get('date') ?? '')
   return { ...(await parse(response, shipxShipmentListSchema, 'shipment list')), serverTime: Number.isNaN(serverTime) ? null : serverTime }
 }
 
+/** One page of the organization's shipments, each a full shipment resource. */
+export async function listShipments(ctx: InpostContext, query: Record<string, string>, page: number): Promise<ShipmentPage> {
+  return readPage(await shipmentPage(ctx, query, page))
+}
+
 /**
- * The organization's shipments with these ids, by the `id` filter (a comma list; read straight from ShipX's
- * database, so a shipment shows here the moment it is made, unlike in any other listing). Shipments ShipX does not
- * have, or has for another organization, are simply missing.
+ * The shipments with these ids, or `refused` when ShipX will not take the list.
  *
  * A filter ShipX ignored shows in `count`: more shipments than ids asked. Pages are read until every id was seen or
  * a page brings nothing new, whatever size ShipX makes them: with this filter its first page came back whole under
  * `per_page: 3`, and the second repeated part of it (sandbox, 2026-10-10).
  */
-export async function shipmentsById(ctx: InpostContext, externalIds: string[]): Promise<Map<string, ShipxShipment>> {
-  const wanted = new Set(externalIds.filter(isShipmentId))
+async function listByIds(ctx: InpostContext, ids: readonly string[]): Promise<Map<string, ShipxShipment> | 'refused'> {
+  const wanted = new Set(ids)
   const found = new Map<string, ShipxShipment>()
-  if (wanted.size === 0) return found
-  const query = { id: [...wanted].join(',') }
+  const query = { id: ids.join(',') }
   const seen = new Set<string>()
   // Each page that does not end the listing brings a shipment not seen before, so there are never more than ids.
   for (let page = 1; page <= wanted.size; page++) {
-    const list = await listShipments(ctx, query, page)
+    const response = await shipmentPage(ctx, query, page)
+    // One id ShipX will not take fails the list for all of them: `400 validation_failed`, with the id it means
+    // inside a key of `details`. Only the status and the error key are read; the details echo what was asked.
+    if (response.status === 400 && (await readError(response))?.error === 'validation_failed') return 'refused'
+    const list = await readPage(response)
     if (list.count > wanted.size) {
       throw new PermanentError(`InPost counts ${list.count} shipments for ${wanted.size} shipment ids, so its id filter cannot be trusted`)
     }
@@ -133,6 +141,44 @@ export async function shipmentsById(ctx: InpostContext, externalIds: string[]): 
     }
     if (found.size === wanted.size || seen.size >= list.count || seen.size === before) break
   }
+  return found
+}
+
+/**
+ * The most lists one call asks for. One list is the rule; more are asked only to find an id ShipX refuses the whole
+ * list for, by halves: 15 lists for one such id among a hundred.
+ */
+export const MAX_ID_LISTS = 20
+
+/**
+ * The organization's shipments with these ids, by the `id` filter (a comma list; read straight from ShipX's
+ * database, so a shipment shows here the moment it is made, unlike in any other listing). A shipment ShipX does not
+ * have, or has for another organization, is simply missing from its answer, and so from this one.
+ *
+ * An id that is not of ShipX's own form is never asked for. Should ShipX still refuse a list for one of its ids, the
+ * list is asked again in halves until that id stands alone, and it is left out: one Shipment that is gone never costs
+ * the others their state. Past `MAX_ID_LISTS` the ids not yet answered for are left out too, to be asked next time.
+ */
+export async function shipmentsById(ctx: InpostContext, externalIds: string[]): Promise<Map<string, ShipxShipment>> {
+  const found = new Map<string, ShipxShipment>()
+  const queue: string[][] = [[...new Set(externalIds.filter(isShipmentId))]]
+  let lists = 0
+  let refused = 0
+  let unanswered = 0
+  for (let ids = queue.shift(); ids !== undefined; ids = queue.shift()) {
+    if (ids.length === 0) continue
+    if (lists === MAX_ID_LISTS) {
+      unanswered += ids.length
+      continue
+    }
+    lists++
+    const answer = await listByIds(ctx, ids)
+    if (answer !== 'refused') for (const [id, shipment] of answer) found.set(id, shipment)
+    else if (ids.length === 1) refused++
+    else queue.push(ids.slice(0, Math.ceil(ids.length / 2)), ids.slice(Math.ceil(ids.length / 2)))
+  }
+  // Counts only: which ids they were is in what ShipX answered, and that is not repeated anywhere.
+  if (refused > 0 || unanswered > 0) ctx.log('InPost refused a list of shipment ids; the ids it would not take were left out of tracking', { refused, unanswered })
   return found
 }
 

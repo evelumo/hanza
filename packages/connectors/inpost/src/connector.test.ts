@@ -49,8 +49,12 @@ describe('InPost connector', () => {
           rejected: { request: { ...request, reference: run.rejectedReference, destination: { type: 'pickup_point', pointId: 'XXX000X' } } },
           // InPost buys the label a few seconds after the create; a replay never waits.
           labelWaitMs: 3_000,
-          // TODO(#126): `repeatWaitMs: 10_000` once the kit has it. The listing shows a shipment up to 5.4 s after
-          // its POST (AGENTS.md), so the kit's repeated create, sent at once, posts a second parcel when recording.
+          // The listing shows a shipment up to 5.4 s after its POST (AGENTS.md): a repeat sent sooner finds nothing
+          // and posts a second parcel. The core waits 5 minutes; a recording waits twice the worst lag measured.
+          repeatWaitMs: 10_000,
+          // An id of ShipX's own form that no account of the sandbox has: the list leaves it out. The kit's default,
+          // `0`, is not an id ShipX gives, so the connector would not even ask for it.
+          unknownExternalId: '999999999999',
         },
         recording: () => ({ credentials: { apiToken: sandbox!.apiToken } }),
       })
@@ -60,11 +64,24 @@ describe('InPost connector', () => {
 })
 
 describe('the conformance cassette', { skip: isRecording() }, () => {
+  it('holds nothing that changes a shipment but the two creates', async () => {
+    const { interactions } = await loadCassette(conformanceCassette)
+    expect(interactions.map(({ request }) => request.method).filter((method) => method !== 'GET')).toEqual(['POST', 'POST'])
+  })
+
   it('shows one create per reference: the repeated create of the kit posted nothing', async () => {
     const { interactions } = await loadCassette(conformanceCassette)
     const posted = interactions.filter(({ request }) => request.method === 'POST').map(({ request }) => (request.body as { json: { reference: string } }).json.reference)
     expect(posted).toHaveLength(2)
     expect(new Set(posted).size).toBe(2)
+  })
+
+  it('answers bad credentials before anything is posted: the track, then the search of a create', async () => {
+    const { interactions } = await loadCassette(new URL('conformance-unauthorized.cassette.json', fixtures))
+    expect(interactions.map(({ request, response }) => [request.method, new URL(request.url).searchParams.has('id') ? 'by id' : 'search', response.status])).toEqual([
+      ['GET', 'by id', 401],
+      ['GET', 'search', 401],
+    ])
   })
 
   it('holds the placeholder of the recorder where the Label was, never a real one', async () => {

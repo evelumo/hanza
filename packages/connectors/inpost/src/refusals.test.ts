@@ -74,15 +74,15 @@ describe('createRefusal', () => {
   })
 
   it.each([
+    ['debt_collection', 'debt_collection'],
+    ['DEBT_COLLECTION', 'debt_collection'],
+    ['no_carriers', 'no_carriers'],
+    // No contract for the service the request names: the account's to fix, so never `rejected`.
     ['carrier_unavailable', 'carrier_unavailable'],
     ['missing_trucker_id', 'missing_trucker_id'],
     ['trucker_ID_is_not_set_for_organization', 'missing_trucker_id'],
-  ])('rejects %s, which is about the service the request names', (key, code) => {
-    expect(createRefusal({ error: key, details: null })).toEqual({ kind: 'rejected', code })
-  })
-
-  it.each(['debt_collection', 'no_carriers', 'DEBT_COLLECTION'])('leaves %s, which is about the account, to fail the call', (key) => {
-    expect(createRefusal({ error: key })).toEqual({ kind: 'account', key: key.toLowerCase() })
+  ])('leaves %s, which is about the account, to fail the call', (key, named) => {
+    expect(createRefusal({ error: key, details: null })).toEqual({ kind: 'account', key: named })
   })
 
   it.each(['offer_expired', 'quota_exceeded', 'Kowalski', 'Insurance should be equal or higher than COD', '111222333', '', 'constructor', '__proto__'])(

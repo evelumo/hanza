@@ -1,5 +1,4 @@
 import { defineConnector } from '@hanza/connector-sdk'
-import { cancelShipment } from './capabilities/shipments-cancel'
 import { createShipment } from './capabilities/shipments-create'
 import { shipmentLabel } from './capabilities/shipments-label'
 import { trackShipments } from './capabilities/shipments-track'
@@ -8,6 +7,10 @@ import { COURIER_SERVICE, inpostConfigSchema, inpostCredentialsSchema, LOCKER_SE
 /**
  * InPost through its ShipX API: Paczkomat lockers and the InPost courier in Poland. The token is a static one a
  * person generates in the InPost manager, so there is nothing to refresh.
+ *
+ * No `shipments.cancel`, on purpose: ShipX takes a cancel only in the tenth of a second in which its own purchase
+ * runs, and that purchase can write over the cancel it has just confirmed (AGENTS.md, "Why this connector does not
+ * cancel").
  */
 export const inpostConnector = defineConnector({
   id: 'inpost',
@@ -48,6 +51,5 @@ export const inpostConnector = defineConnector({
     'shipments.create': createShipment,
     'shipments.track': trackShipments,
     'shipments.label': shipmentLabel,
-    'shipments.cancel': cancelShipment,
   },
 })

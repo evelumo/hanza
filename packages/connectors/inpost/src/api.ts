@@ -1,7 +1,12 @@
 import { z } from 'zod'
 
-/** A ShipX shipment id as text: digits only. The one shape that may be put into a path or a query. */
-export const SHIPMENT_ID = /^\d{1,20}$/
+/**
+ * A ShipX shipment id as text: a whole number above 0, at most 18 digits, no leading zero. The one shape that may
+ * be put into a path or a query. The bounds are ShipX's own: its `id` filter answers the whole list with a 400 for
+ * `0`, `00`, a word or a number near 2^63, while a number in range that it does not have is simply not listed
+ * (sandbox, 2026-10-10).
+ */
+export const SHIPMENT_ID = /^[1-9]\d{0,17}$/
 
 export function isShipmentId(value: string): boolean {
   return SHIPMENT_ID.test(value)
@@ -9,7 +14,7 @@ export function isShipmentId(value: string): boolean {
 
 // ShipX answers ids as JSON numbers; the documentation shows them as strings of digits in a few examples. Anything
 // else (`..`, a path, a word) is refused here, so an id InPost returned can never steer a later request elsewhere.
-const id = z.union([z.number().int().nonnegative(), z.string().regex(SHIPMENT_ID)]).transform(String)
+const id = z.union([z.number().int().positive(), z.string().regex(SHIPMENT_ID)]).transform(String).pipe(z.string().regex(SHIPMENT_ID))
 
 const offerSchema = z.object({
   status: z.string(),
