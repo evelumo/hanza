@@ -12,13 +12,13 @@ Hanza is in **early development**. This page summarizes the direction in the [or
 - Buyer data sealing, retention and erasure services.
 - English/Polish panel, fake connectors, conformance tests, recorded HTTP fixtures and local browser flows.
 
-These foundations work with simulated Channels. The SDK has not yet been validated by two real connectors, and a workflow engine is not yet a user-facing automation builder.
+These foundations work with simulated Channels and one real connector, WooCommerce. The SDK has not yet been validated by two real connectors, and a workflow engine is not yet a user-facing automation builder.
 
 ## Planned milestones
 
 | Milestone | Intended outcome | Current boundary |
 | --- | --- | --- |
-| Real connector validation | Allegro Order feed and Stock pushes, followed by WooCommerce, exercising one contract against two APIs | No real connector is registered today |
+| Real connector validation | WooCommerce, then the Allegro Order feed and Stock pushes, exercising one contract against two APIs | WooCommerce is registered (Orders in, Stock out; recorded against a local sandbox shop, not yet run on a live one); Allegro is planned |
 | Connector authoring with AI agents | A third connector built from the recipe and conformance tests without changing the core | Skill/reference implementations exist; generator and third real connector are planned |
 | Shipping and invoicing | Courier labels, shipment tracking and invoicing capabilities | No working courier/invoicing connector or panel flow |
 | Automations and product-facing AI | Rules across Orders, shipments and invoices; MCP server, in-panel assistant and mapping assistance | Workflow primitives exist; these product features are planned |

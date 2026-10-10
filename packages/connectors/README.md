@@ -105,8 +105,9 @@ ended, reopen it only if it sold out, and report `rejected` otherwise.
 | `fake-oauth` | `@hanza/connector-fake` | marketplace | The same in-memory data behind an OAuth sign-in (device flow, rotating tokens, installation settings). Only available where `HANZA_CONNECTOR_FAKE_OAUTH_CLIENT_ID` and `_CLIENT_SECRET` are set. Not a real Channel. |
 | `fake-http` | `@hanza/connector-fake` | marketplace | Not registered. The same fake Channel behind a small JSON API with client-credentials tokens (`src/http/`), tested only with recorded fixtures: the reference for a connector that talks HTTP. |
 | `fake-http-oauth` | `@hanza/connector-fake` | marketplace | Not registered. The same API with an OAuth life cycle shaped like Allegro's (installation settings, device flow, rotating refresh tokens; `src/http/oauth-connector.ts`), tested with recorded fixtures through `runConformance` (`app`, `refresh`, `deviceFlow`): the reference for an OAuth connector. |
+| `woocommerce` | `@hanza/connector-woocommerce` | shop | A WooCommerce shop (7.6 and later, HTTPS) through its REST API with a consumer key and secret: Offers (simple products and variations), Orders in (including unpaid ones), Stock out, Order phases out; no `price.push`. Registered. Built on order snapshots, not a journal. Read its [`AGENTS.md`](woocommerce/AGENTS.md); its tests replay cassettes recorded from a local sandbox shop (`woocommerce/sandbox/`). |
 
-Allegro and WooCommerce come first among the real ones (stage 2 of the plan).
+WooCommerce is the first real connector; Allegro is next (stage 2 of the plan).
 
 ## Recorded fixtures
 

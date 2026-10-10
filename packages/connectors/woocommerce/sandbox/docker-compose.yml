@@ -1,0 +1,64 @@
+# A throwaway WordPress + WooCommerce, used only to record the connector's test fixtures (see README.md).
+# Started through ./sandbox.sh, which passes the project name and the port, so several instances can run at once:
+# nothing here has a fixed name, and the volumes are prefixed with the project name.
+
+x-wordpress-env: &wordpress-env
+  WORDPRESS_DB_HOST: db
+  WORDPRESS_DB_NAME: wordpress
+  WORDPRESS_DB_USER: wordpress
+  WORDPRESS_DB_PASSWORD: wordpress
+  # No WP-Cron and no updates: a recording must not change under the recorder, and the pinned versions must stay.
+  WORDPRESS_CONFIG_EXTRA: |
+    define('DISABLE_WP_CRON', true);
+    define('AUTOMATIC_UPDATER_DISABLED', true);
+    define('WP_AUTO_UPDATE_CORE', false);
+
+services:
+  db:
+    image: mariadb:11.8.9
+    environment:
+      MARIADB_DATABASE: wordpress
+      MARIADB_USER: wordpress
+      MARIADB_PASSWORD: wordpress
+      MARIADB_RANDOM_ROOT_PASSWORD: "1"
+    volumes:
+      - db:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 2s
+      timeout: 3s
+      retries: 60
+
+  wordpress:
+    image: wordpress:7.1.3-php8.3-apache
+    depends_on:
+      db:
+        condition: service_healthy
+    environment: *wordpress-env
+    ports:
+      # Loopback only: the shop accepts API keys over plain HTTP from anything that says `X-Forwarded-Proto: https`.
+      - "127.0.0.1:${WOO_SANDBOX_PORT:-8089}:80"
+    volumes:
+      - wordpress:/var/www/html
+      - ./mu-plugins:/var/www/html/wp-content/mu-plugins:ro
+
+  # wp-cli on the same files; run with `./sandbox.sh wp <command>`.
+  cli:
+    image: wordpress:cli-2.12.0-php8.3
+    profiles: ["tools"]
+    depends_on:
+      db:
+        condition: service_healthy
+    # www-data of the Debian-based wordpress image (the cli image is Alpine, where it is 82).
+    user: "33:33"
+    environment:
+      <<: *wordpress-env
+      WP_CLI_CACHE_DIR: /tmp/wp-cli-cache
+    volumes:
+      - wordpress:/var/www/html
+      - ./mu-plugins:/var/www/html/wp-content/mu-plugins:ro
+      - ./php:/sandbox:ro
+
+volumes:
+  db:
+  wordpress:

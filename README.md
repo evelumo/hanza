@@ -10,7 +10,7 @@ An open-source, self-hosted e-commerce integration hub for Orders, Products, Sto
 
 [Quick start](#quick-start) · [Try the demo](docs/demo.md) · [Documentation](docs/README.md) · [Contributing](CONTRIBUTING.md) · [Roadmap](docs/roadmap.md)
 
-> **Early development.** The panel, domain core and worker work with a simulated Channel. There are **no real marketplace, shop, courier or invoicing connectors yet**. Use Hanza to evaluate the architecture, try the demo and contribute; connecting a live business is a future milestone.
+> **Early development.** The panel, domain core and worker work with a simulated Channel. **WooCommerce is the first real connector** (Orders in, Stock out); there are no marketplace (Allegro is planned), courier or invoicing connectors yet. Use Hanza to evaluate the architecture, try the demo and contribute; connecting a live business is a future milestone.
 
 ## Why Hanza?
 
@@ -37,7 +37,7 @@ Commerce operations need a consistent view of what was sold, what is still avail
 | Connector development | SDK, conformance kit, scrubbed HTTP recordings and simulated connectors |
 | Quality | Dependency boundary checks, type checks, Vitest tests and local Playwright panel flows |
 
-The current connectors are **Test channel** (`fake`) and **Test OAuth channel** (`fake-oauth`, requires demo installation settings). Both simulate a Channel. The HTTP reference implementations are tested on recordings and are not registered in the panel. See the [connector catalogue and author guide](packages/connectors/README.md).
+The current connectors are **WooCommerce** (`woocommerce`, a real shop through its REST API), **Test channel** (`fake`) and **Test OAuth channel** (`fake-oauth`, requires demo installation settings); the last two simulate a Channel. The HTTP reference implementations are tested on recordings and are not registered in the panel. See the [connector catalogue and author guide](packages/connectors/README.md).
 
 ## Quick start
 
@@ -115,7 +115,7 @@ Database tests need `HANZA_TEST_DATABASE_URL`; Redis tests need a reachable Redi
 
 ## Direction and community
 
-The next product milestone is a real Order-and-Stock flow with Allegro and WooCommerce. Shipping, invoicing, automations and product-facing AI follow later. The [roadmap](docs/roadmap.md) distinguishes implemented foundations from planned work and links to the original Polish architecture plan.
+The next product milestone is a real Order-and-Stock flow with Allegro, following WooCommerce. Shipping, invoicing, automations and product-facing AI follow later. The [roadmap](docs/roadmap.md) distinguishes implemented foundations from planned work and links to the original Polish architecture plan.
 
 Use [GitHub Issues](https://github.com/evelumo/hanza/issues) for bugs, questions and proposals. Read [SUPPORT.md](SUPPORT.md) for reporting guidance and [SECURITY.md](SECURITY.md) for private vulnerability reports.
 

@@ -8,7 +8,7 @@ A connector declares its identity, kind, configuration/credential schemas, authe
 
 Channel connectors implement `offers.pull`, `orders.pull` and `stock.push`; price and Order phase pushes are optional capabilities. They reason about fixed Order phases, never an organization's Order statuses. The canonical model uses decimal-string Money and validated external data.
 
-See [the Commerce model glossary](CONTEXT.md) and [the connector guide](../connectors/README.md) for the complete contract, Order feed semantics and auth behaviour. The current contract has simulated reference implementations; validation against real Channels is [planned](../../docs/roadmap.md).
+See [the Commerce model glossary](CONTEXT.md) and [the connector guide](../connectors/README.md) for the complete contract, Order feed semantics and auth behaviour. The current contract has simulated reference implementations and one real connector (WooCommerce); validation against a second real Channel (Allegro) is [planned](../../docs/roadmap.md).
 
 ## Conformance and fixtures
 

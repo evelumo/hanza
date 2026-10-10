@@ -1,5 +1,5 @@
 {
-  "name": "@hanza/connector-registry",
+  "name": "@hanza/connector-woocommerce",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -7,14 +7,16 @@
     ".": "./src/index.ts"
   },
   "scripts": {
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
   },
   "dependencies": {
-    "@hanza/connector-fake": "workspace:*",
     "@hanza/connector-sdk": "workspace:*",
-    "@hanza/connector-woocommerce": "workspace:*"
+    "zod": "^4.6.5"
   },
   "devDependencies": {
-    "typescript": "^6.0.3"
+    "@types/node": "^24.0.0",
+    "typescript": "^6.0.3",
+    "vitest": "^5.0.3"
   }
 }
