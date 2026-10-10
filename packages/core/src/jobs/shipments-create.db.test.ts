@@ -478,7 +478,7 @@ describe.skipIf(!databaseUrl)('shipments.create', () => {
 
   it('a refusal of the call for good (the account, not this request) marks the Connection failing and leaves the Shipment waiting', async () => {
     const { create, shipment, connection, waits } = await setup()
-    // What a connector throws for no funds or no contract: never `rejected`, which would fail the Shipment for good.
+    // What a connector throws for a refusal of the whole account (no funds, unpaid invoices, no contract with any carrier): never `rejected`, which would fail the Shipment for good.
     carrier.failures.create = new PermanentError('403 on the organization path')
     await expect(create()).rejects.toBeInstanceOf(PermanentJobError)
     expect(await connection()).toMatchObject({ health: 'failing', sync: { lastErrorKind: 'permanent' } })
