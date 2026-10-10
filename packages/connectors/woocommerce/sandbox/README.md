@@ -1,14 +1,16 @@
 # WooCommerce recording sandbox
 
-A throwaway WordPress + WooCommerce in Docker. It exists only to record the connector's test fixtures
+A throwaway WordPress + WooCommerce in Docker. It exists to record the connector's test fixtures
 (`packages/connectors/README.md`, "Recorded fixtures"): tests replay the cassettes, and CI never starts it.
+With its opt-in [TLS front](#a-tls-front) it is also a shop a locally running Hanza can connect to for real.
 Everything in it is invented; lose it whenever you like.
 
-Pinned: WordPress 7.1.3 (`wordpress:7.1.3-php8.3-apache`), WooCommerce 11.2.1, MariaDB 11.8.9, wp-cli 2.12.0.
+Pinned: WordPress 7.1.3 (`wordpress:7.1.3-php8.3-apache`), WooCommerce 11.2.1, MariaDB 11.8.9, wp-cli 2.12.0,
+and for the TLS front nginx 1.30.0 (`nginx:1.30.0-alpine`).
 
 ## Commands
 
-Run from anywhere; needs Docker and Node.
+Run from anywhere; needs Docker and Node (and `openssl` for `tls`).
 
 ```sh
 packages/connectors/woocommerce/sandbox/sandbox.sh reset    # a fresh, seeded shop with API keys: down, up, seed, key
@@ -24,6 +26,9 @@ packages/connectors/woocommerce/sandbox/sandbox.sh reset    # a fresh, seeded sh
 | `wp <args>` | Runs wp-cli in the shop, to script a scenario. |
 | `curl <path> [curl args]` | `curl` against `wp-json/wc/v3/<path>` with the read-write key. The key goes to curl on its standard input, never on its command line (where `ps` would show it), so `-d @-` is not available. |
 | `status` | Lists the containers. |
+| `tls` | Opt-in: puts nginx with a throwaway certificate in front of the shop and prints how to reach it. See [A TLS front](#a-tls-front). |
+| `tls-env` | Prints, as shell to `eval`, the environment a local Hanza worker needs to reach the TLS front. |
+| `tls-curl <curl args>` | `curl` through the TLS front (the shop's host name sent to this machine, trusting the sandbox's certificate authority only). |
 
 Scripting a scenario between two recorded calls:
 
@@ -51,6 +56,74 @@ The default is project `hanza-woo-sandbox` on port 8089 with keys in `.recording
 project keeps its keys in `.recording/credentials.<project>.json`. Set the port next to the project name: a test that calls `sandbox.sh wp` refuses to run without it, because the script would fall back to the default port. The recording setup
 (`src/testing/recording.ts`, `loadRecording()`) reads `WOO_SANDBOX_PROJECT` to pick the file, which also says
 where that instance listens.
+
+## A TLS front
+
+The recording flow talks to the shop over plain HTTP and rewrites the address in the test transport. To run the
+real application against the shop (the core's `ctx.fetch`, the rate limiter, the scheduler, the panel), the shop
+has to be reachable the way a real one is: `https://shop.example.test:<port>` → nginx, which ends TLS → WordPress
+over HTTP with `X-Forwarded-Proto: https`. It is opt-in and changes nothing of the plain port or the recording
+flow: `up`, `seed`, `key`, `reset`, `wp` and `curl` work as before, with or without it.
+
+```sh
+export WOO_SANDBOX_PROJECT=hanza-woo-live WOO_SANDBOX_PORT=8095 WOO_SANDBOX_TLS_PORT=8445
+sandbox.sh reset          # the shop, as always
+sandbox.sh tls            # certificate, nginx, and the lines below
+sandbox.sh tls-curl -i https://shop.example.test:8445/wp-json/wc/v3/
+sandbox.sh down           # removes the front, its certificate and its log too
+```
+
+| Variable | Default | Meaning |
+| --- | --- | --- |
+| `WOO_SANDBOX_TLS_PORT` | `8443` | Host port of the front, bound to 127.0.0.1 only. Give each instance its own, like `WOO_SANDBOX_PORT`. |
+| `WOO_SANDBOX_RESOLVE` | unset | Read by `resolve-shop.mjs` (below), not by the script: the host names to answer with 127.0.0.1. |
+
+What `tls` sets up:
+
+- **nginx** (`nginx:1.30.0-alpine`, the Compose service `tls` behind the profile `tls`, config in `nginx/shop.conf`):
+  TLS 1.2 and 1.3, HTTP/2 offered, gzip on (WordPress is asked for plain bodies, so the compression is nginx's),
+  `X-Forwarded-Proto: https` set by nginx whatever the client sends, and WordPress looked up again on every request,
+  so the front answers **502** while the shop is stopped (`docker stop <project>-wordpress-1`) and works again once
+  it is back. `www.shop.example.test` answers **301** to the bare name, as a shop does for its other spelling. The
+  `Date` header of every answer is nginx's own (it replaces the one WordPress sends).
+- **A certificate** for `shop.example.test` and `www.shop.example.test`, signed by a certificate authority made
+  for this instance with `openssl`. The authority may sign for those names only (a name constraint), its private
+  key is deleted as soon as the certificate is signed, and both expire after 30 days. Everything is in
+  `../.recording/tls[.<project>]/` (git-ignored, never commit it): `ca.crt`, `cert/server.crt`, `cert/server.key`.
+- **An access log**, one JSON object per request, in `../.recording/tls[.<project>]/log/access.log` and in
+  `docker compose -p <project> logs tls`: time, method, path with its query, status, bytes on the wire and before
+  compression, duration, TLS version, the connection and the request's number on it, and whether an `Authorization`
+  header came (`basic`, `other`, `none`), never its value. It is the audit of what the connector really sends: a key
+  in a URL would show in `uri`.
+
+### Pointing a locally running Hanza at it
+
+The connector accepts only a public-looking `https://` address (`src/settings.ts`), so the shop keeps its name and
+the name is made to resolve to this machine **in the worker process only**: `resolve-shop.mjs`, preloaded with
+`node --import`, answers `dns.lookup` for the names in `WOO_SANDBOX_RESOLVE` with 127.0.0.1 and leaves every other
+name alone. No `/etc/hosts`, no sudo, no DNS service. Node trusts the certificate through `NODE_EXTRA_CA_CERTS`.
+`tls-env` prints the three variables:
+
+```sh
+eval "$(sandbox.sh tls-env)"            # NODE_EXTRA_CA_CERTS, WOO_SANDBOX_RESOLVE, NODE_OPTIONS=--import=…/resolve-shop.mjs
+pnpm --filter @hanza/worker dev         # in that shell. Not `pnpm dev`: Turborepo hides variables it was not told about
+pnpm --filter @hanza/web dev            # in another shell; the web app never calls the shop and needs none of them
+```
+
+Then add a WooCommerce Connection in the panel with the address `tls` printed (`https://shop.example.test:8445`)
+and the keys from `../.recording/credentials[.<project>].json`. Only the worker calls the shop. Use a database and a
+`HANZA_QUEUE_PREFIX` of your own if the default ones hold data you care about (`apps/e2e/src/run.ts` shows how a run
+isolates itself): the first sync imports the seed's open orders.
+
+To act as a Buyer, use the Store API through the front (`sandbox.sh tls-curl … /wp-json/wc/store/v1/cart`, with the
+`Cart-Token` and `Nonce` headers it answers with), or a real browser started with
+`--host-resolver-rules="MAP shop.example.test:443 127.0.0.1:<port>"` and certificate errors ignored, which opens the
+storefront and its checkout at `https://shop.example.test/`. The seed enables no payment method and no shipping:
+`sandbox.sh wp wc payment_gateway update cod --enabled=true --user=1`, the same for `bacs`, and
+`sandbox.sh wp wc shipping_zone_method create 0 --method_id=flat_rate --user=1`.
+
+Known differences from a real shop: the port in the address (the shop itself believes it is on 443, so its
+`permalink`s and `Link` headers carry no port), and one machine's clock behind both the shop and the worker.
 
 ## How it is set up
 

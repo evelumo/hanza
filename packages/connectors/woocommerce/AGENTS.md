@@ -195,6 +195,7 @@ $S down
   - `src/capabilities/orders-update-status.test.ts` (`orders-update-status`, `orders-update-status-read-only`): may follow the feed file on the same shop (it uses orders the feed does not touch) or run on a fresh one.
   - `src/capabilities/orders-pull.legacy.recorded.test.ts` (`orders-legacy-storage`): needs HPOS **off**, which `reset` does not give. After `$S down`: `$S up && $S wp wc hpos disable && $S seed && $S key`, then record. It creates order 58.
 - HPOS is on in the sandbox by default (`up` turns it on, because WooCommerce installed through wp-cli would keep orders in posts).
+- **Running the real application against the sandbox** (worker, scheduler, rate limiter, panel) needs the shop under a real `https://` address: `sandbox.sh tls` puts nginx with a throwaway certificate in front of it, and `sandbox/resolve-shop.mjs`, preloaded into the worker, makes `shop.example.test` resolve to this machine in that process only (`sandbox/README.md`, "A TLS front"). Opt-in; recording does not use it.
 - Recording runs the kit against the sandbox for real: stock pushes of 0 and 5, every Order phase. Use a shop you can lose. After recording, replay without the variable and read the diff: no `localhost`, no port, no key, no `Authorization`, no real name, address, phone or e-mail.
 - Re-record on purpose only (a replay miss says the connector's requests changed, or the API did). Placeholders are numbered in order of appearance, so the same data gives the same file.
 
@@ -209,5 +210,5 @@ src/decimal.ts          exact decimal arithmetic on strings
 src/mapping/            offer.ts (ids, Offers), order.ts (facts, Orders, updates), status.ts (statuses, phases)
 src/capabilities/       offers-pull, stock-push, orders-pull (+ orders-cursor, orders-stream, orders-line-skus), orders-update-status
 src/testing/            test and recording tooling only, never imported by the connector
-sandbox/                the recording sandbox
+sandbox/                the recording sandbox, and its opt-in TLS front (nginx/shop.conf, resolve-shop.mjs)
 ```
