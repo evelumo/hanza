@@ -31,7 +31,12 @@ export const allegroScrub: ScrubConfig = {
     // The seller's own note on an Order, free text that may quote the Buyer.
     note: 'text',
   },
-  paths: Object.fromEntries(COMPANY_PATHS.map((path) => [path, 'text' as const])),
+  paths: {
+    ...Object.fromEntries(COMPANY_PATHS.map((path) => [path, 'text' as const])),
+    // The seller's own company on `GET /me`: not Buyer data, but a real seller's name and tax id all the same.
+    'company.name': 'text',
+    'company.taxId': 'text',
+  },
   // The Order feed takes its boundary from the `Date` of `GET /order/event-stats`: kept, a replay starts at the same time.
   keepResponseHeaders: ['date'],
 }

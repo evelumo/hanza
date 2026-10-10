@@ -1,6 +1,7 @@
 // Test and recording tooling only (`@hanza/connector-allegro/testing`): never imported by the connector itself.
 // A simulation of the part of the Allegro REST API the connector uses, written from the OpenAPI file
-// (developer.allegro.pl/swagger.yaml) and the tutorials, not from the sandbox. It answers as a `fetch`, in memory.
+// (developer.allegro.pl/swagger.yaml) and the tutorials, then corrected where the sandbox answered otherwise on
+// 2026-10-10 (see "Fixtures" in the package's AGENTS.md). It answers as a `fetch`, in memory.
 import { environmentHosts, type AllegroCredentials, type AllegroEnvironment } from '../settings'
 import { forms as sampleForms, offers as sampleOffers, productOffers, type CheckoutFormPayload, type ListingOfferPayload } from './samples'
 
@@ -8,6 +9,12 @@ const PUBLIC_JSON = 'application/vnd.allegro.public.v1+json'
 const DEVICE_CODE_GRANT = 'urn:ietf:params:oauth:grant-type:device_code'
 const ACCESS_TOKEN_SECONDS = 43_199
 const DEVICE_CODE_SECONDS = 3600
+// The tutorial's grace period for a rotated refresh token (the sandbox still took one right after the rotation).
+const REFRESH_GRACE_MS = 60_000
+// `from` of `GET /order/events` is a Java long.
+const MAX_EVENT_ID = 9_223_372_036_854_775_807n
+// Checkout form ids are time-based UUIDs (version 1); the API refuses any other id with 422.
+const TIME_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-1[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 const SELLER = { id: '43784832', login: 'hanza-sandbox-seller' }
 // A valid-looking PESEL (the documented example number, an invented person): the recording must scrub it.
 const PESEL_LIKE = '44051401359'
@@ -67,8 +74,6 @@ export interface FakeAllegroApiOptions {
   journal?: Array<{ type: string; formId: string | null; occurredAt: string }>
   /** The data clock (see `FAKE_ALLEGRO_NOW`). */
   now?: () => string
-  /** How `GET /order/events` answers a `from` it does not have (undocumented): default 404. */
-  unknownFromStatus?: 400 | 404 | 422
 }
 
 export interface FakeAllegroApi {
@@ -91,21 +96,24 @@ export interface FakeAllegroApi {
   setForm(form: CheckoutFormPayload): void
   /** The form is gone (merged into another): `GET` answers 404. */
   removeForm(id: string): void
-  /** The journal no longer keeps the events before this one: a `from` among them answers 404. */
-  forgetEventsBefore(eventId: string): void
   /** Every later `PATCH` of the Offer answers 422 with this error code. */
   rejectOffer(offerId: string, code: string): void
-  /** The next `times` `PATCH`es of the Offer answer 409 (an earlier edit still being processed). */
+  /**
+   * The next `times` `PATCH`es of the Offer answer 409 (an earlier edit still being processed). Documented, never seen
+   * on the sandbox: there only to exercise the connector's guard.
+   */
   conflictOffer(offerId: string, times?: number): void
-  /** The next `PATCH` of the Offer answers 202 (accepted, still processing); the `PATCH` after that answers 409. */
+  /** The next reopen (`publication.status: ACTIVE`) of the Offer answers 409; never seen on the sandbox either. */
+  conflictReopen(offerId: string): void
+  /** The next `PATCH` of the Offer answers 202 with the Offer as it was before the edit, as a reopen always does. */
   acceptLater(offerId: string): void
   /** Every later `PATCH` of the Offer answers 403 (another seller's Offer, or a missing scope). */
   forbidOffer(offerId: string): void
 }
 
-/** Allegro event ids look like base64 of a growing number (`MTUzMjYwMzg5ODMxNzQ5Nw`). */
+/** Allegro event ids are decimal integers that grow with time (`1791663869066571`, like a time in microseconds). */
 export function fakeEventId(sequence: number): string {
-  return btoa(String(1_790_000_000_000_000 + sequence)).replace(/=+$/, '')
+  return String(1_791_663_800_000_000 + sequence * 1_000)
 }
 
 function randomText(bytes: number): string {
@@ -130,8 +138,17 @@ function oauthJson(status: number, body: unknown): Response {
 }
 
 // `ErrorsHolder`: the message texts are Allegro's own kind (they never reach Hanza).
-function errors(status: number, code: string, message: string): Response {
-  return apiJson(status, { errors: [{ code, message, details: null, path: null, userMessage: message, metadata: {} }] })
+function errors(status: number, code: string, message: string, path: string | null = null): Response {
+  return apiJson(status, { errors: [{ code, message, details: null, path, userMessage: message, metadata: {} }] })
+}
+
+// As the sandbox answers a bad or missing bearer token.
+function unauthorized(error: string, description: string): Response {
+  const response = oauthJson(401, { error, error_description: description })
+  if (error === 'invalid_token') {
+    response.headers.set('www-authenticate', `Bearer realm="oauth2-resource", error="invalid_token", error_description="${description}"`)
+  }
+  return response
 }
 
 function latestBoughtAt(form: CheckoutFormPayload): string {
@@ -196,9 +213,12 @@ export function createFakeAllegroApi(options: FakeAllegroApiOptions = {}): FakeA
   const issuedTokens: string[] = []
   const accessTokens = new Set<string>()
   const refreshTokens = new Set<string>()
+  // Rotated refresh tokens and when they were spent (data clock): still taken within the grace period.
+  const spentRefreshTokens = new Map<string, number>()
   const devices = new Map<string, { userCode: string; approved: boolean; used: boolean }>()
   const rejections = new Map<string, string>()
   const conflicts = new Map<string, number>()
+  const reopenConflicts = new Set<string>()
   const later = new Set<string>()
   const forbidden = new Set<string>()
   let eventSequence = 0
@@ -269,19 +289,20 @@ export function createFakeAllegroApi(options: FakeAllegroApiOptions = {}): FakeA
 
   const oauth = (request: Request, url: URL, form: URLSearchParams): Response => {
     if (request.method !== 'POST') return oauthJson(405, { error: 'method_not_allowed' })
-    if (!basicClient(request)) return oauthJson(401, { error: 'unauthorized', error_description: 'Full authentication is required' })
+    if (!basicClient(request)) return oauthJson(401, { error_description: 'Client authentication failed', error: 'invalid_client' })
     const endpoint = url.pathname.slice(oauthUrl.pathname.length)
 
     if (endpoint === '/device') {
       if (url.searchParams.get('client_id') !== clientId) return oauthJson(400, { error: 'invalid_client' })
       const deviceCode = randomText(24)
-      const userCode = Array.from(crypto.getRandomValues(new Uint8Array(9)), (byte) => String.fromCharCode(97 + (byte % 26))).join('')
+      // Eight lower-case letters, as the sandbox gives them (`cfnbwjrn`).
+      const userCode = Array.from(crypto.getRandomValues(new Uint8Array(8)), (byte) => String.fromCharCode(97 + (byte % 26))).join('')
       devices.set(deviceCode, { userCode, approved: options.autoApproveDevices === true, used: false })
       return oauthJson(200, {
         device_code: deviceCode,
         user_code: userCode,
-        verification_uri: `${hosts.site}/skojarz-aplikacje`,
-        verification_uri_complete: `${hosts.site}/skojarz-aplikacje?code=${userCode}`,
+        verification_uri: `${hosts.site}/uzytkownik/bezpieczenstwo/skojarz-aplikacje`,
+        verification_uri_complete: `${hosts.site}/uzytkownik/bezpieczenstwo/skojarz-aplikacje?code=${userCode}`,
         expires_in: DEVICE_CODE_SECONDS,
         interval: 5,
       })
@@ -289,8 +310,8 @@ export function createFakeAllegroApi(options: FakeAllegroApiOptions = {}): FakeA
 
     if (endpoint === '/token' && form.get('grant_type') === DEVICE_CODE_GRANT) {
       const device = devices.get(form.get('device_code') ?? '')
-      // As Allegro documents it: an unknown or already used device code is a non-standard error text.
-      if (!device || device.used) return oauthJson(400, { error: 'Invalid device code' })
+      // The sandbox's answer to an unknown device code (a used one assumed the same).
+      if (!device || device.used) return oauthJson(400, { error_description: 'Invalid device code', error: 'invalid_request' })
       if (!device.approved) return oauthJson(400, { error: 'authorization_pending' })
       device.used = true
       return oauthJson(200, tokenBody(issueTokens()))
@@ -298,10 +319,14 @@ export function createFakeAllegroApi(options: FakeAllegroApiOptions = {}): FakeA
 
     if (endpoint === '/token' && form.get('grant_type') === 'refresh_token') {
       const refreshToken = form.get('refresh_token') ?? ''
-      if (!refreshTokens.has(refreshToken)) return oauthJson(400, { error: 'invalid_grant', error_description: 'Invalid refresh token' })
-      // Rotation: the used refresh token is spent (Allegro keeps it 60 s more; not simulated). The old access token
-      // stays valid until it expires, as a JWT does.
-      refreshTokens.delete(refreshToken)
+      const spentAt = spentRefreshTokens.get(refreshToken)
+      const inGrace = spentAt !== undefined && Date.parse(now()) - spentAt <= REFRESH_GRACE_MS
+      if (!refreshTokens.has(refreshToken) && !inGrace) {
+        return oauthJson(400, { error_description: 'Invalid refresh token', error: 'invalid_grant' })
+      }
+      // Rotation: both tokens are new. The spent refresh token is still taken for a while, and the old access token
+      // stays valid until it expires (both seen on the sandbox).
+      if (refreshTokens.delete(refreshToken)) spentRefreshTokens.set(refreshToken, Date.parse(now()))
       return oauthJson(200, tokenBody(issueTokens()))
     }
 
@@ -344,6 +369,9 @@ export function createFakeAllegroApi(options: FakeAllegroApiOptions = {}): FakeA
     const setStatus = (next: string) => {
       listing.publication = { ...(listing.publication ?? {}), status: next }
     }
+    const before = productOfferBody(offer)
+    let ending = false
+    let reopening = false
     if (body.stock !== undefined) {
       const available = body.stock?.available
       if (typeof available !== 'number' || !Number.isInteger(available) || available < 0) {
@@ -351,27 +379,36 @@ export function createFakeAllegroApi(options: FakeAllegroApiOptions = {}): FakeA
       }
       listing.stock = { ...(listing.stock ?? {}), available }
       // "Setting this quantity to 0 for 'ACTIVE' or 'ACTIVATING' offer will trigger changing its status to 'ENDED'".
-      if (available === 0 && (status() === 'ACTIVE' || status() === 'ACTIVATING')) {
-        setStatus('ENDED')
-        offer.endedBy = 'EMPTY_STOCK'
-      }
+      // A number above 0 leaves an ended Offer ended (seen on the sandbox).
+      ending = available === 0 && (status() === 'ACTIVE' || status() === 'ACTIVATING')
     }
     if (body.publication !== undefined) {
       if (body.publication?.status !== 'ACTIVE') return errors(422, 'VALIDATION_ERROR', 'Unsupported publication status')
       // An Offer is activated only with stock above 0.
       if ((listing.stock?.available ?? 0) <= 0) return errors(422, 'OFFER_STOCK_EMPTY', 'The offer has no stock to be activated')
+      if (reopenConflicts.delete(offerId)) {
+        return errors(409, 'OPERATION_IN_PROGRESS', 'The previous edition of the offer is still being processed')
+      }
+      reopening = status() !== 'ACTIVE'
+    }
+    // Allegro changes the publication after it answers (seconds later on the sandbox): a 200 shows the new stock with
+    // the publication as it was, a 202 the whole Offer as it was. The next read shows the change done.
+    const answered = productOfferBody(offer)
+    if (ending) {
+      setStatus('ENDED')
+      offer.endedBy = 'EMPTY_STOCK'
+    }
+    if (reopening) {
       setStatus('ACTIVE')
       offer.endedBy = null
     }
-    if (later.delete(offerId)) {
-      // Still processing: the next edit conflicts with it.
-      conflicts.set(offerId, (conflicts.get(offerId) ?? 0) + 1)
-      return apiJson(202, productOfferBody(offer), {
-        location: `${hosts.api}/sale/product-offers/${encodeURIComponent(offerId)}/operations/${String(++operations).padStart(8, '0')}`,
-        'retry-after': '5',
+    if (later.delete(offerId) || reopening) {
+      return apiJson(202, before, {
+        location: `${hosts.api}/sale/product-offers/${encodeURIComponent(offerId)}/operations/00000000-0000-4000-8000-${String(++operations).padStart(12, '0')}`,
+        'retry-after': '120',
       })
     }
-    return apiJson(200, productOfferBody(offer))
+    return apiJson(200, answered)
   }
 
   const listForms = (url: URL): Response => {
@@ -405,12 +442,13 @@ export function createFakeAllegroApi(options: FakeAllegroApiOptions = {}): FakeA
     const from = single(url, 'from')
     let start = 0
     if (from !== null) {
-      const index = state.events.findIndex((event) => event.id === from)
-      // Not documented: a 404 by default; the OpenAPI's only listed client error here is 422.
-      if (index === -1) {
-        const status = options.unknownFromStatus ?? 404
-        return status === 422 ? errors(422, 'VALIDATION_ERROR', 'Query parameters are incorrect') : errors(status, 'EVENT_NOT_FOUND', 'Event not found')
+      // As on the sandbox: `from` must be an integer in [0, 2^63 - 1] (422 otherwise), it is exclusive, and an integer
+      // the journal has no event for (far before the first, or after the last) answers an empty page, never an error.
+      if (!/^\d{1,19}$/.test(from) || BigInt(from) > MAX_EVENT_ID) {
+        return errors(422, 'VALIDATION_ERROR', 'must be greater than or equal to 0', 'getOrderEvents.from')
       }
+      const index = state.events.findIndex((event) => event.id === from)
+      if (index === -1) return apiJson(200, { events: [] })
       start = index + 1
     }
     const types = url.searchParams.getAll('type')
@@ -423,13 +461,14 @@ export function createFakeAllegroApi(options: FakeAllegroApiOptions = {}): FakeA
   }
 
   const setFulfillment = async (request: Request, formId: string): Promise<Response> => {
-    const form = state.forms.get(formId)
-    if (!form) return errors(404, 'NOT_FOUND', 'Order not found')
     const body = (await request.json().catch(() => null)) as { status?: unknown } | null
     const status = body?.status
     if (typeof status !== 'string' || !SELLER_FULFILLMENT_STATUSES.includes(status)) {
       return errors(422, 'VALIDATION_ERROR', 'The status is not allowed')
     }
+    // An unknown form is a 422 here, not a 404 (seen on the sandbox). Any seller status is accepted after any other.
+    const form = state.forms.get(formId)
+    if (!form) return errors(422, 'SellerOrdersStoreUnprocessableEntityException', `Failed to set status ${status} on order ${formId}`)
     form.fulfillment = { ...(form.fulfillment ?? {}), status }
     form.updatedAt = now()
     form.revision = `fa${String(++revision).padStart(6, '0')}`
@@ -440,7 +479,11 @@ export function createFakeAllegroApi(options: FakeAllegroApiOptions = {}): FakeA
   const api = async (request: Request, url: URL): Promise<Response> => {
     if (request.headers.get('accept') !== PUBLIC_JSON) return errors(406, 'NOT_ACCEPTABLE', 'Use the public media type')
     const token = /^Bearer (.+)$/.exec(request.headers.get('authorization') ?? '')?.[1]
-    if (!token || !accessTokens.has(token)) return oauthJson(401, { error: 'invalid_token', error_description: 'Invalid access token' })
+    if (!token) return unauthorized('unauthorized', 'Full authentication is required to access this resource')
+    if (!accessTokens.has(token)) {
+      // The sandbox's text for a token that is not a JWT; an issued but revoked one is assumed to answer alike.
+      return unauthorized('invalid_token', token.split('.').length === 3 ? 'Invalid access token' : 'Cannot convert access token to JSON')
+    }
     if (!['GET', 'HEAD'].includes(request.method) && request.headers.get('content-type') !== PUBLIC_JSON) {
       return errors(415, 'UNSUPPORTED_MEDIA_TYPE', 'Use the public media type')
     }
@@ -477,7 +520,9 @@ export function createFakeAllegroApi(options: FakeAllegroApiOptions = {}): FakeA
     if (fulfillmentFormId !== null && request.method === 'PUT') return setFulfillment(request, fulfillmentFormId)
     const formId = segment(/^\/order\/checkout-forms\/([^/]+)$/)
     if (formId !== null && request.method === 'GET') {
+      if (!TIME_UUID.test(formId)) return errors(422, 'VALIDATION_ERROR', 'Not valid time UUID', 'getOrder.checkoutFormId')
       const form = state.forms.get(formId)
+      // A merged form is assumed to answer 404 (not produced on the sandbox).
       return form ? apiJson(200, clone(form)) : errors(404, 'NOT_FOUND', 'Order not found')
     }
     return errors(404, 'NOT_FOUND', 'Resource not found')
@@ -519,6 +564,7 @@ export function createFakeAllegroApi(options: FakeAllegroApiOptions = {}): FakeA
     revokeTokens() {
       accessTokens.clear()
       refreshTokens.clear()
+      spentRefreshTokens.clear()
     },
     addEvent,
     setForm(form) {
@@ -527,16 +573,14 @@ export function createFakeAllegroApi(options: FakeAllegroApiOptions = {}): FakeA
     removeForm(id) {
       state.forms.delete(id)
     },
-    forgetEventsBefore(eventId) {
-      const index = state.events.findIndex((event) => event.id === eventId)
-      if (index === -1) throw new Error(`No event ${eventId}`)
-      state.events.splice(0, index)
-    },
     rejectOffer(offerId, code) {
       rejections.set(offerId, code)
     },
     conflictOffer(offerId, times = 1) {
       conflicts.set(offerId, (conflicts.get(offerId) ?? 0) + times)
+    },
+    conflictReopen(offerId) {
+      reopenConflicts.add(offerId)
     },
     acceptLater(offerId) {
       later.add(offerId)

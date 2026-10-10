@@ -38,7 +38,7 @@ function priceOf(offer: ListingOffer): Money | null {
 }
 
 function offerUrl(siteBaseUrl: string, id: string): string {
-  // The `/oferta/{id}` pattern is unverified against the API documentation.
+  // Not in the API documentation; the pattern opens the Offer page (checked on the sandbox).
   return `${siteBaseUrl.replace(/\/+$/, '')}/oferta/${encodeURIComponent(id)}`
 }
 

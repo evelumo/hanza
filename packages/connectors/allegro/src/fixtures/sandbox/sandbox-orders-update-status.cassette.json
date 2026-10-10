@@ -1,0 +1,107 @@
+{
+  "version": 1,
+  "interactions": [
+    {
+      "request": {
+        "method": "PUT",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/order/checkout-forms/7721b2f0-c4e8-11f1-904f-89bb34047197/fulfillment",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json",
+          "content-type": "application/vnd.allegro.public.v1+json"
+        },
+        "body": {
+          "json": {
+            "status": "PROCESSING"
+          }
+        }
+      },
+      "response": {
+        "status": 204,
+        "headers": {
+          "date": "Sat, 10 Oct 2026 20:58:00 GMT"
+        },
+        "body": null
+      }
+    },
+    {
+      "request": {
+        "method": "PUT",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/order/checkout-forms/7721b2f0-c4e8-11f1-904f-89bb34047197/fulfillment",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json",
+          "content-type": "application/vnd.allegro.public.v1+json"
+        },
+        "body": {
+          "json": {
+            "status": "SENT"
+          }
+        }
+      },
+      "response": {
+        "status": 204,
+        "headers": {
+          "date": "Sat, 10 Oct 2026 20:58:00 GMT"
+        },
+        "body": null
+      }
+    },
+    {
+      "request": {
+        "method": "PUT",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/order/checkout-forms/7721b2f0-c4e8-11f1-904f-89bb34047197/fulfillment",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json",
+          "content-type": "application/vnd.allegro.public.v1+json"
+        },
+        "body": {
+          "json": {
+            "status": "NEW"
+          }
+        }
+      },
+      "response": {
+        "status": 204,
+        "headers": {
+          "date": "Sat, 10 Oct 2026 20:58:00 GMT"
+        },
+        "body": null
+      }
+    },
+    {
+      "request": {
+        "method": "PUT",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/order/checkout-forms/00000000-0000-11f1-904f-89bb34047197/fulfillment",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json",
+          "content-type": "application/vnd.allegro.public.v1+json"
+        },
+        "body": {
+          "json": {
+            "status": "SENT"
+          }
+        }
+      },
+      "response": {
+        "status": 422,
+        "headers": {
+          "content-type": "application/json",
+          "date": "Sat, 10 Oct 2026 20:58:00 GMT"
+        },
+        "body": {
+          "json": {
+            "errors": [
+              {
+                "code": "SellerOrdersStoreUnprocessableEntityException",
+                "details": null,
+                "message": "Failed to set status SENT on order 00000000-0000-11f1-904f-89bb34047197.",
+                "metadata": {},
+                "path": "/order/checkout-forms/00000000-0000-11f1-904f-89bb34047197/fulfillment",
+                "userMessage": "Failed to set status SENT on order 00000000-0000-11f1-904f-89bb34047197."
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

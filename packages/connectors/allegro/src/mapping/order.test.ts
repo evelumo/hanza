@@ -45,7 +45,7 @@ describe('mapOrder', () => {
       billingAddress: null,
       lines: [
         {
-          externalId: '62ae358b-8f65-4fc4-9c77-bedf604a2e01',
+          externalId: '62ae358b-c4e8-11f1-9c77-bedf604a2e01',
           offerExternalId: '7834566001',
           sku: 'MUG-350-WHT',
           name: 'Ceramic mug 350 ml, white',
@@ -137,7 +137,7 @@ describe('mapOrder', () => {
     expect(order.lines).toEqual([
       expect.objectContaining({ offerExternalId: '7834566001', quantity: 2, unitPrice: { amount: '39.99', currency: 'PLN' } }),
       expect.objectContaining({
-        externalId: '62ae358b-8f65-4fc4-9c77-bedf604a2e08',
+        externalId: '62ae358b-c4e8-11f1-9c77-bedf604a2e08',
         offerExternalId: '7834566002',
         sku: null,
         name: 'Teapot 1 l, blue glaze',
@@ -320,7 +320,7 @@ describe('placedAtOf', () => {
   it('compares instants, not text', () => {
     const lines = [
       { ...base.lineItems[0]!, boughtAt: '2026-10-01T10:30:00+02:00' },
-      { ...base.lineItems[0]!, id: '62ae358b-8f65-4fc4-9c77-bedf604a2e99', boughtAt: '2026-10-01T09:00:00Z' },
+      { ...base.lineItems[0]!, id: '62ae358b-c4e8-11f1-9c77-bedf604a2e99', boughtAt: '2026-10-01T09:00:00Z' },
     ]
     expect(placedAtOf(parse(sampleCheckoutForm({ lineItems: lines })))).toBe('2026-10-01T10:30:00+02:00')
   })
@@ -409,12 +409,12 @@ describe('mapOrderUpdate', () => {
 
 describe('removedOrderUpdate', () => {
   it('is a cancelled fact for a form Allegro merged away', () => {
-    expect(removedOrderUpdate('29738e61-7f6a-4c45-89db-60ede9d61a20', '2026-10-05T10:00:00.000Z')).toEqual({
+    expect(removedOrderUpdate('29738e61-c4e8-11f1-89db-60ede9d61a20', '2026-10-05T10:00:00.000Z')).toEqual({
       kind: 'update',
-      externalId: '29738e61-7f6a-4c45-89db-60ede9d61a20',
+      externalId: '29738e61-c4e8-11f1-89db-60ede9d61a20',
       facts: [
         {
-          id: '29738e61-7f6a-4c45-89db-60ede9d61a20:removed',
+          id: '29738e61-c4e8-11f1-89db-60ede9d61a20:removed',
           type: 'cancelled',
           occurredAt: '2026-10-05T10:00:00.000Z',
           note: 'Merged into another order on the Channel',

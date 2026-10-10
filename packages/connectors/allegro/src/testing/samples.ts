@@ -28,9 +28,10 @@ export function sampleListingOffer(overrides: Partial<ListingOfferPayload> = {})
     ...unmodelled,
     sellingMode: { format: 'BUY_NOW', price: { amount: '39.99', currency: 'PLN' } },
     stock: { available: 23, ...{ sold: 3 } },
+    // The listing's publication has no `endedBy` (confirmed on the sandbox): only the product-offer resource tells it.
     publication: {
       status: 'ACTIVE',
-      ...{ startedAt: '2026-09-01T08:00:00Z', endingAt: null, endedAt: null },
+      ...{ startingAt: null, startedAt: '2026-09-01T08:00:00Z', endingAt: null, endedAt: null, marketplaces: { base: { id: 'allegro-pl' } } },
     },
     external: { id: 'MUG-350-WHT' },
     isFulfillment: false,
@@ -71,7 +72,7 @@ export function sampleCheckoutForm(overrides: Partial<CheckoutFormPayload> = {})
     note: { text: 'Seller note' },
   }
   return {
-    id: '29738e61-7f6a-4c45-89db-60ede9d61a01',
+    id: '29738e61-c4e8-11f1-89db-60ede9d61a01',
     ...unmodelled,
     buyer: {
       id: '23123123',
@@ -100,7 +101,7 @@ export function sampleCheckoutForm(overrides: Partial<CheckoutFormPayload> = {})
     invoice: { required: false },
     lineItems: [
       {
-        id: '62ae358b-8f65-4fc4-9c77-bedf604a2e01',
+        id: '62ae358b-c4e8-11f1-9c77-bedf604a2e01',
         offer: { id: '7834566001', name: 'Ceramic mug 350 ml, white', external: { id: 'MUG-350-WHT' } },
         quantity: 2,
         originalPrice: { amount: '39.99', currency: 'PLN' },
@@ -126,12 +127,12 @@ export function sampleOrderEvent(overrides: Partial<OrderEventPayload> = {}): Or
     marketplace: { id: 'allegro-pl' },
   }
   return {
-    id: 'MTUzMjYwMzg5ODMxNzQ5Nw',
+    id: '1791663869066571',
     type: 'READY_FOR_PROCESSING',
     occurredAt: '2026-10-01T09:10:05.000Z',
     order: {
       ...unmodelled,
-      checkoutForm: { id: '29738e61-7f6a-4c45-89db-60ede9d61a01', revision: '819b5836' },
+      checkoutForm: { id: '29738e61-c4e8-11f1-89db-60ede9d61a01', revision: '819b5836' },
     },
     ...overrides,
   }
@@ -141,7 +142,7 @@ const base = sampleCheckoutForm()
 const baseLine = base.lineItems[0]!
 
 function formId(suffix: string): string {
-  return `29738e61-7f6a-4c45-89db-60ede9d6${suffix}`
+  return `29738e61-c4e8-11f1-89db-60ede9d6${suffix}`
 }
 
 /** One scenario per mapping rule. Ids differ so a simulation can serve them side by side. */
@@ -215,9 +216,9 @@ export const forms = {
   multiLine: sampleCheckoutForm({
     id: formId('1a07'),
     lineItems: [
-      { ...baseLine, id: '62ae358b-8f65-4fc4-9c77-bedf604a2e07', boughtAt: '2026-10-01T09:02:00.000Z' },
+      { ...baseLine, id: '62ae358b-c4e8-11f1-9c77-bedf604a2e07', boughtAt: '2026-10-01T09:02:00.000Z' },
       {
-        id: '62ae358b-8f65-4fc4-9c77-bedf604a2e08',
+        id: '62ae358b-c4e8-11f1-9c77-bedf604a2e08',
         offer: { id: '7834566002', name: 'Teapot 1 l, blue glaze' },
         quantity: 1,
         originalPrice: { amount: '129.00', currency: 'PLN' },
@@ -322,7 +323,7 @@ export const forms = {
     lineItems: [
       {
         ...baseLine,
-        id: '62ae358b-8f65-4fc4-9c77-bedf604a2e17',
+        id: '62ae358b-c4e8-11f1-9c77-bedf604a2e17',
         quantity: 1,
         originalPrice: { amount: '990.00', currency: 'CZK' },
         price: { amount: '990.00', currency: 'CZK' },
@@ -373,8 +374,13 @@ export const offers = {
     external: { id: 'BOWL-240-GRY' },
   }),
 
-  /** No external id (SKU) set by the seller. */
-  withoutSignature: sampleListingOffer({ id: '7834566006', name: 'Stoneware plate 27 cm', external: null }),
+  /** No external id (SKU) set by the seller; a price without its trailing zero, as the sandbox lists some (`24.0`). */
+  withoutSignature: sampleListingOffer({
+    id: '7834566006',
+    name: 'Stoneware plate 27 cm',
+    sellingMode: { format: 'BUY_NOW', price: { amount: '24.0', currency: 'PLN' } },
+    external: null,
+  }),
 
   /** Fulfilled by Allegro's warehouse: skipped. */
   oneFulfillment: sampleListingOffer({ id: '7834566007', name: 'Milk jug 0.5 l', isFulfillment: true }),

@@ -92,9 +92,9 @@ describe('allegroAuth', () => {
 
   it('allows verification links on both environments only', () => {
     const hosts = allegroAuth.deviceFlow?.verificationHosts ?? []
-    expect(isAllowedVerificationUri('https://allegro.pl/skojarz-aplikacje?code=ABC', hosts)).toBe(true)
-    expect(isAllowedVerificationUri('https://allegro.pl.allegrosandbox.pl/skojarz-aplikacje', hosts)).toBe(true)
-    expect(isAllowedVerificationUri('https://allegro.pl.evil.example/skojarz-aplikacje', hosts)).toBe(false)
+    expect(isAllowedVerificationUri('https://allegro.pl/uzytkownik/bezpieczenstwo/skojarz-aplikacje?code=cfnbwjrn', hosts)).toBe(true)
+    expect(isAllowedVerificationUri('https://allegro.pl.allegrosandbox.pl/uzytkownik/bezpieczenstwo/skojarz-aplikacje', hosts)).toBe(true)
+    expect(isAllowedVerificationUri('https://allegro.pl.evil.example/uzytkownik/bezpieczenstwo/skojarz-aplikacje', hosts)).toBe(false)
   })
 })
 
@@ -175,9 +175,9 @@ describe('device flow', () => {
   }
   const device = {
     device_code: DEVICE_CODE,
-    user_code: 'ABC DEF GHI',
-    verification_uri: 'https://allegro.pl/skojarz-aplikacje',
-    verification_uri_complete: 'https://allegro.pl/skojarz-aplikacje?code=ABCDEFGHI',
+    user_code: 'cfnbwjrn',
+    verification_uri: 'https://allegro.pl/uzytkownik/bezpieczenstwo/skojarz-aplikacje',
+    verification_uri_complete: 'https://allegro.pl/uzytkownik/bezpieczenstwo/skojarz-aplikacje?code=cfnbwjrn',
     expires_in: 3600,
     interval: 5,
   }
@@ -191,16 +191,16 @@ describe('device flow', () => {
       expect(new URL(calls[0]?.url ?? '').searchParams.has('scope')).toBe(false)
       expect(started).toEqual({
         deviceCode: DEVICE_CODE,
-        userCode: 'ABC DEF GHI',
-        verificationUri: 'https://allegro.pl/skojarz-aplikacje',
-        verificationUriComplete: 'https://allegro.pl/skojarz-aplikacje?code=ABCDEFGHI',
+        userCode: 'cfnbwjrn',
+        verificationUri: 'https://allegro.pl/uzytkownik/bezpieczenstwo/skojarz-aplikacje',
+        verificationUriComplete: 'https://allegro.pl/uzytkownik/bezpieczenstwo/skojarz-aplikacje?code=cfnbwjrn',
         expiresInSeconds: 3600,
         intervalSeconds: 5,
       })
     })
 
     it('uses the sandbox OAuth host and accepts a missing complete link', async () => {
-      const { fetch, calls } = stubFetch(() => json({ ...device, verification_uri: 'https://allegro.pl.allegrosandbox.pl/skojarz-aplikacje', verification_uri_complete: undefined }))
+      const { fetch, calls } = stubFetch(() => json({ ...device, verification_uri: 'https://allegro.pl.allegrosandbox.pl/uzytkownik/bezpieczenstwo/skojarz-aplikacje', verification_uri_complete: undefined }))
       const started = await flow().start(context(fetch, 'sandbox'))
       expect(calls[0]?.url).toBe(`https://allegro.pl.allegrosandbox.pl/auth/oauth/device?client_id=${CLIENT_ID}`)
       expect(started.verificationUriComplete).toBeNull()
@@ -254,10 +254,11 @@ describe('device flow', () => {
       expect(calls).toHaveLength(1)
     })
 
-    it('treats another OAuth 400 (an invalid or used device code) as permanent', async () => {
-      const error = await failure(flow().poll(context(stubFetch(oauthError('invalid_grant')).fetch), DEVICE_CODE))
+    // The sandbox answers an unknown device code with `invalid_request`.
+    it.each(['invalid_request', 'invalid_grant'])('treats another OAuth 400 (%s) as permanent', async (code) => {
+      const error = await failure(flow().poll(context(stubFetch(oauthError(code)).fetch), DEVICE_CODE))
       expect(error).toBeInstanceOf(PermanentError)
-      expect((error as Error).message).toBe('400 invalid_grant')
+      expect((error as Error).message).toBe(`400 ${code}`)
       expectNoSecret(error)
     })
 

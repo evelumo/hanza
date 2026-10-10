@@ -4,14 +4,14 @@
     {
       "request": {
         "method": "GET",
-        "url": "https://api.allegro.pl.allegrosandbox.pl/order/events?from=MTc5MDAwMDAwMDAwMDAwMg&limit=100",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/order/events?from=00000000-0000-0000-0000-000000000000&limit=100",
         "headers": {
           "accept": "application/vnd.allegro.public.v1+json"
         },
         "body": null
       },
       "response": {
-        "status": 404,
+        "status": 422,
         "headers": {
           "content-type": "application/vnd.allegro.public.v1+json",
           "date": "Sat, 10 Oct 2026 12:00:00 GMT"
@@ -20,11 +20,11 @@
           "json": {
             "errors": [
               {
-                "code": "EVENT_NOT_FOUND",
-                "message": "Event not found",
+                "code": "VALIDATION_ERROR",
+                "message": "must be greater than or equal to 0",
                 "details": null,
-                "path": null,
-                "userMessage": "Event not found",
+                "path": "getOrderEvents.from",
+                "userMessage": "must be greater than or equal to 0",
                 "metadata": {}
               }
             ]
@@ -35,7 +35,7 @@
     {
       "request": {
         "method": "GET",
-        "url": "https://api.allegro.pl.allegrosandbox.pl/order/events?from=MTc5MDAwMDAwMDAwMDAxNg&limit=100",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/order/events?from=9223372036854775807&limit=100",
         "headers": {
           "accept": "application/vnd.allegro.public.v1+json"
         },
@@ -57,7 +57,29 @@
     {
       "request": {
         "method": "GET",
-        "url": "https://api.allegro.pl.allegrosandbox.pl/order/events?from=MTc5MDAwMDAwMDAwMDAxNg&limit=100",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/order/events?from=1791663800016000&limit=100",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/vnd.allegro.public.v1+json",
+          "date": "Sat, 10 Oct 2026 12:00:00 GMT"
+        },
+        "body": {
+          "json": {
+            "events": []
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/order/events?from=1791663800016000&limit=100",
         "headers": {
           "accept": "application/vnd.allegro.public.v1+json"
         },

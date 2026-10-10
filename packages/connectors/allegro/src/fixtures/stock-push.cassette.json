@@ -22,8 +22,8 @@
         "headers": {
           "content-type": "application/vnd.allegro.public.v1+json",
           "date": "Sat, 10 Oct 2026 12:00:00 GMT",
-          "location": "https://api.allegro.pl.allegrosandbox.pl/sale/product-offers/7834566001/operations/00000001",
-          "retry-after": "5"
+          "location": "https://api.allegro.pl.allegrosandbox.pl/sale/product-offers/7834566001/operations/00000000-0000-4000-8000-000000000001",
+          "retry-after": "120"
         },
         "body": {
           "json": {
@@ -44,7 +44,7 @@
               }
             },
             "stock": {
-              "available": 7,
+              "available": 23,
               "unit": "UNIT"
             },
             "publication": {
@@ -90,7 +90,7 @@
             "sellingMode": {
               "format": "BUY_NOW",
               "price": {
-                "amount": "39.99",
+                "amount": "24.0",
                 "currency": "PLN"
               }
             },
@@ -99,8 +99,8 @@
               "unit": "UNIT"
             },
             "publication": {
-              "status": "ENDED",
-              "endedBy": "EMPTY_STOCK",
+              "status": "ACTIVE",
+              "endedBy": null,
               "republish": false
             }
           }
@@ -230,12 +230,10 @@
         }
       },
       "response": {
-        "status": 202,
+        "status": 200,
         "headers": {
           "content-type": "application/vnd.allegro.public.v1+json",
-          "date": "Sat, 10 Oct 2026 12:00:00 GMT",
-          "location": "https://api.allegro.pl.allegrosandbox.pl/sale/product-offers/7834566009/operations/00000002",
-          "retry-after": "5"
+          "date": "Sat, 10 Oct 2026 12:00:00 GMT"
         },
         "body": {
           "json": {
@@ -324,6 +322,61 @@
     {
       "request": {
         "method": "PATCH",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/sale/product-offers/7834566004",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json",
+          "content-type": "application/vnd.allegro.public.v1+json"
+        },
+        "body": {
+          "json": {
+            "publication": {
+              "status": "ACTIVE"
+            }
+          }
+        }
+      },
+      "response": {
+        "status": 202,
+        "headers": {
+          "content-type": "application/vnd.allegro.public.v1+json",
+          "date": "Sat, 10 Oct 2026 12:00:00 GMT",
+          "location": "https://api.allegro.pl.allegrosandbox.pl/sale/product-offers/7834566004/operations/00000000-0000-4000-8000-000000000002",
+          "retry-after": "120"
+        },
+        "body": {
+          "json": {
+            "id": "7834566004",
+            "name": "Espresso cup 90 ml, black",
+            "language": "pl-PL",
+            "category": {
+              "id": "257929"
+            },
+            "external": {
+              "id": "CUP-090-BLK"
+            },
+            "sellingMode": {
+              "format": "BUY_NOW",
+              "price": {
+                "amount": "39.99",
+                "currency": "PLN"
+              }
+            },
+            "stock": {
+              "available": 3,
+              "unit": "UNIT"
+            },
+            "publication": {
+              "status": "ENDED",
+              "endedBy": "EMPTY_STOCK",
+              "republish": false
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "PATCH",
         "url": "https://api.allegro.pl.allegrosandbox.pl/sale/product-offers/7834566009",
         "headers": {
           "accept": "application/vnd.allegro.public.v1+json",
@@ -355,59 +408,6 @@
                 "metadata": {}
               }
             ]
-          }
-        }
-      }
-    },
-    {
-      "request": {
-        "method": "PATCH",
-        "url": "https://api.allegro.pl.allegrosandbox.pl/sale/product-offers/7834566004",
-        "headers": {
-          "accept": "application/vnd.allegro.public.v1+json",
-          "content-type": "application/vnd.allegro.public.v1+json"
-        },
-        "body": {
-          "json": {
-            "publication": {
-              "status": "ACTIVE"
-            }
-          }
-        }
-      },
-      "response": {
-        "status": 200,
-        "headers": {
-          "content-type": "application/vnd.allegro.public.v1+json",
-          "date": "Sat, 10 Oct 2026 12:00:00 GMT"
-        },
-        "body": {
-          "json": {
-            "id": "7834566004",
-            "name": "Espresso cup 90 ml, black",
-            "language": "pl-PL",
-            "category": {
-              "id": "257929"
-            },
-            "external": {
-              "id": "CUP-090-BLK"
-            },
-            "sellingMode": {
-              "format": "BUY_NOW",
-              "price": {
-                "amount": "39.99",
-                "currency": "PLN"
-              }
-            },
-            "stock": {
-              "available": 3,
-              "unit": "UNIT"
-            },
-            "publication": {
-              "status": "ACTIVE",
-              "endedBy": null,
-              "republish": false
-            }
           }
         }
       }
@@ -522,6 +522,59 @@
                 "metadata": {}
               }
             ]
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "PATCH",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/sale/product-offers/7834566010",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json",
+          "content-type": "application/vnd.allegro.public.v1+json"
+        },
+        "body": {
+          "json": {
+            "stock": {
+              "available": 0
+            }
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/vnd.allegro.public.v1+json",
+          "date": "Sat, 10 Oct 2026 12:00:00 GMT"
+        },
+        "body": {
+          "json": {
+            "id": "7834566010",
+            "name": "Saucer, white",
+            "language": "pl-PL",
+            "category": {
+              "id": "257929"
+            },
+            "external": {
+              "id": "SAUCER-01"
+            },
+            "sellingMode": {
+              "format": "BUY_NOW",
+              "price": {
+                "amount": "39.99",
+                "currency": "PLN"
+              }
+            },
+            "stock": {
+              "available": 0,
+              "unit": "UNIT"
+            },
+            "publication": {
+              "status": "ENDED",
+              "endedBy": "EMPTY_STOCK",
+              "republish": false
+            }
           }
         }
       }

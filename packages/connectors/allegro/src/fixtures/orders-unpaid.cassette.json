@@ -20,7 +20,7 @@
           "json": {
             "checkoutForms": [
               {
-                "id": "7a2e4c10-5b7f-4d3e-8f00-1a2b3c4d0001",
+                "id": "7a2e4c10-c4ea-11f1-8f00-1a2b3c4d0001",
                 "messageToSeller": "scrubbed-1",
                 "surcharges": [],
                 "note": {
@@ -69,7 +69,7 @@
                 },
                 "lineItems": [
                   {
-                    "id": "7a2e4c10-5b7f-4d3e-8f00-11112222",
+                    "id": "7a2e4c10-c4ea-11f1-8f00-11112222",
                     "offer": {
                       "id": "7834566001",
                       "name": "Ceramic mug 350 ml, white",
@@ -111,7 +111,7 @@
     {
       "request": {
         "method": "GET",
-        "url": "https://api.allegro.pl.allegrosandbox.pl/order/events?from=MTc5MDAwMDAwMDAwMDAwMQ&limit=100",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/order/events?from=1791663800001000&limit=100",
         "headers": {
           "accept": "application/vnd.allegro.public.v1+json"
         },
@@ -127,7 +127,7 @@
           "json": {
             "events": [
               {
-                "id": "MTc5MDAwMDAwMDAwMDAwMg",
+                "id": "1791663800002000",
                 "occurredAt": "2026-10-06T10:01:00.000Z",
                 "type": "FILLED_IN",
                 "order": {
@@ -145,7 +145,7 @@
                   },
                   "lineItems": [
                     {
-                      "id": "7a2e4c10-5b7f-4d3e-8f00-11112222",
+                      "id": "7a2e4c10-c4ea-11f1-8f00-11112222",
                       "offer": {
                         "id": "7834566001",
                         "name": "Ceramic mug 350 ml, white",
@@ -166,7 +166,7 @@
                     }
                   ],
                   "checkoutForm": {
-                    "id": "7a2e4c10-5b7f-4d3e-8f00-1a2b3c4d0002",
+                    "id": "7a2e4c10-c4ea-11f1-8f00-1a2b3c4d0002",
                     "revision": "819b5836"
                   }
                 }
@@ -179,7 +179,7 @@
     {
       "request": {
         "method": "GET",
-        "url": "https://api.allegro.pl.allegrosandbox.pl/order/checkout-forms/7a2e4c10-5b7f-4d3e-8f00-1a2b3c4d0002",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/order/checkout-forms/7a2e4c10-c4ea-11f1-8f00-1a2b3c4d0002",
         "headers": {
           "accept": "application/vnd.allegro.public.v1+json"
         },
@@ -193,7 +193,7 @@
         },
         "body": {
           "json": {
-            "id": "7a2e4c10-5b7f-4d3e-8f00-1a2b3c4d0002",
+            "id": "7a2e4c10-c4ea-11f1-8f00-1a2b3c4d0002",
             "messageToSeller": "scrubbed-1",
             "surcharges": [],
             "note": {
@@ -242,7 +242,7 @@
             },
             "lineItems": [
               {
-                "id": "7a2e4c10-5b7f-4d3e-8f00-11112222",
+                "id": "7a2e4c10-c4ea-11f1-8f00-11112222",
                 "offer": {
                   "id": "7834566001",
                   "name": "Ceramic mug 350 ml, white",
@@ -280,7 +280,7 @@
     {
       "request": {
         "method": "GET",
-        "url": "https://api.allegro.pl.allegrosandbox.pl/order/events?from=MTc5MDAwMDAwMDAwMDAwMg&limit=100",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/order/events?from=1791663800002000&limit=100",
         "headers": {
           "accept": "application/vnd.allegro.public.v1+json"
         },
@@ -296,7 +296,7 @@
           "json": {
             "events": [
               {
-                "id": "MTc5MDAwMDAwMDAwMDAwMw",
+                "id": "1791663800003000",
                 "occurredAt": "2026-10-06T12:00:00.000Z",
                 "type": "READY_FOR_PROCESSING",
                 "order": {
@@ -314,7 +314,7 @@
                   },
                   "lineItems": [
                     {
-                      "id": "7a2e4c10-5b7f-4d3e-8f00-11112222",
+                      "id": "7a2e4c10-c4ea-11f1-8f00-11112222",
                       "offer": {
                         "id": "7834566001",
                         "name": "Ceramic mug 350 ml, white",
@@ -335,13 +335,13 @@
                     }
                   ],
                   "checkoutForm": {
-                    "id": "7a2e4c10-5b7f-4d3e-8f00-1a2b3c4d0001",
+                    "id": "7a2e4c10-c4ea-11f1-8f00-1a2b3c4d0001",
                     "revision": "819b5836"
                   }
                 }
               },
               {
-                "id": "MTc5MDAwMDAwMDAwMDAwNA",
+                "id": "1791663800004000",
                 "occurredAt": "2026-10-06T12:30:00.000Z",
                 "type": "READY_FOR_PROCESSING",
                 "order": {
@@ -359,7 +359,7 @@
                   },
                   "lineItems": [
                     {
-                      "id": "7a2e4c10-5b7f-4d3e-8f00-11112222",
+                      "id": "7a2e4c10-c4ea-11f1-8f00-11112222",
                       "offer": {
                         "id": "7834566001",
                         "name": "Ceramic mug 350 ml, white",
@@ -380,7 +380,7 @@
                     }
                   ],
                   "checkoutForm": {
-                    "id": "7a2e4c10-5b7f-4d3e-8f00-1a2b3c4d0002",
+                    "id": "7a2e4c10-c4ea-11f1-8f00-1a2b3c4d0002",
                     "revision": "819b5836"
                   }
                 }
@@ -393,7 +393,7 @@
     {
       "request": {
         "method": "GET",
-        "url": "https://api.allegro.pl.allegrosandbox.pl/order/checkout-forms/7a2e4c10-5b7f-4d3e-8f00-1a2b3c4d0001",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/order/checkout-forms/7a2e4c10-c4ea-11f1-8f00-1a2b3c4d0001",
         "headers": {
           "accept": "application/vnd.allegro.public.v1+json"
         },
@@ -407,7 +407,7 @@
         },
         "body": {
           "json": {
-            "id": "7a2e4c10-5b7f-4d3e-8f00-1a2b3c4d0001",
+            "id": "7a2e4c10-c4ea-11f1-8f00-1a2b3c4d0001",
             "messageToSeller": "scrubbed-1",
             "surcharges": [],
             "note": {
@@ -470,7 +470,7 @@
             },
             "lineItems": [
               {
-                "id": "7a2e4c10-5b7f-4d3e-8f00-11112222",
+                "id": "7a2e4c10-c4ea-11f1-8f00-11112222",
                 "offer": {
                   "id": "7834566001",
                   "name": "Ceramic mug 350 ml, white",
@@ -508,7 +508,7 @@
     {
       "request": {
         "method": "GET",
-        "url": "https://api.allegro.pl.allegrosandbox.pl/order/checkout-forms/7a2e4c10-5b7f-4d3e-8f00-1a2b3c4d0002",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/order/checkout-forms/7a2e4c10-c4ea-11f1-8f00-1a2b3c4d0002",
         "headers": {
           "accept": "application/vnd.allegro.public.v1+json"
         },
@@ -522,7 +522,7 @@
         },
         "body": {
           "json": {
-            "id": "7a2e4c10-5b7f-4d3e-8f00-1a2b3c4d0002",
+            "id": "7a2e4c10-c4ea-11f1-8f00-1a2b3c4d0002",
             "messageToSeller": "scrubbed-1",
             "surcharges": [],
             "note": {
@@ -585,7 +585,7 @@
             },
             "lineItems": [
               {
-                "id": "7a2e4c10-5b7f-4d3e-8f00-11112222",
+                "id": "7a2e4c10-c4ea-11f1-8f00-11112222",
                 "offer": {
                   "id": "7834566001",
                   "name": "Ceramic mug 350 ml, white",

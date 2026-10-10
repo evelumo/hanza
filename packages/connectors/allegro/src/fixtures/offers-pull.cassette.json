@@ -49,9 +49,15 @@
                 },
                 "publication": {
                   "status": "ACTIVE",
+                  "startingAt": null,
                   "startedAt": "2026-09-01T08:00:00Z",
                   "endingAt": null,
-                  "endedAt": null
+                  "endedAt": null,
+                  "marketplaces": {
+                    "base": {
+                      "id": "allegro-pl"
+                    }
+                  }
                 },
                 "external": {
                   "id": "MUG-350-WHT"
@@ -78,7 +84,7 @@
                 "sellingMode": {
                   "format": "BUY_NOW",
                   "price": {
-                    "amount": "39.99",
+                    "amount": "24.0",
                     "currency": "PLN"
                   }
                 },
@@ -88,9 +94,15 @@
                 },
                 "publication": {
                   "status": "ACTIVE",
+                  "startingAt": null,
                   "startedAt": "2026-09-01T08:00:00Z",
                   "endingAt": null,
-                  "endedAt": null
+                  "endedAt": null,
+                  "marketplaces": {
+                    "base": {
+                      "id": "allegro-pl"
+                    }
+                  }
                 },
                 "external": null,
                 "isFulfillment": false
@@ -198,9 +210,15 @@
                 },
                 "publication": {
                   "status": "ACTIVE",
+                  "startingAt": null,
                   "startedAt": "2026-09-01T08:00:00Z",
                   "endingAt": null,
-                  "endedAt": null
+                  "endedAt": null,
+                  "marketplaces": {
+                    "base": {
+                      "id": "allegro-pl"
+                    }
+                  }
                 },
                 "external": null,
                 "isFulfillment": false
@@ -235,9 +253,15 @@
                 },
                 "publication": {
                   "status": "ACTIVE",
+                  "startingAt": null,
                   "startedAt": "2026-09-01T08:00:00Z",
                   "endingAt": null,
-                  "endedAt": null
+                  "endedAt": null,
+                  "marketplaces": {
+                    "base": {
+                      "id": "allegro-pl"
+                    }
+                  }
                 },
                 "external": {
                   "id": "MUG-350-WHT"

@@ -57,9 +57,13 @@ const credentials: AllegroCredentials = {
 const recordedApp: AllegroApp = { ...app, clientId: 'recorded-client-id', clientSecret: 'recorded-client-secret' }
 const recordedSecrets = [recordedApp.clientId, recordedApp.clientSecret, 'recorded-revoked-access-token', 'recorded-refused-refresh-token']
 
-// The sample journal has one event per sample form; the conformance recording forgets the first two.
+// The sample journal has one event per sample form.
 const SEED_EVENTS = Object.keys(forms).length
-const expiredCursor = encodeCursor({ phase: 'journal', eventId: fakeEventId(1), boughtBefore: '2026-10-01T00:00:00.000Z' })
+// Allegro's journal never refuses an integer position (one it has no event for answers an empty page); it refuses a
+// `from` that is not an integer with 422, as for the id the sandbox was probed with. The connector writes only ids
+// Allegro issued, so this is the one expired cursor a recording can produce.
+const MALFORMED_EVENT_ID = '00000000-0000-0000-0000-000000000000'
+const expiredCursor = encodeCursor({ phase: 'journal', eventId: MALFORMED_EVENT_ID, boughtBefore: '2026-10-01T00:00:00.000Z' })
 // The feed's boundary in the scenarios: the sample Orders were placed before it.
 const BOUNDARY = '2026-10-05T00:00:00.000Z'
 
@@ -189,8 +193,6 @@ describe('allegro connector with recorded fixtures', () => {
       scrub: allegroScrub,
       recording: async () => {
         const api = createFakeAllegroApi({ clientId: recordedApp.clientId, clientSecret: recordedApp.clientSecret, autoApproveDevices: true })
-        // Older than the journal keeps: `expiredCursor` points at event 1.
-        api.forgetEventsBefore(fakeEventId(3))
         const recorded = await signInThroughDeviceFlow(api, recordedApp)
         return {
           app: recordedApp,
@@ -205,7 +207,8 @@ describe('allegro connector with recorded fixtures', () => {
   })
 
   it('keeps tokens, client credentials and Buyer data out of every committed cassette', async () => {
-    const names = (await readdir(fixtures)).sort()
+    // The sandbox's cassettes (`fixtures/sandbox/`) have a lint of their own in `sandbox.test.ts`.
+    const names = (await readdir(fixtures)).filter((name) => name.endsWith('.cassette.json')).sort()
     for (const name of [CONFORMANCE_CASSETTE, DEVICE_FLOW_CASSETTE, REFRESH_CASSETTE, REFRESH_REFUSED_CASSETTE, UNAUTHORIZED_CASSETTE]) {
       expect(names).toContain(name)
     }
@@ -226,7 +229,8 @@ describe('allegro connector with recorded fixtures', () => {
     const ctx = { app, config: {}, fetch: api.fetch, log: () => {} }
     const flow = allegroAuth.deviceFlow!
     const started = await flow.start(ctx)
-    expect(started.verificationUri).toBe('https://allegro.pl.allegrosandbox.pl/skojarz-aplikacje')
+    expect(started.verificationUri).toBe('https://allegro.pl.allegrosandbox.pl/uzytkownik/bezpieczenstwo/skojarz-aplikacje')
+    expect(started.userCode).toMatch(/^[a-z]{8}$/)
     expect(api.calls[0]).toMatchObject({ method: 'POST', host: 'allegro.pl.allegrosandbox.pl', path: '/auth/oauth/device', query: { client_id: [app.clientId] } })
     expect(await flow.poll(ctx, started.deviceCode)).toEqual({ status: 'pending' })
     api.approve(started.userCode)
@@ -235,7 +239,11 @@ describe('allegro connector with recorded fixtures', () => {
     const signedIn = (approved as { credentials: AllegroCredentials }).credentials
     const rotated = await allegroAuth.refresh!(ctx, signedIn)
     expect(rotated.refreshToken).not.toBe(signedIn.refreshToken)
-    expect(await rejection(allegroAuth.refresh!(ctx, signedIn))).toBeInstanceOf(AuthExpiredError)
+    expect(rotated.accessToken).not.toBe(signedIn.accessToken)
+    // Right after the rotation the spent refresh token still works (a grace period, seen on the sandbox).
+    expect((await allegroAuth.refresh!(ctx, signedIn)).refreshToken).not.toBe(rotated.refreshToken)
+    api.revokeTokens()
+    expect(await rejection(allegroAuth.refresh!(ctx, rotated))).toBeInstanceOf(AuthExpiredError)
     expect(await rejection(flow.poll(ctx, started.deviceCode))).toBeInstanceOf(PermanentError)
   })
 })
@@ -259,7 +267,8 @@ describe('offers.pull', () => {
         sku: null,
         name: 'Stoneware plate 27 cm',
         url: 'https://allegro.pl.allegrosandbox.pl/oferta/7834566006',
-        price: { amount: '39.99', currency: 'PLN' },
+        // As Allegro sends it: without the trailing zero.
+        price: { amount: '24.0', currency: 'PLN' },
         status: 'active',
       },
       {
@@ -365,8 +374,8 @@ describe('orders.pull', () => {
   })
 
   it('follows the journal: full Orders only after the boundary, updates before it, a removed form cancelled', async () => {
-    const afterBoundary = formBoughtAt('3f6c0a51-0c1e-4b8e-9a51-2c51a0f00001', '2026-10-06T09:00:00.000Z')
-    const cancelledWithoutAddress = formBoughtAt('3f6c0a51-0c1e-4b8e-9a51-2c51a0f00002', '2026-10-06T09:30:00.000Z', {
+    const afterBoundary = formBoughtAt('3f6c0a51-c4e9-11f1-9a51-2c51a0f00001', '2026-10-06T09:00:00.000Z')
+    const cancelledWithoutAddress = formBoughtAt('3f6c0a51-c4e9-11f1-9a51-2c51a0f00002', '2026-10-06T09:30:00.000Z', {
       status: 'CANCELLED',
       buyer: { ...sampleCheckoutForm().buyer, address: null },
       payment: { type: 'ONLINE' },
@@ -374,10 +383,10 @@ describe('orders.pull', () => {
       updatedAt: '2026-10-06T11:00:00.000Z',
     })
     // Lines bought on both sides of the boundary: the latest purchase time decides, `placedAt` stays the earliest.
-    const straddling = formBoughtAt('3f6c0a51-0c1e-4b8e-9a51-2c51a0f00003', '2026-10-04T23:00:00.000Z', {
+    const straddling = formBoughtAt('3f6c0a51-c4e9-11f1-9a51-2c51a0f00003', '2026-10-04T23:00:00.000Z', {
       lineItems: [
-        { ...sampleCheckoutForm().lineItems[0]!, id: '3f6c0a51-0c1e-4b8e-9a51-2c51a0f10003', boughtAt: '2026-10-04T23:00:00.000Z' },
-        { ...sampleCheckoutForm().lineItems[0]!, id: '3f6c0a51-0c1e-4b8e-9a51-2c51a0f20003', boughtAt: '2026-10-05T01:00:00.000Z' },
+        { ...sampleCheckoutForm().lineItems[0]!, id: '3f6c0a51-c4e9-11f1-9a51-2c51a0f10003', boughtAt: '2026-10-04T23:00:00.000Z' },
+        { ...sampleCheckoutForm().lineItems[0]!, id: '3f6c0a51-c4e9-11f1-9a51-2c51a0f20003', boughtAt: '2026-10-05T01:00:00.000Z' },
       ],
       updatedAt: '2026-10-05T01:05:00.000Z',
     })
@@ -467,12 +476,12 @@ describe('orders.pull', () => {
 
   it('reports an unpaid Order awaiting payment, then its payment with the delivery address', async () => {
     const accountOnly = { delivery: { method: { id: '1fa56f79-4b6a-4821-a6f2-ca9c16d5c925', name: 'Allegro Kurier DPD' } } }
-    const unpaidBefore = formBoughtAt('7a2e4c10-5b7f-4d3e-8f00-1a2b3c4d0001', '2026-10-03T10:00:00.000Z', {
+    const unpaidBefore = formBoughtAt('7a2e4c10-c4ea-11f1-8f00-1a2b3c4d0001', '2026-10-03T10:00:00.000Z', {
       status: 'FILLED_IN',
       payment: { type: 'ONLINE' },
       ...accountOnly,
     })
-    const unpaidAfter = formBoughtAt('7a2e4c10-5b7f-4d3e-8f00-1a2b3c4d0002', '2026-10-06T10:00:00.000Z', {
+    const unpaidAfter = formBoughtAt('7a2e4c10-c4ea-11f1-8f00-1a2b3c4d0002', '2026-10-06T10:00:00.000Z', {
       status: 'FILLED_IN',
       payment: { type: 'ONLINE' },
       ...accountOnly,
@@ -526,7 +535,7 @@ describe('orders.pull', () => {
     const listed = Array.from({ length: count }, (_, index) => {
       const n = index + 1
       const boughtAt = new Date(Date.parse('2026-09-20T00:00:00.000Z') + n * 60_000).toISOString()
-      return compactForm(`9b1e7d00-2c4f-4a8e-b000-${String(n).padStart(12, '0')}`, boughtAt)
+      return compactForm(`9b1e7d00-c4eb-11f1-b000-${String(n).padStart(12, '0')}`, boughtAt)
     })
     // Already shipped: on the page (the query cannot filter by status), left out by the connector.
     listed[9] = { ...listed[9]!, fulfillment: { status: 'SENT', provider: { id: 'SELLER' } } }
@@ -555,27 +564,33 @@ describe('orders.pull', () => {
     expect(journal).toEqual({ items: [], nextCursor: second.nextCursor, hasMore: false })
   })
 
-  it('fails with CursorExpiredError when the journal no longer has the position, and keeps a 401 a sign-in problem', async () => {
-    const scenario = await openScenario('orders-expired-cursor', (api) => api.forgetEventsBefore(fakeEventId(5)))
-    const expired = await rejection(pullOrders(scenario.ctx, encodeCursor({ phase: 'journal', eventId: fakeEventId(2), boughtBefore: BOUNDARY })))
+  it('fails with CursorExpiredError when the journal refuses the position, reads an unknown one as empty, and keeps a 401 a sign-in problem', async () => {
+    const scenario = await openScenario('orders-expired-cursor')
+    const expired = await rejection(pullOrders(scenario.ctx, encodeCursor({ phase: 'journal', eventId: MALFORMED_EVENT_ID, boughtBefore: BOUNDARY })))
+    // An integer the journal has no event for (here the largest it takes) is not refused: an empty page, the same cursor.
+    const beyond = encodeCursor({ phase: 'journal', eventId: '9223372036854775807', boughtBefore: BOUNDARY })
+    const empty = await pullOrders(scenario.ctx, beyond)
     const kept = await pullOrders(scenario.ctx, encodeCursor({ phase: 'journal', eventId: fakeEventId(SEED_EVENTS), boughtBefore: BOUNDARY }))
     scenario.script((api) => api.revokeTokens())
     const signedOut = await rejection(pullOrders(scenario.ctx, encodeCursor({ phase: 'journal', eventId: fakeEventId(SEED_EVENTS), boughtBefore: BOUNDARY })))
     await scenario.close()
 
+    expect(scenario.sent[0]).toMatchObject({ path: '/order/events', query: { from: [MALFORMED_EVENT_ID], limit: ['100'] } })
     expect(expired).toBeInstanceOf(CursorExpiredError)
+    expect(empty).toEqual({ items: [], nextCursor: beyond, hasMore: false })
     expect(kept).toMatchObject({ items: [], hasMore: false })
     expect(signedOut).toBeInstanceOf(AuthExpiredError)
   })
 
-  it('takes a 422 for a journal position as an expired cursor too, but not without a position', async () => {
-    const scenario = await openScenario('orders-expired-cursor-422', (api) => api.forgetEventsBefore(fakeEventId(5)), {
-      api: { unknownFromStatus: 422 },
-    })
-    const expired = await rejection(pullOrders(scenario.ctx, encodeCursor({ phase: 'journal', eventId: fakeEventId(2), boughtBefore: BOUNDARY })))
-    await scenario.close()
-    expect(scenario.sent[0]).toMatchObject({ path: '/order/events', query: { from: [fakeEventId(2)], limit: ['100'] } })
-    expect(expired).toBeInstanceOf(CursorExpiredError)
+  it('takes a 400 or 404 with an Allegro error body for a journal position as an expired cursor too, but not without a position', async () => {
+    // Never seen on the sandbox (it answers 422): a guard in case Allegro changes how it refuses a position.
+    for (const status of [400, 404]) {
+      const answer: typeof fetch = async () => new Response(JSON.stringify({ errors: [{ code: 'NOT_FOUND' }] }), { status })
+      const ctx: AllegroContext = { app, config: {}, credentials, fetch: answer, log: () => {} }
+      expect(await rejection(pullOrders(ctx, encodeCursor({ phase: 'journal', eventId: fakeEventId(2), boughtBefore: BOUNDARY })))).toBeInstanceOf(
+        CursorExpiredError,
+      )
+    }
 
     // An empty-journal start has no `from`: nothing can have expired, so the same statuses stay permanent.
     for (const status of [400, 404, 422]) {
@@ -614,29 +629,28 @@ describe('stock.push', () => {
     { offerExternalId: '7834566003', sku: null, available: 4 },
     { offerExternalId: '7834566007', sku: 'MUG-350-WHT', available: 1 },
     { offerExternalId: '7834569999', sku: null, available: 1 },
+    { offerExternalId: '7834566010', sku: 'SAUCER-01', available: 0 },
   ]
 
   it('sets each Offer, ends it at 0, reopens only a sold-out one, and reports refusals per Offer', async () => {
+    const soldOut = (id: string, name: string, sku: string) => ({
+      listing: sampleListingOffer({ id, name, stock: { available: 0 }, publication: { status: 'ENDED' }, external: { id: sku } }),
+      endedBy: 'EMPTY_STOCK',
+    })
     const scenario = await openScenario('stock-push', (api) => {
-      // Accepted for processing: the next edit of it conflicts.
+      // Accepted for processing: a 202 showing the Offer as it was.
       api.acceptLater('7834566001')
-      // A second sold-out Offer, whose stock edit is still processing when the reopen comes.
-      api.state.offers.set('7834566009', {
-        listing: sampleListingOffer({
-          id: '7834566009',
-          name: 'Sugar bowl, white',
-          stock: { available: 0 },
-          publication: { status: 'ENDED' },
-          external: { id: 'SUGAR-BOWL-01' },
-        }),
-        endedBy: 'EMPTY_STOCK',
-      })
-      api.acceptLater('7834566009')
+      // A second sold-out Offer, whose reopen meets an edit still being processed (a 409 never seen on the sandbox).
+      api.state.offers.set('7834566009', soldOut('7834566009', 'Sugar bowl, white', 'SUGAR-BOWL-01'))
+      api.conflictReopen('7834566009')
+      // Sold out already: a 0 leaves it ended.
+      api.state.offers.set('7834566010', soldOut('7834566010', 'Saucer, white', 'SAUCER-01'))
       api.rejectOffer('7834566003', 'ConstraintViolationException.QuantityTooHigh')
       api.forbidOffer('7834566007')
     })
     const results = await pushStock(scenario.ctx, levels)
-    // The 202 above is still being processed: a 409 on the stock edit fails the whole push, to be retried.
+    // An earlier edit still being processed: a 409 on the stock edit fails the whole push, to be retried.
+    scenario.script((api) => api.conflictOffer('7834566001'))
     const conflict = await rejection(pushStock(scenario.ctx, [{ offerExternalId: '7834566001', sku: 'MUG-350-WHT', available: 5 }]))
     const sentBefore = scenario.sent.length
     expect(await pushStock(scenario.ctx, [])).toEqual([])
@@ -645,15 +659,18 @@ describe('stock.push', () => {
 
     expect(results).toEqual([
       { offerExternalId: '7834566001', outcome: 'ok' },
+      // The answer still shows the Offer active (Allegro ends it seconds later): a 0 is `ended` all the same.
       { offerExternalId: '7834566006', outcome: 'ended' },
       // A draft given 0 stays a draft: set, not ended.
       { offerExternalId: '7834566008', outcome: 'ok' },
+      // Set, still ended (`EMPTY_STOCK`), then reopened: the reopen answers 202 showing the Offer still ended.
       { offerExternalId: '7834566004', outcome: 'ok' },
       { offerExternalId: '7834566009', outcome: 'rejected', code: 'OFFER_REOPEN_PENDING' },
       { offerExternalId: '7834566005', outcome: 'rejected', code: 'OFFER_ENDED_USER' },
       { offerExternalId: '7834566003', outcome: 'rejected', code: 'ConstraintViolationException.QuantityTooHigh' },
       { offerExternalId: '7834566007', outcome: 'rejected', code: 'FORBIDDEN' },
       { offerExternalId: '7834569999', outcome: 'rejected', code: 'OFFER_NOT_FOUND' },
+      { offerExternalId: '7834566010', outcome: 'ended' },
     ])
     const patches = scenario.sent
       .slice(0, -1)
@@ -672,6 +689,7 @@ describe('stock.push', () => {
         'PATCH 7834566003 {"stock":{"available":4}}',
         'PATCH 7834566007 {"stock":{"available":1}}',
         'PATCH 7834569999 {"stock":{"available":1}}',
+        'PATCH 7834566010 {"stock":{"available":0}}',
       ].sort(),
     )
     expect(conflict).toBeInstanceOf(TransientError)
@@ -691,7 +709,8 @@ describe('orders.updateStatus', () => {
     const id = forms.paidOnline.id
     const scenario = await openScenario('orders-update-status')
     for (const phase of ['new', 'processing', 'shipped', 'cancelled'] as const) await updateStatus(scenario.ctx, { orderExternalId: id, phase })
-    const unknown = await rejection(updateStatus(scenario.ctx, { orderExternalId: '00000000-0000-4000-8000-000000000000', phase: 'shipped' }))
+    // Allegro answers an unknown form 422 here (seen on the sandbox), not 404.
+    const unknown = await rejection(updateStatus(scenario.ctx, { orderExternalId: '00000000-0000-1000-8000-000000000000', phase: 'shipped' }))
     scenario.script((api) => api.revokeTokens())
     const signedOut = await rejection(updateStatus(scenario.ctx, { orderExternalId: id, phase: 'processing' }))
     await scenario.close()

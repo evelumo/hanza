@@ -28,8 +28,9 @@ async function drain(response: Response): Promise<void> {
 }
 
 /**
- * The Offer after an accepted edit. A 202 (accepted, still processing) may carry the Offer as it was; when its body
- * does not parse there is nothing to tell from it (null).
+ * The Offer an accepted stock edit answers with. Allegro applies the publication side of an edit later (seen on the
+ * sandbox: a 0 answers 200 still `ACTIVE`, the Offer is `ENDED` seconds after), and a 202 shows the Offer as it was
+ * before the edit; when a 202's body does not parse there is nothing to tell from it (null).
  */
 async function editedOffer(response: Response): Promise<ProductOffer | null> {
   if (response.status === 202) {
@@ -66,17 +67,20 @@ async function pushOne(ctx: AllegroContext, level: StockLevel): Promise<Outcome>
   if (!(answer instanceof Response)) return { result: answer, forbidden: answer.outcome === 'rejected' && answer.code === FORBIDDEN }
   const done = (result: StockPushResult): Outcome => ({ result, forbidden: false })
   const offer = await editedOffer(answer)
-  const ended = offer?.publication?.status === 'ENDED'
-  // 0 ends an active Offer (or leaves an ended one ended): sold out. A draft stays a draft: just set.
-  if (available === 0) return done({ offerExternalId: offerId, outcome: ended ? 'ended' : 'ok' })
-  if (!ended) return done({ offerExternalId: offerId, outcome: 'ok' })
+  const status = offer?.publication?.status
+  // 0 leaves the Offer sold out: Allegro ends an active one, and an ended one stays ended. The answer cannot tell
+  // (the ending happens after it), so only a draft (`INACTIVE`, which keeps 0 and stays a draft) is just set.
+  if (available === 0) return done({ offerExternalId: offerId, outcome: status === 'INACTIVE' ? 'ok' : 'ended' })
+  if (status !== 'ENDED') return done({ offerExternalId: offerId, outcome: 'ok' })
 
   // The number is set, but an ended Offer stays ended: reopen it only if it sold out (ADR 0022).
-  const endedBy = offer.publication?.endedBy
+  const endedBy = offer?.publication?.endedBy
   if (endedBy !== 'EMPTY_STOCK') {
     return done(rejected(offerId, endedBy && ENDED_BY.test(endedBy) ? `OFFER_ENDED_${endedBy}` : 'OFFER_ENDED'))
   }
-  // A 409 here means the stock edit is still being processed: the stock is set, the reopen waits for the next push.
+  // Accepted is done: Allegro answers the reopen 202 with the Offer as it was (still `ENDED`) and activates it seconds
+  // later, so the body says nothing. A 409 (never seen on the sandbox, kept as a guard) would mean an earlier edit is
+  // still being processed: the stock is set, the reopen waits for the next push.
   const reopened = await edit(ctx, offerId, { publication: { status: 'ACTIVE' } }, REOPEN_PENDING)
   if (!(reopened instanceof Response)) return done(reopened)
   await drain(reopened)
@@ -84,9 +88,9 @@ async function pushOne(ctx: AllegroContext, level: StockLevel): Promise<Outcome>
 }
 
 /**
- * Absolute quantities, one `PATCH /sale/product-offers/{id}` per Offer (ADR 0022): 0 ends the Offer (`ended`), a
- * number above 0 sets it and reopens an Offer Allegro ended because it sold out, while any other ended Offer is
- * `rejected` with `OFFER_ENDED_<endedBy>`. A result for every level. A 403 refuses one Offer (another seller's); a 403
+ * Absolute quantities, one `PATCH /sale/product-offers/{id}` per Offer (ADR 0022): 0 ends the Offer (`ended`; a
+ * draft stays a draft, `ok`), a number above 0 sets it and reopens an Offer Allegro ended because it sold out, while
+ * any other ended Offer is `rejected` with `OFFER_ENDED_<endedBy>`. A result for every level. A 403 refuses one Offer (another seller's); a 403
  * for every Offer of the call is a missing scope, a `PermanentError`.
  */
 export async function pushStock(ctx: AllegroContext, levels: StockLevel[]): Promise<StockPushResult[]> {

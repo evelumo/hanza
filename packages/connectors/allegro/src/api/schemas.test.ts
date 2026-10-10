@@ -78,19 +78,19 @@ describe('checkout form schemas', () => {
 
 describe('order event schemas', () => {
   it('parses a page of events', () => {
-    const later = sampleOrderEvent({ id: 'MTUzMjYwMzg5ODMxNzQ5OA', type: 'NEW_TYPE' })
+    const later = sampleOrderEvent({ id: '1791663872701487', type: 'NEW_TYPE' })
     const page = orderEventsPageSchema.parse({ events: [sampleOrderEvent(), later] })
     expect(page.events[0]).toEqual({
-      id: 'MTUzMjYwMzg5ODMxNzQ5Nw',
+      id: '1791663869066571',
       type: 'READY_FOR_PROCESSING',
       occurredAt: '2026-10-01T09:10:05.000Z',
-      order: { checkoutForm: { id: '29738e61-7f6a-4c45-89db-60ede9d61a01', revision: '819b5836' } },
+      order: { checkoutForm: { id: '29738e61-c4e8-11f1-89db-60ede9d61a01', revision: '819b5836' } },
     })
     expect(page.events[1]?.type).toBe('NEW_TYPE')
   })
 
   it('parses the stats of a journal, empty or not', () => {
-    expect(orderEventStatsSchema.parse({ latestEvent: { id: 'MTUz', occurredAt: '2026-10-01T09:10:05.000Z' } }).latestEvent?.id).toBe('MTUz')
+    expect(orderEventStatsSchema.parse({ latestEvent: { id: '1791663976344997', occurredAt: '2026-10-01T09:10:05.000Z' } }).latestEvent?.id).toBe('1791663976344997')
     expect(orderEventStatsSchema.parse({}).latestEvent).toBeUndefined()
     expect(orderEventStatsSchema.parse({ latestEvent: null }).latestEvent).toBeNull()
   })

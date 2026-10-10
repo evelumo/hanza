@@ -49,9 +49,15 @@
                 },
                 "publication": {
                   "status": "ACTIVE",
+                  "startingAt": null,
                   "startedAt": "2026-09-01T08:00:00Z",
                   "endingAt": null,
-                  "endedAt": null
+                  "endedAt": null,
+                  "marketplaces": {
+                    "base": {
+                      "id": "allegro-pl"
+                    }
+                  }
                 },
                 "external": {
                   "id": "MUG-350-WHT"
@@ -78,7 +84,7 @@
                 "sellingMode": {
                   "format": "BUY_NOW",
                   "price": {
-                    "amount": "39.99",
+                    "amount": "24.0",
                     "currency": "PLN"
                   }
                 },
@@ -88,9 +94,15 @@
                 },
                 "publication": {
                   "status": "ACTIVE",
+                  "startingAt": null,
                   "startedAt": "2026-09-01T08:00:00Z",
                   "endingAt": null,
-                  "endedAt": null
+                  "endedAt": null,
+                  "marketplaces": {
+                    "base": {
+                      "id": "allegro-pl"
+                    }
+                  }
                 },
                 "external": null,
                 "isFulfillment": false
@@ -198,9 +210,15 @@
                 },
                 "publication": {
                   "status": "ACTIVE",
+                  "startingAt": null,
                   "startedAt": "2026-09-01T08:00:00Z",
                   "endingAt": null,
-                  "endedAt": null
+                  "endedAt": null,
+                  "marketplaces": {
+                    "base": {
+                      "id": "allegro-pl"
+                    }
+                  }
                 },
                 "external": null,
                 "isFulfillment": false
@@ -235,9 +253,15 @@
                 },
                 "publication": {
                   "status": "ACTIVE",
+                  "startingAt": null,
                   "startedAt": "2026-09-01T08:00:00Z",
                   "endingAt": null,
-                  "endedAt": null
+                  "endedAt": null,
+                  "marketplaces": {
+                    "base": {
+                      "id": "allegro-pl"
+                    }
+                  }
                 },
                 "external": {
                   "id": "MUG-350-WHT"
@@ -345,9 +369,15 @@
                 },
                 "publication": {
                   "status": "ACTIVE",
+                  "startingAt": null,
                   "startedAt": "2026-09-01T08:00:00Z",
                   "endingAt": null,
-                  "endedAt": null
+                  "endedAt": null,
+                  "marketplaces": {
+                    "base": {
+                      "id": "allegro-pl"
+                    }
+                  }
                 },
                 "external": {
                   "id": "MUG-350-WHT"
@@ -374,7 +404,7 @@
                 "sellingMode": {
                   "format": "BUY_NOW",
                   "price": {
-                    "amount": "39.99",
+                    "amount": "24.0",
                     "currency": "PLN"
                   }
                 },
@@ -384,9 +414,15 @@
                 },
                 "publication": {
                   "status": "ACTIVE",
+                  "startingAt": null,
                   "startedAt": "2026-09-01T08:00:00Z",
                   "endingAt": null,
-                  "endedAt": null
+                  "endedAt": null,
+                  "marketplaces": {
+                    "base": {
+                      "id": "allegro-pl"
+                    }
+                  }
                 },
                 "external": null,
                 "isFulfillment": false
@@ -494,9 +530,15 @@
                 },
                 "publication": {
                   "status": "ACTIVE",
+                  "startingAt": null,
                   "startedAt": "2026-09-01T08:00:00Z",
                   "endingAt": null,
-                  "endedAt": null
+                  "endedAt": null,
+                  "marketplaces": {
+                    "base": {
+                      "id": "allegro-pl"
+                    }
+                  }
                 },
                 "external": null,
                 "isFulfillment": false
@@ -531,9 +573,15 @@
                 },
                 "publication": {
                   "status": "ACTIVE",
+                  "startingAt": null,
                   "startedAt": "2026-09-01T08:00:00Z",
                   "endingAt": null,
-                  "endedAt": null
+                  "endedAt": null,
+                  "marketplaces": {
+                    "base": {
+                      "id": "allegro-pl"
+                    }
+                  }
                 },
                 "external": {
                   "id": "MUG-350-WHT"
@@ -611,7 +659,7 @@
         "body": {
           "json": {
             "latestEvent": {
-              "id": "MTc5MDAwMDAwMDAwMDAxNg",
+              "id": "1791663800016000",
               "occurredAt": "2026-10-08T09:00:00.000Z"
             }
           }
@@ -637,7 +685,7 @@
           "json": {
             "checkoutForms": [
               {
-                "id": "29738e61-7f6a-4c45-89db-60ede9d61a02",
+                "id": "29738e61-c4e8-11f1-89db-60ede9d61a02",
                 "messageToSeller": "scrubbed-1",
                 "surcharges": [],
                 "note": {
@@ -709,7 +757,7 @@
                 },
                 "lineItems": [
                   {
-                    "id": "62ae358b-8f65-4fc4-9c77-bedf604a2e01",
+                    "id": "62ae358b-c4e8-11f1-9c77-bedf604a2e01",
                     "offer": {
                       "id": "7834566001",
                       "name": "Ceramic mug 350 ml, white",
@@ -742,7 +790,7 @@
                 "revision": "819b5836"
               },
               {
-                "id": "29738e61-7f6a-4c45-89db-60ede9d61a03",
+                "id": "29738e61-c4e8-11f1-89db-60ede9d61a03",
                 "messageToSeller": "scrubbed-1",
                 "surcharges": [],
                 "note": {
@@ -809,7 +857,7 @@
                 },
                 "lineItems": [
                   {
-                    "id": "62ae358b-8f65-4fc4-9c77-bedf604a2e01",
+                    "id": "62ae358b-c4e8-11f1-9c77-bedf604a2e01",
                     "offer": {
                       "id": "7834566001",
                       "name": "Ceramic mug 350 ml, white",
@@ -842,7 +890,7 @@
                 "revision": "819b5836"
               },
               {
-                "id": "29738e61-7f6a-4c45-89db-60ede9d61a04",
+                "id": "29738e61-c4e8-11f1-89db-60ede9d61a04",
                 "messageToSeller": "scrubbed-1",
                 "surcharges": [],
                 "note": {
@@ -936,7 +984,7 @@
                 },
                 "lineItems": [
                   {
-                    "id": "62ae358b-8f65-4fc4-9c77-bedf604a2e01",
+                    "id": "62ae358b-c4e8-11f1-9c77-bedf604a2e01",
                     "offer": {
                       "id": "7834566001",
                       "name": "Ceramic mug 350 ml, white",
@@ -969,7 +1017,7 @@
                 "revision": "819b5836"
               },
               {
-                "id": "29738e61-7f6a-4c45-89db-60ede9d61a05",
+                "id": "29738e61-c4e8-11f1-89db-60ede9d61a05",
                 "messageToSeller": "scrubbed-1",
                 "surcharges": [],
                 "note": {
@@ -1052,7 +1100,7 @@
                 },
                 "lineItems": [
                   {
-                    "id": "62ae358b-8f65-4fc4-9c77-bedf604a2e01",
+                    "id": "62ae358b-c4e8-11f1-9c77-bedf604a2e01",
                     "offer": {
                       "id": "7834566001",
                       "name": "Ceramic mug 350 ml, white",
@@ -1085,7 +1133,7 @@
                 "revision": "819b5836"
               },
               {
-                "id": "29738e61-7f6a-4c45-89db-60ede9d61a06",
+                "id": "29738e61-c4e8-11f1-89db-60ede9d61a06",
                 "messageToSeller": "scrubbed-1",
                 "surcharges": [],
                 "note": {
@@ -1162,7 +1210,7 @@
                 },
                 "lineItems": [
                   {
-                    "id": "62ae358b-8f65-4fc4-9c77-bedf604a2e01",
+                    "id": "62ae358b-c4e8-11f1-9c77-bedf604a2e01",
                     "offer": {
                       "id": "7834566001",
                       "name": "Ceramic mug 350 ml, white",
@@ -1195,7 +1243,7 @@
                 "revision": "819b5836"
               },
               {
-                "id": "29738e61-7f6a-4c45-89db-60ede9d61a09",
+                "id": "29738e61-c4e8-11f1-89db-60ede9d61a09",
                 "messageToSeller": "scrubbed-1",
                 "surcharges": [],
                 "note": {
@@ -1255,7 +1303,7 @@
                 },
                 "lineItems": [
                   {
-                    "id": "62ae358b-8f65-4fc4-9c77-bedf604a2e01",
+                    "id": "62ae358b-c4e8-11f1-9c77-bedf604a2e01",
                     "offer": {
                       "id": "7834566001",
                       "name": "Ceramic mug 350 ml, white",
@@ -1288,7 +1336,7 @@
                 "revision": "819b5836"
               },
               {
-                "id": "29738e61-7f6a-4c45-89db-60ede9d61a10",
+                "id": "29738e61-c4e8-11f1-89db-60ede9d61a10",
                 "messageToSeller": "scrubbed-1",
                 "surcharges": [],
                 "note": {
@@ -1360,7 +1408,7 @@
                 },
                 "lineItems": [
                   {
-                    "id": "62ae358b-8f65-4fc4-9c77-bedf604a2e01",
+                    "id": "62ae358b-c4e8-11f1-9c77-bedf604a2e01",
                     "offer": {
                       "id": "7834566001",
                       "name": "Ceramic mug 350 ml, white",
@@ -1393,7 +1441,7 @@
                 "revision": "819b5836"
               },
               {
-                "id": "29738e61-7f6a-4c45-89db-60ede9d61a11",
+                "id": "29738e61-c4e8-11f1-89db-60ede9d61a11",
                 "messageToSeller": "scrubbed-1",
                 "surcharges": [],
                 "note": {
@@ -1459,7 +1507,7 @@
                 },
                 "lineItems": [
                   {
-                    "id": "62ae358b-8f65-4fc4-9c77-bedf604a2e01",
+                    "id": "62ae358b-c4e8-11f1-9c77-bedf604a2e01",
                     "offer": {
                       "id": "7834566001",
                       "name": "Ceramic mug 350 ml, white",
@@ -1492,7 +1540,7 @@
                 "revision": "819b5836"
               },
               {
-                "id": "29738e61-7f6a-4c45-89db-60ede9d61a12",
+                "id": "29738e61-c4e8-11f1-89db-60ede9d61a12",
                 "messageToSeller": "scrubbed-1",
                 "surcharges": [],
                 "note": {
@@ -1558,7 +1606,7 @@
                 },
                 "lineItems": [
                   {
-                    "id": "62ae358b-8f65-4fc4-9c77-bedf604a2e01",
+                    "id": "62ae358b-c4e8-11f1-9c77-bedf604a2e01",
                     "offer": {
                       "id": "7834566001",
                       "name": "Ceramic mug 350 ml, white",
@@ -1591,7 +1639,7 @@
                 "revision": "819b5836"
               },
               {
-                "id": "29738e61-7f6a-4c45-89db-60ede9d61a13",
+                "id": "29738e61-c4e8-11f1-89db-60ede9d61a13",
                 "messageToSeller": "scrubbed-1",
                 "surcharges": [],
                 "note": {
@@ -1628,7 +1676,7 @@
                 },
                 "lineItems": [
                   {
-                    "id": "62ae358b-8f65-4fc4-9c77-bedf604a2e01",
+                    "id": "62ae358b-c4e8-11f1-9c77-bedf604a2e01",
                     "offer": {
                       "id": "7834566001",
                       "name": "Ceramic mug 350 ml, white",
@@ -1661,7 +1709,7 @@
                 "revision": "819b5836"
               },
               {
-                "id": "29738e61-7f6a-4c45-89db-60ede9d61a14",
+                "id": "29738e61-c4e8-11f1-89db-60ede9d61a14",
                 "messageToSeller": "scrubbed-1",
                 "surcharges": [],
                 "note": {
@@ -1703,7 +1751,7 @@
                 },
                 "lineItems": [
                   {
-                    "id": "62ae358b-8f65-4fc4-9c77-bedf604a2e01",
+                    "id": "62ae358b-c4e8-11f1-9c77-bedf604a2e01",
                     "offer": {
                       "id": "7834566001",
                       "name": "Ceramic mug 350 ml, white",
@@ -1736,7 +1784,7 @@
                 "revision": "819b5836"
               },
               {
-                "id": "29738e61-7f6a-4c45-89db-60ede9d61a15",
+                "id": "29738e61-c4e8-11f1-89db-60ede9d61a15",
                 "messageToSeller": "scrubbed-1",
                 "surcharges": [],
                 "note": {
@@ -1805,7 +1853,7 @@
                 },
                 "lineItems": [
                   {
-                    "id": "62ae358b-8f65-4fc4-9c77-bedf604a2e01",
+                    "id": "62ae358b-c4e8-11f1-9c77-bedf604a2e01",
                     "offer": {
                       "id": "7834566001",
                       "name": "Ceramic mug 350 ml, white",
@@ -1838,7 +1886,7 @@
                 "revision": "819b5836"
               },
               {
-                "id": "29738e61-7f6a-4c45-89db-60ede9d61a16",
+                "id": "29738e61-c4e8-11f1-89db-60ede9d61a16",
                 "messageToSeller": "scrubbed-1",
                 "surcharges": [],
                 "note": {
@@ -1907,7 +1955,7 @@
                 },
                 "lineItems": [
                   {
-                    "id": "62ae358b-8f65-4fc4-9c77-bedf604a2e01",
+                    "id": "62ae358b-c4e8-11f1-9c77-bedf604a2e01",
                     "offer": {
                       "id": "7834566001",
                       "name": "Ceramic mug 350 ml, white",
@@ -1940,7 +1988,7 @@
                 "revision": "819b5836"
               },
               {
-                "id": "29738e61-7f6a-4c45-89db-60ede9d61a17",
+                "id": "29738e61-c4e8-11f1-89db-60ede9d61a17",
                 "messageToSeller": "scrubbed-1",
                 "surcharges": [],
                 "note": {
@@ -2000,7 +2048,7 @@
                 },
                 "lineItems": [
                   {
-                    "id": "62ae358b-8f65-4fc4-9c77-bedf604a2e17",
+                    "id": "62ae358b-c4e8-11f1-9c77-bedf604a2e17",
                     "offer": {
                       "id": "7834566001",
                       "name": "Ceramic mug 350 ml, white",
@@ -2033,7 +2081,7 @@
                 "revision": "819b5836"
               },
               {
-                "id": "29738e61-7f6a-4c45-89db-60ede9d61a18",
+                "id": "29738e61-c4e8-11f1-89db-60ede9d61a18",
                 "messageToSeller": "scrubbed-1",
                 "surcharges": [],
                 "note": {
@@ -2102,7 +2150,7 @@
                 },
                 "lineItems": [
                   {
-                    "id": "62ae358b-8f65-4fc4-9c77-bedf604a2e01",
+                    "id": "62ae358b-c4e8-11f1-9c77-bedf604a2e01",
                     "offer": {
                       "id": "7834566001",
                       "name": "Ceramic mug 350 ml, white",
@@ -2135,7 +2183,7 @@
                 "revision": "819b5836"
               },
               {
-                "id": "29738e61-7f6a-4c45-89db-60ede9d61a07",
+                "id": "29738e61-c4e8-11f1-89db-60ede9d61a07",
                 "messageToSeller": "scrubbed-1",
                 "surcharges": [],
                 "note": {
@@ -2207,7 +2255,7 @@
                 },
                 "lineItems": [
                   {
-                    "id": "62ae358b-8f65-4fc4-9c77-bedf604a2e07",
+                    "id": "62ae358b-c4e8-11f1-9c77-bedf604a2e07",
                     "offer": {
                       "id": "7834566001",
                       "name": "Ceramic mug 350 ml, white",
@@ -2227,7 +2275,7 @@
                     "boughtAt": "2026-10-01T09:02:00.000Z"
                   },
                   {
-                    "id": "62ae358b-8f65-4fc4-9c77-bedf604a2e08",
+                    "id": "62ae358b-c4e8-11f1-9c77-bedf604a2e08",
                     "offer": {
                       "id": "7834566002",
                       "name": "Teapot 1 l, blue glaze"
@@ -2266,7 +2314,7 @@
     {
       "request": {
         "method": "GET",
-        "url": "https://api.allegro.pl.allegrosandbox.pl/order/events?from=MTc5MDAwMDAwMDAwMDAxNg&limit=100",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/order/events?from=1791663800016000&limit=100",
         "headers": {
           "accept": "application/vnd.allegro.public.v1+json"
         },
@@ -2303,7 +2351,7 @@
         "body": {
           "json": {
             "latestEvent": {
-              "id": "MTc5MDAwMDAwMDAwMDAxNg",
+              "id": "1791663800016000",
               "occurredAt": "2026-10-08T09:00:00.000Z"
             }
           }
@@ -2329,7 +2377,7 @@
           "json": {
             "checkoutForms": [
               {
-                "id": "29738e61-7f6a-4c45-89db-60ede9d61a02",
+                "id": "29738e61-c4e8-11f1-89db-60ede9d61a02",
                 "messageToSeller": "scrubbed-1",
                 "surcharges": [],
                 "note": {
@@ -2401,7 +2449,7 @@
                 },
                 "lineItems": [
                   {
-                    "id": "62ae358b-8f65-4fc4-9c77-bedf604a2e01",
+                    "id": "62ae358b-c4e8-11f1-9c77-bedf604a2e01",
                     "offer": {
                       "id": "7834566001",
                       "name": "Ceramic mug 350 ml, white",
@@ -2434,7 +2482,7 @@
                 "revision": "819b5836"
               },
               {
-                "id": "29738e61-7f6a-4c45-89db-60ede9d61a03",
+                "id": "29738e61-c4e8-11f1-89db-60ede9d61a03",
                 "messageToSeller": "scrubbed-1",
                 "surcharges": [],
                 "note": {
@@ -2501,7 +2549,7 @@
                 },
                 "lineItems": [
                   {
-                    "id": "62ae358b-8f65-4fc4-9c77-bedf604a2e01",
+                    "id": "62ae358b-c4e8-11f1-9c77-bedf604a2e01",
                     "offer": {
                       "id": "7834566001",
                       "name": "Ceramic mug 350 ml, white",
@@ -2534,7 +2582,7 @@
                 "revision": "819b5836"
               },
               {
-                "id": "29738e61-7f6a-4c45-89db-60ede9d61a04",
+                "id": "29738e61-c4e8-11f1-89db-60ede9d61a04",
                 "messageToSeller": "scrubbed-1",
                 "surcharges": [],
                 "note": {
@@ -2628,7 +2676,7 @@
                 },
                 "lineItems": [
                   {
-                    "id": "62ae358b-8f65-4fc4-9c77-bedf604a2e01",
+                    "id": "62ae358b-c4e8-11f1-9c77-bedf604a2e01",
                     "offer": {
                       "id": "7834566001",
                       "name": "Ceramic mug 350 ml, white",
@@ -2661,7 +2709,7 @@
                 "revision": "819b5836"
               },
               {
-                "id": "29738e61-7f6a-4c45-89db-60ede9d61a05",
+                "id": "29738e61-c4e8-11f1-89db-60ede9d61a05",
                 "messageToSeller": "scrubbed-1",
                 "surcharges": [],
                 "note": {
@@ -2744,7 +2792,7 @@
                 },
                 "lineItems": [
                   {
-                    "id": "62ae358b-8f65-4fc4-9c77-bedf604a2e01",
+                    "id": "62ae358b-c4e8-11f1-9c77-bedf604a2e01",
                     "offer": {
                       "id": "7834566001",
                       "name": "Ceramic mug 350 ml, white",
@@ -2777,7 +2825,7 @@
                 "revision": "819b5836"
               },
               {
-                "id": "29738e61-7f6a-4c45-89db-60ede9d61a06",
+                "id": "29738e61-c4e8-11f1-89db-60ede9d61a06",
                 "messageToSeller": "scrubbed-1",
                 "surcharges": [],
                 "note": {
@@ -2854,7 +2902,7 @@
                 },
                 "lineItems": [
                   {
-                    "id": "62ae358b-8f65-4fc4-9c77-bedf604a2e01",
+                    "id": "62ae358b-c4e8-11f1-9c77-bedf604a2e01",
                     "offer": {
                       "id": "7834566001",
                       "name": "Ceramic mug 350 ml, white",
@@ -2887,7 +2935,7 @@
                 "revision": "819b5836"
               },
               {
-                "id": "29738e61-7f6a-4c45-89db-60ede9d61a09",
+                "id": "29738e61-c4e8-11f1-89db-60ede9d61a09",
                 "messageToSeller": "scrubbed-1",
                 "surcharges": [],
                 "note": {
@@ -2947,7 +2995,7 @@
                 },
                 "lineItems": [
                   {
-                    "id": "62ae358b-8f65-4fc4-9c77-bedf604a2e01",
+                    "id": "62ae358b-c4e8-11f1-9c77-bedf604a2e01",
                     "offer": {
                       "id": "7834566001",
                       "name": "Ceramic mug 350 ml, white",
@@ -2980,7 +3028,7 @@
                 "revision": "819b5836"
               },
               {
-                "id": "29738e61-7f6a-4c45-89db-60ede9d61a10",
+                "id": "29738e61-c4e8-11f1-89db-60ede9d61a10",
                 "messageToSeller": "scrubbed-1",
                 "surcharges": [],
                 "note": {
@@ -3052,7 +3100,7 @@
                 },
                 "lineItems": [
                   {
-                    "id": "62ae358b-8f65-4fc4-9c77-bedf604a2e01",
+                    "id": "62ae358b-c4e8-11f1-9c77-bedf604a2e01",
                     "offer": {
                       "id": "7834566001",
                       "name": "Ceramic mug 350 ml, white",
@@ -3085,7 +3133,7 @@
                 "revision": "819b5836"
               },
               {
-                "id": "29738e61-7f6a-4c45-89db-60ede9d61a11",
+                "id": "29738e61-c4e8-11f1-89db-60ede9d61a11",
                 "messageToSeller": "scrubbed-1",
                 "surcharges": [],
                 "note": {
@@ -3151,7 +3199,7 @@
                 },
                 "lineItems": [
                   {
-                    "id": "62ae358b-8f65-4fc4-9c77-bedf604a2e01",
+                    "id": "62ae358b-c4e8-11f1-9c77-bedf604a2e01",
                     "offer": {
                       "id": "7834566001",
                       "name": "Ceramic mug 350 ml, white",
@@ -3184,7 +3232,7 @@
                 "revision": "819b5836"
               },
               {
-                "id": "29738e61-7f6a-4c45-89db-60ede9d61a12",
+                "id": "29738e61-c4e8-11f1-89db-60ede9d61a12",
                 "messageToSeller": "scrubbed-1",
                 "surcharges": [],
                 "note": {
@@ -3250,7 +3298,7 @@
                 },
                 "lineItems": [
                   {
-                    "id": "62ae358b-8f65-4fc4-9c77-bedf604a2e01",
+                    "id": "62ae358b-c4e8-11f1-9c77-bedf604a2e01",
                     "offer": {
                       "id": "7834566001",
                       "name": "Ceramic mug 350 ml, white",
@@ -3283,7 +3331,7 @@
                 "revision": "819b5836"
               },
               {
-                "id": "29738e61-7f6a-4c45-89db-60ede9d61a13",
+                "id": "29738e61-c4e8-11f1-89db-60ede9d61a13",
                 "messageToSeller": "scrubbed-1",
                 "surcharges": [],
                 "note": {
@@ -3320,7 +3368,7 @@
                 },
                 "lineItems": [
                   {
-                    "id": "62ae358b-8f65-4fc4-9c77-bedf604a2e01",
+                    "id": "62ae358b-c4e8-11f1-9c77-bedf604a2e01",
                     "offer": {
                       "id": "7834566001",
                       "name": "Ceramic mug 350 ml, white",
@@ -3353,7 +3401,7 @@
                 "revision": "819b5836"
               },
               {
-                "id": "29738e61-7f6a-4c45-89db-60ede9d61a14",
+                "id": "29738e61-c4e8-11f1-89db-60ede9d61a14",
                 "messageToSeller": "scrubbed-1",
                 "surcharges": [],
                 "note": {
@@ -3395,7 +3443,7 @@
                 },
                 "lineItems": [
                   {
-                    "id": "62ae358b-8f65-4fc4-9c77-bedf604a2e01",
+                    "id": "62ae358b-c4e8-11f1-9c77-bedf604a2e01",
                     "offer": {
                       "id": "7834566001",
                       "name": "Ceramic mug 350 ml, white",
@@ -3428,7 +3476,7 @@
                 "revision": "819b5836"
               },
               {
-                "id": "29738e61-7f6a-4c45-89db-60ede9d61a15",
+                "id": "29738e61-c4e8-11f1-89db-60ede9d61a15",
                 "messageToSeller": "scrubbed-1",
                 "surcharges": [],
                 "note": {
@@ -3497,7 +3545,7 @@
                 },
                 "lineItems": [
                   {
-                    "id": "62ae358b-8f65-4fc4-9c77-bedf604a2e01",
+                    "id": "62ae358b-c4e8-11f1-9c77-bedf604a2e01",
                     "offer": {
                       "id": "7834566001",
                       "name": "Ceramic mug 350 ml, white",
@@ -3530,7 +3578,7 @@
                 "revision": "819b5836"
               },
               {
-                "id": "29738e61-7f6a-4c45-89db-60ede9d61a16",
+                "id": "29738e61-c4e8-11f1-89db-60ede9d61a16",
                 "messageToSeller": "scrubbed-1",
                 "surcharges": [],
                 "note": {
@@ -3599,7 +3647,7 @@
                 },
                 "lineItems": [
                   {
-                    "id": "62ae358b-8f65-4fc4-9c77-bedf604a2e01",
+                    "id": "62ae358b-c4e8-11f1-9c77-bedf604a2e01",
                     "offer": {
                       "id": "7834566001",
                       "name": "Ceramic mug 350 ml, white",
@@ -3632,7 +3680,7 @@
                 "revision": "819b5836"
               },
               {
-                "id": "29738e61-7f6a-4c45-89db-60ede9d61a17",
+                "id": "29738e61-c4e8-11f1-89db-60ede9d61a17",
                 "messageToSeller": "scrubbed-1",
                 "surcharges": [],
                 "note": {
@@ -3692,7 +3740,7 @@
                 },
                 "lineItems": [
                   {
-                    "id": "62ae358b-8f65-4fc4-9c77-bedf604a2e17",
+                    "id": "62ae358b-c4e8-11f1-9c77-bedf604a2e17",
                     "offer": {
                       "id": "7834566001",
                       "name": "Ceramic mug 350 ml, white",
@@ -3725,7 +3773,7 @@
                 "revision": "819b5836"
               },
               {
-                "id": "29738e61-7f6a-4c45-89db-60ede9d61a18",
+                "id": "29738e61-c4e8-11f1-89db-60ede9d61a18",
                 "messageToSeller": "scrubbed-1",
                 "surcharges": [],
                 "note": {
@@ -3794,7 +3842,7 @@
                 },
                 "lineItems": [
                   {
-                    "id": "62ae358b-8f65-4fc4-9c77-bedf604a2e01",
+                    "id": "62ae358b-c4e8-11f1-9c77-bedf604a2e01",
                     "offer": {
                       "id": "7834566001",
                       "name": "Ceramic mug 350 ml, white",
@@ -3827,7 +3875,7 @@
                 "revision": "819b5836"
               },
               {
-                "id": "29738e61-7f6a-4c45-89db-60ede9d61a07",
+                "id": "29738e61-c4e8-11f1-89db-60ede9d61a07",
                 "messageToSeller": "scrubbed-1",
                 "surcharges": [],
                 "note": {
@@ -3899,7 +3947,7 @@
                 },
                 "lineItems": [
                   {
-                    "id": "62ae358b-8f65-4fc4-9c77-bedf604a2e07",
+                    "id": "62ae358b-c4e8-11f1-9c77-bedf604a2e07",
                     "offer": {
                       "id": "7834566001",
                       "name": "Ceramic mug 350 ml, white",
@@ -3919,7 +3967,7 @@
                     "boughtAt": "2026-10-01T09:02:00.000Z"
                   },
                   {
-                    "id": "62ae358b-8f65-4fc4-9c77-bedf604a2e08",
+                    "id": "62ae358b-c4e8-11f1-9c77-bedf604a2e08",
                     "offer": {
                       "id": "7834566002",
                       "name": "Teapot 1 l, blue glaze"
@@ -3958,7 +4006,7 @@
     {
       "request": {
         "method": "GET",
-        "url": "https://api.allegro.pl.allegrosandbox.pl/order/events?from=MTc5MDAwMDAwMDAwMDAxNg&limit=100",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/order/events?from=1791663800016000&limit=100",
         "headers": {
           "accept": "application/vnd.allegro.public.v1+json"
         },
@@ -3980,7 +4028,7 @@
     {
       "request": {
         "method": "GET",
-        "url": "https://api.allegro.pl.allegrosandbox.pl/order/events?from=MTc5MDAwMDAwMDAwMDAxNg&limit=100",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/order/events?from=1791663800016000&limit=100",
         "headers": {
           "accept": "application/vnd.allegro.public.v1+json"
         },
@@ -4002,14 +4050,14 @@
     {
       "request": {
         "method": "GET",
-        "url": "https://api.allegro.pl.allegrosandbox.pl/order/events?from=MTc5MDAwMDAwMDAwMDAwMQ&limit=100",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/order/events?from=00000000-0000-0000-0000-000000000000&limit=100",
         "headers": {
           "accept": "application/vnd.allegro.public.v1+json"
         },
         "body": null
       },
       "response": {
-        "status": 404,
+        "status": 422,
         "headers": {
           "content-type": "application/vnd.allegro.public.v1+json",
           "date": "Sat, 10 Oct 2026 12:00:00 GMT"
@@ -4018,11 +4066,11 @@
           "json": {
             "errors": [
               {
-                "code": "EVENT_NOT_FOUND",
-                "message": "Event not found",
+                "code": "VALIDATION_ERROR",
+                "message": "must be greater than or equal to 0",
                 "details": null,
-                "path": null,
-                "userMessage": "Event not found",
+                "path": "getOrderEvents.from",
+                "userMessage": "must be greater than or equal to 0",
                 "metadata": {}
               }
             ]
@@ -4064,7 +4112,7 @@
             "sellingMode": {
               "format": "BUY_NOW",
               "price": {
-                "amount": "39.99",
+                "amount": "24.0",
                 "currency": "PLN"
               }
             },
@@ -4073,8 +4121,8 @@
               "unit": "UNIT"
             },
             "publication": {
-              "status": "ENDED",
-              "endedBy": "EMPTY_STOCK",
+              "status": "ACTIVE",
+              "endedBy": null,
               "republish": false
             }
           }
@@ -4221,7 +4269,7 @@
             "sellingMode": {
               "format": "BUY_NOW",
               "price": {
-                "amount": "39.99",
+                "amount": "24.0",
                 "currency": "PLN"
               }
             },
@@ -4378,7 +4426,7 @@
             "sellingMode": {
               "format": "BUY_NOW",
               "price": {
-                "amount": "39.99",
+                "amount": "24.0",
                 "currency": "PLN"
               }
             },
@@ -4518,10 +4566,12 @@
         }
       },
       "response": {
-        "status": 200,
+        "status": 202,
         "headers": {
           "content-type": "application/vnd.allegro.public.v1+json",
-          "date": "Sat, 10 Oct 2026 12:00:00 GMT"
+          "date": "Sat, 10 Oct 2026 12:00:00 GMT",
+          "location": "https://api.allegro.pl.allegrosandbox.pl/sale/product-offers/7834566006/operations/00000000-0000-4000-8000-000000000001",
+          "retry-after": "120"
         },
         "body": {
           "json": {
@@ -4535,7 +4585,7 @@
             "sellingMode": {
               "format": "BUY_NOW",
               "price": {
-                "amount": "39.99",
+                "amount": "24.0",
                 "currency": "PLN"
               }
             },
@@ -4544,8 +4594,8 @@
               "unit": "UNIT"
             },
             "publication": {
-              "status": "ACTIVE",
-              "endedBy": null,
+              "status": "ENDED",
+              "endedBy": "EMPTY_STOCK",
               "republish": false
             }
           }
@@ -4569,10 +4619,12 @@
         }
       },
       "response": {
-        "status": 200,
+        "status": 202,
         "headers": {
           "content-type": "application/vnd.allegro.public.v1+json",
-          "date": "Sat, 10 Oct 2026 12:00:00 GMT"
+          "date": "Sat, 10 Oct 2026 12:00:00 GMT",
+          "location": "https://api.allegro.pl.allegrosandbox.pl/sale/product-offers/7834566004/operations/00000000-0000-4000-8000-000000000002",
+          "retry-after": "120"
         },
         "body": {
           "json": {
@@ -4597,8 +4649,8 @@
               "unit": "UNIT"
             },
             "publication": {
-              "status": "ACTIVE",
-              "endedBy": null,
+              "status": "ENDED",
+              "endedBy": "EMPTY_STOCK",
               "republish": false
             }
           }
@@ -4639,7 +4691,7 @@
             "sellingMode": {
               "format": "BUY_NOW",
               "price": {
-                "amount": "39.99",
+                "amount": "24.0",
                 "currency": "PLN"
               }
             },
@@ -4765,7 +4817,7 @@
     {
       "request": {
         "method": "PUT",
-        "url": "https://api.allegro.pl.allegrosandbox.pl/order/checkout-forms/29738e61-7f6a-4c45-89db-60ede9d61a02/fulfillment",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/order/checkout-forms/29738e61-c4e8-11f1-89db-60ede9d61a02/fulfillment",
         "headers": {
           "accept": "application/vnd.allegro.public.v1+json",
           "content-type": "application/vnd.allegro.public.v1+json"
@@ -4787,7 +4839,7 @@
     {
       "request": {
         "method": "PUT",
-        "url": "https://api.allegro.pl.allegrosandbox.pl/order/checkout-forms/29738e61-7f6a-4c45-89db-60ede9d61a02/fulfillment",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/order/checkout-forms/29738e61-c4e8-11f1-89db-60ede9d61a02/fulfillment",
         "headers": {
           "accept": "application/vnd.allegro.public.v1+json",
           "content-type": "application/vnd.allegro.public.v1+json"
@@ -4809,7 +4861,7 @@
     {
       "request": {
         "method": "PUT",
-        "url": "https://api.allegro.pl.allegrosandbox.pl/order/checkout-forms/29738e61-7f6a-4c45-89db-60ede9d61a02/fulfillment",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/order/checkout-forms/29738e61-c4e8-11f1-89db-60ede9d61a02/fulfillment",
         "headers": {
           "accept": "application/vnd.allegro.public.v1+json",
           "content-type": "application/vnd.allegro.public.v1+json"
@@ -4831,7 +4883,7 @@
     {
       "request": {
         "method": "PUT",
-        "url": "https://api.allegro.pl.allegrosandbox.pl/order/checkout-forms/29738e61-7f6a-4c45-89db-60ede9d61a02/fulfillment",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/order/checkout-forms/29738e61-c4e8-11f1-89db-60ede9d61a02/fulfillment",
         "headers": {
           "accept": "application/vnd.allegro.public.v1+json",
           "content-type": "application/vnd.allegro.public.v1+json"
@@ -4853,7 +4905,7 @@
     {
       "request": {
         "method": "PUT",
-        "url": "https://api.allegro.pl.allegrosandbox.pl/order/checkout-forms/29738e61-7f6a-4c45-89db-60ede9d61a02/fulfillment",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/order/checkout-forms/29738e61-c4e8-11f1-89db-60ede9d61a02/fulfillment",
         "headers": {
           "accept": "application/vnd.allegro.public.v1+json",
           "content-type": "application/vnd.allegro.public.v1+json"
@@ -4875,7 +4927,7 @@
     {
       "request": {
         "method": "PUT",
-        "url": "https://api.allegro.pl.allegrosandbox.pl/order/checkout-forms/29738e61-7f6a-4c45-89db-60ede9d61a02/fulfillment",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/order/checkout-forms/29738e61-c4e8-11f1-89db-60ede9d61a02/fulfillment",
         "headers": {
           "accept": "application/vnd.allegro.public.v1+json",
           "content-type": "application/vnd.allegro.public.v1+json"
@@ -4897,7 +4949,7 @@
     {
       "request": {
         "method": "PUT",
-        "url": "https://api.allegro.pl.allegrosandbox.pl/order/checkout-forms/29738e61-7f6a-4c45-89db-60ede9d61a02/fulfillment",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/order/checkout-forms/29738e61-c4e8-11f1-89db-60ede9d61a02/fulfillment",
         "headers": {
           "accept": "application/vnd.allegro.public.v1+json",
           "content-type": "application/vnd.allegro.public.v1+json"
@@ -4919,7 +4971,7 @@
     {
       "request": {
         "method": "PUT",
-        "url": "https://api.allegro.pl.allegrosandbox.pl/order/checkout-forms/29738e61-7f6a-4c45-89db-60ede9d61a02/fulfillment",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/order/checkout-forms/29738e61-c4e8-11f1-89db-60ede9d61a02/fulfillment",
         "headers": {
           "accept": "application/vnd.allegro.public.v1+json",
           "content-type": "application/vnd.allegro.public.v1+json"

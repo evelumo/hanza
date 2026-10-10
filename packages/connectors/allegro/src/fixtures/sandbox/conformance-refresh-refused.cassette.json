@@ -17,11 +17,11 @@
         "status": 400,
         "headers": {
           "content-type": "application/json;charset=UTF-8",
-          "date": "Sat, 10 Oct 2026 12:00:00 GMT"
+          "date": "Sat, 10 Oct 2026 20:57:59 GMT"
         },
         "body": {
           "json": {
-            "error_description": "Invalid refresh token",
+            "error_description": "Invalid refresh token: [scrubbed]",
             "error": "invalid_grant"
           }
         }

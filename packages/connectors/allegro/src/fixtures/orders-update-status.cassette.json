@@ -4,7 +4,7 @@
     {
       "request": {
         "method": "PUT",
-        "url": "https://api.allegro.pl.allegrosandbox.pl/order/checkout-forms/29738e61-7f6a-4c45-89db-60ede9d61a02/fulfillment",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/order/checkout-forms/29738e61-c4e8-11f1-89db-60ede9d61a02/fulfillment",
         "headers": {
           "accept": "application/vnd.allegro.public.v1+json",
           "content-type": "application/vnd.allegro.public.v1+json"
@@ -26,7 +26,7 @@
     {
       "request": {
         "method": "PUT",
-        "url": "https://api.allegro.pl.allegrosandbox.pl/order/checkout-forms/29738e61-7f6a-4c45-89db-60ede9d61a02/fulfillment",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/order/checkout-forms/29738e61-c4e8-11f1-89db-60ede9d61a02/fulfillment",
         "headers": {
           "accept": "application/vnd.allegro.public.v1+json",
           "content-type": "application/vnd.allegro.public.v1+json"
@@ -48,7 +48,7 @@
     {
       "request": {
         "method": "PUT",
-        "url": "https://api.allegro.pl.allegrosandbox.pl/order/checkout-forms/29738e61-7f6a-4c45-89db-60ede9d61a02/fulfillment",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/order/checkout-forms/29738e61-c4e8-11f1-89db-60ede9d61a02/fulfillment",
         "headers": {
           "accept": "application/vnd.allegro.public.v1+json",
           "content-type": "application/vnd.allegro.public.v1+json"
@@ -70,7 +70,7 @@
     {
       "request": {
         "method": "PUT",
-        "url": "https://api.allegro.pl.allegrosandbox.pl/order/checkout-forms/29738e61-7f6a-4c45-89db-60ede9d61a02/fulfillment",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/order/checkout-forms/29738e61-c4e8-11f1-89db-60ede9d61a02/fulfillment",
         "headers": {
           "accept": "application/vnd.allegro.public.v1+json",
           "content-type": "application/vnd.allegro.public.v1+json"
@@ -92,7 +92,7 @@
     {
       "request": {
         "method": "PUT",
-        "url": "https://api.allegro.pl.allegrosandbox.pl/order/checkout-forms/00000000-0000-4000-8000-000000000000/fulfillment",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/order/checkout-forms/00000000-0000-1000-8000-000000000000/fulfillment",
         "headers": {
           "accept": "application/vnd.allegro.public.v1+json",
           "content-type": "application/vnd.allegro.public.v1+json"
@@ -104,7 +104,7 @@
         }
       },
       "response": {
-        "status": 404,
+        "status": 422,
         "headers": {
           "content-type": "application/vnd.allegro.public.v1+json",
           "date": "Sat, 10 Oct 2026 12:00:00 GMT"
@@ -113,11 +113,11 @@
           "json": {
             "errors": [
               {
-                "code": "NOT_FOUND",
-                "message": "Order not found",
+                "code": "SellerOrdersStoreUnprocessableEntityException",
+                "message": "Failed to set status SENT on order 00000000-0000-1000-8000-000000000000",
                 "details": null,
                 "path": null,
-                "userMessage": "Order not found",
+                "userMessage": "Failed to set status SENT on order 00000000-0000-1000-8000-000000000000",
                 "metadata": {}
               }
             ]
@@ -128,7 +128,7 @@
     {
       "request": {
         "method": "PUT",
-        "url": "https://api.allegro.pl.allegrosandbox.pl/order/checkout-forms/29738e61-7f6a-4c45-89db-60ede9d61a02/fulfillment",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/order/checkout-forms/29738e61-c4e8-11f1-89db-60ede9d61a02/fulfillment",
         "headers": {
           "accept": "application/vnd.allegro.public.v1+json",
           "content-type": "application/vnd.allegro.public.v1+json"

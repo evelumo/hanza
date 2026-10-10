@@ -1,0 +1,36 @@
+{
+  "version": 1,
+  "interactions": [
+    {
+      "request": {
+        "method": "POST",
+        "url": "https://allegro.pl.allegrosandbox.pl/auth/oauth/token",
+        "headers": {
+          "accept": "application/json",
+          "content-type": "application/x-www-form-urlencoded"
+        },
+        "body": {
+          "text": "grant_type=refresh_token&refresh_token=%5Bscrubbed%5D"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json;charset=UTF-8",
+          "date": "Sat, 10 Oct 2026 20:57:59 GMT"
+        },
+        "body": {
+          "json": {
+            "access_token": "[scrubbed]",
+            "refresh_token": "[scrubbed]",
+            "scope": "allegro:api:sale:offers:write allegro:api:billing:read allegro:api:disputes allegro:api:sale:offers:read allegro:api:orders:write allegro:api:ads:write allegro:api:sale:settings:write allegro:api:sale:settings:read allegro:api:ads:read allegro:api:orders:read allegro:api:fulfillment:read allegro:api:profile:write allegro:api:fulfillment:write allegro:api:campaigns allegro:api:affiliate:write allegro:api:bids allegro:api:shipments:write allegro:api:ads allegro:api:payments:write allegro:api:profile:read allegro:api:ratings allegro:api:affiliate:read allegro:api:payments:read allegro:api:shipments:read allegro:api:messaging",
+            "iss": "https://allegro.pl.allegrosandbox.pl",
+            "token_type": "bearer",
+            "expires_in": 43198,
+            "jti": "1c67b5b2-92de-452f-ab04-2b8d88c16e3a"
+          }
+        }
+      }
+    }
+  ]
+}

@@ -71,14 +71,14 @@ const offers = [
   sampleOffers.draft,
 ]
 
-const formId = (suffix: string) => `5c0e7a12-3d4b-4f6a-9e21-0a1b2c3d${suffix}`
+const formId = (suffix: string) => `5c0e7a12-c4ec-11f1-9e21-0a1b2c3d${suffix}`
 const FORM = { paid: formId('e001'), unpaid: formId('e002'), toCancel: formId('e003'), shippedBefore: formId('e004'), placedLater: formId('e005') } as const
 
 function line(id: string, offer: 'mug' | 'teapot', quantity: number, boughtAt: string) {
   const name = offer === 'mug' ? 'Ceramic mug 350 ml, white' : 'Teapot 1 l, blue glaze'
   const amount = offer === 'mug' ? '39.99' : '119.90'
   return {
-    id: `62ae358b-8f65-4fc4-9c77-${id}`,
+    id: `62ae358b-c4e8-11f1-9c77-${id}`,
     offer: { id: OFFER[offer], name, external: { id: SKU[offer] } },
     quantity,
     originalPrice: { amount, currency: 'PLN' },

@@ -20,8 +20,8 @@
           "json": {
             "device_code": "[scrubbed]",
             "user_code": "[scrubbed]",
-            "verification_uri": "https://allegro.pl.allegrosandbox.pl/skojarz-aplikacje",
-            "verification_uri_complete": "https://allegro.pl.allegrosandbox.pl/skojarz-aplikacje?code=[scrubbed]",
+            "verification_uri": "https://allegro.pl.allegrosandbox.pl/uzytkownik/bezpieczenstwo/skojarz-aplikacje",
+            "verification_uri_complete": "https://allegro.pl.allegrosandbox.pl/uzytkownik/bezpieczenstwo/skojarz-aplikacje?code=[scrubbed]",
             "expires_in": 3600,
             "interval": 5
           }

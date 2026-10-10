@@ -1,0 +1,58 @@
+{
+  "version": 1,
+  "interactions": [
+    {
+      "request": {
+        "method": "POST",
+        "url": "https://allegro.pl.allegrosandbox.pl/auth/oauth/device?client_id=%5Bscrubbed%5D",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json",
+          "date": "Sat, 10 Oct 2026 20:57:59 GMT"
+        },
+        "body": {
+          "json": {
+            "user_code": "[scrubbed]",
+            "device_code": "[scrubbed]",
+            "interval": 5,
+            "verification_uri_complete": "https://allegro.pl.allegrosandbox.pl/uzytkownik/bezpieczenstwo/skojarz-aplikacje?code=[scrubbed]",
+            "verification_uri": "https://allegro.pl.allegrosandbox.pl/uzytkownik/bezpieczenstwo/skojarz-aplikacje",
+            "expires_in": 3600
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "url": "https://allegro.pl.allegrosandbox.pl/auth/oauth/token",
+        "headers": {
+          "accept": "application/json",
+          "content-type": "application/x-www-form-urlencoded"
+        },
+        "body": {
+          "text": "grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Adevice_code&device_code=%5Bscrubbed%5D"
+        }
+      },
+      "response": {
+        "status": 400,
+        "headers": {
+          "content-type": "application/json;charset=UTF-8",
+          "date": "Sat, 10 Oct 2026 20:57:59 GMT"
+        },
+        "body": {
+          "json": {
+            "error_description": "User has not authorized the device code yet.",
+            "error": "authorization_pending"
+          }
+        }
+      }
+    }
+  ]
+}

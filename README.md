@@ -10,7 +10,7 @@ An open-source, self-hosted e-commerce integration hub for Orders, Products, Sto
 
 [Quick start](#quick-start) · [Try the demo](docs/demo.md) · [Documentation](docs/README.md) · [Contributing](CONTRIBUTING.md) · [Roadmap](docs/roadmap.md)
 
-> **Early development.** The panel, domain core and worker work with a simulated Channel. The only real connector is **Allegro**, new and verified so far against a simulation of its API, not a live seller account; there are no shop, courier or invoicing connectors yet. Use Hanza to evaluate the architecture, try the demo and contribute; connecting a live business is a future milestone.
+> **Early development.** The panel, domain core and worker work with a simulated Channel. The only real connector is **Allegro**, new and checked against the Allegro sandbox, not yet a live seller account; there are no shop, courier or invoicing connectors yet. Use Hanza to evaluate the architecture, try the demo and contribute; connecting a live business is a future milestone.
 
 ## Why Hanza?
 
@@ -77,6 +77,8 @@ For configuration, health checks and troubleshooting, read the [full quick start
 
 Allegro works through an application you register, so the Client ID and secret belong to your installation.
 
+To try it in the sandbox (https://allegro.pl.allegrosandbox.pl), set up the seller account first: the developer portal lets you register an application only once the account is activated as a seller (company data confirmed) and has two-step login on. The sandbox sends no SMS: its code is always `123456`. Before a business account can list an Offer it needs a shipping-rate set, a return policy, an implied warranty and a responsible producer (GPSR). The sandbox is reset every quarter and deletes its Offers; use fictitious personal data there.
+
 1. Register an application at https://apps.developer.allegro.pl (sandbox: https://apps.developer.allegro.pl.allegrosandbox.pl). Choose the type that works "without access to a browser or keyboard" (the device flow). Pick a unique name: it is shown on the consent screen and cannot be changed later. Give it these scopes: `allegro:api:orders:read`, `allegro:api:orders:write`, `allegro:api:sale:offers:read`, `allegro:api:sale:offers:write` and `allegro:api:profile:read`.
 2. Set these in `.env`, then restart web and worker:
 
@@ -87,13 +89,12 @@ Allegro works through an application you register, so the Client ID and secret b
    HANZA_CONNECTOR_ALLEGRO_APP_NAME=...             # the registered name, exactly
    ```
 
-3. Open **Connections → Add connection → Allegro** and choose **Connect**. Hanza shows a code. While signed in to Allegro as the seller, enter it at https://allegro.pl/skojarz-aplikacje (sandbox: https://allegro.pl.allegrosandbox.pl/skojarz-aplikacje) and approve.
+3. Open **Connections → Add connection → Allegro** and choose **Connect**. Hanza shows a code. While signed in to Allegro as the seller, enter it at https://allegro.pl/uzytkownik/bezpieczenstwo/skojarz-aplikacje (sandbox: https://allegro.pl.allegrosandbox.pl/uzytkownik/bezpieczenstwo/skojarz-aplikacje) and approve.
 
 Allegro's [REST API terms](https://developer.allegro.pl/rules) bind you: never share the client secret, keep the `User-Agent` Hanza sends (`<APP_NAME>/<version> (+https://github.com/evelumo/hanza)`, which is why the name must match the registration), and use the key at least every 90 days or Allegro may remove it.
 
 - Changing the Client ID later means every Allegro Connection must sign in again.
 - Unsetting the variables makes the panel list Allegro as not set up; existing Connections fail with the variable names and keep their data.
-- The sandbox deletes Offers once a quarter. Use fictitious personal data there.
 
 What is synchronised in version 1:
 

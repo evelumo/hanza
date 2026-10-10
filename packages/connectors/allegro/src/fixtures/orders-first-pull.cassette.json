@@ -19,7 +19,7 @@
         "body": {
           "json": {
             "latestEvent": {
-              "id": "MTc5MDAwMDAwMDAwMDAxNg",
+              "id": "1791663800016000",
               "occurredAt": "2026-10-08T09:00:00.000Z"
             }
           }
@@ -45,7 +45,7 @@
           "json": {
             "checkoutForms": [
               {
-                "id": "29738e61-7f6a-4c45-89db-60ede9d61a02",
+                "id": "29738e61-c4e8-11f1-89db-60ede9d61a02",
                 "messageToSeller": "scrubbed-1",
                 "surcharges": [],
                 "note": {
@@ -117,7 +117,7 @@
                 },
                 "lineItems": [
                   {
-                    "id": "62ae358b-8f65-4fc4-9c77-bedf604a2e01",
+                    "id": "62ae358b-c4e8-11f1-9c77-bedf604a2e01",
                     "offer": {
                       "id": "7834566001",
                       "name": "Ceramic mug 350 ml, white",
@@ -150,7 +150,7 @@
                 "revision": "819b5836"
               },
               {
-                "id": "29738e61-7f6a-4c45-89db-60ede9d61a03",
+                "id": "29738e61-c4e8-11f1-89db-60ede9d61a03",
                 "messageToSeller": "scrubbed-1",
                 "surcharges": [],
                 "note": {
@@ -217,7 +217,7 @@
                 },
                 "lineItems": [
                   {
-                    "id": "62ae358b-8f65-4fc4-9c77-bedf604a2e01",
+                    "id": "62ae358b-c4e8-11f1-9c77-bedf604a2e01",
                     "offer": {
                       "id": "7834566001",
                       "name": "Ceramic mug 350 ml, white",
@@ -250,7 +250,7 @@
                 "revision": "819b5836"
               },
               {
-                "id": "29738e61-7f6a-4c45-89db-60ede9d61a04",
+                "id": "29738e61-c4e8-11f1-89db-60ede9d61a04",
                 "messageToSeller": "scrubbed-1",
                 "surcharges": [],
                 "note": {
@@ -344,7 +344,7 @@
                 },
                 "lineItems": [
                   {
-                    "id": "62ae358b-8f65-4fc4-9c77-bedf604a2e01",
+                    "id": "62ae358b-c4e8-11f1-9c77-bedf604a2e01",
                     "offer": {
                       "id": "7834566001",
                       "name": "Ceramic mug 350 ml, white",
@@ -377,7 +377,7 @@
                 "revision": "819b5836"
               },
               {
-                "id": "29738e61-7f6a-4c45-89db-60ede9d61a05",
+                "id": "29738e61-c4e8-11f1-89db-60ede9d61a05",
                 "messageToSeller": "scrubbed-1",
                 "surcharges": [],
                 "note": {
@@ -460,7 +460,7 @@
                 },
                 "lineItems": [
                   {
-                    "id": "62ae358b-8f65-4fc4-9c77-bedf604a2e01",
+                    "id": "62ae358b-c4e8-11f1-9c77-bedf604a2e01",
                     "offer": {
                       "id": "7834566001",
                       "name": "Ceramic mug 350 ml, white",
@@ -493,7 +493,7 @@
                 "revision": "819b5836"
               },
               {
-                "id": "29738e61-7f6a-4c45-89db-60ede9d61a06",
+                "id": "29738e61-c4e8-11f1-89db-60ede9d61a06",
                 "messageToSeller": "scrubbed-1",
                 "surcharges": [],
                 "note": {
@@ -570,7 +570,7 @@
                 },
                 "lineItems": [
                   {
-                    "id": "62ae358b-8f65-4fc4-9c77-bedf604a2e01",
+                    "id": "62ae358b-c4e8-11f1-9c77-bedf604a2e01",
                     "offer": {
                       "id": "7834566001",
                       "name": "Ceramic mug 350 ml, white",
@@ -603,7 +603,7 @@
                 "revision": "819b5836"
               },
               {
-                "id": "29738e61-7f6a-4c45-89db-60ede9d61a09",
+                "id": "29738e61-c4e8-11f1-89db-60ede9d61a09",
                 "messageToSeller": "scrubbed-1",
                 "surcharges": [],
                 "note": {
@@ -663,7 +663,7 @@
                 },
                 "lineItems": [
                   {
-                    "id": "62ae358b-8f65-4fc4-9c77-bedf604a2e01",
+                    "id": "62ae358b-c4e8-11f1-9c77-bedf604a2e01",
                     "offer": {
                       "id": "7834566001",
                       "name": "Ceramic mug 350 ml, white",
@@ -696,7 +696,7 @@
                 "revision": "819b5836"
               },
               {
-                "id": "29738e61-7f6a-4c45-89db-60ede9d61a10",
+                "id": "29738e61-c4e8-11f1-89db-60ede9d61a10",
                 "messageToSeller": "scrubbed-1",
                 "surcharges": [],
                 "note": {
@@ -768,7 +768,7 @@
                 },
                 "lineItems": [
                   {
-                    "id": "62ae358b-8f65-4fc4-9c77-bedf604a2e01",
+                    "id": "62ae358b-c4e8-11f1-9c77-bedf604a2e01",
                     "offer": {
                       "id": "7834566001",
                       "name": "Ceramic mug 350 ml, white",
@@ -801,7 +801,7 @@
                 "revision": "819b5836"
               },
               {
-                "id": "29738e61-7f6a-4c45-89db-60ede9d61a11",
+                "id": "29738e61-c4e8-11f1-89db-60ede9d61a11",
                 "messageToSeller": "scrubbed-1",
                 "surcharges": [],
                 "note": {
@@ -867,7 +867,7 @@
                 },
                 "lineItems": [
                   {
-                    "id": "62ae358b-8f65-4fc4-9c77-bedf604a2e01",
+                    "id": "62ae358b-c4e8-11f1-9c77-bedf604a2e01",
                     "offer": {
                       "id": "7834566001",
                       "name": "Ceramic mug 350 ml, white",
@@ -900,7 +900,7 @@
                 "revision": "819b5836"
               },
               {
-                "id": "29738e61-7f6a-4c45-89db-60ede9d61a12",
+                "id": "29738e61-c4e8-11f1-89db-60ede9d61a12",
                 "messageToSeller": "scrubbed-1",
                 "surcharges": [],
                 "note": {
@@ -966,7 +966,7 @@
                 },
                 "lineItems": [
                   {
-                    "id": "62ae358b-8f65-4fc4-9c77-bedf604a2e01",
+                    "id": "62ae358b-c4e8-11f1-9c77-bedf604a2e01",
                     "offer": {
                       "id": "7834566001",
                       "name": "Ceramic mug 350 ml, white",
@@ -999,7 +999,7 @@
                 "revision": "819b5836"
               },
               {
-                "id": "29738e61-7f6a-4c45-89db-60ede9d61a13",
+                "id": "29738e61-c4e8-11f1-89db-60ede9d61a13",
                 "messageToSeller": "scrubbed-1",
                 "surcharges": [],
                 "note": {
@@ -1036,7 +1036,7 @@
                 },
                 "lineItems": [
                   {
-                    "id": "62ae358b-8f65-4fc4-9c77-bedf604a2e01",
+                    "id": "62ae358b-c4e8-11f1-9c77-bedf604a2e01",
                     "offer": {
                       "id": "7834566001",
                       "name": "Ceramic mug 350 ml, white",
@@ -1069,7 +1069,7 @@
                 "revision": "819b5836"
               },
               {
-                "id": "29738e61-7f6a-4c45-89db-60ede9d61a14",
+                "id": "29738e61-c4e8-11f1-89db-60ede9d61a14",
                 "messageToSeller": "scrubbed-1",
                 "surcharges": [],
                 "note": {
@@ -1111,7 +1111,7 @@
                 },
                 "lineItems": [
                   {
-                    "id": "62ae358b-8f65-4fc4-9c77-bedf604a2e01",
+                    "id": "62ae358b-c4e8-11f1-9c77-bedf604a2e01",
                     "offer": {
                       "id": "7834566001",
                       "name": "Ceramic mug 350 ml, white",
@@ -1144,7 +1144,7 @@
                 "revision": "819b5836"
               },
               {
-                "id": "29738e61-7f6a-4c45-89db-60ede9d61a15",
+                "id": "29738e61-c4e8-11f1-89db-60ede9d61a15",
                 "messageToSeller": "scrubbed-1",
                 "surcharges": [],
                 "note": {
@@ -1213,7 +1213,7 @@
                 },
                 "lineItems": [
                   {
-                    "id": "62ae358b-8f65-4fc4-9c77-bedf604a2e01",
+                    "id": "62ae358b-c4e8-11f1-9c77-bedf604a2e01",
                     "offer": {
                       "id": "7834566001",
                       "name": "Ceramic mug 350 ml, white",
@@ -1246,7 +1246,7 @@
                 "revision": "819b5836"
               },
               {
-                "id": "29738e61-7f6a-4c45-89db-60ede9d61a16",
+                "id": "29738e61-c4e8-11f1-89db-60ede9d61a16",
                 "messageToSeller": "scrubbed-1",
                 "surcharges": [],
                 "note": {
@@ -1315,7 +1315,7 @@
                 },
                 "lineItems": [
                   {
-                    "id": "62ae358b-8f65-4fc4-9c77-bedf604a2e01",
+                    "id": "62ae358b-c4e8-11f1-9c77-bedf604a2e01",
                     "offer": {
                       "id": "7834566001",
                       "name": "Ceramic mug 350 ml, white",
@@ -1348,7 +1348,7 @@
                 "revision": "819b5836"
               },
               {
-                "id": "29738e61-7f6a-4c45-89db-60ede9d61a17",
+                "id": "29738e61-c4e8-11f1-89db-60ede9d61a17",
                 "messageToSeller": "scrubbed-1",
                 "surcharges": [],
                 "note": {
@@ -1408,7 +1408,7 @@
                 },
                 "lineItems": [
                   {
-                    "id": "62ae358b-8f65-4fc4-9c77-bedf604a2e17",
+                    "id": "62ae358b-c4e8-11f1-9c77-bedf604a2e17",
                     "offer": {
                       "id": "7834566001",
                       "name": "Ceramic mug 350 ml, white",
@@ -1441,7 +1441,7 @@
                 "revision": "819b5836"
               },
               {
-                "id": "29738e61-7f6a-4c45-89db-60ede9d61a18",
+                "id": "29738e61-c4e8-11f1-89db-60ede9d61a18",
                 "messageToSeller": "scrubbed-1",
                 "surcharges": [],
                 "note": {
@@ -1510,7 +1510,7 @@
                 },
                 "lineItems": [
                   {
-                    "id": "62ae358b-8f65-4fc4-9c77-bedf604a2e01",
+                    "id": "62ae358b-c4e8-11f1-9c77-bedf604a2e01",
                     "offer": {
                       "id": "7834566001",
                       "name": "Ceramic mug 350 ml, white",
@@ -1543,7 +1543,7 @@
                 "revision": "819b5836"
               },
               {
-                "id": "29738e61-7f6a-4c45-89db-60ede9d61a07",
+                "id": "29738e61-c4e8-11f1-89db-60ede9d61a07",
                 "messageToSeller": "scrubbed-1",
                 "surcharges": [],
                 "note": {
@@ -1615,7 +1615,7 @@
                 },
                 "lineItems": [
                   {
-                    "id": "62ae358b-8f65-4fc4-9c77-bedf604a2e07",
+                    "id": "62ae358b-c4e8-11f1-9c77-bedf604a2e07",
                     "offer": {
                       "id": "7834566001",
                       "name": "Ceramic mug 350 ml, white",
@@ -1635,7 +1635,7 @@
                     "boughtAt": "2026-10-01T09:02:00.000Z"
                   },
                   {
-                    "id": "62ae358b-8f65-4fc4-9c77-bedf604a2e08",
+                    "id": "62ae358b-c4e8-11f1-9c77-bedf604a2e08",
                     "offer": {
                       "id": "7834566002",
                       "name": "Teapot 1 l, blue glaze"
@@ -1674,7 +1674,7 @@
     {
       "request": {
         "method": "GET",
-        "url": "https://api.allegro.pl.allegrosandbox.pl/order/events?from=MTc5MDAwMDAwMDAwMDAxNg&limit=100",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/order/events?from=1791663800016000&limit=100",
         "headers": {
           "accept": "application/vnd.allegro.public.v1+json"
         },

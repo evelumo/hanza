@@ -7,13 +7,13 @@ const boughtBefore = '2026-10-10T12:00:00.000Z'
 
 describe('encodeCursor / decodeCursor', () => {
   it.each<[string, OrdersCursor]>([
-    ['a listing cursor before its first page', { phase: 'listing', eventId: 'MTUzMjYw', boughtBefore, lastBoughtAt: null }],
+    ['a listing cursor before its first page', { phase: 'listing', eventId: '1791663869066571', boughtBefore, lastBoughtAt: null }],
     [
       'a listing cursor after a page',
-      { phase: 'listing', eventId: 'MTUzMjYw', boughtBefore, lastBoughtAt: '2026-10-01T09:00:00.000Z' },
+      { phase: 'listing', eventId: '1791663869066571', boughtBefore, lastBoughtAt: '2026-10-01T09:00:00.000Z' },
     ],
     ['a listing cursor of an empty journal', { phase: 'listing', eventId: null, boughtBefore, lastBoughtAt: null }],
-    ['a journal cursor', { phase: 'journal', eventId: 'MTUzMjYw', boughtBefore }],
+    ['a journal cursor', { phase: 'journal', eventId: '1791663869066571', boughtBefore }],
     ['a journal cursor of an empty journal', { phase: 'journal', eventId: null, boughtBefore }],
     ['an event id with separators and other characters', { phase: 'journal', eventId: 'a:b/c+d=%20 ż:', boughtBefore }],
   ])('round-trips %s', (_label, cursor) => {

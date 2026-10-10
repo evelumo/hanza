@@ -108,7 +108,7 @@ async function poll(ctx: AllegroAuthContext, deviceCode: string): Promise<Device
         return { status: 'denied' }
       case 'expired_token':
         return { status: 'expired' }
-      // An invalid or already used device code answers 400 with a non-standard error text: the sign-in cannot go on.
+      // An unknown device code answers 400 `invalid_request` (a used one presumably too): the sign-in cannot go on.
       default:
         throw new PermanentError(`400 ${result.error}`)
     }
