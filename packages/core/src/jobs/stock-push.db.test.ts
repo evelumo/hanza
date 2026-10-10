@@ -1,12 +1,14 @@
 import { defineConnector, type StockLevel } from '@hanza/connector-sdk'
 import { describe, expect, it } from 'vitest'
 import { z } from 'zod'
-import { createProduct } from '../catalog/products'
-import { upsertOffers } from '../catalog/offers'
+import { createProduct, createProductsFromOffers, getProduct } from '../catalog/products'
+import { linkOffer, unlinkOffer, upsertOffers } from '../catalog/offers'
 import { createConnection } from '../connections/connections'
 import { updateChannelStockRules } from '../connections/stock-rules'
 import { failSyncRun } from '../connections/sync-state'
 import { importOrder } from '../orders/import'
+import { setStock } from '../stock/set-stock'
+import { ensureDefaultWarehouse } from '../stock/warehouse'
 import { createTestOrganization } from '../testing/context'
 import { databaseUrl, useTestContext } from '../testing/db-test'
 import { buildOrder, orderLine, uniqueSku, user } from '../testing/fixtures'
@@ -40,6 +42,12 @@ const channel = defineConnector({
 })
 
 const run = { attempt: 1, maxAttempts: 5, retriedLater: 0 }
+
+/** Forgets every request so far, including waiting ones that would swallow a new request with the same key. */
+function clearQueue(ctx: { queue: { enqueued: unknown[]; waiting: unknown[] } }) {
+  ctx.queue.enqueued.length = 0
+  ctx.queue.waiting.length = 0
+}
 
 describe.skipIf(!databaseUrl)('stock.push', () => {
   const context = useTestContext({ connectors: [channel] })
@@ -177,6 +185,9 @@ describe.skipIf(!databaseUrl)('stock.push', () => {
       data: Array.from({ length: 1_050 }, (_, i) => ({ organizationId, sku: `${prefix}-${i}`, name: `P${i}` })),
       select: { id: true, sku: true },
     })
+    // Stock rows of their own: a Product without one has unset Stock and is never pushed (#137).
+    const warehouseId = await ensureDefaultWarehouse(ctx.db, organizationId)
+    await ctx.db.stock.createMany({ data: products.map((product) => ({ organizationId, productId: product.id, warehouseId, units: 0 })) })
     await ctx.db.offer.createMany({
       data: products.map((product) => ({
         organizationId,
@@ -199,6 +210,104 @@ describe.skipIf(!databaseUrl)('stock.push', () => {
       { name: 'stock.push', payload: { organizationId, connectionId }, options: { coalesceKey: `stock.push:${connectionId}` } },
     ])
     expect((await ctx.db.syncState.findFirstOrThrow({ where: { connectionId, stream: 'stock_push' } })).lastResult).toEqual({ pushed: 1_000, rejected: 0, skipped: 0 })
+  })
+
+  it('leaves out Offers of a Product with unset Stock, even after an Order reserves it, and pushes them once Stock is saved (#137)', async () => {
+    const { ctx, organizationId, connectionId } = await setup()
+    const sku = uniqueSku('UNSET')
+    const other = uniqueSku('UNSET')
+    await upsertOffers(
+      ctx,
+      organizationId,
+      connectionId,
+      [
+        { externalId: 'offer-u', sku, name: 'U', url: null },
+        { externalId: 'offer-z', sku: other, name: 'Z', url: null },
+      ],
+      new Date(),
+    )
+    const offer = (externalId: string) => ctx.db.offer.findFirstOrThrow({ where: { organizationId, connectionId, externalId } })
+    clearQueue(ctx)
+    const { created } = await createProductsFromOffers(ctx, organizationId, [(await offer('offer-u')).id, (await offer('offer-z')).id], user)
+    const [productId, otherId] = created as [string, string]
+    // Nothing to send: no Stock row, the Offers are not marked and no push is requested.
+    expect(await ctx.db.stock.count({ where: { organizationId, productId: { in: created } } })).toBe(0)
+    expect(await offer('offer-u')).toMatchObject({ productId, stockPushSeq: 0, stockPushedSeq: 0 })
+    expect(ctx.queue.enqueued.filter((job) => job.name === 'stock.push')).toEqual([])
+
+    // An Order reserves against the unset Stock (a Shortage) and marks the Offer; the push still leaves it out.
+    await importOrder(ctx, organizationId, connectionId, buildOrder({ lines: [orderLine('l1', { sku, quantity: 2 })] }))
+    expect((await offer('offer-u')).stockPushSeq).toBe(1)
+    pushes.length = 0
+    await stockPushJob.handler(ctx, { organizationId, connectionId }, run)
+    expect(pushes).toEqual([])
+    // Left out counts as handled, so the Offer does not wait in every batch.
+    expect(await offer('offer-u')).toMatchObject({ stockPushedSeq: 1, lastPushedAt: null })
+    const detail = await getProduct(ctx, organizationId, productId)
+    expect(detail).toMatchObject({ stockSet: false, stock: 0, reserved: 2, available: -2 })
+    expect(detail?.offers.map((row) => row.stockStatus)).toEqual(['unset'])
+
+    // Saving the Stock, 0 included, makes it a number to send.
+    await setStock(ctx, organizationId, productId, 5, user)
+    await setStock(ctx, organizationId, otherId, 0, user)
+    expect((await ctx.db.eventLog.findFirstOrThrow({ where: { organizationId, type: 'stock.set', subjectId: otherId } })).payload).toMatchObject({
+      from: null,
+      to: 0,
+    })
+    pushes.length = 0
+    await stockPushJob.handler(ctx, { organizationId, connectionId }, run)
+    expect(pushes).toHaveLength(1)
+    expect(pushes[0]).toHaveLength(2)
+    expect(pushes[0]).toEqual(
+      expect.arrayContaining([
+        { offerExternalId: 'offer-u', sku, available: 3 },
+        { offerExternalId: 'offer-z', sku: other, available: 0 },
+      ]),
+    )
+  })
+
+  it('linking an Offer by hand to a Product with unset Stock requests no push and sends nothing (#137)', async () => {
+    const { ctx, organizationId, connectionId } = await setup()
+    const sku = uniqueSku('UNSET')
+    await upsertOffers(
+      ctx,
+      organizationId,
+      connectionId,
+      [
+        { externalId: 'offer-source', sku, name: 'Source', url: null },
+        { externalId: 'offer-manual', sku: null, name: 'Manual', url: null },
+      ],
+      new Date(),
+    )
+    const source = await ctx.db.offer.findFirstOrThrow({ where: { organizationId, externalId: 'offer-source' } })
+    const manual = await ctx.db.offer.findFirstOrThrow({ where: { organizationId, externalId: 'offer-manual' } })
+    const [productId] = (await createProductsFromOffers(ctx, organizationId, [source.id], user)).created as [string]
+    clearQueue(ctx)
+
+    await linkOffer(ctx, organizationId, manual.id, productId, user)
+
+    expect(ctx.queue.enqueued.filter((job) => job.name === 'stock.push')).toEqual([])
+    pushes.length = 0
+    await stockPushJob.handler(ctx, { organizationId, connectionId }, run)
+    expect(pushes).toEqual([])
+
+    // With Stock saved, the same link pushes as it always did.
+    await setStock(ctx, organizationId, productId, 2, user)
+    const { productId: stocked } = await createProduct(ctx, organizationId, { sku: uniqueSku('SET'), name: 'Set', stock: 4 }, user)
+    await unlinkOffer(ctx, organizationId, manual.id, user)
+    clearQueue(ctx)
+    await linkOffer(ctx, organizationId, manual.id, stocked, user)
+    expect(ctx.queue.enqueued.filter((job) => job.name === 'stock.push')).toEqual([
+      { name: 'stock.push', payload: { organizationId, connectionId }, options: { coalesceKey: `stock.push:${connectionId}` } },
+    ])
+    pushes.length = 0
+    await stockPushJob.handler(ctx, { organizationId, connectionId }, run)
+    expect(pushes.flat()).toEqual(
+      expect.arrayContaining([
+        { offerExternalId: 'offer-manual', sku: null, available: 4 },
+        { offerExternalId: 'offer-source', sku, available: 2 },
+      ]),
+    )
   })
 
   it('a payload naming another organization does nothing', async () => {

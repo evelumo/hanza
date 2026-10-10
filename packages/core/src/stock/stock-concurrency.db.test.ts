@@ -1,7 +1,7 @@
 import { createDb, type Db } from '@hanza/db'
 import { describe, expect, it } from 'vitest'
 import { upsertOffers } from '../catalog/offers'
-import { createProduct } from '../catalog/products'
+import { createProduct, createProductsFromOffers } from '../catalog/products'
 import { isUniqueViolation } from '../errors'
 import { updateChannelStockRules } from '../connections/stock-rules'
 import { failSyncRun, finishSyncRun } from '../connections/sync-state'
@@ -185,5 +185,62 @@ describe.skipIf(!databaseUrl)('Stock and Reservations under concurrency', () => 
     }
     // Something was oversold along the way, so the clamp to zero was exercised too.
     expect([...availability.values()].some((value) => value.available < 0)).toBe(true)
+  })
+  /** A Product created from its Offer: no Stock row, so its Stock is unset (#137). */
+  async function setupUnset() {
+    const ctx = context()
+    const org = await createTestOrganization(ctx.db)
+    const connectionId = await createTestConnection(ctx, org)
+    await upsertOffers(ctx, org, connectionId, [{ externalId: 'cold-offer', sku: 'COLD', name: 'Offer', url: null }], new Date())
+    const offer = await ctx.db.offer.findFirstOrThrow({ where: { organizationId: org, externalId: 'cold-offer' } })
+    const [productId] = (await createProductsFromOffers(ctx, org, [offer.id], user)).created
+    const order = () => buildOrder({ lines: [orderLine('l1', { sku: 'COLD', quantity: 1 })] })
+    return { ctx, org, connectionId, productId: productId!, order }
+  }
+
+  it('(7) unset Stock: 20 parallel imports still wait for each other, every line is a Shortage, and no Stock row is left', async () => {
+    const { ctx, org, connectionId, productId, order } = await setupUnset()
+    const watcher = watchLockWaits(databaseUrl!, applicationName)
+
+    await Promise.all(Array.from({ length: 20 }, () => importOrder(ctx, org, connectionId, order())))
+
+    // The rows each import creates to lock are what the others wait for, even though none of them stays.
+    expect(await watcher.stop()).toBeGreaterThan(0)
+    const lines = await ctx.db.orderLine.findMany({ where: { organizationId: org } })
+    expect(lines.filter((line) => line.shortage)).toHaveLength(20)
+    expect(await ctx.db.stock.count({ where: { organizationId: org, productId } })).toBe(0)
+    expect((await getAvailability(ctx.db, org, [productId])).get(productId)).toEqual({ stock: 0, reserved: 20, available: -20 })
+  })
+
+  it('(8) Stock saved for the first time while imports run: no import covers its line with units it did not see locked', async () => {
+    const { ctx, org, connectionId, productId, order } = await setupUnset()
+    const watcher = watchLockWaits(databaseUrl!, applicationName)
+
+    await Promise.all([
+      ...Array.from({ length: 10 }, () => importOrder(ctx, org, connectionId, order())),
+      setStock(ctx, org, productId, 5, user),
+      ...Array.from({ length: 10 }, () => importOrder(ctx, org, connectionId, order())),
+    ])
+
+    expect(await watcher.stop()).toBeGreaterThan(0)
+    const lines = await ctx.db.orderLine.findMany({ where: { organizationId: org } })
+    // Each import read Available after every earlier writer committed, so at most the 5 saved units are covered.
+    expect(lines.filter((line) => !line.shortage).length).toBeLessThanOrEqual(5)
+    expect((await getAvailability(ctx.db, org, [productId])).get(productId)).toEqual({ stock: 5, reserved: 20, available: -15 })
+    const set = await ctx.db.eventLog.findFirstOrThrow({ where: { organizationId: org, type: 'stock.set' } })
+    expect(set.payload).toMatchObject({ from: null, to: 5 })
+  })
+
+  it('(9) shipping Orders of a Product with unset Stock takes nothing off Stock and leaves it unset', async () => {
+    const { ctx, org, connectionId, productId, order } = await setupUnset()
+    const orderIds: string[] = []
+    for (let i = 0; i < 3; i++) orderIds.push((await importOrder(ctx, org, connectionId, order())).orderId)
+
+    await Promise.all(orderIds.map((orderId) => changeOrderStatus(ctx, org, orderId, 'shipped', user)))
+
+    expect(await ctx.db.reservation.count({ where: { organizationId: org, status: 'consumed' } })).toBe(3)
+    expect(await ctx.db.eventLog.count({ where: { organizationId: org, type: 'stock.consumed' } })).toBe(3)
+    expect(await ctx.db.stock.count({ where: { organizationId: org, productId } })).toBe(0)
+    expect((await getAvailability(ctx.db, org, [productId])).get(productId)).toEqual({ stock: 0, reserved: 0, available: 0 })
   })
 })

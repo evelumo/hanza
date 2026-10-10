@@ -83,6 +83,22 @@ export async function getAvailabilityByWarehouse(
   return result
 }
 
+/**
+ * The Products of these that have Stock: a Stock row in some Warehouse. A Product with none has unset Stock (#137):
+ * nobody has saved it yet, so its Offers are left out of stock pushes, while Available and placement count it as 0.
+ */
+export async function productsWithStock(db: Db | Tx, organizationId: string, productIds: string[]): Promise<Set<string>> {
+  const ids = [...new Set(productIds)]
+  if (ids.length === 0) return new Set()
+  const client: Tx = db
+  const rows = await client.stock.findMany({
+    where: { organizationId, productId: { in: ids } },
+    distinct: ['productId'],
+    select: { productId: true },
+  })
+  return new Set(rows.map((row) => row.productId))
+}
+
 /** Availability of one Product in each of these Warehouses (zeros where it has none). One statement. */
 export async function getWarehouseAvailability(
   db: Db | Tx,
