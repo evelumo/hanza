@@ -36,6 +36,10 @@ _Avoid_: Seller id, profile, user
 The Channel refusing the stock or price Hanza sent for one Offer (with its short error code), while the rest of the push went through. Recorded on the Offer and shown with a Retry; the Offer is not sent again until Retry or a change that alters what it would be told, and the Connection stays healthy. Hanza records one itself, without calling the Channel, for an ended Offer it must not reopen.
 _Avoid_: Push error, failed sync, sync failure
 
+**Order feed**:
+A Channel's stream of new Orders and changes to them, which Hanza follows from a saved position. It starts with the Orders open on the Channel now, and starts that way again when the Channel no longer has the position (a restart, ADR 0021). It has caught up once a pull has read it to its end; until then, since the Connection was created or the feed restarted, Hanza does not push Stock to that Channel, because Available does not count those open Orders yet.
+_Avoid_: Order stream, order sync, journal (a Channel's own log the feed may read)
+
 **Request budget**:
 How many requests Hanza lets itself send to a connector's API in a window of time, or at once, set below the Channel's own rate limits: one budget shared by every Connection of that connector on the installation, across organizations, and one per Connection. The connector declares them, every worker shares them, and a job whose request does not fit waits or is delayed, never failed (ADR 0019).
 _Avoid_: Quota, throttle
