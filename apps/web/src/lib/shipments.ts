@@ -49,8 +49,10 @@ export const labelFailureKey: Record<ShipmentLabelFailure, MessageKey> = {
 
 /** What the page knows about the Connection a Shipment went through; null when it is not one Shipments are made through any more. */
 export interface ShipmentConnection {
-  /** Failing, or waiting for a sign-in: nothing reaches the Carrier until that is mended. */
+  /** Failing, or waiting for a sign-in: nothing new reaches the Carrier until that is mended. */
   trouble: boolean
+  /** Waiting for a sign-in, which is more than `trouble`: nothing asks the Carrier again until a person signs in. A failing Connection is tried again. */
+  needsSignIn: boolean
   /** Whether a Shipment the Carrier has can be cancelled through Hanza. */
   canCancel: boolean
 }
@@ -62,7 +64,7 @@ export type ShipmentNote =
   | { kind: 'mayExistAtCarrier' }
   /** Still waiting to be asked for again after an attempt whose outcome is not known. */
   | { kind: 'retrying' }
-  /** Nothing was sent yet, and nothing will be while the Connection is as it is. */
+  /** Nothing is sent to the Carrier while the Connection is as it is. */
   | { kind: 'connectionWaiting' }
   | { kind: 'arranging' }
   /** The Carrier has the request and has not confirmed it; `code` is its own status, the only thing that says why. */
@@ -109,9 +111,11 @@ export function shipmentNotes(shipment: NoteFields, connection: ShipmentConnecti
   if (status === 'requested') {
     // A cancel that could not be done at once: the Carrier is not asked again, and the Shipment is cancelled here
     // when the wait after the last attempt is over. Otherwise: after an attempt nobody knows the outcome of, the row
-    // waits out the retry delay; before any attempt it waits for its Connection, or for the worker, which is a
-    // matter of moments.
+    // waits out the retry delay, unless its Connection waits for a sign-in, which the scheduler skips, so no retry
+    // comes (the label that may exist is still said); before any attempt it waits for its Connection, or for the
+    // worker, which is a matter of moments.
     if (shipment.cancelRequestedAt !== null) notes.push({ kind: 'cancelQueued' })
+    else if (shipment.mayExistAtCarrier && connection?.needsSignIn) notes.push({ kind: 'connectionWaiting' }, { kind: 'mayExistAtCarrier' })
     else if (shipment.mayExistAtCarrier) notes.push({ kind: 'retrying' })
     else notes.push({ kind: connection?.trouble ? 'connectionWaiting' : 'arranging' })
   } else if (shipment.mayExistAtCarrier) {

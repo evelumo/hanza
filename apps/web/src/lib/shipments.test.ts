@@ -37,7 +37,9 @@ const row = (overrides: Partial<ShipmentRow> = {}) => ({
   createdAt: created,
   ...overrides,
 })
-const working = { trouble: false, canCancel: true }
+const working = { trouble: false, needsSignIn: false, canCancel: true }
+const failing = { trouble: true, needsSignIn: false, canCancel: true }
+const needsSignIn = { trouble: true, needsSignIn: true, canCancel: true }
 const kinds = (notes: ShipmentNote[]) => notes.map((note) => note.kind)
 
 describe('the Shipment status badge', () => {
@@ -93,7 +95,11 @@ describe('shipmentNotes', () => {
   it('says of a Shipment the Carrier was asked for without an answer that a label may exist there, also once it is over', () => {
     const waiting = row({ status: 'requested', canCheck: false, hasLabel: false, mayExistAtCarrier: true })
     // Still to be asked for again: that, not "being arranged", and not the Connection, which fails at the same time.
-    expect(kinds(shipmentNotes(waiting, { trouble: true, canCancel: true }))).toEqual(['retrying'])
+    expect(kinds(shipmentNotes(waiting, working))).toEqual(['retrying'])
+    expect(kinds(shipmentNotes(waiting, failing))).toEqual(['retrying'])
+    // A Connection that waits for a sign-in is skipped by the scheduler: nobody asks again until it is mended, so
+    // no retry is promised; the label that may exist is still said.
+    expect(kinds(shipmentNotes(waiting, needsSignIn))).toEqual(['connectionWaiting', 'mayExistAtCarrier'])
     const over = { canCheck: false, canCancel: false, hasLabel: false, mayExistAtCarrier: true }
     expect(kinds(shipmentNotes(row({ ...over, status: 'cancelled' }), working))).toEqual(['mayExistAtCarrier'])
     expect(kinds(shipmentNotes(row({ ...over, status: 'failed', failureCode: 'carrier_timeout' }), working))).toEqual(['failed', 'mayExistAtCarrier'])
@@ -104,7 +110,8 @@ describe('shipmentNotes', () => {
   it('tells a request that waits for its Connection from one the worker is about to send', () => {
     const requested = row({ status: 'requested', canCheck: false, hasLabel: false })
     expect(kinds(shipmentNotes(requested, working))).toEqual(['arranging'])
-    expect(kinds(shipmentNotes(requested, { trouble: true, canCancel: true }))).toEqual(['connectionWaiting'])
+    expect(kinds(shipmentNotes(requested, failing))).toEqual(['connectionWaiting'])
+    expect(kinds(shipmentNotes(requested, needsSignIn))).toEqual(['connectionWaiting'])
     expect(kinds(shipmentNotes(requested, null))).toEqual(['arranging'])
   })
 
@@ -128,20 +135,20 @@ describe('shipmentNotes', () => {
     const asked = row({ status: 'requested', canCheck: false, canCancel: false, hasLabel: false, cancelRequestedAt: created })
     expect(kinds(shipmentNotes(asked, working))).toEqual(['cancelQueued'])
     // Not "asked again in 5 minutes": the next thing that happens to it is the cancel.
-    expect(kinds(shipmentNotes({ ...asked, mayExistAtCarrier: true }, { trouble: true, canCancel: false }))).toEqual(['cancelQueued'])
+    expect(kinds(shipmentNotes({ ...asked, mayExistAtCarrier: true }, { trouble: true, needsSignIn: true, canCancel: false }))).toEqual(['cancelQueued'])
   })
 
   it('says what became of a cancel: asked, refused with the Carrier’s code, or not something this Carrier does', () => {
     expect(kinds(shipmentNotes(row({ cancelRequestedAt: created, canCancel: false }), working))).toEqual(['cancelRequested', 'ready'])
     expect(shipmentNotes(row({ cancelRefusedCode: 'too_late' }), working)).toEqual([{ kind: 'cancelRefused', code: 'too_late' }, { kind: 'ready' }])
-    expect(kinds(shipmentNotes(row({ cancelRefusedCode: 'cancel_unsupported', canCancel: false }), { trouble: false, canCancel: false }))).toEqual([
+    expect(kinds(shipmentNotes(row({ cancelRefusedCode: 'cancel_unsupported', canCancel: false }), { trouble: false, needsSignIn: false, canCancel: false }))).toEqual([
       'cancelUnsupported',
       'ready',
     ])
   })
 
   it('says once, for a Shipment at a Carrier that cannot cancel through Hanza, where it is cancelled instead', () => {
-    const noCancel = { trouble: false, canCancel: false }
+    const noCancel = { trouble: false, needsSignIn: false, canCancel: false }
     expect(kinds(shipmentNotes(row({ canCancel: false }), noCancel))).toEqual(['ready', 'cancelAtCarrier'])
     expect(kinds(shipmentNotes(row({ status: 'pending', hasLabel: false, canCancel: false, carrierStatus: 'created' }), noCancel))).toEqual([
       'unconfirmed',

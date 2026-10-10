@@ -65,7 +65,7 @@ export function ShipmentsSection({
   const offered = connections.filter((connection) => connection.services.length > 0)
   const now = new Date()
   const through = new Map(
-    connections.map(({ id, health, canCancel }): [string, ShipmentConnection] => [id, { canCancel, trouble: health === 'failing' || health === 'auth_expired' }]),
+    connections.map(({ id, health, canCancel }): [string, ShipmentConnection] => [id, { canCancel, trouble: health === 'failing' || health === 'auth_expired', needsSignIn: health === 'auth_expired' }]),
   )
 
   // A Carrier's own code cannot be translated, and is never read as anything but text: it stands beside the

@@ -547,7 +547,7 @@
         "arranging": "Being arranged with the carrier. The label appears here once the carrier confirms the shipment.",
         "unconfirmed": "The carrier has the request and has not confirmed it yet. It gives this status:",
         "retrying": "The carrier did not answer the request. Hanza asks again {minutes, plural, one {# minute} other {# minutes}} after that attempt. A label may have been bought all the same: check at the carrier before you create another shipment.",
-        "connectionWaiting": "The connection to this carrier is not working, so the request has not been sent.",
+        "connectionWaiting": "The connection to this carrier is not working, so the request waits until it works again.",
         "mayExistAtCarrier": "The carrier was asked for this shipment and its answer never arrived, so a label may have been bought there. Check at the carrier, and cancel it there if it exists.",
         "ready": "The label is ready. Print it and stick it on the parcel.",
         "labelPending": "The carrier confirmed the shipment. Its label is being fetched.",

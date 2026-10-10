@@ -547,7 +547,7 @@
         "arranging": "Przesyłka jest zlecana przewoźnikowi. Etykieta pojawi się tutaj, gdy przewoźnik potwierdzi przesyłkę.",
         "unconfirmed": "Przewoźnik przyjął zlecenie, ale jeszcze go nie potwierdził. Podaje taki status:",
         "retrying": "Przewoźnik nie odpowiedział na zlecenie. Hanza ponowi je {minutes, plural, one {# minutę} few {# minuty} many {# minut} other {# minuty}} po tamtej próbie. Etykieta mogła mimo to zostać kupiona: sprawdź u przewoźnika, zanim utworzysz kolejną przesyłkę.",
-        "connectionWaiting": "Połączenie z tym przewoźnikiem nie działa, więc zlecenie nie zostało jeszcze wysłane.",
+        "connectionWaiting": "Połączenie z tym przewoźnikiem nie działa, więc zlecenie czeka, aż zacznie działać.",
         "mayExistAtCarrier": "Przewoźnik dostał zlecenie tej przesyłki, ale jego odpowiedź nie dotarła, więc etykieta mogła zostać tam kupiona. Sprawdź u przewoźnika i anuluj ją tam, jeśli istnieje.",
         "ready": "Etykieta jest gotowa. Wydrukuj ją i naklej na paczkę.",
         "labelPending": "Przewoźnik potwierdził przesyłkę. Etykieta jest pobierana.",

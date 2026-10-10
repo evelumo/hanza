@@ -67,7 +67,7 @@ test('a Shipment is created for an Order, its Label downloads, and the Carrier t
   const [sent] = await mine()
   expect(sent).toMatchObject({ status: 'ready', trackingNumber: expect.stringMatching(/^FAKE\d{6}$/) })
   await expect(row).toContainText(sent!.trackingNumber)
-  // To the pickup point the Buyer chose, in the size that was picked.
+  // The Carrier was asked once for this Shipment, through the locker service. (The probe does not serve the receiver's data, so the pickup point and the size are not checked here.)
   expect((await fakeCarrier.calls()).creates.filter((create) => create.reference === sent!.reference)).toEqual([{ reference: sent!.reference, service: 'locker' }])
 
   // The Label is a file to print: an attachment named after the tracking number, never cached, and inert in a browser.
