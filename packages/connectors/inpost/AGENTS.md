@@ -4,15 +4,15 @@ InPost through its ShipX API: Paczkomat lockers and the InPost courier in Poland
 
 **What is known, and how.** Three kinds of statement are kept apart here:
 
-- _Observed_: what ShipX's sandbox answered on 2026-10-10 to a prepaid test account (see "The test account"). Dated where it matters.
+- _Observed_: what ShipX's sandbox answered to a prepaid test account (see "The test account"): on 2026-10-10 without funds, and from 01:05 on 2026-10-11 with funds, so with shipments InPost bought. Dated where it matters.
 - From the documentation: page ids in brackets.
-- _Verify on the sandbox_: a reading of the documentation that nothing has confirmed yet. Most of what is left needs an account with funds, because **no shipment of the test account was ever bought**: nothing from `confirmed` on has been seen, no Label, no tracking number.
+- _Verify on the sandbox_: a reading of the documentation that nothing has confirmed yet. What is left cannot be shown on this account: the courier service, cash on delivery, and every status after `confirmed`.
 
-Every cassette is still written by hand, now in the observed shapes. See "Fixtures".
+The conformance cassettes are recorded from the sandbox (2026-10-11); the scenario cassettes are written by hand, in the observed shapes. See "Fixtures".
 
 ## The one rule: a create never posts twice
 
-ShipX has no idempotency key, and in the mode this connector uses ("simplified": the request names the `service`) InPost goes on to buy the label within a second of the `POST`, and from then on it cannot be cancelled. A `POST` repeated after a lost answer is a second paid parcel.
+ShipX has no idempotency key, and in the mode this connector uses ("simplified": the request names the `service`) InPost goes on to buy the label at once, and from then on it cannot be cancelled (_observed_ with funds: `confirmed` 1.1 s after the `POST` was sent). A `POST` repeated after a lost answer is a second paid parcel.
 
 So `shipments.create` searches before it posts (`src/earlier-shipment.ts`, the one function that knows how):
 
@@ -67,12 +67,12 @@ The conformance replay and the scenario tests serve every recorded answer once (
 - Error bodies are `{ status, error, message, details }` [18153492]; `details` may be `null` (_observed_). The connector matches the HTTP status first and the `error` key second, never `message`, and never puts a body, the token or receiver data in an error message or a log line.
 - **Redirects are never followed** (`redirect: 'error'` on every request). A 307 or 308 on the create would post the receiver's name, phone, e-mail and address, and the token, to wherever `Location` points. A redirect is a `permanent` failure, whether the transport refuses it (Node rejects with a `TypeError` whose cause is "unexpected redirect") or hands the 3xx over (a replayed cassette does).
 
-### The test account (2026-10-10)
+### The test account
 
-The recording account is prepaid. What it cannot show:
+The recording account is prepaid. On 2026-10-10 it had no funds: every purchase failed with `debt_collection`, which is where the failed-purchase observations come from. It was topped up (200 PLN, virtual) at about 01:05 on 2026-10-11; from then on its locker shipments are bought, and the conformance cassettes were recorded at 01:14. What it still cannot show:
 
-- **No funds at the time.** Every purchase failed with `debt_collection`, so no shipment reached `confirmed`: no tracking number, no Label, no status after the purchase.
-- **No `inpost_courier_standard`.** Its services are `inpost_locker_standard`, `inpost_locker_economy`, `inpost_locker_allegro`, `inpost_locker_pass_thru`, the `_smart` ones, `inpost_courier_allegro`, `inpost_courier_c2c` and `inpost_letter_allegro`. The courier path is untried.
+- **No status after `confirmed`.** The sandbox does not move a parcel.
+- **No `inpost_courier_standard`.** Its services are `inpost_locker_standard`, `inpost_locker_economy`, `inpost_locker_allegro`, `inpost_locker_pass_thru`, the `_smart` ones, `inpost_courier_allegro`, `inpost_courier_c2c` and `inpost_letter_allegro`. The courier path is untried, beyond the refusal (`missing_trucker_id`).
 - **No bank account, no company data**, so no cash on delivery: the shipment is accepted and its purchase then fails with `company_data_missing`.
 
 ## Services
@@ -175,11 +175,36 @@ Of that answer only the status and the `error` key are read. Its `details` and i
 
 An ignored filter shows as a `count` above the number of ids asked: `permanent`. Pages are read until every id was seen, `count` shipments were seen, or a page brings nothing new, whatever size ShipX makes them. Shipments nobody asked for are ignored.
 
+### A purchase that goes through (_observed_, 2026-10-11, with funds)
+
+Two shipments, by their own timestamps and by a read every 0.1 s:
+
+| Shipment | `created` | `offer_selected` seen | Payment (`created_at` → `updated_at` of the transaction) | `confirmed` |
+| --- | --- | --- | --- | --- |
+| 14588110 | 01:16:50.991 | 0.6 s after the `POST` was sent | 51.513 → 51.976 | `updated_at` 52.036: 1.05 s after `created_at`; first seen 1.12 s after the `POST` was sent |
+| 14588109 (the recording) | 01:14:43.243 | not read | 43.667 → 44.330 | `updated_at` 44.365: 1.12 s after `created_at` |
+
+So about a second from the `POST` to `confirmed`, on the sandbox. The resource then has:
+
+```json
+"status": "confirmed", "tracking_number": "664920617630552011718863",
+"selected_offer": { "status": "bought", "expires_at": null, "rate": null, … },
+"offers": [{ "status": "bought", "expires_at": null, … }],
+"transactions": [{ "status": "success", "details": {}, … }],
+"custom_attributes": { "target_point": "KRA010", "sending_method": "any_point", "customer_delivering_code": "…" }
+```
+
+- The tracking number is 24 digits, on the shipment and on its one parcel.
+- A shipment past the purchase still carries `offers` and `transactions`.
+- `customer_delivering_code` appears with `confirmed`: the code the sender opens a locker with to hand the parcel in. The connector does not read it, and the scrub config declares it a secret, so no cassette holds one.
+
+What the purchase takes on production, and under load, is not known; the core asks again while a Shipment is `pending`, so nothing depends on it.
+
 ### A purchase that does not go through
 
 A failed purchase has no status of its own: the shipment stays `created`, `offers_prepared` or `offer_selected`.
 
-_Observed_ every time, on twelve shipments, with no funds: `created` → `offers_prepared` → `offer_selected` within 0.1 to 0.5 s of the `POST`, then, within another half second,
+_Observed_ on every shipment made without funds, sixteen in all (2026-10-10): `created` → `offers_prepared` → `offer_selected` within 0.1 to 0.5 s of the `POST`, then, within another half second,
 
 ```json
 "status": "offer_selected", "tracking_number": null,
@@ -196,10 +221,14 @@ and it stays like that. With cash on delivery on the account without company dat
 
 **Why a failed payment is not final.** The documentation says an offer stays `selected` "if a previous payment attempt was unsuccessful" and can be paid for again [18153611], and the sandbox shows that very shape. A Shipment reported `failed` is one Hanza stops following; if the payment went through afterwards, InPost would hold a paid label nobody tracks, and the replacement the seller made meanwhile would be a second parcel. `pending` loses nothing: the core gives up on a Shipment that is not confirmed after 24 hours (`carrier_timeout`).
 
-**What is not known**, because the account never got funds:
+**What happened to the unpaid shipments when the funds came** (_observed_). The account was topped up at about 01:05 on 2026-10-11. At 01:14, 01:16, 01:18 and 01:19 the shipments left unpaid the evening before (14588072 and 14588073 from 22:10, 14588092 from 23:18, and two more) were exactly as they had been: `offer_selected`, the offer `selected`, the one failed `debt_collection` transaction, the same `updated_at`, no tracking number. A shipment made at 01:16 on the same account was bought in a second.
 
-- Whether InPost pays for a stuck shipment by itself once the account has funds, or only on `POST /v1/shipments/{id}/buy`. The two shipments made at 22:10 were unchanged at 22:55: still `offer_selected`, one failed transaction each. That only says InPost does not try again by itself while there are no funds.
-- Whether an offer past its `expires_at` can still be bought. The documentation says offers "are available 5 minutes" and names an `offer_expired` error [18153611]; _observed_, the offers kept `status: "selected"` 40 minutes after their `expires_at`, and no offer in status `expired` was ever seen. The connector goes by the status, not by the time: reading `expires_at` would be a second comparison of two clocks, and would end Shipments on a guess.
+- What it shows: InPost does not pay for a waiting shipment by itself when funds arrive, at least not within 14 minutes, and it does not close one either. Such a shipment is neither bought nor ended, which is what `pending` says. Nothing was seen that `failed`, a final status, would have been right for.
+- What it does not show: whether InPost tries again later, on a schedule of its own; and whether a person could still buy such a shipment (in the manager, or by `POST /v1/shipments/{id}/buy`), which is the case the rule is there for. Nobody tried: the connector never buys, and the offers were two to three hours past their `expires_at`.
+
+**What is still not known:**
+
+- Whether an offer past its `expires_at` can still be bought. The documentation says offers "are available 5 minutes" and names an `offer_expired` error [18153611]; _observed_, the offers kept `status: "selected"` three hours after their `expires_at`, and no offer in status `expired` was ever seen. The connector goes by the status, not by the time: reading `expires_at` would be a second comparison of two clocks, and would end Shipments on a guess.
 - The shape of an unavailable offer (`unavailability_reasons`): from the documentation only.
 
 Keys taken from inside a resource (a payment's error, an unavailability reason) must be lower-case letters and `_` only. A key with digits in it could carry a phone number or a locker code.
@@ -245,16 +274,17 @@ Names kept as the issue has them although their description reads differently:
 - `unstack_from_box_machine` → `in_transit`, though its live text is the one of a pickup deadline that passed.
 - `undelivered_lack_of_access_letterbox` → `delivery_problem`, though its text says the parcel is on its way back.
 
-No status after `confirmed` can be recorded: the sandbox does not advance a shipment, so this table is tested on hand-written answers only, for good.
+`created`, `offer_selected` and `confirmed` are recorded or observed. No status after `confirmed` can be: the sandbox does not move a parcel, so the rest of this table is tested on hand-written answers only, for good.
 
 ## Label
 
-- **Label:** `GET /v1/shipments/{id}/label?format=pdf`, with `&type=A6` when the setting is `A6` and **no `type` at all when it is `normal`**: without `type` ShipX returns a normal label, and A6 for courier services, which have no normal one [18153509]; what an explicit `type=normal` does for a courier shipment is not documented, so it is never sent.
-  - Only from `confirmed` on. Before: `400` with `{"error":"invalid_action","message":"shipment_status_incorrect","details":{"action":"get_label","shipment_status":"offer_selected",…}}` (_observed_) → `TransientError`, by the key, on any 4xx. For a cancelled shipment the answer is another one: `400 validation_failed` with `{"tracking_number":["you_can_not_generate_labels_for_unpaid_shipments"]}` (_observed_) → `permanent`.
+- **Label:** `GET /v1/shipments/{id}/label?format=pdf`, with `&type=A6` when the setting is `A6` and **no `type` at all when it is `normal`**: without `type` ShipX returns a normal label, and A6 for courier services, which have no normal one [18153509]; what an explicit `type=normal` does for a courier shipment is not documented, so it is never sent. _Observed_ for a locker shipment (14588110, 2026-10-11): without `type`, and without any query at all, the PDF is one A4 page (`MediaBox [0 0 595 842]`), of the same size, 22 447 bytes, as the one `type=normal` gives; with `type=A6` it is one A6 page (`[0 0 297 421]`).
+  - Only from `confirmed` on. Before: `400` with `{"error":"invalid_action","message":"shipment_status_incorrect","details":{"action":"get_label","shipment_status":"offer_selected",…}}` (_observed_, also with `"created"`, 0.1 s after a `POST` on the funded account) → `TransientError`, by the key, on any 4xx. With funds the label is there about a second after the `POST`: the recording, which asked 10 s later, got it at the first attempt. For a cancelled shipment the answer is another one: `400 validation_failed` with `{"tracking_number":["you_can_not_generate_labels_for_unpaid_shipments"]}` (_observed_) → `permanent`.
   - The file says what it is, not the header. The body must begin with `%PDF-`, and is then returned as `application/pdf` whatever `Content-Type` says. Anything else answered with 200 (an error page of the edge in front of ShipX, JSON, an empty body) is a `TransientError`: the core stores a Label once and for good.
   - At most 5 MB, the core's limit: a `Content-Length` above it is not read at all, and a body that turns out longer is dropped where it passes it. Both `permanent`.
   - `label_generation_failed` and `label_template_not_found` follow their HTTP status.
-  - _Verify on the sandbox_ (funds): the real content type and size of a label, and that a locker shipment without `type` gets the normal one.
+  - _Observed_ (2026-10-11): `200`, `Content-Type: application/pdf`, `Content-Disposition: attachment; filename="inpost_locker_standard.pdf"`, a body of about 22 KB that begins with `%PDF-1.4`, and **no `Content-Length`** (`Transfer-Encoding: chunked`). So the size is only ever known by reading, which is why the cap is applied while reading. The `Accept` header makes no difference.
+  - _Verify on the sandbox_ (an account with the courier service): that a courier shipment without `type` gets A6.
 
 ## Why this connector does not cancel
 
@@ -288,13 +318,15 @@ Allegro services (`inpost_locker_allegro`, `inpost_courier_allegro`, `inpost_let
 
 ## Fixtures (`src/fixtures/`)
 
-**All cassettes are hand-written**, from fictitious data, then passed through the SDK's scrubber with this connector's scrub config (`src/testing.ts`), so placeholders, kept headers and the Label file are exactly what the recorder writes. Where the sandbox answered, the shapes are its own, word for word: the `201` with `Location`, the resource and the list envelope with `href` and `Link`, `offer_selected` with a failed payment, the nested `validation_failed`, `invalid_action` with its `details`, the `401`, `403` and `404` bodies. Hand-written from the documentation alone: everything from `confirmed` on (tracking numbers, bought offers, the Label), unavailable and expired offers, the courier shipment, statuses after the purchase, the 429 and the 500.
+**The conformance cassettes are recorded**, from the sandbox, at 01:14 on 2026-10-11 (`conformance`, `conformance-unauthorized`): a real locker shipment that InPost bought, its Label, and the kit's whole run (S1 to S6 and S8, C11, C14; S7 is the cancel this connector does not have). They hold the organization id of the account (below); the token, the sender, the receiver's name and phone, the reference and the code the parcel is handed in with are scrubbed, and the Label is the recorder's blank PDF.
 
-A first recording of the conformance run was made on 2026-10-10 and not committed: without funds it never reached a Label, and its repeated create met the listing's lag and made a second shipment.
+**The scenario cassettes are hand-written**, from fictitious data, then passed through the SDK's scrubber with this connector's scrub config (`src/testing.ts`), so placeholders, kept headers and the Label file are exactly what the recorder writes. Where the sandbox answered, the shapes are its own, word for word: the `201` with `Location`, the resource and the list envelope with `href` and `Link`, `offer_selected` with a failed payment, the `confirmed` resource with its bought offer and its payment, the nested `validation_failed`, `invalid_action` with its `details`, the `401`, `403` and `404` bodies. Hand-written from the documentation alone: unavailable and expired offers, the courier shipment, cash on delivery, statuses after `confirmed`, the 429 and the 500.
+
+A first recording, on 2026-10-10, was not committed: without funds it never reached a Label, and its repeated create, sent at once, met the listing's lag and made a second shipment. The kit now waits before the repeat (`shipment.repeatWaitMs`), and the recording of 2026-10-11 shows one `POST` per reference.
 
 | Cassette | What it shows |
 | --- | --- |
-| `conformance`, `conformance-unauthorized` | the conformance kit's run (S1 to S6, C11) for a locker Shipment: create, repeated create, track beside an id InPost does not have, label too early then ready, a rejected create. The unauthorized one holds the track answered 401 and then the search of a create answered 401, and no `POST`. C14 and S8 answer with the kit's own 403 and 500 and record nothing |
+| `conformance`, `conformance-unauthorized` | **recorded.** The conformance kit's run for a locker Shipment, 7 requests: the search (nothing); the `POST` → 201, `created`; 10 s later the repeat's search, which finds the shipment `confirmed` with its tracking number, and no second `POST`; the track beside an id InPost does not have (`999999999999`), answered with the real one alone; the Label, `200 application/pdf`; the search of the rejected create, and its `POST` → 400 `validation_failed` for the locker `XXX000X`. The unauthorized one holds the track answered 401 and then the search of a create answered 401, and no `POST`. C14 and S8 answer with the kit's own 403 and 500 and record nothing |
 | `create-lost-answer` | the repeat of a create finds the shipment by reference; one `POST` in all |
 | `create-list-lag` | as on the sandbox: the search right after the `POST` is empty; the one after the wait finds the shipment; one `POST` in all |
 | `create-search-inconsistent` | the listing counts five shipments and serves two: no `POST` |
@@ -310,7 +342,7 @@ A first recording of the conformance run was made on 2026-10-10 and not committe
 | `label-too-early`, `label-not-pdf` | `invalid_action`; an HTML page answered with 200, then the PDF |
 | `errors` | 401, 403, 404 on the organization, 429 with `Retry-After`, 500 |
 
-**Recording the conformance cassettes from the sandbox.** It needs an account **with funds**: checked four times on 2026-10-10 (22:28, 22:55, 23:11, 23:19), there were none. The test already waits 10 s before the kit's repeated create (`shipment.repeatWaitMs`, twice the worst lag measured), so the repeat finds the shipment instead of posting a second parcel, and asks the kit to track an id InPost does not have (`unknownExternalId: '999999999999'`).
+**Recording the conformance cassettes again.** The test waits 10 s before the kit's repeated create (`shipment.repeatWaitMs`, twice the worst lag measured), so the repeat finds the shipment instead of posting a second parcel, and asks the kit to track an id InPost does not have (`unknownExternalId: '999999999999'`). Each recording buys one locker shipment from the sandbox account's (virtual) funds; a run on an account without funds passes nothing and must not be committed.
 
 1. Put `packages/connectors/inpost/.recording/credentials.json` in place (ignored by git):
 
@@ -325,13 +357,13 @@ A first recording of the conformance run was made on 2026-10-10 and not committe
    HANZA_RECORD_FIXTURES=1 pnpm --filter @hanza/connector-inpost exec vitest run src/connector.test.ts
    ```
 
-   It creates **one locker shipment that InPost buys** (sandbox funds), under a fresh `reference` and `requestedAt`, and one request InPost refuses. It waits 3 s between label attempts. The cassettes are written even when a check fails: do not commit a recording that did not reach a Label.
+   It creates **one locker shipment that InPost buys**, under a fresh `reference` and `requestedAt`, and one request InPost refuses. It waits 10 s before the repeated create and 3 s between label attempts, should the first not find the Label. The cassettes are written even when a check fails: do not commit a recording that did not reach a Label.
 3. Read the diff, run `pnpm --filter @hanza/connector-inpost test` without the variable, delete `.recording/`.
 
-**A recording commits the organization id of the account it was made with**: it is in every organization path (`/organizations/7008/…` for the owner's sandbox account), in the `href` and `Link` of every list, and the resource carries the account's `application_id` and `owner_id`. None of them is a secret, and none can be scrubbed without breaking the replay. The token, the sender and the receiver are scrubbed.
+**A recording commits the organization id of the account it was made with**: it is in every organization path (`/organizations/7008/…` for the owner's sandbox account), in the `href` and `Link` of every list, and the resource carries the account's `application_id` and `owner_id`. None of them is a secret, and none can be scrubbed without breaking the replay. The token, the sender, the receiver, the reference and `customer_delivering_code` are scrubbed; so is whatever else `src/testing.ts` names, which is where a field ShipX adds has to be declared before a recording is committed.
 
 A replay reads the organization id, the locker and the two references back from the cassette (`recordedConformance`), so nothing in the test needs editing after a recording. References are scrubbed to `scrubbed-N`; ShipX's answers carry the same placeholder, which is why a replay sends the placeholder as its reference.
 
-Expect these differences from the hand-written cassettes, and fix the connector or this file where they contradict it: ids, tracking number and timestamps; the organization id in every path; how many label attempts the purchase took, and whether the status seen between them is `offer_selected`; the label's content type; whether a shipment past `confirmed` still carries `offers` and `transactions`.
+What a new recording may show differently from this one, and what to check in its diff: ids, the tracking number and timestamps; whether the repeat finds the shipment `confirmed` or still `offer_selected` (then the Label is asked for more than once, with a track in between); any field of the resource that is new, and whether it is personal or a secret.
 
-The scenario cassettes (`src/scenarios.test.ts`) are skipped when recording and are never overwritten. Those that could be recorded once someone writes the steps: lost answer, list lag, unknown target point, label too early, an id InPost does not have, the failed payment (an account without funds). The rest cannot: statuses after `confirmed`, unavailable offers on demand, an inconsistent listing, a skewed clock, a redirect, and error statuses.
+The scenario cassettes (`src/scenarios.test.ts`) are skipped when recording and are never overwritten. Those that could be recorded once someone writes the steps: lost answer, list lag, unknown target point, label too early, an id InPost does not have; the failed payment only on an account without funds. The rest cannot: statuses after `confirmed`, unavailable offers on demand, an inconsistent listing, a skewed clock, a redirect, and error statuses.
