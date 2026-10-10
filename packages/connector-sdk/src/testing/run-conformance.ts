@@ -2,7 +2,7 @@ import { basename, join } from 'node:path'
 import type { AuthContext } from '../auth'
 import type { AnyConnectorDefinition, CapabilityContext } from '../connector'
 import { CASSETTE_SUFFIX, loadCassette, toPath } from './cassette'
-import { assertConformance } from './conformance'
+import { assertConformance, type ShipmentFixtures } from './conformance'
 import { createRecordingFetch } from './record'
 import { createReplayFetch, type MatchOptions } from './replay'
 import { normalizeName, SECRET_NAMES, type ScrubConfig } from './scrub'
@@ -152,6 +152,16 @@ export interface RunConformanceOptions extends LintOptions {
   expiredCursor?: string
   /** A journal connector: C18 then requires `expiredCursor`. */
   journal?: boolean
+  /**
+   * Required for a connector with `shipments.create`: checks S1 to S8 against the main cassette. `labelWaitMs` and
+   * `repeatWaitMs` are used only when recording; a replay never waits. The Label is a binary body: record with
+   * `scrub: { replaceBinaryBodies: true }`, or the replayed Label is empty and S5 fails.
+   *
+   * The replay of such a connector serves every recorded write (any method but GET and HEAD) once: a second identical
+   * `POST` is an unmatched request, not the first answer again (`match.exhausted: 'repeat-reads'`, unless the test asks
+   * for the stricter `'error'`). So a connector that posts a Shipment twice fails on its own cassette.
+   */
+  shipment?: ShipmentFixtures
   maxPages?: number
   scrub?: ScrubConfig
   match?: MatchOptions
@@ -204,8 +214,10 @@ export async function runConformance(connector: AnyConnectorDefinition, options:
     ...stringsIn(options.refresh?.refused?.credentials),
     ...appSecretValues(options.app, options.appSecrets),
   ]
-  const replay = async (file: string) =>
-    createReplayFetch(await loadCassette(file), { match: options.match, scrub: options.scrub, secrets, name: basename(file) })
+  // A repeated write the recording does not hold is a request it never made: for a create, a second paid Shipment.
+  const match: MatchOptions | undefined =
+    connector.capabilities['shipments.create'] && options.match?.exhausted !== 'error' ? { ...options.match, exhausted: 'repeat-reads' } : options.match
+  const replay = async (file: string) => createReplayFetch(await loadCassette(file), { match, scrub: options.scrub, secrets, name: basename(file) })
   const main = await replay(files.main)
   const unauthorized = options.unauthorized ? await replay(files.unauthorized) : null
   const refresh = options.refresh ? await replay(files.refresh) : null
@@ -221,6 +233,7 @@ export async function runConformance(connector: AnyConnectorDefinition, options:
       maxPages: options.maxPages,
       expiredCursor: options.expiredCursor,
       journal: options.journal,
+      shipment: options.shipment && { ...options.shipment, labelWaitMs: 0, repeatWaitMs: 0 },
       fetch: main.fetch,
       unauthorized: unauthorized ? { credentials: options.unauthorized?.credentials, fetch: unauthorized.fetch } : undefined,
       refresh: refresh
@@ -272,6 +285,7 @@ async function recordConformance(connector: AnyConnectorDefinition, options: Run
       maxPages: options.maxPages,
       expiredCursor: options.expiredCursor,
       journal: options.journal,
+      shipment: options.shipment,
       fetch: main.fetch,
       unauthorized: unauthorized ? { credentials: unauthorizedCredentials, fetch: unauthorized.fetch } : undefined,
       refresh: refresh

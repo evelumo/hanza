@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { CassetteInteraction } from './cassette'
-import { scrubInteractions, Scrubber, SCRUBBED } from './scrub'
+import { binaryPlaceholder, scrubInteractions, Scrubber, SCRUBBED } from './scrub'
 import { findSecrets } from './secrets-lint'
 
 const JWT = 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJzZWxsZXItMSJ9.c2lnbmF0dXJlLWJ5dGVz'
@@ -111,6 +111,29 @@ describe('bodies', () => {
     expect(request.body).toEqual({ text: 'grant_type=password&username=scrubbed-1&password=%5Bscrubbed%5D' })
     expect(response.body).toBeNull()
     expect(new Scrubber({ keepBinaryBodies: true }).body({ base64: 'JVBERi0xLjQ=' }, 'application/pdf')).toEqual({ base64: 'JVBERi0xLjQ=' })
+  })
+
+  it('puts a placeholder where a binary body was, when asked: a blank PDF for a PDF, never the recorded bytes', () => {
+    const label = { base64: Buffer.from('%PDF-1.7 Jan Kowalski, ul. Testowa 1').toString('base64') }
+    const scrubber = new Scrubber({ replaceBinaryBodies: true })
+
+    const pdf = scrubber.body(label, 'application/pdf')
+    expect(pdf).toEqual(binaryPlaceholder('application/pdf'))
+    const text = Buffer.from((pdf as { base64: string }).base64, 'base64').toString('latin1')
+    expect(text.startsWith('%PDF-1.4\n')).toBe(true)
+    expect(text.endsWith('%%EOF\n')).toBe(true)
+    expect(text).not.toContain('Kowalski')
+    // The cross-reference table points at the objects, so a reader opens it.
+    const offsets = [...text.matchAll(/^(\d{10}) 00000 n $/gm)].map((match) => Number(match[1]))
+    expect(offsets.map((offset) => text.slice(offset, offset + 7))).toEqual(['1 0 obj', '2 0 obj', '3 0 obj'])
+    expect(text.slice(Number(/startxref\n(\d+)\n/.exec(text)![1]))).toMatch(/^xref\n0 4\n/)
+
+    expect(scrubber.body({ base64: '//4=' }, 'image/png')).toEqual({ base64: Buffer.from('[scrubbed]').toString('base64') })
+    expect(scrubber.body({ base64: '//4=' }, null)).toEqual({ base64: Buffer.from('[scrubbed]').toString('base64') })
+    expect(findSecrets([pdf, binaryPlaceholder(null)])).toEqual([])
+    // Kept bodies win, and text and JSON bodies are scrubbed as ever.
+    expect(new Scrubber({ replaceBinaryBodies: true, keepBinaryBodies: true }).body(label, 'application/pdf')).toEqual(label)
+    expect(scrubber.body({ json: { apiKey: 'live-key-0123456789' } }, 'application/json')).toEqual({ json: { apiKey: '[scrubbed]' } })
   })
 
   it('leaves text that only looks similar alone', () => {
