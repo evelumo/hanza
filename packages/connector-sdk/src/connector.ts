@@ -4,6 +4,15 @@ import type { Offer } from './model/offer'
 import type { Order, OrderPhase, OrderUpdate } from './model/order'
 import type { OfferPrice } from './model/price'
 import type { PricePushResult, StockPushResult } from './model/push-result'
+import {
+  shippingServiceSchema,
+  type ShipmentCancelResult,
+  type ShipmentCreateResult,
+  type ShipmentLabel,
+  type ShipmentRequest,
+  type ShipmentState,
+  type ShippingService,
+} from './model/shipment'
 import type { StockLevel } from './model/stock'
 
 export const CONNECTOR_KINDS = ['marketplace', 'shop', 'courier', 'invoicing'] as const
@@ -93,6 +102,43 @@ export interface Capabilities<TConfig, TCredentials, TApp = unknown> {
     ctx: CapabilityContext<TConfig, TCredentials, TApp>,
     input: { orderExternalId: string; phase: OrderPhase },
   ): Promise<void>
+  /**
+   * Ask the Carrier for one Shipment. **Must be repeatable: a second call with the same `reference` returns the
+   * Shipment the first one made, never another one**, also when the first call's answer was lost (the job died after
+   * the Carrier answered). A Carrier without an idempotency key needs a lookup before the request: search the
+   * Shipments made since `requestedAt` (the same on every repeat) for the `reference`, and ask for a new one only
+   * when none has it.
+   *
+   * The request names one of the connector's `shipping.services` and fits it (destination type, parcel preset or
+   * dimensions, cash on delivery only where the service takes it): the core refuses anything else before the call.
+   * What the Carrier needs beyond that is the connector's to check, such as a phone, or a currency it collects.
+   *
+   * Returns `created` with the Shipment's state (`pending` or `ready` for a new one; a repeat returns the Shipment
+   * as it is now), or `rejected` with a short code when the Carrier refuses this request for good (an unknown pickup
+   * point, a missing phone): the Shipment then fails and is never asked for again. Throw only for a failure of the
+   * call (auth, rate limit, network), which the core retries. The receiver and the address are Buyer data: never log
+   * them, and never put them in an error message or a code.
+   */
+  'shipments.create'?(ctx: CapabilityContext<TConfig, TCredentials, TApp>, request: ShipmentRequest): Promise<ShipmentCreateResult>
+  /**
+   * The current state of up to 100 Shipments of this Connection, by the ids `shipments.create` returned. Must be
+   * repeatable. A Shipment left out of the answer is unchanged, so leave out one whose Carrier status the connector
+   * cannot translate instead of guessing; never answer for an id that was not asked. An empty list resolves to an
+   * empty list without a request. Report `failed` (with the reason as `carrierStatus`) when the Carrier will never
+   * confirm a Shipment. Throw for a failure of the whole call.
+   */
+  'shipments.track'?(ctx: CapabilityContext<TConfig, TCredentials, TApp>, externalIds: string[]): Promise<ShipmentState[]>
+  /**
+   * The Label of one Shipment. The core asks once the Shipment is `ready` or later and stores the file, so this is
+   * not called for every download. Throw `TransientError` while the Carrier has none yet; the core asks again.
+   */
+  'shipments.label'?(ctx: CapabilityContext<TConfig, TCredentials, TApp>, input: { externalId: string }): Promise<ShipmentLabel>
+  /**
+   * Optional. Ask the Carrier to cancel a Shipment it has not taken. Returns `cancelled`, also for a Shipment that
+   * is already cancelled or gone, or `refused` with a short code when it is too late. Must be repeatable. Throw for a
+   * failure of the call.
+   */
+  'shipments.cancel'?(ctx: CapabilityContext<TConfig, TCredentials, TApp>, input: { externalId: string }): Promise<ShipmentCancelResult>
 }
 export type CapabilityName = keyof Capabilities<unknown, unknown, unknown>
 
@@ -144,11 +190,22 @@ export interface ConnectorDefinition<
   reopensSoldOutOffers?: boolean
   /** Optional request limits the core enforces on `ctx.fetch`; none when omitted. */
   rateLimits?: RateLimits
+  /**
+   * What a connector with `shipments.create` offers: the services a person chooses from when making a Shipment.
+   * Static, like `rateLimits`: the same for every Connection, never fetched from the Carrier.
+   */
+  shipping?: { services: ShippingService[] }
 }
 export type AnyConnectorDefinition = ConnectorDefinition<z.ZodType, z.ZodType, z.ZodType>
 
 /** Capabilities every Channel (marketplace or shop) must implement. */
 export const CHANNEL_CAPABILITIES = ['offers.pull', 'orders.pull', 'stock.push'] as const satisfies readonly CapabilityName[]
+
+/**
+ * Capabilities a connector that makes Shipments must implement together (`shipments.cancel` is optional). About
+ * capabilities, not `kind`: a Channel with its own shipping may implement them too.
+ */
+export const SHIPMENT_CAPABILITIES = ['shipments.create', 'shipments.track', 'shipments.label'] as const satisfies readonly CapabilityName[]
 
 export function listCapabilities(connector: AnyConnectorDefinition): CapabilityName[] {
   return (Object.keys(connector.capabilities) as CapabilityName[]).filter(
@@ -179,6 +236,46 @@ export function rateLimitsProblem(rateLimits: RateLimits | undefined): string | 
   )
 }
 
+/** True when Shipments can be made through this connector: it implements `shipments.create`, whatever its kind. */
+export function canShip(connector: AnyConnectorDefinition): boolean {
+  return connector.capabilities['shipments.create'] !== undefined
+}
+
+/** The service a connector declares under this id, if any. */
+export function findShippingService(connector: AnyConnectorDefinition, serviceId: string): ShippingService | undefined {
+  return connector.shipping?.services.find((service) => service.id === serviceId)
+}
+
+/** Null when the shipment capabilities and `shipping.services` of a connector fit together, else what is wrong. */
+export function shippingProblem(connector: Pick<AnyConnectorDefinition, 'capabilities' | 'shipping'>): string | null {
+  const declared: unknown = connector.shipping?.services
+  const services = Array.isArray(declared) ? (declared as ShippingService[]) : []
+  const implemented = (name: CapabilityName) => connector.capabilities[name] !== undefined
+  if (!implemented('shipments.create')) {
+    return services.length > 0 ? 'shipping.services are declared but shipments.create is missing' : null
+  }
+  const missing = SHIPMENT_CAPABILITIES.filter((name) => !implemented(name))
+  if (missing.length > 0) return `shipments.create needs ${missing.join(' and ')} as well`
+  if (services.length === 0) return 'shipments.create needs at least one service in shipping.services'
+  const ids = new Set<string>()
+  for (const [index, service] of services.entries()) {
+    const id: unknown = service?.id
+    if (typeof id !== 'string' || id === '') return `shipping service #${index + 1} has an empty id`
+    if (ids.has(id)) return `shipping service "${id}" is declared twice`
+    ids.add(id)
+    if (service.parcel?.type === 'presets') {
+      const presets = Array.isArray(service.parcel.presets) ? service.parcel.presets : []
+      if (presets.length === 0) return `shipping service "${id}" has no parcel presets`
+      const presetIds = presets.map((preset) => preset?.id)
+      const repeated = presetIds.find((presetId, position) => presetIds.indexOf(presetId) !== position)
+      if (repeated !== undefined) return `shipping service "${id}" declares the parcel preset "${String(repeated)}" twice`
+    }
+    const issue = shippingServiceSchema.safeParse(service).error?.issues[0]
+    if (issue) return `shipping service "${id}" is not well formed (${issue.path.join('.')}: ${issue.message})`
+  }
+  return null
+}
+
 /** The device flow of a connector, if it has one. */
 export function deviceFlowOf(connector: AnyConnectorDefinition) {
   return connector.auth.type === 'oauth2' ? connector.auth.deviceFlow : undefined
@@ -198,6 +295,8 @@ export function defineConnector<
   if (auth.type === 'oauth2' && auth.deviceFlow && auth.deviceFlow.verificationHosts.length === 0) {
     throw new Error(`Connector "${definition.id}" has a device flow but no verificationHosts`)
   }
+  const shipping = shippingProblem(definition as unknown as AnyConnectorDefinition)
+  if (shipping !== null) throw new Error(`Connector "${definition.id}": ${shipping}`)
   if (isChannel(definition as unknown as AnyConnectorDefinition)) {
     const implemented = listCapabilities(definition as unknown as AnyConnectorDefinition)
     const missing = CHANNEL_CAPABILITIES.filter((name) => !implemented.includes(name))

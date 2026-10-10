@@ -138,6 +138,25 @@ describe('orderSchema', () => {
   it('rejects a lowercase country code', () => {
     expect(orderSchema.safeParse({ ...order, shippingAddress: { ...address, countryCode: 'pl' } }).success).toBe(false)
   })
+
+  it('accepts a Delivery with or without a method and a pickup point; leaving it out keeps older connectors valid', () => {
+    expect('delivery' in orderSchema.parse(order)).toBe(false)
+    const locker = { method: 'InPost Paczkomat 24/7', pickupPoint: { id: 'KRA010', name: 'Paczkomat KRA010' } }
+    expect(orderSchema.parse({ ...order, delivery: locker })).toEqual({ ...order, delivery: locker })
+    expect(orderSchema.safeParse({ ...order, delivery: { method: 'Courier', pickupPoint: null } }).success).toBe(true)
+    expect(orderSchema.safeParse({ ...order, delivery: { method: null, pickupPoint: { id: 'KRA010', name: null } } }).success).toBe(true)
+    expect(orderSchema.safeParse({ ...order, delivery: { method: null, pickupPoint: null } }).success).toBe(true)
+  })
+
+  it('rejects a Delivery that is null, partial or has empty strings', () => {
+    expect(orderSchema.safeParse({ ...order, delivery: null }).success).toBe(false)
+    expect(orderSchema.safeParse({ ...order, delivery: { method: 'Courier' } }).success).toBe(false)
+    expect(orderSchema.safeParse({ ...order, delivery: { pickupPoint: null } }).success).toBe(false)
+    expect(orderSchema.safeParse({ ...order, delivery: { method: '', pickupPoint: null } }).success).toBe(false)
+    expect(orderSchema.safeParse({ ...order, delivery: { method: null, pickupPoint: { id: '', name: null } } }).success).toBe(false)
+    expect(orderSchema.safeParse({ ...order, delivery: { method: null, pickupPoint: { id: 'KRA010' } } }).success).toBe(false)
+    expect(orderSchema.safeParse({ ...order, delivery: { method: null, pickupPoint: 'KRA010' } }).success).toBe(false)
+  })
 })
 
 describe('orderUpdateSchema', () => {
@@ -155,6 +174,14 @@ describe('orderUpdateSchema', () => {
     expect(orderUpdateSchema.safeParse({ kind: 'update', externalId: 'o-1' }).success).toBe(false)
     expect(orderUpdateSchema.safeParse({ kind: 'update', externalId: 'o-1', facts: [], shippingAddress: null }).success).toBe(false)
     expect(orderUpdateSchema.safeParse({ kind: 'update', externalId: 'o-1', facts: [], shippingAddress: { ...address, countryCode: 'pl' } }).success).toBe(false)
+  })
+
+  it('accepts a Delivery, and an update without one stays an update that leaves it unchanged', () => {
+    const delivery = { method: 'InPost Paczkomat 24/7', pickupPoint: { id: 'KRA010', name: null } }
+    expect(orderUpdateSchema.parse({ kind: 'update', externalId: 'o-1', facts: [], delivery })).toEqual({ kind: 'update', externalId: 'o-1', facts: [], delivery })
+    expect('delivery' in orderUpdateSchema.parse({ kind: 'update', externalId: 'o-1', facts: [removed] })).toBe(false)
+    expect(orderUpdateSchema.safeParse({ kind: 'update', externalId: 'o-1', facts: [], delivery: null }).success).toBe(false)
+    expect(orderUpdateSchema.safeParse({ kind: 'update', externalId: 'o-1', facts: [], delivery: { method: 'Courier' } }).success).toBe(false)
   })
 
   it('isOrderUpdate tells an update from a full Order', () => {

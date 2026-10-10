@@ -125,3 +125,29 @@ _Avoid_: Unknown product, orphan line
 **Buyer**:
 The person who placed an Order, kept as a snapshot on that Order together with their addresses. Buyers are not linked across Orders or Channels. Connectors always see the Buyer in plaintext; Hanza stores it sealed and can erase it (see Erasure in the Core glossary).
 _Avoid_: Customer, client, user
+
+**Delivery**:
+What the Buyer chose on the Channel for getting the Order: a method name, as the Channel words it, and, for a locker or a shop, a Pickup point. Optional: a Channel may not say. It is what the Buyer asked for, not a parcel: sending one is a Shipment.
+_Avoid_: Shipping method, shipping option, shipment (a Shipment is the parcel the seller sends)
+
+**Pickup point**:
+The locker or shop the Buyer collects a parcel from, known by the Carrier's own code for it (such as `KRA010`). It comes with an Order's Delivery, and it is where a Shipment goes when its service delivers to a point instead of an address.
+_Avoid_: Locker, parcel machine, Paczkomat (one Carrier's name), drop-off point, collection point
+
+### Shipments
+
+**Shipment**:
+One parcel handed to a Carrier for one Order. An Order can have several. Hanza asks the Carrier for it through a Connection and follows it by its Shipment status.
+_Avoid_: Package, consignment, delivery
+
+**Carrier**:
+The delivery company behind a courier Connection, such as InPost. The SDK's connector kind stays `courier`; a Channel with its own shipping can be a Carrier too.
+_Avoid_: Courier (the connector kind, and the person at the door), shipper, forwarder
+
+**Shipment status**:
+Where a Shipment is, from one fixed list every connector translates its Carrier's own statuses into: pending, ready, in transit, awaiting pickup, delivery problem, and the final delivered, returned, cancelled and failed. Not an Order status or an Order phase. The Carrier's own status key is kept beside it as a short code (`carrierStatus`), never as free text.
+_Avoid_: Tracking status, delivery status, parcel state
+
+**Label**:
+The document a person prints and sticks on the parcel, which the Carrier issues once it has confirmed the Shipment. It shows the Buyer's name and address, so it is Buyer data.
+_Avoid_: Waybill, sticker, shipping document
