@@ -9,7 +9,7 @@ import { importOrder } from '../orders/import'
 import { moveReservation } from '../orders/move-reservation'
 import { createTestOrganization } from '../testing/context'
 import { databaseUrl, useTestContext } from '../testing/db-test'
-import { buildOrder, createTestConnection, fact, orderLine, testChannel, user } from '../testing/fixtures'
+import { buildOrder, createTestConnection, fact, orderFeedCaughtUp, orderLine, testChannel, user } from '../testing/fixtures'
 import { uniqueApplicationName, watchLockWaits } from '../testing/lock-waits'
 import { createWarehouse, listWarehouses, setWarehouseActive, updateWarehouse } from '../warehouses/warehouses'
 import { getAvailability, getWarehouseAvailability } from './availability'
@@ -83,6 +83,7 @@ describe.skipIf(!databaseUrl)('multiple Warehouses under concurrency', () => {
       await createTestConnection(ctx, org, 'B'),
       await createTestConnection(ctx, org, 'C'),
     ]
+    for (const connectionId of connections) await orderFeedCaughtUp(ctx, org, connectionId)
     await updateChannelWarehouses(ctx, org, connections[1]!, { all: false, warehouseIds: [north] }, user)
     const offers = (reverse: boolean) =>
       (reverse ? [...skus].reverse() : skus).map((sku) => ({ externalId: `offer-${sku}`, sku, name: sku, url: null }))

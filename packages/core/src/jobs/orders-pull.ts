@@ -1,9 +1,10 @@
 import { isCursorExpiredError, isOrderUpdate, type OrderFeedItem, type PullResult } from '@hanza/connector-sdk'
-import { finishSyncRun, restartOrderFeed, saveSyncCursor } from '../connections/sync-state'
+import { finishSyncRun, markOrderFeedCaughtUp, restartOrderFeed, saveSyncCursor } from '../connections/sync-state'
 import { defineJob } from '../jobs'
 import { importOrder } from '../orders/import'
 import { rematchUnmatchedLines } from '../orders/rematch'
 import { applyOrderUpdate } from '../orders/update'
+import { requestStockPushAfterCommit } from '../stock/push'
 import { withSyncRun } from '../sync/begin-run'
 import { parseOrdersPage } from '../sync/pull-result'
 import { runConnectorCall } from '../sync/run-connector'
@@ -73,6 +74,10 @@ export const ordersPullJob = defineJob({
       if (hasMore) {
         // Runs after this one finishes (coalesced), so a large backlog never holds a worker slot for long.
         await ctx.queue.enqueue(ordersPullRef, { organizationId, connectionId, trigger }, { coalesceKey: coalesceKeys.ordersPull(connectionId) })
+      } else if (await markOrderFeedCaughtUp(ctx, organizationId, connectionId)) {
+        // The first time the feed is read to its end: the held stock push (#125) goes now, net of every open Order,
+        // rather than at the next tick. A lost enqueue waits for the tick's next stock push.
+        await requestStockPushAfterCommit(ctx, organizationId, [connectionId])
       }
     })
   },

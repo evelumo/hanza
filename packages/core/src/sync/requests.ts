@@ -7,6 +7,7 @@ import { credentialsExpiry } from '../connections/credentials'
 import type { Context } from '../context'
 import { DomainError } from '../errors'
 import { coalesceKeys, offersPullRef, pricePushRef, stockPushRef } from '../jobs/refs'
+import { isStockPushHeld } from './stock-push-hold'
 
 type Issue = { path: string; message: string }
 
@@ -63,13 +64,21 @@ export async function requestSync(ctx: Context, organizationId: string, connecti
   await enqueueSync(ctx, organizationId, connectionId)
 }
 
-/** Enqueues the streams worth starting at once: Offers (which then pull Orders), stock and prices. */
+/**
+ * Enqueues the streams worth starting at once: Offers (which then pull Orders), stock and prices. Stock is pushed only
+ * once the Orders open on the Channel are imported (#125): until the Order feed has been read to its end since the
+ * Connection was created or the feed restarted, their Reservations are missing from Available, and a push would offer
+ * units already sold there. So the stock push is left out then; the Orders pull that catches up enqueues it (and the
+ * job holds any push requested meanwhile). Prices do not wait.
+ */
 export async function enqueueSync(ctx: Context, organizationId: string, connectionId: string): Promise<void> {
   await ctx.queue.enqueue(
     offersPullRef,
     { organizationId, connectionId, trigger: 'manual' },
     { coalesceKey: coalesceKeys.offersPull(connectionId) },
   )
-  await ctx.queue.enqueue(stockPushRef, { organizationId, connectionId }, { coalesceKey: coalesceKeys.stockPush(connectionId) })
+  if (!(await isStockPushHeld(ctx, organizationId, connectionId))) {
+    await ctx.queue.enqueue(stockPushRef, { organizationId, connectionId }, { coalesceKey: coalesceKeys.stockPush(connectionId) })
+  }
   await ctx.queue.enqueue(pricePushRef, { organizationId, connectionId }, { coalesceKey: coalesceKeys.pricePush(connectionId) })
 }

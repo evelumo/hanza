@@ -1,5 +1,6 @@
 export { addConnection, requestSync, enqueueSync } from './requests'
 export { buildCapabilityContext } from './capability-context'
+export { isStockPushHeld, isStockPushHeldBy } from './stock-push-hold'
 export {
   runConnectorCall,
   retryLaterDelay,

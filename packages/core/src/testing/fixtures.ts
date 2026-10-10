@@ -43,6 +43,7 @@ export const testCourier = defineConnector({
   capabilities: {},
 })
 
+/** A new `fake` Connection: its stock pushes are held until `orderFeedCaughtUp` (#125). */
 export async function createTestConnection(ctx: TestContext, organizationId: string, name = 'Test channel'): Promise<string> {
   const { connectionId } = await createConnection(
     ctx,
@@ -51,6 +52,16 @@ export async function createTestConnection(ctx: TestContext, organizationId: str
     user,
   )
   return connectionId
+}
+
+/** As if an Orders pull of the Connection had read its feed to the end: its stock pushes are no longer held (#125). */
+export async function orderFeedCaughtUp(ctx: TestContext, organizationId: string, connectionId: string): Promise<void> {
+  const caughtUpAt = new Date()
+  await ctx.db.syncState.upsert({
+    where: { connectionId_stream: { connectionId, stream: 'orders_pull' } },
+    create: { organizationId, connectionId, stream: 'orders_pull', caughtUpAt },
+    update: { caughtUpAt },
+  })
 }
 
 export function orderLine(externalId: string, overrides: Partial<OrderLine> = {}): OrderLine {
