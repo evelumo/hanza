@@ -2,10 +2,12 @@ import type { ScrubConfig } from '@hanza/connector-sdk/testing'
 
 // The invoice company's name and tax ids, wherever a checkout form sits: a single form, or a list page (arrays are
 // transparent in paths). Not by key: `name` is also an Offer's name, `value` and `ids` appear elsewhere, and the
-// tax id types (`PL_NIP`) must survive for the mapping to be tested.
+// tax id types (`PL_NIP`) must survive for the mapping to be tested. The sandbox sends the NIP twice: in `ids[]` and
+// again as `taxId`.
 const COMPANY_PATHS = ['invoice.address.company', 'checkoutForms.invoice.address.company'].flatMap((company) => [
   `${company}.name`,
   `${company}.ids.value`,
+  `${company}.taxId`,
 ])
 
 /**

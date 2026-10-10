@@ -230,6 +230,7 @@ describe('allegro connector against sandbox recordings', () => {
       'goldlightdrake',
       'Hanza Test Sp',
       '5252434812',
+      'Testowa Firma',
       'Client:111578773',
       'eyJ',
       'Bearer ',
@@ -319,6 +320,157 @@ describe('offers.pull on the sandbox', () => {
       }
       // Ended by the seller: whatever its stock, never sold out.
       expect(page.items[0]).toMatchObject({ status: 'ended', endedReason: 'other' })
+    },
+    timeout,
+  )
+})
+
+describe('orders.pull on the sandbox, later purchases', () => {
+  // Purchases placed 2026-10-10T21:5x–22:16Z, after the journal event `LATER_FROM`. Deliberately no reset of the
+  // forms here: the scenarios read the account as the purchases left it.
+  const later = {
+    paidAfterImport: forms.unpaidMug,
+    cancelledByBuyer: 'db2dbcd0-c4f7-11f1-904f-89bb34047197',
+    twoLines: '004f5a50-c4f8-11f1-904f-89bb34047197',
+    cashOnDelivery: '18d1c450-c4f8-11f1-904f-89bb34047197',
+    parcelLocker: '3e2a9e70-c4f8-11f1-904f-89bb34047197',
+  }
+  // The last event before them (the unpaid mug's import), and the last of them (the parcel locker's payment).
+  const LATER_FROM = '1791668937688157'
+  const LATER_LAST = '1791670639273069'
+  const nonEmpty = expect.stringMatching(/\S/)
+  const addressShape = { name: nonEmpty, street: nonEmpty, postalCode: nonEmpty, city: nonEmpty, countryCode: 'PL' }
+  // Company, name, street, city and tax id are scrubbed on replay (`allegroScrub`): only their presence is held.
+  const invoiceShape = { ...addressShape, company: nonEmpty, phone: null, taxId: nonEmpty }
+
+  // Other runs place purchases and change fulfillment on the same account: only these forms are asserted on.
+  const ofLater = (items: Array<Order | OrderUpdate>) => items.filter((item) => Object.values(later).includes(item.externalId))
+  const orderOf = (items: Array<Order | OrderUpdate>, id: string) => fullOrders(items).find((order) => order.externalId === id)!
+  const updateOf = (items: Array<Order | OrderUpdate>, id: string) => items.filter(isOrderUpdate).find((update) => update.externalId === id)!
+  const paidFact = (id: string) => expect.objectContaining({ id: `${id}:paid`, type: 'paid' })
+  const line = (offerExternalId: string, amount: string) =>
+    expect.objectContaining({ offerExternalId, quantity: 1, unitPrice: { amount, currency: 'PLN' } })
+
+  it(
+    'follows a payment after import, a Buyer cancellation, two lines, cash on delivery with an invoice and a parcel locker',
+    async () => {
+      const scenario = await openScenario('sandbox-orders-journal-lifecycle')
+      const placedAfter = await pullOrders(scenario.ctx, encodeCursor({ phase: 'journal', eventId: LATER_FROM, boughtBefore: '2026-10-10T21:50:00.000Z' }))
+      const placedBefore = await pullOrders(scenario.ctx, encodeCursor({ phase: 'journal', eventId: LATER_FROM, boughtBefore: '2026-10-10T22:30:00.000Z' }))
+      await scenario.close()
+
+      const journalQueries = scenario.sent.filter(({ path }) => path === '/order/events').map(({ query }) => query)
+      expect(journalQueries).toEqual([
+        { from: [LATER_FROM], limit: ['100'] },
+        { from: [LATER_FROM], limit: ['100'] },
+      ])
+
+      // Boundary 21:50: the unpaid mug was bought before it, the four new forms after it.
+      expect(ids(ofLater(placedAfter.items))).toEqual([
+        `update:${later.paidAfterImport}`,
+        later.cancelledByBuyer,
+        later.twoLines,
+        `update:${later.twoLines}`,
+        later.cashOnDelivery,
+        `update:${later.cashOnDelivery}`,
+        later.parcelLocker,
+        `update:${later.parcelLocker}`,
+      ])
+      expect(placedAfter.hasMore).toBe(false)
+      const afterCursor = decodeCursor(placedAfter.nextCursor!)
+      expect(afterCursor).toMatchObject({ phase: 'journal', boughtBefore: '2026-10-10T21:50:00.000Z' })
+      expect(BigInt(afterCursor.eventId!) >= BigInt(LATER_LAST)).toBe(true)
+
+      // Imported awaiting payment, paid later (FILLED_IN, FILLED_IN, READY_FOR_PROCESSING): the paid fact and the
+      // delivery address in place of the account one.
+      const paidLater = updateOf(placedAfter.items, later.paidAfterImport)
+      // The fact takes `payment.finishedAt`, the time of the READY_FOR_PROCESSING event.
+      expect(paidLater.facts).toEqual([{ id: `${later.paidAfterImport}:paid`, type: 'paid', occurredAt: '2026-10-10T22:13:31.994Z', note: null }])
+      expect(paidLater.shippingAddress).toMatchObject(addressShape)
+
+      // BUYER_CANCELLED while unpaid: the form is CANCELLED with no delivery address, so the account address.
+      const cancelled = orderOf(placedAfter.items, later.cancelledByBuyer)
+      expect(cancelled).toMatchObject({ payment: 'prepaid', awaitingPayment: false, billingAddress: null, total: { amount: '40.49', currency: 'PLN' } })
+      // At the form's `updatedAt`, the time of the BUYER_CANCELLED event.
+      expect(cancelled.facts).toEqual([{ id: `${later.cancelledByBuyer}:cancelled`, type: 'cancelled', occurredAt: '2026-10-10T22:14:14.292Z', note: null }])
+      expect(cancelled.lines).toEqual([line('7782361657', '34.50')])
+      expect(cancelled.shippingAddress).toMatchObject(addressShape)
+
+      const twoLines = orderOf(placedAfter.items, later.twoLines)
+      expect(twoLines.lines).toEqual([line('7782361656', '39.99'), line('7782361658', '24.00')])
+      expect(twoLines).toMatchObject({ payment: 'prepaid', awaitingPayment: false, total: { amount: '69.98', currency: 'PLN' } })
+      expect(twoLines.facts).toEqual([paidFact(later.twoLines)])
+      expect(updateOf(placedAfter.items, later.twoLines).shippingAddress).toMatchObject(addressShape)
+
+      // Cash on delivery: `payment.finishedAt` is set although nothing was paid, and still no paid fact.
+      const cod = orderOf(placedAfter.items, later.cashOnDelivery)
+      expect(cod).toMatchObject({ payment: 'cash_on_delivery', awaitingPayment: false, total: { amount: '52.98', currency: 'PLN' } })
+      expect(cod.facts).toEqual([])
+      expect(cod.billingAddress).toEqual(invoiceShape)
+      const codUpdate = updateOf(placedAfter.items, later.cashOnDelivery)
+      expect(codUpdate.facts).toEqual([])
+      expect(codUpdate.billingAddress).toEqual(cod.billingAddress)
+
+      // A parcel locker (`delivery.pickupPoint`): not in the canonical Order, a normal paid Order with an address.
+      const locker = orderOf(placedAfter.items, later.parcelLocker)
+      expect(locker.lines).toEqual([line('7782361658', '24.00')])
+      expect(locker).toMatchObject({ payment: 'prepaid', awaitingPayment: false, total: { amount: '33.99', currency: 'PLN' } })
+      expect(locker.facts).toEqual([paidFact(later.parcelLocker)])
+      expect(locker.shippingAddress).toMatchObject(addressShape)
+
+      // Boundary 22:30: every form was bought before it, so updates only, with the same facts.
+      expect(ids(ofLater(placedBefore.items))).toEqual([
+        `update:${later.paidAfterImport}`,
+        `update:${later.cancelledByBuyer}`,
+        `update:${later.twoLines}`,
+        `update:${later.cashOnDelivery}`,
+        `update:${later.parcelLocker}`,
+      ])
+      for (const id of [later.paidAfterImport, later.twoLines, later.parcelLocker]) {
+        expect(updateOf(placedBefore.items, id).facts).toEqual([paidFact(id)])
+        expect(updateOf(placedBefore.items, id).shippingAddress).toMatchObject(addressShape)
+      }
+      expect(updateOf(placedBefore.items, later.cancelledByBuyer).facts).toEqual([
+        expect.objectContaining({ id: `${later.cancelledByBuyer}:cancelled`, type: 'cancelled' }),
+      ])
+      expect(updateOf(placedBefore.items, later.cashOnDelivery)).toMatchObject({ facts: [], billingAddress: invoiceShape })
+      expect(placedBefore.hasMore).toBe(false)
+      expect(decodeCursor(placedBefore.nextCursor!)).toMatchObject({ phase: 'journal', boughtBefore: '2026-10-10T22:30:00.000Z' })
+    },
+    timeout,
+  )
+
+  it(
+    'lists the Orders open now, never the cancelled one, then reads an empty journal',
+    async () => {
+      const scenario = await openScenario('sandbox-orders-listing-now')
+      const first = await pullOrders(scenario.ctx, null)
+      const second = await pullOrders(scenario.ctx, first.nextCursor)
+      await scenario.close()
+
+      expect(scenario.sent.map(({ method, path }) => `${method} ${path}`)).toEqual([
+        'GET /order/event-stats',
+        'GET /order/checkout-forms',
+        'GET /order/events',
+      ])
+      expect(first.hasMore).toBe(true)
+      expect(decodeCursor(first.nextCursor!)).toMatchObject({ phase: 'journal', eventId: expect.stringMatching(/^\d+$/) })
+
+      // The listing query has no status filter: the cancelled form is answered and dropped in code. `paidMugs` is
+      // listed or not depending on the fulfillment status other runs left it in.
+      const listed = first.items.map(({ externalId }) => externalId)
+      expect(listed).not.toContain(later.cancelledByBuyer)
+      const open = [later.paidAfterImport, later.twoLines, later.cashOnDelivery, later.parcelLocker, forms.paidPlate]
+      expect(listed).toEqual(expect.arrayContaining(open))
+      for (const id of open) expect(orderOf(first.items, id), id).toBeDefined()
+
+      expect(orderOf(first.items, later.cashOnDelivery)).toMatchObject({ payment: 'cash_on_delivery', awaitingPayment: false, facts: [] })
+      const paidLater = orderOf(first.items, later.paidAfterImport)
+      expect(paidLater).toMatchObject({ payment: 'prepaid', awaitingPayment: false })
+      expect(paidLater.facts).toEqual([paidFact(later.paidAfterImport)])
+      expect(orderOf(first.items, later.twoLines).lines).toEqual([line('7782361656', '39.99'), line('7782361658', '24.00')])
+
+      expect(second).toEqual({ items: [], nextCursor: first.nextCursor, hasMore: false })
     },
     timeout,
   )
