@@ -7,6 +7,7 @@ import { databaseUrl, useTestContext } from '../testing/db-test'
 import { buildOrder, createTestConnection, fact, orderLine, testChannel, user } from '../testing/fixtures'
 import { changeOrderStatus } from './change-status'
 import { importOrder } from './import'
+import { getOrder } from './queries'
 
 describe.skipIf(!databaseUrl)('importOrder', () => {
   const context = useTestContext({ connectors: [testChannel] })
@@ -64,6 +65,21 @@ describe.skipIf(!databaseUrl)('importOrder', () => {
     // The linked Offer is marked and a push is requested.
     expect(await ctx.db.offer.findFirstOrThrow({ where: { organizationId: org } })).toMatchObject({ stockPushSeq: 2 })
     expect(ctx.queue.waiting.map((job) => job.name)).toEqual(['stock.push'])
+  })
+
+  it('seals the Delivery with the Buyer data: the pickup point is in no column and no Event', async () => {
+    const { ctx, org, connectionId } = await setup()
+    const delivery = { method: 'Paczkomat InPost 24/7', pickupPoint: { id: 'KRA010', name: 'Kraków, Długa 5' } }
+    const { orderId } = await importOrder(ctx, org, connectionId, buildOrder({ delivery }))
+
+    expect(await getOrder(ctx, org, orderId)).toMatchObject({ delivery })
+    const row = await ctx.db.order.findFirstOrThrow({ where: { id: orderId } })
+    const everything = JSON.stringify([row, await ctx.db.eventLog.findMany({ where: { organizationId: org } })])
+    for (const personal of ['KRA010', 'Paczkomat', 'Długa 5']) expect(everything).not.toContain(personal)
+
+    // The Channel did not say: no Delivery, not an empty one.
+    const silent = await importOrder(ctx, org, connectionId, buildOrder())
+    expect((await getOrder(ctx, org, silent.orderId))?.delivery).toBeNull()
   })
 
   it('is idempotent: importing the same Order again changes nothing', async () => {

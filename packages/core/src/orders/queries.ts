@@ -1,4 +1,4 @@
-import type { Address, Buyer, Money } from '@hanza/connector-sdk'
+import type { Address, Buyer, Delivery, Money } from '@hanza/connector-sdk'
 import type { AttentionReason, ChannelFactType, OrderStatusColor, PaymentMethod } from '@hanza/db'
 import type { Context } from '../context'
 import { listEvents, type EventRow } from '../events'
@@ -39,6 +39,8 @@ export interface OrderDetail extends OrderRow {
   buyer: Buyer | null
   shippingAddress: Address | null
   billingAddress: Address | null
+  /** What the Buyer chose on the Channel; null when the Channel did not say, and unless `buyerDataState` is `present`. */
+  delivery: Delivery | null
   /** Kept after erasure. */
   shippingCountryCode: string | null
   lines: Array<{
@@ -199,6 +201,7 @@ export async function getOrder(ctx: Context, organizationId: string, orderId: st
     buyer: present?.buyer ?? null,
     shippingAddress: present?.shippingAddress ?? null,
     billingAddress: present?.billingAddress ?? null,
+    delivery: present?.delivery ?? null,
     shippingCountryCode: order.shippingCountryCode,
     lines: order.lines.map((line) => ({
       id: line.id,

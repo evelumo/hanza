@@ -37,6 +37,7 @@ export type EventType =
   | 'order.reservation_moved'
   | 'order.buyer_data_erased'
   | 'order.addresses_updated'
+  | 'order.delivery_updated'
   | 'order_status.created'
   | 'order_status.updated'
   | 'order_status.deletion_requested'
