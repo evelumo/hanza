@@ -1,4 +1,4 @@
-import { getOrder, listWarehouses, ORDER_PHASES, type OrderDetail, type OrderPhase } from '@hanza/core'
+import { getOrder, listOrderShipments, listShippingConnections, listWarehouses, ORDER_PHASES, type OrderDetail, type OrderPhase } from '@hanza/core'
 import type { AttentionReason } from '@hanza/db'
 import { OctagonAlert } from 'lucide-react'
 import type { Metadata } from 'next'
@@ -30,6 +30,7 @@ import { changeOrderStatusAction, resolveAttentionAction } from './actions'
 import { AddressBlock } from './address-block'
 import { LinkLineForm } from './link-line-form'
 import { MoveReservationForm } from './move-reservation-form'
+import { ShipmentsSection } from './shipments-section'
 
 export const dynamic = 'force-dynamic'
 
@@ -51,9 +52,12 @@ export default async function OrderPage({ params }: { params: Promise<{ orderId:
   // Reservations move only while the Order is in an open phase (the core refuses it otherwise).
   const orderOpen = order.phase === 'new' || order.phase === 'processing'
   const nextPhase = NEXT_PHASE[order.phase]
-  const [warehouses, nextDefault] = await Promise.all([
+  const [warehouses, nextDefault, shipments, shippingConnections] = await Promise.all([
     orderOpen ? listWarehouses(ctx, organizationId) : [],
     nextPhase ? ctx.db.orderStatus.findFirst({ where: { organizationId, phase: nextPhase, isDefault: true }, select: { id: true } }) : null,
+    listOrderShipments(ctx, organizationId, order.id),
+    // Only an open Order can get a new Shipment, so only it needs to know through what.
+    orderOpen ? listShippingConnections(ctx, organizationId) : [],
   ])
   const activeWarehouses = warehouses.filter((warehouse) => warehouse.active).map(({ id, name }) => ({ id, name }))
 
@@ -127,13 +131,16 @@ export default async function OrderPage({ params }: { params: Promise<{ orderId:
       hint: t('orders.detail.attention.status_push_failed'),
       links: [{ href: `/connections/${order.connectionId}`, label: t('orders.detail.attention.toConnection', { connection: order.connectionName }) }],
     },
-    shipment_conflict: { hint: t('orders.detail.attention.shipment_conflict'), links: [] },
+    shipment_conflict: { hint: t('orders.detail.attention.shipment_conflict'), links: [{ href: '#shipments', label: t('orders.detail.attention.toShipments') }] },
   }
 
   // The names this page already holds for what its history points at.
   const eventIdentifiers = {
     product: new Map(order.lines.flatMap((line) => (line.productId && line.productSku ? [[line.productId, line.productSku] as const] : []))),
-    connection: new Map([[order.connectionId, order.connectionName]]),
+    connection: new Map([
+      [order.connectionId, order.connectionName],
+      ...shipments.map((shipment) => [shipment.connectionId, shipment.connectionName] as const),
+    ]),
     warehouse: new Map([
       ...activeWarehouses.map((warehouse) => [warehouse.id, warehouse.name] as const),
       ...order.lines.flatMap((line) => (line.reservationWarehouse ? [[line.reservationWarehouse.id, line.reservationWarehouse.name] as const] : [])),
@@ -204,6 +211,8 @@ export default async function OrderPage({ params }: { params: Promise<{ orderId:
               </SectionContent>
             </Section>
 
+            <ShipmentsSection order={order} shipments={shipments} connections={shippingConnections} />
+
             <Section title={t('orders.detail.paymentTitle')} actions={awaitingPayment ? <AwaitingPaymentBadge /> : undefined}>
               <SectionContent className="py-2">
                 <DescriptionList layout="inline">
@@ -256,6 +265,23 @@ export default async function OrderPage({ params }: { params: Promise<{ orderId:
                     </DescriptionItem>
                     <DescriptionItem term={t('orders.detail.shippingAddress')}>
                       <AddressBlock address={order.shippingAddress} />
+                    </DescriptionItem>
+                    {/* What the Buyer chose on the Channel; a dash where the Channel did not say. */}
+                    <DescriptionItem term={t('orders.detail.deliveryMethod')}>{order.delivery?.method ?? <NoValue />}</DescriptionItem>
+                    <DescriptionItem term={t('orders.detail.pickupPoint')}>
+                      {order.delivery?.pickupPoint ? (
+                        <>
+                          <Identifier wrap>{order.delivery.pickupPoint.id}</Identifier>
+                          {order.delivery.pickupPoint.name ? (
+                            <>
+                              <br />
+                              {order.delivery.pickupPoint.name}
+                            </>
+                          ) : null}
+                        </>
+                      ) : (
+                        <NoValue />
+                      )}
                     </DescriptionItem>
                     <DescriptionItem term={t('orders.detail.billingAddress')}>
                       <AddressBlock address={order.billingAddress} />

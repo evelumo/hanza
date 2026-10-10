@@ -464,6 +464,7 @@
         "shipment_conflict": "Przewoźnik odebrał paczkę tego zamówienia, ale Hanza nie mogła oznaczyć go jako wysłane: jest anulowane, nieopłacone albo ma pozycję niepołączoną z produktem. Wyjaśnij to, w razie potrzeby samodzielnie oznacz zamówienie jako wysłane, a potem oznacz je jako sprawdzone.",
         "toLines": "Przejdź do pozycji",
         "toReservations": "Przejdź do rezerwacji",
+        "toShipments": "Przejdź do przesyłek",
         "toProduct": "Produkt",
         "toChannelChanges": "Zobacz zmiany zgłoszone przez kanał",
         "toConnection": "Otwórz połączenie {connection}"
@@ -507,7 +508,9 @@
       "historyEmpty": "Brak zdarzeń.",
       "phaseLine": "Faza: {phase}",
       "paymentTitle": "Płatność",
-      "paymentMethod": "Metoda"
+      "paymentMethod": "Metoda",
+      "deliveryMethod": "Sposób dostawy",
+      "pickupPoint": "Punkt odbioru"
     },
     "linkLine": {
       "skuLabel": "SKU produktu, z którym połączyć pozycję",
@@ -520,6 +523,65 @@
       "submit": "Przenieś",
       "submitting": "Przenoszenie…",
       "hint": "Tylko do magazynu, który ma dość Dostępnego na całą pozycję."
+    },
+    "shipments": {
+      "title": "Przesyłki",
+      "description": "Paczki nadane do tego zamówienia. Gdy przewoźnik odbierze pierwszą, zamówienie samo przejdzie do fazy Wysłane; kolejne paczki już go nie zmieniają.",
+      "columns": {
+        "carrier": "Przewoźnik",
+        "service": "Usługa",
+        "status": "Status",
+        "tracking": "Numer przesyłki",
+        "trackingShort": "Nr przesyłki",
+        "next": "Co dalej"
+      },
+      "carrierStatus": "Status u przewoźnika",
+      "downloadLabel": "Pobierz etykietę",
+      "check": "Sprawdź status",
+      "checking": "Sprawdzanie…",
+      "checkRequested": "Zapytanie do przewoźnika wysłane. Odśwież stronę za chwilę.",
+      "cancel": "Anuluj przesyłkę",
+      "cancelling": "Anulowanie…",
+      "confirmCancel": "Anulować tę przesyłkę? Jej etykiety nie będzie już można użyć. Jeśli przewoźnik przyjął już zlecenie, Hanza poprosi go o anulowanie.",
+      "note": {
+        "arranging": "Przesyłka jest zlecana przewoźnikowi. Etykieta pojawi się tutaj, gdy przewoźnik potwierdzi przesyłkę.",
+        "ready": "Etykieta jest gotowa. Wydrukuj ją i naklej na paczkę.",
+        "labelPending": "Przewoźnik potwierdził przesyłkę. Etykieta jest pobierana.",
+        "cancelRequested": "Przewoźnik został poproszony o anulowanie tej przesyłki.",
+        "cancelRefused": "Tutaj jest już za późno na anulowanie tej przesyłki. Anuluj ją u przewoźnika.",
+        "failed": "Przewoźnik nie przyjął tej przesyłki.",
+        "failedByCarrier": "Przewoźnik odrzucił tę przesyłkę.",
+        "code": "Odpowiedź przewoźnika:"
+      },
+      "createHeading": "Nowa przesyłka",
+      "noCarrierTitle": "Najpierw połącz przewoźnika",
+      "noCarrier": "Przesyłki nadaje się przez połączenie z przewoźnikiem, a żadnego jeszcze nie ma.",
+      "noCarrierAction": "Przejdź do połączeń",
+      "unavailable": {
+        "shipped": "To zamówienie jest wysłane, więc nie można już utworzyć do niego przesyłki.",
+        "cancelled": "To zamówienie jest anulowane, więc nie można utworzyć do niego przesyłki.",
+        "awaitingPayment": "Kupujący jeszcze nie zapłacił. Przesyłkę będzie można utworzyć, gdy kanał zgłosi płatność.",
+        "buyerErased": "Dane kupującego w tym zamówieniu zostały usunięte, więc nie ma do kogo wysłać paczki.",
+        "buyerUnreadable": "Danych kupującego w tym zamówieniu nie można odczytać, więc nie da się utworzyć przesyłki."
+      }
+    },
+    "createShipment": {
+      "connection": "Przewoźnik",
+      "connectionTrouble": "To połączenie teraz nie działa. Przesyłka poczeka, aż zacznie działać.",
+      "service": "Usługa",
+      "preset": "Rozmiar paczki",
+      "length": "Długość (cm)",
+      "width": "Szerokość (cm)",
+      "height": "Wysokość (cm)",
+      "weight": "Waga (kg)",
+      "pickupPoint": "Punkt odbioru",
+      "pickupPointHint": "Kod paczkomatu lub punktu u przewoźnika. Uzupełniany z zamówienia, jeśli kanał go podał.",
+      "toAddress": "Paczka pojedzie na adres dostawy z zamówienia.",
+      "cashOnDelivery": "Pobranie ({currency})",
+      "cashOnDeliveryHint": "Kwota, którą przewoźnik pobierze od kupującego. Zostaw puste, żeby nie pobierać nic.",
+      "submit": "Utwórz przesyłkę",
+      "submitting": "Tworzenie…",
+      "created": "Przesyłka zlecona. Etykieta pojawi się wyżej, gdy przewoźnik potwierdzi przesyłkę."
     },
     "emptyTitle": "Nie ma jeszcze zamówień",
     "emptyAction": "Zobacz połączenia",
@@ -550,6 +612,8 @@
       "syncing": "Zlecanie…",
       "syncRequested": "Synchronizacja zlecona. Odśwież stronę za chwilę.",
       "syncEmpty": "Synchronizacja jeszcze się nie odbyła.",
+      "carrierSyncDescription": "Hanza zleca przewoźnikowi przesyłkę, gdy ją utworzysz, a potem śledzi ją w tle. Tutaj widać, co zrobiły ostatnie uruchomienia.",
+      "carrierSyncEmpty": "Do tego przewoźnika nic jeszcze nie wysłano. Utwórz przesyłkę na stronie zamówienia.",
       "syncColumns": {
         "data": "Dane",
         "started": "Rozpoczęto",
@@ -589,7 +653,7 @@
     },
     "new": {
       "title": "Dodaj połączenie",
-      "description": "Wybierz konektor, przez który Hanza połączy się z kanałem.",
+      "description": "Wybierz konektor, przez który Hanza połączy się z kanałem albo przewoźnikiem.",
       "titleFor": "Dodaj połączenie: {connector}",
       "name": "Nazwa",
       "nameHint": "Pod tą nazwą połączenie pojawi się w panelu.",
@@ -748,7 +812,7 @@
     "connectorKind": {
       "marketplace": "Marketplace",
       "shop": "Sklep",
-      "courier": "Kurier",
+      "courier": "Przewoźnik",
       "invoicing": "Fakturowanie"
     },
     "statusColor": {
@@ -776,6 +840,26 @@
       "ended": "Zakończona",
       "ended_sold_out": "Zakończona (wyprzedana)",
       "unknown": "Nieznany"
+    },
+    "shipmentStatus": {
+      "requested": "Zlecana przewoźnikowi",
+      "pending": "Czeka na przewoźnika",
+      "ready": "Gotowa do nadania",
+      "in_transit": "W drodze",
+      "awaiting_pickup": "Czeka na odbiór",
+      "delivery_problem": "Problem z doręczeniem",
+      "delivered": "Doręczona",
+      "returned": "Zwrócona",
+      "cancelled": "Anulowana",
+      "failed": "Nieudana"
+    },
+    "shipmentFailure": {
+      "carrier_timeout": "Przewoźnik nie potwierdził przesyłki w ciągu 24 godzin.",
+      "buyer_data_erased": "Dane kupującego usunięto, zanim przesyłka trafiła do przewoźnika.",
+      "buyer_data_unreadable": "Nie udało się odczytać danych kupującego.",
+      "request_invalid": "W zamówieniu brakuje danych potrzebnych przewoźnikowi, na przykład nazwy lub adresu odbiorcy.",
+      "service_unavailable": "Połączenie nie oferuje już wybranej usługi.",
+      "duplicate_external_id": "Przewoźnik odpowiedział przesyłką, którą Hanza już ma. Sprawdź u przewoźnika, zanim utworzysz kolejną."
     }
   },
   "sync": {
@@ -793,7 +877,11 @@
       "skipped": "niewysłane",
       "updatesIgnored": "zmiany zamówień spoza Hanzy",
       "feedRestarts": "pobieranie zamówień od nowa",
-      "rejected": "odrzucone"
+      "rejected": "odrzucone",
+      "checked": "sprawdzone",
+      "changed": "zmienione",
+      "labels": "pobrane etykiety",
+      "cancelled": "anulowane"
     }
   },
   "events": {
@@ -845,7 +933,14 @@
       "offer_channel_status_changed": "Zmienił się status oferty w kanale",
       "offer_push_rejected": "Kanał odrzucił ofertę",
       "offer_push_retried": "Ponowiono wysłanie oferty",
-      "connection_signed_in": "Zalogowano do kanału"
+      "connection_signed_in": "Zalogowano do kanału",
+      "shipment_requested": "Zlecono przesyłkę",
+      "shipment_status_changed": "Zmienił się status przesyłki",
+      "shipment_failed": "Nie udało się nadać przesyłki",
+      "shipment_cancel_requested": "Zlecono anulowanie przesyłki",
+      "shipment_cancel_refused": "Przewoźnik odmówił anulowania przesyłki",
+      "order_delivery_updated": "Kanał zmienił sposób dostawy",
+      "order_status_changed_by_carrier": "Przewoźnik odebrał paczkę"
     },
     "lines": "{count, plural, one {# pozycja} few {# pozycje} many {# pozycji} other {# pozycji}}",
     "defaultStatus": "status domyślny",
@@ -857,6 +952,7 @@
     "someWarehouses": "{count, plural, one {# wybrany magazyn} few {# wybrane magazyny} many {# wybranych magazynów} other {# wybranego magazynu}}",
     "priority": "priorytet {change}",
     "feedRestartGap": "może brakować zamówień złożonych i zamkniętych w międzyczasie",
+    "pickupPointChanged": "inny punkt odbioru",
     "addresses": "{which, select, shipping {adres dostawy} billing {adres do faktury} other {adres dostawy i adres do faktury}}",
     "push": {
       "stock": "stan",
@@ -913,7 +1009,7 @@
       "not_linked": "Ta oferta nie jest połączona z produktem.",
       "connector_not_configured": "Ten konektor nie jest jeszcze skonfigurowany w tej instalacji. Zapytaj osobę, która utrzymuje Hanzę.",
       "sign_in_required": "To połączenie dodaje się przez logowanie, a nie formularz.",
-      "not_a_carrier": "To połączenie nie może nadawać przesyłek.",
+      "not_a_carrier": "Przez to połączenie nie można nadawać przesyłek.",
       "shipment_order_closed": "Przesyłkę można utworzyć tylko dla nowego lub realizowanego zamówienia.",
       "shipment_service_unknown": "To połączenie nie oferuje już tej usługi. Wybierz inną.",
       "shipment_request_invalid": "Przesyłka nie pasuje do wybranej usługi. Sprawdź paczkę i kwotę pobrania.",
@@ -968,7 +1064,15 @@
     "emailInvalid": "Podaj adres e-mail (z @, najwyżej 320 znaków).",
     "retentionDaysInvalid": "Podaj liczbę całkowitą dni od 1 do 3650 albo zostaw pole puste.",
     "warehouseNameTooLong": "Nazwa może mieć najwyżej 100 znaków.",
-    "warehousesRequired": "Wybierz co najmniej jeden magazyn."
+    "warehousesRequired": "Wybierz co najmniej jeden magazyn.",
+    "carrierRequired": "Wybierz przewoźnika.",
+    "serviceRequired": "Wybierz usługę.",
+    "presetRequired": "Wybierz rozmiar paczki.",
+    "dimensionInvalid": "Podaj wymiar w centymetrach większy od 0, np. 30 albo 30,5.",
+    "weightInvalid": "Podaj wagę w kilogramach większą od 0, np. 2 albo 0,5.",
+    "pickupPointRequired": "Podaj punkt odbioru.",
+    "pickupPointTooLong": "Punkt odbioru może mieć najwyżej 100 znaków.",
+    "codAmountInvalid": "Podaj kwotę pobrania, np. 49,99, albo zostaw pole puste."
   },
   "settings": {
     "title": "Ustawienia",

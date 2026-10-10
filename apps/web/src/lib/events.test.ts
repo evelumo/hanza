@@ -66,6 +66,54 @@ describe('describeEvent', () => {
     expect(describeEvent('order.attention_raised', { reasons: ['unmatched_line', 'shortage'] }, t, format).detail).toBe('Unmatched line, Shortage')
   })
 
+  it('describes what happens to a Shipment, with the Shipment statuses in the viewer\'s language', () => {
+    expect(describeEvent('shipment.requested', { shipmentId: 's1', connectionId: 'c1', service: 'locker' }, t, format)).toEqual({
+      title: 'Shipment requested',
+      detail: null,
+    })
+    expect(describeEvent('shipment.status_changed', { shipmentId: 's1', from: 'pending', to: 'ready', carrierStatus: 'confirmed' }, t, format)).toEqual({
+      title: 'Shipment status changed',
+      detail: 'Waiting for carrier → Ready to send',
+    })
+    const { shipmentStatus } = catalogues.pl.labels
+    expect(describeEvent('shipment.status_changed', { from: 'requested', to: 'cancelled' }, translatorFor('pl'), formatPl)).toEqual({
+      title: catalogues.pl.events.title.shipment_status_changed,
+      detail: `${shipmentStatus.requested} → ${shipmentStatus.cancelled}`,
+    })
+    expect(describeEvent('shipment.status_changed', { from: 'ready', to: 'on_a_drone' }, t, format).detail).toBe('Ready to send → on_a_drone')
+    expect(describeEvent('shipment.cancel_requested', { shipmentId: 's1' }, t, format)).toEqual({ title: 'Shipment cancellation requested', detail: null })
+    expect(describeEvent('shipment.cancel_refused', { shipmentId: 's1', code: 'too_late' }, t, format)).toEqual({
+      title: 'The carrier refused to cancel the shipment',
+      detail: 'too_late',
+    })
+  })
+
+  it('explains a failed Shipment by Hanza\'s own reason, and shows a Carrier\'s code as it is', () => {
+    expect(describeEvent('shipment.failed', { shipmentId: 's1', from: 'requested', code: 'carrier_timeout' }, t, format)).toEqual({
+      title: 'Shipment failed',
+      detail: 'The carrier did not confirm the shipment within 24 hours.',
+    })
+    expect(describeEvent('shipment.failed', { code: 'carrier_timeout' }, translatorFor('pl'), formatPl).detail).toBe(catalogues.pl.labels.shipmentFailure.carrier_timeout)
+    expect(describeEvent('shipment.failed', { code: 'target_point.does_not_exist' }, t, format).detail).toBe('target_point.does_not_exist')
+    expect(describeEvent('shipment.failed', { code: null }, t, format).detail).toBeNull()
+  })
+
+  it('says that the Carrier took the parcel when a pickup shipped the Order, not that somebody changed its status', () => {
+    const pickup = { from: 'processing', to: 'shipped', fromStatus: { id: 'a', name: 'Packed' }, toStatus: { id: 'b', name: null }, cause: 'shipment', shipmentId: 's1' }
+    expect(describeEvent('order.status_changed', pickup, t, format)).toEqual({ title: 'The carrier took the parcel', detail: 'Packed → Shipped' })
+    expect(describeEvent('order.status_changed', pickup, translatorFor('pl'), formatPl).title).toBe(catalogues.pl.events.title.order_status_changed_by_carrier)
+    expect(describeEvent('order.status_changed', { ...pickup, cause: 'user' }, t, format).title).toBe('Status changed')
+    expect(describeEvent('order.attention_raised', { reasons: ['shipment_conflict'], shipmentId: 's1' }, t, format).detail).toBe(
+      'The carrier took a parcel of an order that could not be shipped',
+    )
+  })
+
+  it('describes a new Delivery from the Channel by whether the pickup point changed, never which one', () => {
+    expect(describeEvent('order.delivery_updated', { pickupPoint: true }, t, format)).toEqual({ title: 'The channel changed the delivery', detail: 'another pickup point' })
+    expect(describeEvent('order.delivery_updated', { pickupPoint: false }, t, format).detail).toBeNull()
+    expect(describeEvent('order.delivery_updated', { pickupPoint: 'KRA010' }, t, format).detail).toBeNull()
+  })
+
   it('describes price changes, a removed price included, and ignores a malformed one', () => {
     const pln = { amount: '45', currency: 'PLN' }
     expect(describeEvent('product.price_changed', { from: null, to: pln }, t, format)).toEqual({ title: 'Base price changed', detail: `No price → ${format.money(pln)}` })
@@ -225,6 +273,17 @@ describe('describeEvent with a context', () => {
       identifier: null,
       label: catalogues.pl.events.view.offer,
     })
+  })
+
+  it('links a Shipment\'s Event to its Order, and on the Order\'s own page to the Connection it was requested through', () => {
+    const requested = { shipmentId: 's1', connectionId: 'c2', service: 'locker' }
+    expect(describeEvent('shipment.requested', requested, t, format, { subject: order, identifiers: { order: new Map([['o1', 'A-7']]) } }).link).toMatchObject({
+      href: '/orders/o1',
+      label: 'Order A-7',
+    })
+    const onOrderPage = { subject: order, current: { type: 'order', id: 'o1' } as const, identifiers: { connection: new Map([['c2', 'InPost']]) } }
+    expect(describeEvent('shipment.requested', requested, t, format, onOrderPage).link).toMatchObject({ href: '/connections/c2', label: 'Connection InPost' })
+    expect(describeEvent('shipment.failed', { shipmentId: 's1', code: 'too_big' }, t, format, onOrderPage).link).toBeUndefined()
   })
 
   it('prefers what the page knows over the payload, and says "View" when neither names the subject', () => {

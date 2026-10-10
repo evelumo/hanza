@@ -464,6 +464,7 @@
         "shipment_conflict": "The carrier took a parcel of this order, but Hanza could not mark the order as shipped: it is cancelled, not paid yet, or has a line linked to no product. Settle it, ship the order yourself if it should be shipped, then mark it as reviewed.",
         "toLines": "Go to Lines",
         "toReservations": "Go to Reservations",
+        "toShipments": "Go to Shipments",
         "toProduct": "Product",
         "toChannelChanges": "See the changes reported by the channel",
         "toConnection": "Open connection {connection}"
@@ -507,7 +508,9 @@
       "historyEmpty": "No events.",
       "phaseLine": "Phase: {phase}",
       "paymentTitle": "Payment",
-      "paymentMethod": "Method"
+      "paymentMethod": "Method",
+      "deliveryMethod": "Delivery method",
+      "pickupPoint": "Pickup point"
     },
     "linkLine": {
       "skuLabel": "SKU of the product to link the line to",
@@ -520,6 +523,65 @@
       "submit": "Move",
       "submitting": "Moving…",
       "hint": "Only to a warehouse that has enough available for the whole line."
+    },
+    "shipments": {
+      "title": "Shipments",
+      "description": "Parcels handed to a carrier for this order. When the carrier takes the first one, the order moves to Shipped on its own; later parcels do not change it.",
+      "columns": {
+        "carrier": "Carrier",
+        "service": "Service",
+        "status": "Status",
+        "tracking": "Tracking number",
+        "trackingShort": "Tracking",
+        "next": "Next step"
+      },
+      "carrierStatus": "Carrier status",
+      "downloadLabel": "Download label",
+      "check": "Check status",
+      "checking": "Asking…",
+      "checkRequested": "The carrier is being asked. Refresh the page in a moment.",
+      "cancel": "Cancel shipment",
+      "cancelling": "Cancelling…",
+      "confirmCancel": "Cancel this shipment? Its label can no longer be used. If the carrier already has the request, Hanza asks the carrier to cancel it.",
+      "note": {
+        "arranging": "Being arranged with the carrier. The label appears here once the carrier confirms the shipment.",
+        "ready": "The label is ready. Print it and stick it on the parcel.",
+        "labelPending": "The carrier confirmed the shipment. Its label is being fetched.",
+        "cancelRequested": "The carrier is being asked to cancel this shipment.",
+        "cancelRefused": "It is too late to cancel this shipment here. Cancel it at the carrier.",
+        "failed": "The carrier did not accept this shipment.",
+        "failedByCarrier": "The carrier refused this shipment.",
+        "code": "The carrier’s answer:"
+      },
+      "createHeading": "New shipment",
+      "noCarrierTitle": "Connect a carrier first",
+      "noCarrier": "A shipment is created through a connection to a carrier, and there is none yet.",
+      "noCarrierAction": "Go to Connections",
+      "unavailable": {
+        "shipped": "This order is shipped, so no shipment can be created for it.",
+        "cancelled": "This order is cancelled, so no shipment can be created for it.",
+        "awaitingPayment": "The buyer has not paid yet. A shipment can be created once the channel reports the payment.",
+        "buyerErased": "The buyer data of this order was erased, so there is nobody to send a parcel to.",
+        "buyerUnreadable": "The buyer data of this order cannot be read, so a shipment cannot be created."
+      }
+    },
+    "createShipment": {
+      "connection": "Carrier",
+      "connectionTrouble": "This connection is not working right now. The shipment will wait until it does.",
+      "service": "Service",
+      "preset": "Parcel size",
+      "length": "Length (cm)",
+      "width": "Width (cm)",
+      "height": "Height (cm)",
+      "weight": "Weight (kg)",
+      "pickupPoint": "Pickup point",
+      "pickupPointHint": "The carrier’s code of the point. Filled in from the order when the channel gave it.",
+      "toAddress": "The parcel goes to the shipping address of the order.",
+      "cashOnDelivery": "Cash on delivery ({currency})",
+      "cashOnDeliveryHint": "What the carrier collects from the buyer. Leave it empty to collect nothing.",
+      "submit": "Create shipment",
+      "submitting": "Creating…",
+      "created": "Shipment requested. Its label appears above once the carrier confirms it."
     },
     "emptyTitle": "No orders yet",
     "emptyAction": "View connections",
@@ -550,6 +612,8 @@
       "syncing": "Requesting…",
       "syncRequested": "Synchronisation requested. Refresh the page in a moment.",
       "syncEmpty": "No synchronisation has run yet.",
+      "carrierSyncDescription": "Hanza asks the carrier for a shipment when you create one, then follows it in the background. What the last runs did shows here.",
+      "carrierSyncEmpty": "Nothing has been sent to this carrier yet. Create a shipment on the page of an order.",
       "syncColumns": {
         "data": "Data",
         "started": "Started",
@@ -589,7 +653,7 @@
     },
     "new": {
       "title": "Add connection",
-      "description": "Choose the connector Hanza will use to reach the channel.",
+      "description": "Choose the connector Hanza will use to reach the channel or the carrier.",
       "titleFor": "Add connection: {connector}",
       "name": "Name",
       "nameHint": "The connection will appear in the panel under this name.",
@@ -748,7 +812,7 @@
     "connectorKind": {
       "marketplace": "Marketplace",
       "shop": "Shop",
-      "courier": "Courier",
+      "courier": "Carrier",
       "invoicing": "Invoicing"
     },
     "statusColor": {
@@ -776,6 +840,26 @@
       "ended": "Ended",
       "ended_sold_out": "Ended (sold out)",
       "unknown": "Unknown"
+    },
+    "shipmentStatus": {
+      "requested": "Sending to carrier",
+      "pending": "Waiting for carrier",
+      "ready": "Ready to send",
+      "in_transit": "In transit",
+      "awaiting_pickup": "Awaiting pickup",
+      "delivery_problem": "Delivery problem",
+      "delivered": "Delivered",
+      "returned": "Returned",
+      "cancelled": "Cancelled",
+      "failed": "Failed"
+    },
+    "shipmentFailure": {
+      "carrier_timeout": "The carrier did not confirm the shipment within 24 hours.",
+      "buyer_data_erased": "The buyer data of the order was erased before the carrier was asked.",
+      "buyer_data_unreadable": "The buyer data of the order could not be read.",
+      "request_invalid": "The order lacks what the carrier needs, such as the name or the address of the receiver.",
+      "service_unavailable": "The connection no longer offers the chosen service.",
+      "duplicate_external_id": "The carrier answered with a shipment Hanza already has. Check at the carrier before creating another one."
     }
   },
   "sync": {
@@ -793,7 +877,11 @@
       "skipped": "not sent",
       "updatesIgnored": "changes to orders not in Hanza",
       "feedRestarts": "order feed restarted",
-      "rejected": "rejected"
+      "rejected": "rejected",
+      "checked": "checked",
+      "changed": "changed",
+      "labels": "labels fetched",
+      "cancelled": "cancelled"
     }
   },
   "events": {
@@ -845,7 +933,14 @@
       "offer_channel_status_changed": "Offer status on the channel changed",
       "offer_push_rejected": "The channel rejected an offer",
       "offer_push_retried": "Sending an offer retried",
-      "connection_signed_in": "Signed in to the channel"
+      "connection_signed_in": "Signed in to the channel",
+      "shipment_requested": "Shipment requested",
+      "shipment_status_changed": "Shipment status changed",
+      "shipment_failed": "Shipment failed",
+      "shipment_cancel_requested": "Shipment cancellation requested",
+      "shipment_cancel_refused": "The carrier refused to cancel the shipment",
+      "order_delivery_updated": "The channel changed the delivery",
+      "order_status_changed_by_carrier": "The carrier took the parcel"
     },
     "lines": "{count, plural, one {# line} other {# lines}}",
     "defaultStatus": "default status",
@@ -857,6 +952,7 @@
     "someWarehouses": "{count, plural, one {# chosen warehouse} other {# chosen warehouses}}",
     "priority": "priority {change}",
     "feedRestartGap": "orders placed and closed meanwhile may be missing",
+    "pickupPointChanged": "another pickup point",
     "addresses": "{which, select, shipping {shipping address} billing {billing address} other {shipping and billing address}}",
     "push": {
       "stock": "stock",
@@ -914,13 +1010,13 @@
       "connector_not_configured": "This connector is not set up on this installation yet. Ask whoever runs Hanza.",
       "sign_in_required": "This connector is connected by signing in, not with a form.",
       "no_sign_in": "This connector has no sign-in.",
-      "not_a_carrier": "This connection cannot make shipments.",
-      "shipment_order_closed": "A shipment can be made only for a new or processing order.",
+      "not_a_carrier": "Shipments cannot be created through this connection.",
+      "shipment_order_closed": "A shipment can be created only for a new or processing order.",
       "shipment_service_unknown": "This connection no longer offers that service. Choose another one.",
       "shipment_request_invalid": "The shipment does not fit the chosen service. Check the parcel and the cash on delivery.",
       "shipment_pickup_point_required": "Enter the pickup point.",
       "shipment_buyer_data_erased": "The buyer data of this order was erased, so there is nobody to send the parcel to.",
-      "shipment_buyer_data_unreadable": "The buyer data of this order cannot be read, so the shipment cannot be made.",
+      "shipment_buyer_data_unreadable": "The buyer data of this order cannot be read, so the shipment cannot be created.",
       "shipment_already_requested": "A shipment for this order with this carrier and service is already being created. Wait until the carrier has it, or cancel it first.",
       "shipment_not_cancellable": "This shipment can no longer be cancelled here.",
       "shipment_cancel_unsupported": "This carrier does not cancel shipments through Hanza. Cancel it at the carrier.",
@@ -968,7 +1064,15 @@
     "emailInvalid": "Enter an email address (with @, at most 320 characters).",
     "retentionDaysInvalid": "Enter a whole number of days from 1 to 3650, or leave the field empty.",
     "warehouseNameTooLong": "The name can have at most 100 characters.",
-    "warehousesRequired": "Choose at least one warehouse."
+    "warehousesRequired": "Choose at least one warehouse.",
+    "carrierRequired": "Choose a carrier.",
+    "serviceRequired": "Choose a service.",
+    "presetRequired": "Choose a parcel size.",
+    "dimensionInvalid": "Enter a size in centimetres above 0, e.g. 30 or 30.5.",
+    "weightInvalid": "Enter a weight in kilograms above 0, e.g. 2 or 0.5.",
+    "pickupPointRequired": "Enter the pickup point.",
+    "pickupPointTooLong": "The pickup point can have at most 100 characters.",
+    "codAmountInvalid": "Enter the amount to collect, e.g. 49.99, or leave the field empty."
   },
   "settings": {
     "title": "Settings",

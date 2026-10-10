@@ -93,6 +93,17 @@ function detail(t: Translator, format: EventFormatters, type: string, payload: P
       return pushLabel(t, payload.push)
     case 'order.status_changed':
       return arrow(statusName(t, payload.fromStatus, text(payload.from)), statusName(t, payload.toStatus, text(payload.to)))
+    case 'shipment.status_changed':
+      return arrow(shipmentStatus(t, text(payload.from)), shipmentStatus(t, text(payload.to)))
+    case 'shipment.failed': {
+      // One of Hanza's own reasons has a sentence; a Carrier's code is shown as it is.
+      const code = text(payload.code)
+      return code === null ? null : labelOrRaw(t, 'labels.shipmentFailure', code)
+    }
+    case 'shipment.cancel_refused':
+      return text(payload.code)
+    case 'order.delivery_updated':
+      return payload.pickupPoint === true ? t('events.pickupPointChanged') : null
     case 'connection.status_mapping_changed': {
       const phase = text(payload.phase)
       const change = arrow(mappedName(t, payload.from, phase), mappedName(t, payload.to, phase))
@@ -170,6 +181,7 @@ function publicationText(t: Translator, status: unknown, endedReason: string | n
 }
 
 const healthLabel = (t: Translator, value: string | null) => (value === null ? null : labelOrRaw(t, 'labels.health', value))
+const shipmentStatus = (t: Translator, value: string | null) => (value === null ? null : labelOrRaw(t, 'labels.shipmentStatus', value))
 
 /** Null in the payload means retention off; anything that is not a number is unknown. */
 function retentionLabel(t: Translator, value: unknown): string | null {
@@ -178,8 +190,14 @@ function retentionLabel(t: Translator, value: unknown): string | null {
   return days === null ? null : t('events.retentionDays', { count: days })
 }
 
-/** Event types have dots, which message keys cannot contain: `order.status_changed` is `order_status_changed`. */
-const titleKey = (type: string) => type.replaceAll('.', '_')
+/**
+ * Event types have dots, which message keys cannot contain: `order.status_changed` is `order_status_changed`. An Order
+ * that a Carrier's pickup shipped (ADR 0024) says so, instead of a status change nobody made.
+ */
+function titleKey(type: string, payload: Payload): string {
+  if (type === 'order.status_changed' && payload.cause === 'shipment') return 'order_status_changed_by_carrier'
+  return type.replaceAll('.', '_')
+}
 
 /** The subjects of Events that have a page of their own in the panel. */
 export const EVENT_LINK_KINDS = ['order', 'product', 'offer', 'connection', 'warehouse', 'product_family'] as const
@@ -312,7 +330,8 @@ export function describeEvent(
   context?: EventContext,
 ): { title: string; detail: string | null; link?: EventLink } {
   const result = detail(t, format, type, payload)
-  const title = hasLabel('events.title', titleKey(type)) ? labelOrRaw(t, 'events.title', titleKey(type)) : type
+  const key = titleKey(type, payload)
+  const title = hasLabel('events.title', key) ? labelOrRaw(t, 'events.title', key) : type
   const link = context ? linkOf(t, type, payload, context) : null
   // The link already names the Product by its SKU, so the line says which family, where the page is not that family's.
   const shown = link?.kind === 'product' && aboutItsProduct(type) ? familyName(context) : result
