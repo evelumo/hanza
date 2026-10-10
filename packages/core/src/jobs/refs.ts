@@ -65,6 +65,18 @@ export const signInPollRef = {
   schema: z.object({ organizationId: id, signInId: id }),
 } satisfies JobRef
 
+/** Asks the Carrier for one Shipment still `requested` (ADR 0023). */
+export const shipmentsCreateRef = {
+  name: 'shipments.create',
+  schema: z.object({ organizationId: id, shipmentId: id }),
+} satisfies JobRef
+
+/** Follows the due Shipments of one Connection at their Carrier: cancels, statuses, Labels. */
+export const shipmentsTrackRef = {
+  name: 'shipments.track',
+  schema: z.object({ organizationId: id, connectionId: id }),
+} satisfies JobRef
+
 export const coalesceKeys = {
   offersPull: (connectionId: string) => `offers.pull:${connectionId}`,
   ordersPull: (connectionId: string) => `orders.pull:${connectionId}`,
@@ -75,4 +87,6 @@ export const coalesceKeys = {
   privacySweep: (organizationId: string) => `privacy.sweep:${organizationId}`,
   signInStart: (signInId: string) => `connections.signIn.start:${signInId}`,
   signInPoll: (signInId: string) => `connections.signIn.poll:${signInId}`,
+  shipmentsCreate: (shipmentId: string) => `shipments.create:${shipmentId}`,
+  shipmentsTrack: (connectionId: string) => `shipments.track:${connectionId}`,
 }

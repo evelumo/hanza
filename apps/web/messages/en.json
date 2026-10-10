@@ -913,7 +913,16 @@
       "not_linked": "This offer is not linked to a product.",
       "connector_not_configured": "This connector is not set up on this installation yet. Ask whoever runs Hanza.",
       "sign_in_required": "This connector is connected by signing in, not with a form.",
-      "no_sign_in": "This connector has no sign-in."
+      "no_sign_in": "This connector has no sign-in.",
+      "not_a_carrier": "This connection cannot make shipments.",
+      "shipment_order_closed": "A shipment can be made only for a new or processing order.",
+      "shipment_service_unknown": "This connection no longer offers that service. Choose another one.",
+      "shipment_request_invalid": "The shipment does not fit the chosen service. Check the parcel and the cash on delivery.",
+      "shipment_pickup_point_required": "Enter the pickup point.",
+      "shipment_buyer_data_erased": "The buyer data of this order was erased, so there is nobody to send the parcel to.",
+      "shipment_buyer_data_unreadable": "The buyer data of this order cannot be read, so the shipment cannot be made.",
+      "shipment_not_cancellable": "This shipment can no longer be cancelled here.",
+      "shipment_cancel_unsupported": "This carrier does not cancel shipments through Hanza. Cancel it at the carrier."
     },
     "unexpected": "Something went wrong. Please try again.",
     "invalidInput": "Check the fields.",

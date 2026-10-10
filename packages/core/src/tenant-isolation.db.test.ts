@@ -26,6 +26,8 @@ import {
   updateChannelWarehouses,
 } from './connections/index'
 import { listEvents } from './events'
+import { shipmentsCreateJob } from './jobs/shipments-create'
+import { shipmentsTrackJob } from './jobs/shipments-track'
 import {
   changeOrderStatus,
   getOrder,
@@ -37,6 +39,8 @@ import {
   resolveAttention,
 } from './orders/index'
 import { listOffersAwaitingPricePush, markOffersPriceHandled, setBasePrice, setOfferPrice } from './prices/index'
+import { applyShipmentState, failShipment } from './shipments/apply-state'
+import { cancelShipment, getShipmentLabel, listOrderShipments, listShippingConnections, requestShipment } from './shipments/index'
 import {
   channelWarehouseIds,
   ensureDefaultWarehouse,
@@ -46,13 +50,16 @@ import {
   getWarehouseAvailability,
   setStock,
 } from './stock/index'
+import { createTestCarrier } from './testing/carrier'
 import { createTestOrganization } from './testing/context'
 import { databaseUrl, useTestContext } from './testing/db-test'
-import { buildOrder, createTestConnection, orderLine, user } from './testing/fixtures'
+import { buildOrder, createCarrierConnection, createTestConnection, jobRun, lockerShipment, orderLine, user } from './testing/fixtures'
 import { createWarehouse, deleteWarehouse, getWarehouse, listWarehouses, setWarehouseActive, updateWarehouse } from './warehouses/index'
 
+const carrier = createTestCarrier({ id: 'isolation-carrier' })
+
 describe.skipIf(!databaseUrl)('tenant isolation: another organization\'s ids', () => {
-  const context = useTestContext()
+  const context = useTestContext({ connectors: [carrier.connector] })
 
   it('every service refuses or returns nothing, and leaves the owner\'s data unchanged', async () => {
     const ctx = context()
@@ -70,6 +77,18 @@ describe.skipIf(!databaseUrl)('tenant isolation: another organization\'s ids', (
     const spareWarehouseA = (await createWarehouse(ctx, a, { name: 'Spare A' }, user)).warehouseId
     // B has Products with the same SKUs; they must never be matched to A's lines.
     const productB = (await createProduct(ctx, b, { sku: 'LATER', name: 'B', stock: 1 }, user)).productId
+    // A has a Shipment the Carrier confirmed, with a Label; B has a Carrier Connection and an Order of its own.
+    const carrierA = await createCarrierConnection(ctx, a, 'isolation-carrier')
+    const carrierB = await createCarrierConnection(ctx, b, 'isolation-carrier')
+    const orderB = (await importOrder(ctx, b, connB, buildOrder())).orderId
+    const shipmentA = (await requestShipment(ctx, a, orderA, lockerShipment(carrierA), user)).shipmentId
+    await shipmentsCreateJob.handler(ctx, { organizationId: a, shipmentId: shipmentA }, jobRun)
+    const atCarrier = carrier.byReference(shipmentA)!
+    carrier.advance(atCarrier.externalId, 'ready')
+    await ctx.db.$executeRaw`UPDATE "shipment" SET "nextCheckAt" = now() - interval '1 second' WHERE "id" = ${shipmentA}`
+    await shipmentsTrackJob.handler(ctx, { organizationId: a, connectionId: carrierA }, jobRun)
+    await ctx.db.$executeRaw`UPDATE "shipment" SET "nextCheckAt" = now() - interval '1 second' WHERE "id" = ${shipmentA}`
+    ctx.queue.waiting.length = 0
     const snapshot = async () => ({
       eventCount: await ctx.db.eventLog.count({ where: { organizationId: a } }),
       product: await ctx.db.product.findFirstOrThrow({ where: { id: productA } }),
@@ -80,6 +99,8 @@ describe.skipIf(!databaseUrl)('tenant isolation: another organization\'s ids', (
       connection: await ctx.db.connection.findFirstOrThrow({ where: { id: connA } }),
       warehouses: await ctx.db.warehouse.findMany({ where: { organizationId: a }, orderBy: { id: 'asc' } }),
       channelWarehouses: await ctx.db.connectionWarehouse.findMany({ where: { organizationId: a } }),
+      shipments: await ctx.db.shipment.findMany({ where: { organizationId: a } }),
+      carrierCalls: { create: carrier.calls.create.length, track: carrier.calls.track.length, label: carrier.calls.label.length, cancel: carrier.calls.cancel.length },
     })
     const before = await snapshot()
     const notFound = { code: 'not_found' }
@@ -135,11 +156,30 @@ describe.skipIf(!databaseUrl)('tenant isolation: another organization\'s ids', (
     await expect(moveReservation(ctx, a, reservedLineA, warehouseB, user)).rejects.toMatchObject(notFound)
     await expect(resolveAttention(ctx, b, orderA, user)).rejects.toMatchObject(notFound)
     expect(await rematchUnmatchedLines(ctx, b)).toEqual({ linked: 0 })
-    expect((await listOrders(ctx, b, { skip: 0, take: 50 })).total).toBe(0)
+    expect((await listOrders(ctx, b, { skip: 0, take: 50 })).items.map((order) => order.id)).toEqual([orderB])
     expect(await getOrder(ctx, b, orderA)).toBeNull()
 
+    // Shipments
+    await expect(requestShipment(ctx, b, orderA, lockerShipment(carrierB), user)).rejects.toMatchObject(notFound)
+    await expect(requestShipment(ctx, b, orderB, lockerShipment(carrierA), user)).rejects.toMatchObject(notFound)
+    await expect(requestShipment(ctx, a, orderA, lockerShipment(carrierB), user)).rejects.toMatchObject(notFound)
+    await expect(cancelShipment(ctx, b, shipmentA, user)).rejects.toMatchObject(notFound)
+    expect(await getShipmentLabel(ctx, b, shipmentA)).toBeNull()
+    expect((await getShipmentLabel(ctx, a, shipmentA))?.data.byteLength).toBeGreaterThan(0)
+    expect(await listOrderShipments(ctx, b, orderA)).toEqual([])
+    expect((await listOrderShipments(ctx, a, orderA)).map((shipment) => shipment.id)).toEqual([shipmentA])
+    expect((await listShippingConnections(ctx, b)).map((connection) => connection.id)).toEqual([carrierB])
+    // A job payload with a foreign organization id is harmless: no Carrier call, no change.
+    carrier.advance(atCarrier.externalId, 'in_transit')
+    await shipmentsCreateJob.handler(ctx, { organizationId: b, shipmentId: shipmentA }, jobRun)
+    await shipmentsTrackJob.handler(ctx, { organizationId: b, connectionId: carrierA }, jobRun)
+    const delivered = { externalId: atCarrier.externalId, status: 'delivered', trackingNumber: null, carrierStatus: null } as const
+    expect(await applyShipmentState(ctx, b, shipmentA, delivered, 'tracked')).toEqual({ applied: false })
+    expect(await failShipment(ctx, b, shipmentA, 'forged')).toBe(false)
+    expect(await ctx.db.shipment.count({ where: { organizationId: b } })).toBe(0)
+
     // Connections
-    expect((await listConnections(ctx, b)).map((connection) => connection.id)).toEqual([connB])
+    expect((await listConnections(ctx, b)).map((connection) => connection.id)).toEqual([connB, carrierB])
     expect(await getConnection(ctx, b, connA)).toBeNull()
     expect(await openConnection(ctx, b, connA)).toBeNull()
     await expect(updateChannelStockRules(ctx, b, connA, { safetyBuffer: 1, channelLimit: 1 }, user)).rejects.toMatchObject(notFound)
