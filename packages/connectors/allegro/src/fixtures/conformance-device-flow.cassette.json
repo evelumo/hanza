@@ -1,0 +1,92 @@
+{
+  "version": 1,
+  "interactions": [
+    {
+      "request": {
+        "method": "POST",
+        "url": "https://allegro.pl.allegrosandbox.pl/auth/oauth/device?client_id=%5Bscrubbed%5D",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json;charset=UTF-8",
+          "date": "Sat, 10 Oct 2026 12:00:00 GMT"
+        },
+        "body": {
+          "json": {
+            "device_code": "[scrubbed]",
+            "user_code": "[scrubbed]",
+            "verification_uri": "https://allegro.pl.allegrosandbox.pl/skojarz-aplikacje",
+            "verification_uri_complete": "https://allegro.pl.allegrosandbox.pl/skojarz-aplikacje?code=[scrubbed]",
+            "expires_in": 3600,
+            "interval": 5
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "url": "https://allegro.pl.allegrosandbox.pl/auth/oauth/token",
+        "headers": {
+          "accept": "application/json",
+          "content-type": "application/x-www-form-urlencoded"
+        },
+        "body": {
+          "text": "grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Adevice_code&device_code=%5Bscrubbed%5D"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json;charset=UTF-8",
+          "date": "Sat, 10 Oct 2026 12:00:00 GMT"
+        },
+        "body": {
+          "json": {
+            "access_token": "[scrubbed]",
+            "token_type": "bearer",
+            "refresh_token": "[scrubbed]",
+            "expires_in": 43199,
+            "scope": "allegro:api:orders:read allegro:api:orders:write allegro:api:sale:offers:read allegro:api:sale:offers:write allegro:api:profile:read",
+            "allegro_api": true,
+            "jti": "00000000-0000-4000-8000-000000000003"
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/me",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/vnd.allegro.public.v1+json",
+          "date": "Sat, 10 Oct 2026 12:00:00 GMT"
+        },
+        "body": {
+          "json": {
+            "id": "43784832",
+            "login": "scrubbed-1",
+            "firstName": "scrubbed-2",
+            "lastName": "scrubbed-3",
+            "email": "person-1@example.com",
+            "baseMarketplace": {
+              "id": "allegro-pl"
+            }
+          }
+        }
+      }
+    }
+  ]
+}

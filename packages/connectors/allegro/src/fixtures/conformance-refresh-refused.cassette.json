@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "interactions": [
+    {
+      "request": {
+        "method": "POST",
+        "url": "https://allegro.pl.allegrosandbox.pl/auth/oauth/token",
+        "headers": {
+          "accept": "application/json",
+          "content-type": "application/x-www-form-urlencoded"
+        },
+        "body": {
+          "text": "grant_type=refresh_token&refresh_token=%5Bscrubbed%5D"
+        }
+      },
+      "response": {
+        "status": 400,
+        "headers": {
+          "content-type": "application/json;charset=UTF-8",
+          "date": "Sat, 10 Oct 2026 12:00:00 GMT"
+        },
+        "body": {
+          "json": {
+            "error": "invalid_grant",
+            "error_description": "Invalid refresh token"
+          }
+        }
+      }
+    }
+  ]
+}

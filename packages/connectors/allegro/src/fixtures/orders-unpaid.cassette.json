@@ -1,0 +1,624 @@
+{
+  "version": 1,
+  "interactions": [
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/order/checkout-forms?limit=100&sort=lineItems.boughtAt&lineItems.boughtAt.lte=2026-10-05T00%3A00%3A00.000Z&lineItems.boughtAt.gte=2026-09-05T00%3A00%3A00.000Z",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/vnd.allegro.public.v1+json",
+          "date": "Sat, 10 Oct 2026 12:00:00 GMT"
+        },
+        "body": {
+          "json": {
+            "checkoutForms": [
+              {
+                "id": "7a2e4c10-5b7f-4d3e-8f00-1a2b3c4d0001",
+                "messageToSeller": "scrubbed-1",
+                "surcharges": [],
+                "note": {
+                  "text": "scrubbed-2"
+                },
+                "buyer": {
+                  "id": "23123123",
+                  "email": "person-1@example.com",
+                  "login": "scrubbed-3",
+                  "firstName": "scrubbed-4",
+                  "lastName": "scrubbed-5",
+                  "guest": false,
+                  "phoneNumber": "+00000000001",
+                  "address": {
+                    "street": "scrubbed-6",
+                    "city": "scrubbed-7",
+                    "postCode": "scrubbed-8",
+                    "countryCode": "PL"
+                  },
+                  "personalIdentity": "scrubbed-9",
+                  "preferences": {
+                    "language": "pl-PL"
+                  }
+                },
+                "payment": {
+                  "type": "ONLINE"
+                },
+                "status": "FILLED_IN",
+                "fulfillment": {
+                  "status": "NEW",
+                  "provider": {
+                    "id": "SELLER"
+                  },
+                  "shipmentSummary": {
+                    "lineItemsSent": "NONE"
+                  }
+                },
+                "delivery": {
+                  "method": {
+                    "id": "1fa56f79-4b6a-4821-a6f2-ca9c16d5c925",
+                    "name": "Allegro Kurier DPD"
+                  }
+                },
+                "invoice": {
+                  "required": false
+                },
+                "lineItems": [
+                  {
+                    "id": "7a2e4c10-5b7f-4d3e-8f00-11112222",
+                    "offer": {
+                      "id": "7834566001",
+                      "name": "Ceramic mug 350 ml, white",
+                      "external": {
+                        "id": "MUG-350-WHT"
+                      }
+                    },
+                    "quantity": 2,
+                    "originalPrice": {
+                      "amount": "39.99",
+                      "currency": "PLN"
+                    },
+                    "price": {
+                      "amount": "39.99",
+                      "currency": "PLN"
+                    },
+                    "boughtAt": "2026-10-03T10:00:00.000Z"
+                  }
+                ],
+                "summary": {
+                  "totalToPay": {
+                    "amount": "94.97",
+                    "currency": "PLN"
+                  }
+                },
+                "marketplace": {
+                  "id": "allegro-pl"
+                },
+                "updatedAt": "2026-10-03T10:00:00.000Z",
+                "revision": "819b5836"
+              }
+            ],
+            "count": 1,
+            "totalCount": 1
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/order/events?from=MTc5MDAwMDAwMDAwMDAwMQ&limit=100",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/vnd.allegro.public.v1+json",
+          "date": "Sat, 10 Oct 2026 12:00:00 GMT"
+        },
+        "body": {
+          "json": {
+            "events": [
+              {
+                "id": "MTc5MDAwMDAwMDAwMDAwMg",
+                "occurredAt": "2026-10-06T10:01:00.000Z",
+                "type": "FILLED_IN",
+                "order": {
+                  "seller": {
+                    "id": "43784832"
+                  },
+                  "marketplace": {
+                    "id": "allegro-pl"
+                  },
+                  "buyer": {
+                    "id": "23123123",
+                    "email": "person-1@example.com",
+                    "login": "scrubbed-3",
+                    "guest": false
+                  },
+                  "lineItems": [
+                    {
+                      "id": "7a2e4c10-5b7f-4d3e-8f00-11112222",
+                      "offer": {
+                        "id": "7834566001",
+                        "name": "Ceramic mug 350 ml, white",
+                        "external": {
+                          "id": "MUG-350-WHT"
+                        }
+                      },
+                      "quantity": 2,
+                      "originalPrice": {
+                        "amount": "39.99",
+                        "currency": "PLN"
+                      },
+                      "price": {
+                        "amount": "39.99",
+                        "currency": "PLN"
+                      },
+                      "boughtAt": "2026-10-06T10:00:00.000Z"
+                    }
+                  ],
+                  "checkoutForm": {
+                    "id": "7a2e4c10-5b7f-4d3e-8f00-1a2b3c4d0002",
+                    "revision": "819b5836"
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/order/checkout-forms/7a2e4c10-5b7f-4d3e-8f00-1a2b3c4d0002",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/vnd.allegro.public.v1+json",
+          "date": "Sat, 10 Oct 2026 12:00:00 GMT"
+        },
+        "body": {
+          "json": {
+            "id": "7a2e4c10-5b7f-4d3e-8f00-1a2b3c4d0002",
+            "messageToSeller": "scrubbed-1",
+            "surcharges": [],
+            "note": {
+              "text": "scrubbed-2"
+            },
+            "buyer": {
+              "id": "23123123",
+              "email": "person-1@example.com",
+              "login": "scrubbed-3",
+              "firstName": "scrubbed-4",
+              "lastName": "scrubbed-5",
+              "guest": false,
+              "phoneNumber": "+00000000001",
+              "address": {
+                "street": "scrubbed-6",
+                "city": "scrubbed-7",
+                "postCode": "scrubbed-8",
+                "countryCode": "PL"
+              },
+              "personalIdentity": "scrubbed-10",
+              "preferences": {
+                "language": "pl-PL"
+              }
+            },
+            "payment": {
+              "type": "ONLINE"
+            },
+            "status": "FILLED_IN",
+            "fulfillment": {
+              "status": "NEW",
+              "provider": {
+                "id": "SELLER"
+              },
+              "shipmentSummary": {
+                "lineItemsSent": "NONE"
+              }
+            },
+            "delivery": {
+              "method": {
+                "id": "1fa56f79-4b6a-4821-a6f2-ca9c16d5c925",
+                "name": "Allegro Kurier DPD"
+              }
+            },
+            "invoice": {
+              "required": false
+            },
+            "lineItems": [
+              {
+                "id": "7a2e4c10-5b7f-4d3e-8f00-11112222",
+                "offer": {
+                  "id": "7834566001",
+                  "name": "Ceramic mug 350 ml, white",
+                  "external": {
+                    "id": "MUG-350-WHT"
+                  }
+                },
+                "quantity": 2,
+                "originalPrice": {
+                  "amount": "39.99",
+                  "currency": "PLN"
+                },
+                "price": {
+                  "amount": "39.99",
+                  "currency": "PLN"
+                },
+                "boughtAt": "2026-10-06T10:00:00.000Z"
+              }
+            ],
+            "summary": {
+              "totalToPay": {
+                "amount": "94.97",
+                "currency": "PLN"
+              }
+            },
+            "marketplace": {
+              "id": "allegro-pl"
+            },
+            "updatedAt": "2026-10-06T10:00:00.000Z",
+            "revision": "819b5836"
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/order/events?from=MTc5MDAwMDAwMDAwMDAwMg&limit=100",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/vnd.allegro.public.v1+json",
+          "date": "Sat, 10 Oct 2026 12:00:00 GMT"
+        },
+        "body": {
+          "json": {
+            "events": [
+              {
+                "id": "MTc5MDAwMDAwMDAwMDAwMw",
+                "occurredAt": "2026-10-06T12:00:00.000Z",
+                "type": "READY_FOR_PROCESSING",
+                "order": {
+                  "seller": {
+                    "id": "43784832"
+                  },
+                  "marketplace": {
+                    "id": "allegro-pl"
+                  },
+                  "buyer": {
+                    "id": "23123123",
+                    "email": "person-1@example.com",
+                    "login": "scrubbed-3",
+                    "guest": false
+                  },
+                  "lineItems": [
+                    {
+                      "id": "7a2e4c10-5b7f-4d3e-8f00-11112222",
+                      "offer": {
+                        "id": "7834566001",
+                        "name": "Ceramic mug 350 ml, white",
+                        "external": {
+                          "id": "MUG-350-WHT"
+                        }
+                      },
+                      "quantity": 2,
+                      "originalPrice": {
+                        "amount": "39.99",
+                        "currency": "PLN"
+                      },
+                      "price": {
+                        "amount": "39.99",
+                        "currency": "PLN"
+                      },
+                      "boughtAt": "2026-10-03T10:00:00.000Z"
+                    }
+                  ],
+                  "checkoutForm": {
+                    "id": "7a2e4c10-5b7f-4d3e-8f00-1a2b3c4d0001",
+                    "revision": "819b5836"
+                  }
+                }
+              },
+              {
+                "id": "MTc5MDAwMDAwMDAwMDAwNA",
+                "occurredAt": "2026-10-06T12:30:00.000Z",
+                "type": "READY_FOR_PROCESSING",
+                "order": {
+                  "seller": {
+                    "id": "43784832"
+                  },
+                  "marketplace": {
+                    "id": "allegro-pl"
+                  },
+                  "buyer": {
+                    "id": "23123123",
+                    "email": "person-1@example.com",
+                    "login": "scrubbed-3",
+                    "guest": false
+                  },
+                  "lineItems": [
+                    {
+                      "id": "7a2e4c10-5b7f-4d3e-8f00-11112222",
+                      "offer": {
+                        "id": "7834566001",
+                        "name": "Ceramic mug 350 ml, white",
+                        "external": {
+                          "id": "MUG-350-WHT"
+                        }
+                      },
+                      "quantity": 2,
+                      "originalPrice": {
+                        "amount": "39.99",
+                        "currency": "PLN"
+                      },
+                      "price": {
+                        "amount": "39.99",
+                        "currency": "PLN"
+                      },
+                      "boughtAt": "2026-10-06T10:00:00.000Z"
+                    }
+                  ],
+                  "checkoutForm": {
+                    "id": "7a2e4c10-5b7f-4d3e-8f00-1a2b3c4d0002",
+                    "revision": "819b5836"
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/order/checkout-forms/7a2e4c10-5b7f-4d3e-8f00-1a2b3c4d0001",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/vnd.allegro.public.v1+json",
+          "date": "Sat, 10 Oct 2026 12:00:00 GMT"
+        },
+        "body": {
+          "json": {
+            "id": "7a2e4c10-5b7f-4d3e-8f00-1a2b3c4d0001",
+            "messageToSeller": "scrubbed-1",
+            "surcharges": [],
+            "note": {
+              "text": "scrubbed-2"
+            },
+            "buyer": {
+              "id": "23123123",
+              "email": "person-1@example.com",
+              "login": "scrubbed-3",
+              "firstName": "scrubbed-4",
+              "lastName": "scrubbed-5",
+              "guest": false,
+              "phoneNumber": "+00000000001",
+              "address": {
+                "street": "scrubbed-6",
+                "city": "scrubbed-7",
+                "postCode": "scrubbed-8",
+                "countryCode": "PL"
+              },
+              "personalIdentity": "scrubbed-10",
+              "preferences": {
+                "language": "pl-PL"
+              }
+            },
+            "payment": {
+              "type": "ONLINE",
+              "finishedAt": "2026-10-06T12:00:00.000Z",
+              "paidAmount": {
+                "amount": "94.97",
+                "currency": "PLN"
+              }
+            },
+            "status": "READY_FOR_PROCESSING",
+            "fulfillment": {
+              "status": "NEW",
+              "provider": {
+                "id": "SELLER"
+              },
+              "shipmentSummary": {
+                "lineItemsSent": "NONE"
+              }
+            },
+            "delivery": {
+              "method": {
+                "id": "1fa56f79-4b6a-4821-a6f2-ca9c16d5c925",
+                "name": "Allegro Kurier DPD"
+              },
+              "address": {
+                "firstName": "scrubbed-11",
+                "lastName": "scrubbed-12",
+                "street": "scrubbed-13",
+                "city": "scrubbed-7",
+                "zipCode": "scrubbed-14",
+                "countryCode": "PL",
+                "phoneNumber": "+00000000002"
+              }
+            },
+            "invoice": {
+              "required": false
+            },
+            "lineItems": [
+              {
+                "id": "7a2e4c10-5b7f-4d3e-8f00-11112222",
+                "offer": {
+                  "id": "7834566001",
+                  "name": "Ceramic mug 350 ml, white",
+                  "external": {
+                    "id": "MUG-350-WHT"
+                  }
+                },
+                "quantity": 2,
+                "originalPrice": {
+                  "amount": "39.99",
+                  "currency": "PLN"
+                },
+                "price": {
+                  "amount": "39.99",
+                  "currency": "PLN"
+                },
+                "boughtAt": "2026-10-03T10:00:00.000Z"
+              }
+            ],
+            "summary": {
+              "totalToPay": {
+                "amount": "94.97",
+                "currency": "PLN"
+              }
+            },
+            "marketplace": {
+              "id": "allegro-pl"
+            },
+            "updatedAt": "2026-10-06T12:00:00.000Z",
+            "revision": "819b5836"
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/order/checkout-forms/7a2e4c10-5b7f-4d3e-8f00-1a2b3c4d0002",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/vnd.allegro.public.v1+json",
+          "date": "Sat, 10 Oct 2026 12:00:00 GMT"
+        },
+        "body": {
+          "json": {
+            "id": "7a2e4c10-5b7f-4d3e-8f00-1a2b3c4d0002",
+            "messageToSeller": "scrubbed-1",
+            "surcharges": [],
+            "note": {
+              "text": "scrubbed-2"
+            },
+            "buyer": {
+              "id": "23123123",
+              "email": "person-1@example.com",
+              "login": "scrubbed-3",
+              "firstName": "scrubbed-4",
+              "lastName": "scrubbed-5",
+              "guest": false,
+              "phoneNumber": "+00000000001",
+              "address": {
+                "street": "scrubbed-6",
+                "city": "scrubbed-7",
+                "postCode": "scrubbed-8",
+                "countryCode": "PL"
+              },
+              "personalIdentity": "scrubbed-10",
+              "preferences": {
+                "language": "pl-PL"
+              }
+            },
+            "payment": {
+              "type": "ONLINE",
+              "finishedAt": "2026-10-06T12:30:00.000Z",
+              "paidAmount": {
+                "amount": "94.97",
+                "currency": "PLN"
+              }
+            },
+            "status": "READY_FOR_PROCESSING",
+            "fulfillment": {
+              "status": "NEW",
+              "provider": {
+                "id": "SELLER"
+              },
+              "shipmentSummary": {
+                "lineItemsSent": "NONE"
+              }
+            },
+            "delivery": {
+              "method": {
+                "id": "1fa56f79-4b6a-4821-a6f2-ca9c16d5c925",
+                "name": "Allegro Kurier DPD"
+              },
+              "address": {
+                "firstName": "scrubbed-11",
+                "lastName": "scrubbed-12",
+                "street": "scrubbed-13",
+                "city": "scrubbed-7",
+                "zipCode": "scrubbed-14",
+                "countryCode": "PL",
+                "phoneNumber": "+00000000002"
+              }
+            },
+            "invoice": {
+              "required": false
+            },
+            "lineItems": [
+              {
+                "id": "7a2e4c10-5b7f-4d3e-8f00-11112222",
+                "offer": {
+                  "id": "7834566001",
+                  "name": "Ceramic mug 350 ml, white",
+                  "external": {
+                    "id": "MUG-350-WHT"
+                  }
+                },
+                "quantity": 2,
+                "originalPrice": {
+                  "amount": "39.99",
+                  "currency": "PLN"
+                },
+                "price": {
+                  "amount": "39.99",
+                  "currency": "PLN"
+                },
+                "boughtAt": "2026-10-06T10:00:00.000Z"
+              }
+            ],
+            "summary": {
+              "totalToPay": {
+                "amount": "94.97",
+                "currency": "PLN"
+              }
+            },
+            "marketplace": {
+              "id": "allegro-pl"
+            },
+            "updatedAt": "2026-10-06T12:30:00.000Z",
+            "revision": "819b5836"
+          }
+        }
+      }
+    }
+  ]
+}

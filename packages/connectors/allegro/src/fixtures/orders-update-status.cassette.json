@@ -1,0 +1,157 @@
+{
+  "version": 1,
+  "interactions": [
+    {
+      "request": {
+        "method": "PUT",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/order/checkout-forms/29738e61-7f6a-4c45-89db-60ede9d61a02/fulfillment",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json",
+          "content-type": "application/vnd.allegro.public.v1+json"
+        },
+        "body": {
+          "json": {
+            "status": "NEW"
+          }
+        }
+      },
+      "response": {
+        "status": 204,
+        "headers": {
+          "date": "Sat, 10 Oct 2026 12:00:00 GMT"
+        },
+        "body": null
+      }
+    },
+    {
+      "request": {
+        "method": "PUT",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/order/checkout-forms/29738e61-7f6a-4c45-89db-60ede9d61a02/fulfillment",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json",
+          "content-type": "application/vnd.allegro.public.v1+json"
+        },
+        "body": {
+          "json": {
+            "status": "PROCESSING"
+          }
+        }
+      },
+      "response": {
+        "status": 204,
+        "headers": {
+          "date": "Sat, 10 Oct 2026 12:00:00 GMT"
+        },
+        "body": null
+      }
+    },
+    {
+      "request": {
+        "method": "PUT",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/order/checkout-forms/29738e61-7f6a-4c45-89db-60ede9d61a02/fulfillment",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json",
+          "content-type": "application/vnd.allegro.public.v1+json"
+        },
+        "body": {
+          "json": {
+            "status": "SENT"
+          }
+        }
+      },
+      "response": {
+        "status": 204,
+        "headers": {
+          "date": "Sat, 10 Oct 2026 12:00:00 GMT"
+        },
+        "body": null
+      }
+    },
+    {
+      "request": {
+        "method": "PUT",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/order/checkout-forms/29738e61-7f6a-4c45-89db-60ede9d61a02/fulfillment",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json",
+          "content-type": "application/vnd.allegro.public.v1+json"
+        },
+        "body": {
+          "json": {
+            "status": "CANCELLED"
+          }
+        }
+      },
+      "response": {
+        "status": 204,
+        "headers": {
+          "date": "Sat, 10 Oct 2026 12:00:00 GMT"
+        },
+        "body": null
+      }
+    },
+    {
+      "request": {
+        "method": "PUT",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/order/checkout-forms/00000000-0000-4000-8000-000000000000/fulfillment",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json",
+          "content-type": "application/vnd.allegro.public.v1+json"
+        },
+        "body": {
+          "json": {
+            "status": "SENT"
+          }
+        }
+      },
+      "response": {
+        "status": 404,
+        "headers": {
+          "content-type": "application/vnd.allegro.public.v1+json",
+          "date": "Sat, 10 Oct 2026 12:00:00 GMT"
+        },
+        "body": {
+          "json": {
+            "errors": [
+              {
+                "code": "NOT_FOUND",
+                "message": "Order not found",
+                "details": null,
+                "path": null,
+                "userMessage": "Order not found",
+                "metadata": {}
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "PUT",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/order/checkout-forms/29738e61-7f6a-4c45-89db-60ede9d61a02/fulfillment",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json",
+          "content-type": "application/vnd.allegro.public.v1+json"
+        },
+        "body": {
+          "json": {
+            "status": "PROCESSING"
+          }
+        }
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json;charset=UTF-8",
+          "date": "Sat, 10 Oct 2026 12:00:00 GMT"
+        },
+        "body": {
+          "json": {
+            "error": "invalid_token",
+            "error_description": "Invalid access token"
+          }
+        }
+      }
+    }
+  ]
+}

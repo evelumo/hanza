@@ -1,0 +1,548 @@
+// Test and recording tooling only (`@hanza/connector-allegro/testing`): never imported by the connector itself.
+// A simulation of the part of the Allegro REST API the connector uses, written from the OpenAPI file
+// (developer.allegro.pl/swagger.yaml) and the tutorials, not from the sandbox. It answers as a `fetch`, in memory.
+import { environmentHosts, type AllegroCredentials, type AllegroEnvironment } from '../settings'
+import { forms as sampleForms, offers as sampleOffers, productOffers, type CheckoutFormPayload, type ListingOfferPayload } from './samples'
+
+const PUBLIC_JSON = 'application/vnd.allegro.public.v1+json'
+const DEVICE_CODE_GRANT = 'urn:ietf:params:oauth:grant-type:device_code'
+const ACCESS_TOKEN_SECONDS = 43_199
+const DEVICE_CODE_SECONDS = 3600
+const SELLER = { id: '43784832', login: 'hanza-sandbox-seller' }
+// A valid-looking PESEL (the documented example number, an invented person): the recording must scrub it.
+const PESEL_LIKE = '44051401359'
+/** The data clock: every time the simulation writes (an edit, a new event) unless a test sets its own. */
+export const FAKE_ALLEGRO_NOW = '2026-10-10T12:00:00.000Z'
+
+// The statuses a seller may set (`RETURNED` is Allegro's own).
+const SELLER_FULFILLMENT_STATUSES = ['NEW', 'PROCESSING', 'READY_FOR_SHIPMENT', 'READY_FOR_PICKUP', 'SENT', 'PICKED_UP', 'CANCELLED', 'SUSPENDED']
+
+export interface FakeAllegroOffer {
+  /** The Offer as `GET /sale/offers` lists it; `stock.available` and `publication.status` are kept current. */
+  listing: ListingOfferPayload
+  /** `publication.endedBy`, which only `GET /sale/product-offers/{id}` shows. */
+  endedBy: string | null
+}
+
+export interface FakeAllegroEvent {
+  id: string
+  type: string
+  occurredAt: string
+  /** The checkout form it is about; null for an event without one (the OpenAPI makes it optional). */
+  formId: string | null
+  /** The event's own snapshot of the Buyer and the lines, as Allegro sends it. */
+  order: Record<string, unknown>
+}
+
+export interface FakeAllegroCall {
+  method: string
+  /** The host the request went to (`api.…` or `allegro.…`). */
+  host: string
+  path: string
+  /** Every query parameter, repeated ones in order. */
+  query: Record<string, string[]>
+  /** JSON or form body, parsed; null without one. */
+  body: unknown
+}
+
+export interface FakeAllegroState {
+  offers: Map<string, FakeAllegroOffer>
+  forms: Map<string, CheckoutFormPayload>
+  /** The order event journal, oldest first. */
+  events: FakeAllegroEvent[]
+}
+
+export interface FakeAllegroApiOptions {
+  clientId?: string
+  clientSecret?: string
+  /** Which hosts it answers: those of `environmentHosts(environment)`. Default `sandbox`. */
+  environment?: AllegroEnvironment
+  /** Device sign-ins are approved as soon as they start (recording the conformance kit, which polls once). */
+  autoApproveDevices?: boolean
+  /** Default: the sample Offers (`samples.ts`). */
+  offers?: ListingOfferPayload[]
+  /** Default: the sample checkout forms (`samples.ts`). */
+  forms?: CheckoutFormPayload[]
+  /** Journal entries to start with, oldest first. Default: one per sample form, in the order they last changed. */
+  journal?: Array<{ type: string; formId: string | null; occurredAt: string }>
+  /** The data clock (see `FAKE_ALLEGRO_NOW`). */
+  now?: () => string
+  /** How `GET /order/events` answers a `from` it does not have (undocumented): default 404. */
+  unknownFromStatus?: 400 | 404 | 422
+}
+
+export interface FakeAllegroApi {
+  /** Answers requests to the environment's API and OAuth hosts; anything else fails like an unreachable host. */
+  fetch: typeof fetch
+  state: FakeAllegroState
+  /** Every request answered, in order. */
+  calls: FakeAllegroCall[]
+  /** Every access and refresh token handed out, to prove none reached a cassette. */
+  issuedTokens: string[]
+  /** Credentials as if the seller had signed in. */
+  signIn(): AllegroCredentials
+  /** Approves a pending device sign-in, as the seller on Allegro's page would. */
+  approve(userCode: string): void
+  /** The seller unlinked the application: every access and refresh token issued so far stops working. */
+  revokeTokens(): void
+  /** Appends a journal entry about the form (its current snapshot); returns the event id. */
+  addEvent(type: string, formId: string | null, occurredAt?: string): string
+  /** Adds the form, or replaces the one with its id. */
+  setForm(form: CheckoutFormPayload): void
+  /** The form is gone (merged into another): `GET` answers 404. */
+  removeForm(id: string): void
+  /** The journal no longer keeps the events before this one: a `from` among them answers 404. */
+  forgetEventsBefore(eventId: string): void
+  /** Every later `PATCH` of the Offer answers 422 with this error code. */
+  rejectOffer(offerId: string, code: string): void
+  /** The next `times` `PATCH`es of the Offer answer 409 (an earlier edit still being processed). */
+  conflictOffer(offerId: string, times?: number): void
+  /** The next `PATCH` of the Offer answers 202 (accepted, still processing); the `PATCH` after that answers 409. */
+  acceptLater(offerId: string): void
+  /** Every later `PATCH` of the Offer answers 403 (another seller's Offer, or a missing scope). */
+  forbidOffer(offerId: string): void
+}
+
+/** Allegro event ids look like base64 of a growing number (`MTUzMjYwMzg5ODMxNzQ5Nw`). */
+export function fakeEventId(sequence: number): string {
+  return btoa(String(1_790_000_000_000_000 + sequence)).replace(/=+$/, '')
+}
+
+function randomText(bytes: number): string {
+  const values = crypto.getRandomValues(new Uint8Array(bytes))
+  return btoa(String.fromCharCode(...values)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
+}
+
+function base64Url(value: object): string {
+  return btoa(JSON.stringify(value)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
+}
+
+function clone<T>(value: T): T {
+  return structuredClone(value)
+}
+
+function apiJson(status: number, body: unknown, headers: Record<string, string> = {}): Response {
+  return new Response(JSON.stringify(body), { status, headers: { 'content-type': PUBLIC_JSON, ...headers } })
+}
+
+function oauthJson(status: number, body: unknown): Response {
+  return new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json;charset=UTF-8' } })
+}
+
+// `ErrorsHolder`: the message texts are Allegro's own kind (they never reach Hanza).
+function errors(status: number, code: string, message: string): Response {
+  return apiJson(status, { errors: [{ code, message, details: null, path: null, userMessage: message, metadata: {} }] })
+}
+
+function latestBoughtAt(form: CheckoutFormPayload): string {
+  const times = form.lineItems.map((item) => item.boughtAt).filter((time): time is string => typeof time === 'string')
+  return times.sort((a, b) => Date.parse(b) - Date.parse(a))[0] ?? (form.updatedAt as string)
+}
+
+function seedJournal(forms: CheckoutFormPayload[]): Array<{ type: string; formId: string; occurredAt: string }> {
+  const typeOf = (form: CheckoutFormPayload): string => {
+    if (form.status === 'CANCELLED') return form.payment?.finishedAt ? 'BUYER_CANCELLED' : 'AUTO_CANCELLED'
+    if (form.fulfillment?.status && form.fulfillment.status !== 'NEW') return 'FULFILLMENT_STATUS_CHANGED'
+    return form.status as string
+  }
+  return forms
+    .map((form) => ({ type: typeOf(form), formId: form.id, occurredAt: (form.updatedAt ?? latestBoughtAt(form)) as string }))
+    .sort((a, b) => Date.parse(a.occurredAt) - Date.parse(b.occurredAt))
+}
+
+/** The sample forms as Allegro would send them, with a PESEL the lint recognises. */
+function seedForm(form: CheckoutFormPayload): CheckoutFormPayload {
+  const copy = clone(form) as CheckoutFormPayload & { buyer: Record<string, unknown> }
+  if ('personalIdentity' in copy.buyer) copy.buyer.personalIdentity = PESEL_LIKE
+  return copy
+}
+
+function seedOffer(offer: ListingOfferPayload): FakeAllegroOffer {
+  const lookup = Object.values(productOffers).find((product) => product.id === offer.id)
+  const endedBy = lookup?.publication?.endedBy ?? (offer.publication?.status === 'ENDED' ? 'USER' : null)
+  return { listing: clone(offer), endedBy }
+}
+
+/**
+ * A single-valued query parameter (`type: string` in the OpenAPI): like a real server, only the last value counts
+ * when it is repeated, so nothing the connector does may rely on repeating it.
+ */
+function single(url: URL, name: string): string | null {
+  return url.searchParams.getAll(name).at(-1) ?? null
+}
+
+function queryOf(url: URL): Record<string, string[]> {
+  const query: Record<string, string[]> = {}
+  for (const [name, value] of url.searchParams) (query[name] ??= []).push(value)
+  return query
+}
+
+/** `createFakeAllegroApi()` with the sample data: what the conformance recording and the scenarios run against. */
+export function createFakeAllegroApi(options: FakeAllegroApiOptions = {}): FakeAllegroApi {
+  const clientId = options.clientId ?? 'fake-allegro-client-id'
+  const clientSecret = options.clientSecret ?? 'fake-allegro-client-secret'
+  const hosts = environmentHosts(options.environment ?? 'sandbox')
+  const apiOrigin = new URL(hosts.api).origin
+  const oauthUrl = new URL(hosts.oauth)
+  const now = options.now ?? (() => FAKE_ALLEGRO_NOW)
+
+  const forms = (options.forms ?? Object.values(sampleForms)).map(seedForm)
+  const state: FakeAllegroState = {
+    offers: new Map((options.offers ?? Object.values(sampleOffers)).map((offer) => [offer.id, seedOffer(offer)])),
+    forms: new Map(forms.map((form) => [form.id, form])),
+    events: [],
+  }
+  const calls: FakeAllegroCall[] = []
+  const issuedTokens: string[] = []
+  const accessTokens = new Set<string>()
+  const refreshTokens = new Set<string>()
+  const devices = new Map<string, { userCode: string; approved: boolean; used: boolean }>()
+  const rejections = new Map<string, string>()
+  const conflicts = new Map<string, number>()
+  const later = new Set<string>()
+  const forbidden = new Set<string>()
+  let eventSequence = 0
+  let revision = 0
+  // Counters, not random values, for what is not a secret: recording the same scenario again gives the same file.
+  let issued = 0
+  let operations = 0
+
+  const addEvent = (type: string, formId: string | null, occurredAt = now()): string => {
+    const id = fakeEventId(++eventSequence)
+    const form = formId === null ? undefined : state.forms.get(formId)
+    const order: Record<string, unknown> = {
+      seller: { id: SELLER.id },
+      marketplace: { id: 'allegro-pl' },
+      ...(form
+        ? {
+            buyer: { id: form.buyer.id, email: form.buyer.email, login: form.buyer.login, guest: form.buyer.guest ?? false },
+            lineItems: form.lineItems.map((item) => ({ ...clone(item) })),
+          }
+        : {}),
+      ...(formId === null ? {} : { checkoutForm: { id: formId, revision: form?.revision ?? null } }),
+    }
+    state.events.push({ id, type, occurredAt, formId, order })
+    return id
+  }
+  for (const entry of options.journal ?? seedJournal(forms)) addEvent(entry.type, entry.formId, entry.occurredAt)
+
+  const issueTokens = () => {
+    // Allegro's access tokens are JWTs; the refresh token is opaque here.
+    const accessToken = `${base64Url({ alg: 'RS256', typ: 'JWT' })}.${base64Url({ user_name: SELLER.id, jti: randomText(8) })}.${randomText(32)}`
+    const refreshToken = randomText(48)
+    accessTokens.add(accessToken)
+    refreshTokens.add(refreshToken)
+    issuedTokens.push(accessToken, refreshToken)
+    return { accessToken, refreshToken, serial: ++issued }
+  }
+  const tokenBody = (pair: ReturnType<typeof issueTokens>) => ({
+    access_token: pair.accessToken,
+    token_type: 'bearer',
+    refresh_token: pair.refreshToken,
+    expires_in: ACCESS_TOKEN_SECONDS,
+    scope: 'allegro:api:orders:read allegro:api:orders:write allegro:api:sale:offers:read allegro:api:sale:offers:write allegro:api:profile:read',
+    allegro_api: true,
+    jti: `00000000-0000-4000-8000-${String(pair.serial).padStart(12, '0')}`,
+  })
+
+  const productOfferBody = (offer: FakeAllegroOffer) => ({
+    id: offer.listing.id,
+    name: offer.listing.name,
+    language: 'pl-PL',
+    category: { id: '257929' },
+    external: offer.listing.external ?? null,
+    sellingMode: offer.listing.sellingMode ?? null,
+    stock: { available: offer.listing.stock?.available ?? 0, unit: 'UNIT' },
+    publication: { status: offer.listing.publication?.status ?? 'INACTIVE', endedBy: offer.endedBy, republish: false },
+  })
+
+  // --- OAuth ---------------------------------------------------------------------------------------------------
+
+  const basicClient = (request: Request) => {
+    const encoded = /^Basic (.+)$/.exec(request.headers.get('authorization') ?? '')?.[1]
+    try {
+      return encoded !== undefined && atob(encoded) === `${clientId}:${clientSecret}`
+    } catch {
+      return false
+    }
+  }
+
+  const oauth = (request: Request, url: URL, form: URLSearchParams): Response => {
+    if (request.method !== 'POST') return oauthJson(405, { error: 'method_not_allowed' })
+    if (!basicClient(request)) return oauthJson(401, { error: 'unauthorized', error_description: 'Full authentication is required' })
+    const endpoint = url.pathname.slice(oauthUrl.pathname.length)
+
+    if (endpoint === '/device') {
+      if (url.searchParams.get('client_id') !== clientId) return oauthJson(400, { error: 'invalid_client' })
+      const deviceCode = randomText(24)
+      const userCode = Array.from(crypto.getRandomValues(new Uint8Array(9)), (byte) => String.fromCharCode(97 + (byte % 26))).join('')
+      devices.set(deviceCode, { userCode, approved: options.autoApproveDevices === true, used: false })
+      return oauthJson(200, {
+        device_code: deviceCode,
+        user_code: userCode,
+        verification_uri: `${hosts.site}/skojarz-aplikacje`,
+        verification_uri_complete: `${hosts.site}/skojarz-aplikacje?code=${userCode}`,
+        expires_in: DEVICE_CODE_SECONDS,
+        interval: 5,
+      })
+    }
+
+    if (endpoint === '/token' && form.get('grant_type') === DEVICE_CODE_GRANT) {
+      const device = devices.get(form.get('device_code') ?? '')
+      // As Allegro documents it: an unknown or already used device code is a non-standard error text.
+      if (!device || device.used) return oauthJson(400, { error: 'Invalid device code' })
+      if (!device.approved) return oauthJson(400, { error: 'authorization_pending' })
+      device.used = true
+      return oauthJson(200, tokenBody(issueTokens()))
+    }
+
+    if (endpoint === '/token' && form.get('grant_type') === 'refresh_token') {
+      const refreshToken = form.get('refresh_token') ?? ''
+      if (!refreshTokens.has(refreshToken)) return oauthJson(400, { error: 'invalid_grant', error_description: 'Invalid refresh token' })
+      // Rotation: the used refresh token is spent (Allegro keeps it 60 s more; not simulated). The old access token
+      // stays valid until it expires, as a JWT does.
+      refreshTokens.delete(refreshToken)
+      return oauthJson(200, tokenBody(issueTokens()))
+    }
+
+    return oauthJson(400, { error: 'unsupported_grant_type' })
+  }
+
+  // --- REST API ---------------------------------------------------------------------------------------------------
+
+  const listOffers = (url: URL): Response => {
+    const limit = Number(single(url, 'limit') ?? '20')
+    const offset = Number(single(url, 'offset') ?? '0')
+    if (!Number.isInteger(limit) || limit < 1 || limit > 1000 || !Number.isInteger(offset) || offset < 0) {
+      return errors(422, 'VALIDATION_ERROR', 'Limit or offset is out of range')
+    }
+    const statuses = url.searchParams.getAll('publication.status')
+    const matching = [...state.offers.values()]
+      .filter((offer) => statuses.length === 0 || statuses.includes(offer.listing.publication?.status ?? 'INACTIVE'))
+      // Allegro's default order: newest (highest id) first.
+      .sort((a, b) => (a.listing.id < b.listing.id ? 1 : a.listing.id > b.listing.id ? -1 : 0))
+    const page = matching.slice(offset, offset + limit).map((offer) => clone(offer.listing))
+    return apiJson(200, { offers: page, count: page.length, totalCount: matching.length })
+  }
+
+  const editOffer = async (request: Request, offerId: string): Promise<Response> => {
+    const offer = state.offers.get(offerId)
+    if (!offer) return errors(404, 'NOT_FOUND', 'Offer not found')
+    if (forbidden.has(offerId)) return errors(403, 'ACCESS_DENIED', 'Access denied')
+    const pendingConflicts = conflicts.get(offerId) ?? 0
+    if (pendingConflicts > 0) {
+      conflicts.set(offerId, pendingConflicts - 1)
+      return errors(409, 'OPERATION_IN_PROGRESS', 'The previous edition of the offer is still being processed')
+    }
+    const code = rejections.get(offerId)
+    if (code !== undefined) return errors(422, code, 'The offer cannot be edited')
+    const body = (await request.json().catch(() => null)) as { stock?: { available?: unknown }; publication?: { status?: unknown } } | null
+    if (body === null || typeof body !== 'object') return errors(400, 'INVALID_BODY', 'The request body is not valid JSON')
+
+    const listing = offer.listing
+    const status = () => listing.publication?.status ?? 'INACTIVE'
+    const setStatus = (next: string) => {
+      listing.publication = { ...(listing.publication ?? {}), status: next }
+    }
+    if (body.stock !== undefined) {
+      const available = body.stock?.available
+      if (typeof available !== 'number' || !Number.isInteger(available) || available < 0) {
+        return errors(422, 'VALIDATION_ERROR', 'stock.available must be a non-negative integer')
+      }
+      listing.stock = { ...(listing.stock ?? {}), available }
+      // "Setting this quantity to 0 for 'ACTIVE' or 'ACTIVATING' offer will trigger changing its status to 'ENDED'".
+      if (available === 0 && (status() === 'ACTIVE' || status() === 'ACTIVATING')) {
+        setStatus('ENDED')
+        offer.endedBy = 'EMPTY_STOCK'
+      }
+    }
+    if (body.publication !== undefined) {
+      if (body.publication?.status !== 'ACTIVE') return errors(422, 'VALIDATION_ERROR', 'Unsupported publication status')
+      // An Offer is activated only with stock above 0.
+      if ((listing.stock?.available ?? 0) <= 0) return errors(422, 'OFFER_STOCK_EMPTY', 'The offer has no stock to be activated')
+      setStatus('ACTIVE')
+      offer.endedBy = null
+    }
+    if (later.delete(offerId)) {
+      // Still processing: the next edit conflicts with it.
+      conflicts.set(offerId, (conflicts.get(offerId) ?? 0) + 1)
+      return apiJson(202, productOfferBody(offer), {
+        location: `${hosts.api}/sale/product-offers/${encodeURIComponent(offerId)}/operations/${String(++operations).padStart(8, '0')}`,
+        'retry-after': '5',
+      })
+    }
+    return apiJson(200, productOfferBody(offer))
+  }
+
+  const listForms = (url: URL): Response => {
+    const limit = Number(single(url, 'limit') ?? '100')
+    const offset = Number(single(url, 'offset') ?? '0')
+    if (!Number.isInteger(limit) || limit < 1 || limit > 100 || !Number.isInteger(offset) || offset < 0 || offset + limit > 10_000) {
+      return errors(422, 'VALIDATION_ERROR', 'Limit or offset is out of range')
+    }
+    const sort = single(url, 'sort') ?? '-lineItems.boughtAt'
+    if (sort !== 'lineItems.boughtAt' && sort !== '-lineItems.boughtAt') return errors(400, 'VALIDATION_ERROR', 'Unsupported sort')
+    const status = single(url, 'status')
+    const fulfillment = single(url, 'fulfillment.status')
+    const lte = single(url, 'lineItems.boughtAt.lte')
+    const gte = single(url, 'lineItems.boughtAt.gte')
+    for (const bound of [lte, gte]) if (bound !== null && Number.isNaN(Date.parse(bound))) return errors(400, 'VALIDATION_ERROR', 'Invalid date')
+    const direction = sort.startsWith('-') ? -1 : 1
+    const matching = [...state.forms.values()]
+      .filter((form) => status === null || form.status === status)
+      .filter((form) => fulfillment === null || (form.fulfillment?.status ?? 'NEW') === fulfillment)
+      .filter((form) => lte === null || Date.parse(latestBoughtAt(form)) <= Date.parse(lte))
+      .filter((form) => gte === null || Date.parse(latestBoughtAt(form)) >= Date.parse(gte))
+      // By the latest purchase time; the id breaks ties, so the order never changes between pages.
+      .sort((a, b) => direction * (Date.parse(latestBoughtAt(a)) - Date.parse(latestBoughtAt(b)) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0)))
+    const page = matching.slice(offset, offset + limit).map(clone)
+    return apiJson(200, { checkoutForms: page, count: page.length, totalCount: matching.length })
+  }
+
+  const listEvents = (url: URL): Response => {
+    const limit = Number(single(url, 'limit') ?? '100')
+    if (!Number.isInteger(limit) || limit < 1 || limit > 1000) return errors(422, 'VALIDATION_ERROR', 'Limit is out of range')
+    const from = single(url, 'from')
+    let start = 0
+    if (from !== null) {
+      const index = state.events.findIndex((event) => event.id === from)
+      // Not documented: a 404 by default; the OpenAPI's only listed client error here is 422.
+      if (index === -1) {
+        const status = options.unknownFromStatus ?? 404
+        return status === 422 ? errors(422, 'VALIDATION_ERROR', 'Query parameters are incorrect') : errors(status, 'EVENT_NOT_FOUND', 'Event not found')
+      }
+      start = index + 1
+    }
+    const types = url.searchParams.getAll('type')
+    const events = state.events
+      .slice(start)
+      .filter((event) => types.length === 0 || types.includes(event.type))
+      .slice(0, limit)
+      .map((event) => ({ id: event.id, occurredAt: event.occurredAt, type: event.type, order: clone(event.order) }))
+    return apiJson(200, { events })
+  }
+
+  const setFulfillment = async (request: Request, formId: string): Promise<Response> => {
+    const form = state.forms.get(formId)
+    if (!form) return errors(404, 'NOT_FOUND', 'Order not found')
+    const body = (await request.json().catch(() => null)) as { status?: unknown } | null
+    const status = body?.status
+    if (typeof status !== 'string' || !SELLER_FULFILLMENT_STATUSES.includes(status)) {
+      return errors(422, 'VALIDATION_ERROR', 'The status is not allowed')
+    }
+    form.fulfillment = { ...(form.fulfillment ?? {}), status }
+    form.updatedAt = now()
+    form.revision = `fa${String(++revision).padStart(6, '0')}`
+    addEvent('FULFILLMENT_STATUS_CHANGED', formId)
+    return new Response(null, { status: 204 })
+  }
+
+  const api = async (request: Request, url: URL): Promise<Response> => {
+    if (request.headers.get('accept') !== PUBLIC_JSON) return errors(406, 'NOT_ACCEPTABLE', 'Use the public media type')
+    const token = /^Bearer (.+)$/.exec(request.headers.get('authorization') ?? '')?.[1]
+    if (!token || !accessTokens.has(token)) return oauthJson(401, { error: 'invalid_token', error_description: 'Invalid access token' })
+    if (!['GET', 'HEAD'].includes(request.method) && request.headers.get('content-type') !== PUBLIC_JSON) {
+      return errors(415, 'UNSUPPORTED_MEDIA_TYPE', 'Use the public media type')
+    }
+    const { pathname: path } = url
+    const segment = (pattern: RegExp) => {
+      const match = pattern.exec(path)
+      return match ? decodeURIComponent(match[1]!) : null
+    }
+
+    if (request.method === 'GET' && path === '/me') {
+      return apiJson(200, {
+        id: SELLER.id,
+        login: SELLER.login,
+        firstName: 'Tomasz',
+        lastName: 'Sprzedawca',
+        email: 'tomasz.sprzedawca@allegro-sandbox-seller.pl',
+        baseMarketplace: { id: 'allegro-pl' },
+      })
+    }
+    if (request.method === 'GET' && path === '/sale/offers') return listOffers(url)
+    const productOfferId = segment(/^\/sale\/product-offers\/([^/]+)$/)
+    if (productOfferId !== null && request.method === 'GET') {
+      const offer = state.offers.get(productOfferId)
+      return offer ? apiJson(200, productOfferBody(offer)) : errors(404, 'NOT_FOUND', 'Offer not found')
+    }
+    if (productOfferId !== null && request.method === 'PATCH') return editOffer(request, productOfferId)
+    if (request.method === 'GET' && path === '/order/event-stats') {
+      const latest = state.events.at(-1)
+      return apiJson(200, { latestEvent: latest ? { id: latest.id, occurredAt: latest.occurredAt } : null })
+    }
+    if (request.method === 'GET' && path === '/order/events') return listEvents(url)
+    if (request.method === 'GET' && path === '/order/checkout-forms') return listForms(url)
+    const fulfillmentFormId = segment(/^\/order\/checkout-forms\/([^/]+)\/fulfillment$/)
+    if (fulfillmentFormId !== null && request.method === 'PUT') return setFulfillment(request, fulfillmentFormId)
+    const formId = segment(/^\/order\/checkout-forms\/([^/]+)$/)
+    if (formId !== null && request.method === 'GET') {
+      const form = state.forms.get(formId)
+      return form ? apiJson(200, clone(form)) : errors(404, 'NOT_FOUND', 'Order not found')
+    }
+    return errors(404, 'NOT_FOUND', 'Resource not found')
+  }
+
+  const fakeFetch: typeof fetch = async (input, init) => {
+    const request = new Request(input, init)
+    const url = new URL(request.url)
+    const isApi = url.origin === apiOrigin
+    const isOAuth = url.origin === oauthUrl.origin && url.pathname.startsWith(`${oauthUrl.pathname}/`)
+    if (!isApi && !isOAuth) throw new TypeError(`The Allegro simulation answers only ${apiOrigin} and ${hosts.oauth}`)
+    const text = request.method === 'GET' || request.method === 'HEAD' ? '' : await request.clone().text()
+    const contentType = request.headers.get('content-type') ?? ''
+    const form = new URLSearchParams(contentType.includes('x-www-form-urlencoded') ? text : '')
+    let body: unknown = null
+    if (text !== '' && contentType.includes('json')) body = JSON.parse(text)
+    else if (text !== '') body = Object.fromEntries(form)
+    calls.push({ method: request.method, host: url.host, path: url.pathname, query: queryOf(url), body })
+    const response = isApi ? await api(request, url) : oauth(request, url, form)
+    // Every answer carries the server's time, as HTTP requires; the Order feed takes its boundary from it.
+    response.headers.set('date', new Date(now()).toUTCString())
+    return response
+  }
+
+  return {
+    fetch: fakeFetch,
+    state,
+    calls,
+    issuedTokens,
+    signIn() {
+      const { accessToken, refreshToken } = issueTokens()
+      return { accessToken, refreshToken, accessTokenExpiresAt: new Date(Date.now() + ACCESS_TOKEN_SECONDS * 1000).toISOString() }
+    },
+    approve(userCode) {
+      const device = [...devices.values()].find((candidate) => candidate.userCode === userCode)
+      if (!device) throw new Error(`No device sign-in with user code ${userCode}`)
+      device.approved = true
+    },
+    revokeTokens() {
+      accessTokens.clear()
+      refreshTokens.clear()
+    },
+    addEvent,
+    setForm(form) {
+      state.forms.set(form.id, clone(form))
+    },
+    removeForm(id) {
+      state.forms.delete(id)
+    },
+    forgetEventsBefore(eventId) {
+      const index = state.events.findIndex((event) => event.id === eventId)
+      if (index === -1) throw new Error(`No event ${eventId}`)
+      state.events.splice(0, index)
+    },
+    rejectOffer(offerId, code) {
+      rejections.set(offerId, code)
+    },
+    conflictOffer(offerId, times = 1) {
+      conflicts.set(offerId, (conflicts.get(offerId) ?? 0) + times)
+    },
+    acceptLater(offerId) {
+      later.add(offerId)
+    },
+    forbidOffer(offerId) {
+      forbidden.add(offerId)
+    },
+  }
+}
