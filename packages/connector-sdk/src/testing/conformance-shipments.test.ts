@@ -123,6 +123,20 @@ function httpCourier(options: Parameters<typeof errorFromResponse>[1] = {}, also
 }
 const httpFixtures: ConformanceFixtures = { ...fixtures, unauthorized: undefined, fetch: servingFetch }
 
+/** Creates over ctx.fetch, so the 403 of C14 and the 500 of S8 reach it; `refuse` says what it makes of a refusal. */
+function httpCreator(refuse: (response: Response) => Promise<Awaited<ReturnType<NonNullable<Capabilities['shipments.create']>>>>) {
+  return withCapabilities((inner) => ({
+    'shipments.create': async (ctx, shipmentRequest) => {
+      const response = await ctx.fetch('https://carrier.example.test/shipments', { method: 'POST' })
+      if (!response.ok) return refuse(response)
+      return inner['shipments.create']!(ctx, shipmentRequest)
+    },
+  }))
+}
+const throwing = async (response: Response) => {
+  throw await errorFromResponse(response)
+}
+
 const broken: Array<[ids: string[], what: string, connector: AnyConnectorDefinition, fixtures?: ConformanceFixtures]> = [
   [['S1'], 'a service id declared twice', courier({ shipping: { services: [locker, { ...door, id: 'locker' }] } })],
   [['S1'], 'a service with an empty id', courier({ shipping: { services: [locker, { ...door, id: '' }] } })],
@@ -144,6 +158,22 @@ const broken: Array<[ids: string[], what: string, connector: AnyConnectorDefinit
       return result.outcome === 'created' ? { ...result, status: 'delivered' as const } : result
     },
   }))],
+  // Any status but pending and ready would ship the Order the moment the answer is stored.
+  [['S2'], 'a new Shipment that is already in transit', withCapabilities((inner) => ({
+    'shipments.create': async (ctx, shipmentRequest) => {
+      const result = await inner['shipments.create']!(ctx, shipmentRequest)
+      return result.outcome === 'created' ? { ...result, status: 'in_transit' as const } : result
+    },
+  }))],
+  [['S2'], 'a new Shipment with a delivery problem', withCapabilities((inner) => ({
+    'shipments.create': async (ctx, shipmentRequest) => {
+      const result = await inner['shipments.create']!(ctx, shipmentRequest)
+      return result.outcome === 'created' ? { ...result, status: 'delivery_problem' as const } : result
+    },
+  }))],
+  [['S2'], 'an id that is free text', withCapabilities(() => ({ 'shipments.create': async () => ({ outcome: 'created', ...state(), externalId: 'Jan Kowalski, ul. Długa 1' }) })), { ...fixtures, shipment: { request } }],
+  [['S2'], 'a tracking number that is free text', withCapabilities(() => ({ 'shipments.create': async () => ({ outcome: 'created', ...state(), trackingNumber: 'see <the label>' }) })), { ...fixtures, shipment: { request } }],
+  [['S2'], 'a fixture whose reference is not of the guaranteed shape', courier(), { ...fixtures, shipment: { request: { ...request, reference: 'order 7/2026' } } }],
   [['S2'], 'the fixture rejected', withCapabilities(() => ({ 'shipments.create': async () => ({ outcome: 'rejected', code: 'no_funds' }) })), { ...fixtures, shipment: { request } }],
   [['S2'], 'create that fails', withCapabilities(() => ({ 'shipments.create': async () => { throw new PermanentError('down') } })), { ...fixtures, shipment: { request } }],
 
@@ -155,7 +185,7 @@ const broken: Array<[ids: string[], what: string, connector: AnyConnectorDefinit
         return result
       },
       // Every one of them exists at this Carrier, which is the bug.
-      'shipments.track': async (_ctx, externalIds) => externalIds.map((externalId) => state('ready', externalId)),
+      'shipments.track': async (_ctx, externalIds) => externalIds.filter((externalId) => externalId.startsWith('ext-')).map((externalId) => state('ready', externalId)),
       'shipments.label': async () => ({ contentType: 'application/pdf', data: new Uint8Array([1]) }),
     }))
   })(), { ...fixtures, unauthorized: undefined }],
@@ -179,6 +209,19 @@ const broken: Array<[ids: string[], what: string, connector: AnyConnectorDefinit
       return []
     },
   }))],
+  [['S4'], 'a call that fails because one id is unknown', withCapabilities((inner) => ({
+    'shipments.track': async (ctx, externalIds) => {
+      if (externalIds.includes('0')) throw new PermanentError('404 resource_not_found')
+      return inner['shipments.track']!(ctx, externalIds)
+    },
+  }))],
+  [['S4'], 'no answer for the known Shipment because one id is unknown', withCapabilities((inner) => ({
+    'shipments.track': async (ctx, externalIds) => (externalIds.includes('0') ? [] : inner['shipments.track']!(ctx, externalIds)),
+  }))],
+  [['S4'], 'a state made up for the unknown id', withCapabilities((inner) => ({
+    'shipments.track': async (ctx, externalIds) => [...(await inner['shipments.track']!(ctx, externalIds)), ...(externalIds.includes('0') ? [state('pending', '0')] : [])],
+  }))],
+  [['S4'], 'an unknown id fixture that is the created Shipment', courier(), { ...fixtures, shipment: { request, unknownExternalId: 'ext-1' } }],
   [['S4'], 'two states for one Shipment', withCapabilities((inner) => ({
     'shipments.track': async (ctx, externalIds) => {
       const states = await inner['shipments.track']!(ctx, externalIds)
@@ -258,6 +301,37 @@ const broken: Array<[ids: string[], what: string, connector: AnyConnectorDefinit
     },
   }))],
   [['C11'], 'track without create, so no Shipment to track', courier({ capabilities: { 'shipments.track': async () => [] }, shipping: undefined })],
+  [['C11'], 'create that accepts bad credentials', withCapabilities((inner) => ({
+    'shipments.create': async (ctx, shipmentRequest) => inner['shipments.create']!({ ...ctx, credentials: { apiKey: 'test' } }, shipmentRequest),
+  }))],
+  [['C11'], 'create that answers bad credentials with rejected', withCapabilities((inner) => ({
+    'shipments.create': async (ctx, shipmentRequest) => {
+      if ((ctx.credentials as { apiKey: string }).apiKey === 'expired') return { outcome: 'rejected', code: 'token_invalid' }
+      return inner['shipments.create']!(ctx, shipmentRequest)
+    },
+  }))],
+  [['C11'], 'create that fails as transient on bad credentials', withCapabilities((inner) => ({
+    'shipments.create': async (ctx, shipmentRequest) => {
+      if ((ctx.credentials as { apiKey: string }).apiKey === 'expired') throw new TransientError('401')
+      return inner['shipments.create']!(ctx, shipmentRequest)
+    },
+  }))],
+  [['C14'], 'create that answers a bare 403 with rejected', httpCreator(async (response) => {
+    if (response.status === 403) return { outcome: 'rejected', code: 'forbidden' }
+    throw await errorFromResponse(response)
+  }), httpFixtures],
+  [['C14'], 'create that asks for sign-in on a bare 403', httpCreator(async (response) => {
+    throw await errorFromResponse(response, { isAuthFailure: (refused) => refused.status === 403 })
+  }), httpFixtures],
+  [['S8'], 'create that answers a 500 with rejected', httpCreator(async (response) => {
+    if (response.status >= 500) return { outcome: 'rejected', code: 'carrier_error' }
+    throw await errorFromResponse(response)
+  }), httpFixtures],
+  [['S8'], 'create that fails for good on a 500', httpCreator(async (response) => {
+    if (response.status >= 500) throw new PermanentError('500')
+    throw await errorFromResponse(response)
+  }), httpFixtures],
+  [['C14', 'S8'], 'create that answers every refusal with rejected', httpCreator(async (response) => ({ outcome: 'rejected', code: `http_${response.status}` })), httpFixtures],
   [['C14'], 'track that asks for sign-in on a bare 403', httpCourier({ isAuthFailure: (response) => response.status === 403 }), httpFixtures],
   // Given recorded responses, but its track never calls fetch: C14 would pass without seeing a 403.
   [['C14'], 'track that never met the 403', courier(), httpFixtures],
@@ -275,11 +349,12 @@ describe('assertConformance for a connector that makes Shipments', () => {
   it('creates one Shipment twice, tracks it, takes its Label once it is there and cancels it twice, in that order', async () => {
     const calls: Calls = { create: [], track: [], label: [], cancel: [] }
     await assertConformance(courier({}, calls), { ...fixtures, unauthorized: undefined })
-    expect(calls.create).toEqual([request, request, refused])
+    // S2, S3 and S6, then the create of S2 again for C14 (a 403) and S8 (a 500), which an in-memory Carrier never sees.
+    expect(calls.create).toEqual([request, request, refused, request, request])
     // The repeat is another object: a connector must know it by its reference.
     expect(calls.create[1]).not.toBe(calls.create[0])
-    // S4 with the Shipment and with nothing, then C14 with the Shipment again.
-    expect(calls.track).toEqual([['ext-1'], [], ['ext-1']])
+    // S4 with the Shipment beside an id the Carrier does not know, and with nothing, then C14 with the Shipment again.
+    expect(calls.track).toEqual([['ext-1', '0'], [], ['ext-1']])
     expect(calls.label).toEqual(['ext-1'])
     expect(calls.cancel).toEqual(['ext-1', 'ext-1'])
   })
@@ -294,7 +369,8 @@ describe('assertConformance for a connector that makes Shipments', () => {
           ...inner.capabilities,
           'shipments.track': async (_ctx: CapabilityContext, externalIds: string[]) => {
             calls.track.push(externalIds)
-            return externalIds.map((externalId) => state(calls.track.filter((ids) => ids.length > 0).length >= 3 ? 'ready' : 'pending', externalId))
+            const known = externalIds.filter((externalId) => externalId.startsWith('ext-'))
+            return known.map((externalId) => state(calls.track.filter((ids) => ids.length > 0).length >= 3 ? 'ready' : 'pending', externalId))
           },
           'shipments.label': async (_ctx: CapabilityContext, { externalId }: { externalId: string }) => {
             calls.label.push(externalId)
@@ -307,7 +383,7 @@ describe('assertConformance for a connector that makes Shipments', () => {
     const calls: Calls = { create: [], track: [], label: [], cancel: [] }
     await expect(assertConformance(slow(calls), { ...fixtures, unauthorized: undefined, forbidden: false })).resolves.toBeUndefined()
     expect(calls.label).toHaveLength(3)
-    expect(calls.track).toEqual([['ext-1'], [], ['ext-1'], ['ext-1']])
+    expect(calls.track).toEqual([['ext-1', '0'], [], ['ext-1'], ['ext-1']])
 
     const impatient = { ...fixtures, unauthorized: undefined, shipment: { request, labelAttempts: 2 } }
     await expect(assertConformance(slow({ create: [], track: [], label: [], cancel: [] }), impatient)).rejects.toThrow(
@@ -340,6 +416,60 @@ describe('assertConformance for a connector that makes Shipments', () => {
     await expect(assertConformance(httpCourier(), httpFixtures)).resolves.toBeUndefined()
     const signsOutWith403 = httpCourier({ isAuthFailure: (response) => response.status === 403 })
     await expect(assertConformance(signsOutWith403, { ...httpFixtures, forbidden: false })).resolves.toBeUndefined()
+  })
+
+  it('repeats the create of S2 with bad credentials (C11), against a bare 403 (C14) and against a 500 (S8)', async () => {
+    const seen: Array<{ apiKey: string; reference: string }> = []
+    const watched = withCapabilities((inner) => ({
+      'shipments.create': async (ctx, shipmentRequest) => {
+        seen.push({ apiKey: (ctx.credentials as { apiKey: string }).apiKey, reference: shipmentRequest.reference })
+        return inner['shipments.create']!(ctx, shipmentRequest)
+      },
+    }))
+    await expect(assertConformance(watched, fixtures)).resolves.toBeUndefined()
+    // Always the accepted fixture, never the rejected one, and never a third reference: nothing new is asked for.
+    expect(seen).toEqual([
+      { apiKey: 'test', reference: 'shp_1' },
+      { apiKey: 'test', reference: 'shp_1' },
+      { apiKey: 'test', reference: 'shp_2' },
+      { apiKey: 'expired', reference: 'shp_1' },
+      { apiKey: 'test', reference: 'shp_1' },
+      { apiKey: 'test', reference: 'shp_1' },
+    ])
+
+    // A create over HTTP that throws what `errorFromResponse` makes of the answer passes all three.
+    const statuses: number[] = []
+    // A new Carrier for each run: the one of an earlier run holds its cancelled Shipment under the same reference.
+    const overHttp = () =>
+      httpCreator(async (response) => {
+        statuses.push(response.status)
+        throw await errorFromResponse(response)
+      })
+    await expect(assertConformance(overHttp(), httpFixtures)).resolves.toBeUndefined()
+    expect(statuses).toEqual([403, 500])
+    // forbidden: false drops the 403 only.
+    statuses.length = 0
+    await expect(assertConformance(overHttp(), { ...httpFixtures, forbidden: false })).resolves.toBeUndefined()
+    expect(statuses).toEqual([500])
+  })
+
+  it('accepts a new Shipment that is ready at once, and waits repeatWaitMs before the repeat of S3', async () => {
+    const times: number[] = []
+    const timed = withCapabilities((inner) => ({
+      'shipments.create': async (ctx, shipmentRequest) => {
+        times.push(Date.now())
+        const result = await inner['shipments.create']!(ctx, shipmentRequest)
+        return result.outcome === 'created' ? { ...result, status: 'ready' as const, trackingNumber: 'TRACK-1' } : result
+      },
+    }))
+    await expect(assertConformance(timed, { ...fixtures, shipment: { request, repeatWaitMs: 60 } })).resolves.toBeUndefined()
+    expect(times[1]! - times[0]!).toBeGreaterThanOrEqual(55)
+    // The wait is before the repeat only.
+    expect(times[2]! - times[1]!).toBeLessThan(55)
+
+    times.length = 0
+    await assertConformance(timed, { ...fixtures, shipment: { request } })
+    expect(times[1]! - times[0]!).toBeLessThan(55)
   })
 
   it('keeps C11 on orders.pull for a Channel that makes Shipments too', async () => {
@@ -397,6 +527,25 @@ describe('assertConformance for a connector that makes Shipments', () => {
       '[S2] the shipment request fixture does not fit the service "door" (destination_type); the core never sends such a request',
     )
     expect(await message(httpCourier({}, true), httpFixtures)).toContain('[S4] shipments.track of no Shipments made a request')
+    const lost = withCapabilities((inner) => ({
+      'shipments.track': async (ctx, externalIds) => {
+        if (externalIds.includes('0')) throw new PermanentError('404 resource_not_found')
+        return inner['shipments.track']!(ctx, externalIds)
+      },
+    }))
+    expect(await message(lost)).toContain(
+      '[S4] shipments.track of Shipment "ext-1" together with "0", which the Carrier does not know, failed with PermanentError: 404 resource_not_found; an unknown id is left out of the answer',
+    )
+    const eager = withCapabilities((inner) => ({
+      'shipments.create': async (ctx, shipmentRequest) => {
+        const result = await inner['shipments.create']!(ctx, shipmentRequest)
+        return result.outcome === 'created' ? { ...result, status: 'in_transit' as const } : result
+      },
+    }))
+    expect(await message(eager)).toContain("[S2] shipments.create returned a Shipment that is already in_transit; a new Shipment is 'pending' or 'ready'")
+    expect(await message(httpCreator(async (response) => ({ outcome: 'rejected', code: `http_${response.status}` })), httpFixtures)).toContain(
+      "[S8] shipments.create returned 'rejected' (\"http_500\") when the Carrier answered 500 Internal Server Error, which fails the Shipment for good; a 5xx is a thrown TransientError",
+    )
     expect(await message(withCapabilities(() => ({ 'shipments.label': async () => ({ contentType: 'application/pdf', data: new Uint8Array() }) })))).toMatch(
       /\[S5\] shipments\.label returned an invalid Label[\s\S]*expected a non-empty Uint8Array/,
     )

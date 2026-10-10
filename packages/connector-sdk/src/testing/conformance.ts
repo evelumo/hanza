@@ -19,7 +19,6 @@ import { ORDER_PHASES, orderSchema, orderUpdateSchema, type Order } from '../mod
 import { offerPriceSchema, type OfferPrice } from '../model/price'
 import { pricePushResultSchema, stockPushResultSchema } from '../model/push-result'
 import {
-  isFinalShipmentStatus,
   shipmentCancelResultSchema,
   shipmentCreateResultSchema,
   shipmentLabelSchema,
@@ -39,14 +38,18 @@ export interface ConformanceFixtures {
   fetch?: typeof fetch
   /**
    * If given, orders.pull with these overrides must fail with kind 'auth_expired' (C11). A connector without
-   * orders.pull that makes Shipments is asked for `shipments.track` of the Shipment S2 created instead.
+   * orders.pull that makes Shipments is asked for `shipments.track` of the Shipment S2 created instead. A connector
+   * with `shipments.create` is also asked to create the shipment request fixture again with them: that must fail as
+   * 'auth_expired' too, never come back as `rejected`.
    */
   unauthorized?: { credentials?: unknown; fetch?: typeof fetch }
   /**
    * C14: the pulls, run against a Channel that answers every request `403 Forbidden` (no auth signal), must not fail
    * `auth_expired`, and must send a request when `fetch` is given. Default: a fetch answering a bare 403. Pass `false` only if the Channel really uses 403 for
    * rejected credentials, and say so in the connector's AGENTS.md. A connector without orders.pull that makes
-   * Shipments is checked on `shipments.track` of the Shipment S2 created.
+   * Shipments is checked on `shipments.track` of the Shipment S2 created. A connector with `shipments.create` is
+   * checked on a create of the shipment request fixture as well, which must not come back as `rejected` either: a
+   * 403 is a refusal of the account, not of this request.
    */
   forbidden?: false | { fetch?: typeof fetch }
   /** C18: if given, orders.pull with this cursor (one the recorded Channel no longer has) must fail with `CursorExpiredError`. */
@@ -66,16 +69,30 @@ export interface ConformanceFixtures {
   refresh?: { fetch?: typeof fetch; refused?: { credentials?: unknown; fetch?: typeof fetch } }
   /** Required when the connector has `auth.deviceFlow` (C16): `start`, then one `poll` of its device code, with this `fetch`. */
   deviceFlow?: { fetch?: typeof fetch }
-  /** Required when the connector has `shipments.create` (S1 to S7). */
+  /** Required when the connector has `shipments.create` (S1 to S8). */
   shipment?: ShipmentFixtures
 }
 
 export interface ShipmentFixtures {
   /**
    * A request the Carrier accepts, for one of the connector's declared services (S2). The Shipment it makes is the
-   * one S3 to S5 and S7 use, and C11 and C14 for a connector without orders.pull.
+   * one S3 to S5 and S7 use, and C11 and C14 for a connector without orders.pull. C11, C14 and S8 send it again
+   * against a Carrier that refuses or fails, which makes no Shipment. When recording, give it a `reference` no earlier
+   * run used: a repeatable create would hand back that run's Shipment.
    */
   request: ShipmentRequest
+  /**
+   * Milliseconds S3 waits between the first create and its repeat. Default 0; used only when recording against a real
+   * Carrier (a replay never waits). The core never repeats a create at once (`SHIPMENT_CREATE_RETRY_DELAY_MS`), and
+   * a Carrier's list may lag behind its own create, so a recording made without a wait shows a second Shipment that
+   * the core would never have caused. Set it to what the Carrier's lag needs, at most that delay.
+   */
+  repeatWaitMs?: number
+  /**
+   * S4: an id of the Carrier's own form that it does not know, tracked together with the Shipment S2 created. Default
+   * `"0"`.
+   */
+  unknownExternalId?: string
   /** S6: a request the Carrier refuses for good (an unknown pickup point), under another `reference`. */
   rejected?: { request: ShipmentRequest }
   /**
@@ -464,13 +481,16 @@ export async function assertConformance(connector: AnyConnectorDefinition, fixtu
     })
   }
 
-  // S1 to S7: a connector that makes Shipments. One Shipment is created and then repeated, tracked, printed and cancelled.
+  // S1 to S8: a connector that makes Shipments. One Shipment is created and then repeated, tracked, printed and
+  // cancelled (S8, a create against a Carrier that is down, runs after C14).
   const createShipment = capabilities['shipments.create']
   const trackShipments = capabilities['shipments.track']
   const labelShipment = capabilities['shipments.label']
   const cancelShipment = capabilities['shipments.cancel']
   // `as`, not an annotation: S2 assigns it inside a callback, which the compiler does not follow.
   let createdId = null as string | null
+  // The request of S2, once S3 has seen that creating it again gives the same Shipment back.
+  let repeatableRequest = null as ShipmentRequest | null
 
   // S1, also without shipments.create: services nobody can use are a mistake in the definition.
   const shipping = shippingProblem(connector)
@@ -515,33 +535,65 @@ export async function assertConformance(connector: AnyConnectorDefinition, fixtu
         }
         createdId = result.data.externalId
         const { status } = result.data
-        if (isFinalShipmentStatus(status)) fail('S2', `shipments.create returned a Shipment that is already ${status}; a new Shipment is not in a final status`)
+        if (status !== 'pending' && status !== 'ready') {
+          fail(
+            'S2',
+            `shipments.create returned a Shipment that is already ${status}; a new Shipment is 'pending' or 'ready', since the Carrier cannot have the parcel yet (when recording, use a reference no earlier run used)`,
+          )
+        }
       })
     }
     const shipmentId = createdId
 
     if (request && shipmentId !== null) {
       await check('S3', async () => {
+        // The core never repeats a create at once; a recording against a real Carrier waits as it would.
+        const waitMs = shipment?.repeatWaitMs ?? 0
+        if (waitMs > 0) await new Promise((resolve) => setTimeout(resolve, waitMs))
         const again = shipmentCreateResultSchema.safeParse(await create(request))
         if (!again.success || again.data.outcome !== 'created') {
           fail('S3', 'shipments.create with the same reference did not return the created Shipment the second time')
         } else if (again.data.externalId !== shipmentId) {
           fail('S3', `shipments.create with the same reference returned Shipment "${again.data.externalId}" after "${shipmentId}"; a repeated create must return the Shipment the first one made`)
+        } else {
+          repeatableRequest = request
         }
       })
     }
 
     if (trackShipments && shipmentId !== null) {
       await check('S4', async () => {
-        const states = z.array(shipmentStateSchema).safeParse(await call('shipments.track', () => trackShipments(context, [shipmentId])))
+        // One id the Carrier knows and one it does not: a Shipment that is gone must not cost the others their answer.
+        const unknownId = shipment?.unknownExternalId ?? '0'
+        if (unknownId === shipmentId) {
+          fail('S4', `the unknownExternalId fixture "${unknownId}" is the id of the Shipment shipments.create has just made; give one the Carrier does not know`)
+          return
+        }
+        let tracked: unknown
+        try {
+          tracked = await call('shipments.track', () => trackShipments(context, [shipmentId, unknownId]))
+        } catch (error) {
+          fail(
+            'S4',
+            `shipments.track of Shipment "${shipmentId}" together with "${unknownId}", which the Carrier does not know, failed with ${describeError(error)}; an unknown id is left out of the answer, it never fails the call for the others`,
+          )
+          return
+        }
+        const states = z.array(shipmentStateSchema).safeParse(tracked)
         if (!states.success) {
           fail('S4', `shipments.track returned something that is not an array of Shipment states: ${z.prettifyError(states.error)}`)
         } else {
           for (const state of states.data) {
-            if (state.externalId !== shipmentId) fail('S4', `shipments.track returned a state for Shipment "${state.externalId}", which was not asked for`)
+            if (state.externalId === unknownId) {
+              fail('S4', `shipments.track returned a state for Shipment "${unknownId}", which the Carrier does not know (the unknownExternalId fixture)`)
+            } else if (state.externalId !== shipmentId) {
+              fail('S4', `shipments.track returned a state for Shipment "${state.externalId}", which was not asked for`)
+            }
           }
           const own = states.data.filter((state) => state.externalId === shipmentId).length
-          if (own === 0) fail('S4', `shipments.track returned no state for Shipment "${shipmentId}", which shipments.create has just made`)
+          if (own === 0) {
+            fail('S4', `shipments.track returned no state for Shipment "${shipmentId}", which shipments.create has just made, when asked together with the unknown "${unknownId}"`)
+          }
           if (own > 1) fail('S4', `shipments.track returned ${own} states for Shipment "${shipmentId}"`)
         }
         let requests = 0
@@ -627,6 +679,19 @@ export async function assertConformance(connector: AnyConnectorDefinition, fixtu
   const trackedId = createdId
   const trackCreated =
     !pullOrders && trackShipments && trackedId !== null ? (ctx: CapabilityContext) => trackShipments(ctx, [trackedId]) : undefined
+  // A create is the one call where a wrong answer costs a Shipment for good (`rejected` is final), so C11, C14 and S8
+  // also repeat the create of S2 against a Carrier that refuses or fails. Only once S3 has seen the repeat work: a
+  // create that cannot be repeated was reported there. Nothing is made: the Carrier refuses before, or the fetch is
+  // not real.
+  const repeatedRequest = repeatableRequest
+  const createAgain =
+    createShipment && repeatedRequest !== null
+      ? (ctx: CapabilityContext): Promise<unknown> => createShipment(ctx, structuredClone(repeatedRequest))
+      : undefined
+  const rejectionCode = (result: unknown): string | null => {
+    const parsed = shipmentCreateResultSchema.safeParse(result)
+    return parsed.success && parsed.data.outcome === 'rejected' ? parsed.data.code : null
+  }
 
   // C11
   if (fixtures.unauthorized) {
@@ -639,10 +704,11 @@ export async function assertConformance(connector: AnyConnectorDefinition, fixtu
         fail('C11', 'credentialsSchema rejects the unauthorized credentials fixture')
         return
       }
-      const [name, run] = pullOrders
-        ? (['orders.pull', (ctx: CapabilityContext): Promise<unknown> => pullOrders(ctx, null)] as const)
-        : (['shipments.track', trackCreated] as const)
-      if (!run) {
+      const calls: Array<[name: string, run: (ctx: CapabilityContext) => Promise<unknown>]> = []
+      if (pullOrders) calls.push(['orders.pull', (ctx) => pullOrders(ctx, null)])
+      else if (trackCreated) calls.push(['shipments.track', trackCreated])
+      if (createAgain) calls.push(['shipments.create', createAgain])
+      if (calls.length === 0) {
         // A connector that makes Shipments and has none to track failed S1 or S2, which said why.
         if (!createShipment) fail('C11', 'orders.pull is missing, so the unauthorized fixture cannot be exercised')
         return
@@ -652,14 +718,22 @@ export async function assertConformance(connector: AnyConnectorDefinition, fixtu
         credentials: unauthorizedCredentials.data,
         fetch: overrides.fetch ?? context.fetch,
       }
-      try {
-        await run(unauthorizedContext)
-      } catch (error) {
-        const { kind } = classifyConnectorError(error)
-        if (kind !== 'auth_expired') fail('C11', `${name} with bad credentials failed as '${kind}', expected 'auth_expired'`)
-        return
+      for (const [name, run] of calls) {
+        let result: unknown
+        try {
+          result = await run(unauthorizedContext)
+        } catch (error) {
+          const { kind } = classifyConnectorError(error)
+          if (kind !== 'auth_expired') fail('C11', `${name} with bad credentials failed as '${kind}', expected 'auth_expired'`)
+          continue
+        }
+        const code = name === 'shipments.create' ? rejectionCode(result) : null
+        if (code !== null) {
+          fail('C11', `shipments.create with bad credentials returned 'rejected' ("${code}"), which fails the Shipment for good; credentials the Carrier refuses fail the call as 'auth_expired'`)
+        } else {
+          fail('C11', `${name} with the unauthorized fixture resolved; it must reject`)
+        }
       }
-      fail('C11', `${name} with the unauthorized fixture resolved; it must reject`)
     })
   }
 
@@ -668,6 +742,7 @@ export async function assertConformance(connector: AnyConnectorDefinition, fixtu
   if (pullOrders) forbiddenCalls.push(['orders.pull', (ctx) => pullOrders(ctx, null)])
   if (pullOffers) forbiddenCalls.push(['offers.pull', (ctx) => pullOffers(ctx, null)])
   if (trackCreated) forbiddenCalls.push(['shipments.track', trackCreated])
+  if (createAgain) forbiddenCalls.push(['shipments.create', createAgain])
   if (fixtures.forbidden !== false && forbiddenCalls.length > 0) {
     await check('C14', async () => {
       const answer = (fixtures.forbidden && fixtures.forbidden.fetch) || (async () => new Response(null, { status: 403, statusText: 'Forbidden' }))
@@ -678,7 +753,10 @@ export async function assertConformance(connector: AnyConnectorDefinition, fixtu
       }
       for (const [name, run] of forbiddenCalls) {
         try {
-          await call(name, () => run({ ...context, fetch: forbiddenFetch }))
+          const code = rejectionCode(await call(name, () => run({ ...context, fetch: forbiddenFetch })))
+          if (name === 'shipments.create' && code !== null) {
+            fail('C14', `shipments.create returned 'rejected' ("${code}") on a 403 Forbidden, which fails the Shipment for good; a 403 refuses the account, not this request, so it is a thrown PermanentError`)
+          }
         } catch (error) {
           const { kind } = classifyConnectorError(error)
           if (kind === 'auth_expired') {
@@ -688,6 +766,37 @@ export async function assertConformance(connector: AnyConnectorDefinition, fixtu
       }
       // A connector that talks HTTP (it was given recorded responses) must have met the 403, or the check proved nothing.
       if (fixtures.fetch && requests === 0) fail('C14', `no ${trackCreated ? 'call' : 'pull'} made a request, so the 403 was never seen`)
+    })
+  }
+
+  // S8: a Carrier that is down. The core retries a thrown create (after its delay); `rejected` would end the Shipment.
+  if (createAgain) {
+    await check('S8', async () => {
+      let requests = 0
+      const failingFetch: typeof fetch = async () => {
+        requests++
+        return new Response(null, { status: 500, statusText: 'Internal Server Error' })
+      }
+      let result: unknown
+      try {
+        result = await call('shipments.create', () => createAgain({ ...context, fetch: failingFetch }))
+      } catch (error) {
+        const { kind } = classifyConnectorError(error)
+        // Without a request the failure is not about the 500, and C12 has it if it is not a ConnectorError.
+        if (requests > 0 && kind !== 'transient') {
+          fail('S8', `shipments.create failed as '${kind}' when the Carrier answered 500 Internal Server Error; a 5xx is 'transient', so the core asks again`)
+        }
+        return
+      }
+      // A connector that never touched the network (an in-memory Carrier) was not told anything: nothing to judge.
+      if (requests === 0) return
+      const code = rejectionCode(result)
+      fail(
+        'S8',
+        code !== null
+          ? `shipments.create returned 'rejected' ("${code}") when the Carrier answered 500 Internal Server Error, which fails the Shipment for good; a 5xx is a thrown TransientError`
+          : 'shipments.create resolved although the Carrier answered every request 500 Internal Server Error; it must reject as transient',
+      )
     })
   }
 

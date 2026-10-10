@@ -145,7 +145,7 @@ The delivery company behind a courier Connection, such as InPost. The SDK's conn
 _Avoid_: Courier (the connector kind, and the person at the door), shipper, forwarder
 
 **Shipment status**:
-Where a Shipment is, from one fixed list every connector translates its Carrier's own statuses into: pending, ready, in transit, awaiting pickup, delivery problem, and the final delivered, returned, cancelled and failed. Not an Order status or an Order phase. The Carrier's own status key is kept beside it as a short code (`carrierStatus`), never as free text.
+Where a Shipment is, from one fixed list every connector translates its Carrier's own statuses into: pending, ready, in transit, awaiting pickup, delivery problem, and the final delivered, returned, cancelled and failed. A new Shipment is pending or ready; from in transit on (delivery problem included) the Carrier has, or had, the parcel. Not an Order status or an Order phase. The Carrier's own status key is kept beside it as a short code (`carrierStatus`), never as free text; a pending Shipment may carry one that says what it waits for, such as funds on the account.
 _Avoid_: Tracking status, delivery status, parcel state
 
 **Label**:

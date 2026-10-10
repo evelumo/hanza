@@ -334,11 +334,85 @@ describe('runConformance for a connector that makes Shipments', () => {
     expect(text).not.toContain('jan.kowalski@poczta.pl')
     expect(text).not.toContain('600100200')
     expect(text).not.toContain(LIVE_KEY)
-    // C11 for a courier: shipments.track of the created Shipment with the refused key.
+    // C11 for a courier, with the refused key: shipments.track of the created Shipment, then the create of S2 again,
+    // which this connector starts with its lookup. Neither reaches a POST.
     const unauthorized = await loadCassette(join(dir, UNAUTHORIZED_CASSETTE))
-    expect(unauthorized.interactions.map((interaction) => `${interaction.request.url} ${interaction.response.status}`)).toEqual([`${API}/shipments?id=1000 401`])
+    expect(unauthorized.interactions.map((interaction) => `${interaction.request.method} ${interaction.request.url} ${interaction.response.status}`)).toEqual([
+      `GET ${API}/shipments?id=1000 401`,
+      `GET ${API}/shipments?reference=shp_conformance_1 401`,
+    ])
+    // One POST for each of the two fixtures; the 403 of C14 and the 500 of S8 are the kit's own and are not recorded.
+    const posts = main.interactions.filter((interaction) => interaction.request.method === 'POST')
+    expect(posts.map((interaction) => interaction.response.status)).toEqual([201, 400])
+    expect(main.interactions.some((interaction) => [403, 500].includes(interaction.response.status))).toBe(false)
+    // S4 asks about the Shipment together with an id the Carrier does not know.
+    expect(main.interactions.map((interaction) => interaction.request.url)).toContain(`${API}/shipments?id=1000%2C0`)
 
     await runConformance(stubCourier, { ...options({ replaceBinaryBodies: true }), recording: () => ({ fetch: () => Promise.reject(new Error('no network in replay')) }) })
+  })
+
+  it('waits repeatWaitMs before the repeated create when recording, and never on a replay', async () => {
+    const posted: number[] = []
+    const looked: number[] = []
+    const real = carrier()
+    const timing: typeof fetch = async (input, init) => {
+      const request = new Request(input, init)
+      if (request.method === 'POST') posted.push(Date.now())
+      else if (new URL(request.url).searchParams.has('reference')) looked.push(Date.now())
+      return real(request)
+    }
+    const waiting = (repeatWaitMs: number) => ({
+      ...options({ replaceBinaryBodies: true }),
+      shipment: { request: shipmentRequest, rejected: { request: refusedRequest }, repeatWaitMs },
+      recording: () => ({ credentials: { apiKey: LIVE_KEY }, fetch: timing }),
+    })
+    vi.stubEnv('CI', '')
+    vi.stubEnv('HANZA_RECORD_FIXTURES', '1')
+    await runConformance(stubCourier, waiting(80))
+    vi.unstubAllEnvs()
+    vi.stubEnv('HANZA_RECORD_FIXTURES', '')
+    // The lookup of the repeat (the second one) comes at least the wait after the POST of the first create.
+    expect(looked[1]! - posted[0]!).toBeGreaterThanOrEqual(75)
+
+    // A wait of a minute would time this test out.
+    await runConformance(stubCourier, waiting(60_000))
+  })
+
+  it('fails a connector that posts a Shipment twice on the replay of a cassette that holds one POST', async () => {
+    await record({ replaceBinaryBodies: true })
+    // No lookup before the request: every create is a POST. With the last answer repeated, the second POST got the
+    // first Shipment back and S3 passed.
+    const postsTwice = defineConnector({
+      ...stubCourier,
+      capabilities: {
+        ...stubCourier.capabilities,
+        async 'shipments.create'(ctx, request) {
+          const pointId = request.destination.type === 'pickup_point' ? request.destination.pointId : null
+          let response: Response
+          try {
+            response = await ctx.fetch(`${API}/shipments`, {
+              method: 'POST',
+              body: JSON.stringify({ reference: request.reference, pointId, receiver: request.receiver }),
+              headers: { accept: 'application/json', 'content-type': 'application/json', authorization: `Bearer ${ctx.credentials.apiKey}` },
+            })
+          } catch (error) {
+            throw new TransientError('network failure', { cause: error })
+          }
+          if (response.status === 400) return { outcome: 'rejected', code: 'target_point.does_not_exist' }
+          if (!response.ok) throw await errorFromResponse(response)
+          return { outcome: 'created', ...toState(shipmentStateSchema.extend({ reference: z.string() }).parse(await response.json())) }
+        },
+      },
+    })
+    const error = (await runConformance(postsTwice, options({ replaceBinaryBodies: true })).catch((caught: Error) => caught)) as Error
+    expect(error).toBeInstanceOf(Error)
+    expect(error.message).toContain('[S3] unexpected failure: TransientError: network failure')
+    expect(error.message).toContain(`Unmatched requests:\nAll 1 recorded responses in ${CONFORMANCE_CASSETTE} for POST ${API}/shipments were already served.`)
+
+    // A test that asks for the last answer to be repeated cannot turn this off for a connector that makes Shipments.
+    await expect(runConformance(postsTwice, { ...options({ replaceBinaryBodies: true }), match: { exhausted: 'repeat-last' } })).rejects.toThrow(/POST .*\/shipments were already served/)
+    // The connector that looks the Shipment up first replays under the strictest setting too.
+    await expect(runConformance(stubCourier, { ...options({ replaceBinaryBodies: true }), match: { exhausted: 'error' } })).resolves.toBeUndefined()
   })
 
   it('fails S5 on the replay of a cassette whose Label was dropped as a binary body', async () => {
