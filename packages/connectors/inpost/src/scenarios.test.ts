@@ -458,6 +458,7 @@ describe('InPost scenarios', { skip: isRecording() }, () => {
         ['other', null, 'pending', 'other'],
         ['other', '620999548227330124500078', 'ready', 'other'],
         ['missing', '620999548227330124500078', 'ready', 'missing'],
+        ['oversized', '620999548227330124500078', 'ready', 'oversized'],
         ['Sorted by a drone', null, 'pending', null],
       ])('reports %s (tracking number %s) as %s', async (status, trackingNumber, expected, carrierStatus) => {
         const { ctx, methods } = context(async () => list([item(78, { status, tracking_number: trackingNumber, reference: 'shp_untranslated' })]))

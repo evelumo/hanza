@@ -52,13 +52,13 @@ Measured six times: one `POST`, then the search every 0.2 to 0.3 s until it had 
 - The margin is **15 minutes**.
 - The `Date` header of the listing's answer is compared with this server's clock before "none" is concluded: more than **5 minutes** apart is a `permanent` failure that says the server's clock is wrong, and nothing is posted. (_Observed_: ShipX sends `Date`; it was 0.25 s from the local clock.) A shipment that was found is returned whatever the clocks say.
 
-The margin is three times the tolerance on purpose: it also covers a `requestedAt` stamped by another machine than the worker that asks (the core stamps it with the database's clock), up to 10 minutes from the worker's. It was an hour at first; that made every create of a busy seller page through an hour of shipments, for a skew the check already refuses. An answer without a readable `Date` skips the check, which is what a replayed cassette does, since the recorder keeps no `Date` header; ShipX itself always sent one.
+The margin is three times the tolerance on purpose: it also covers a `requestedAt` stamped by another machine than the worker that asks (the core stamps it with the database's clock), up to 10 minutes from the worker's. A longer margin would make every create of a busy seller page through that much more of the list, for a skew the check already refuses. An answer without a readable `Date` skips the check, which is what a replayed cassette does, since the recorder keeps no `Date` header; ShipX itself always sent one.
 
 The conformance replay and the scenario tests serve every recorded answer once (`inpostMatch`: `exhausted: 'error'`), so a second `POST` fails the test instead of getting the first one's answer again. The kit does that for writes by itself (`repeat-reads`); `error` adds the reads, so a create that searched once more than the recording is a miss too.
 
 ## Auth and environments
 
-- A static token: `Authorization: Bearer <token>`, with the organization id in the path [18153477]. No expiry or refresh is documented. Credentials: `apiToken`. Config: `environment` (`production` | `sandbox`), `organizationId` (digits), `lockerSendingMethod`, `courierSendingMethod`, `labelType`.
+- A static token: `Authorization: Bearer <token>`, with the organization id in the path [18153477]. No expiry or refresh is documented. Credentials: `apiToken`. The token is entered when the Connection is created and cannot be replaced afterwards: when InPost revokes it or the seller regenerates it, the Connection is marked as needing sign-in, its Shipments are no longer created or followed, and a new Connection is needed (issue #154). Config: `environment` (`production` | `sandbox`), `organizationId` (digits), `lockerSendingMethod`, `courierSendingMethod`, `labelType`.
 - Production `https://api-shipx-pl.easypack24.net`, sandbox `https://sandbox-api-shipx-pl.easypack24.net`. A token works on its own environment only.
 - **Sandbox access:** an account at `https://sandbox-manager.paczkomaty.pl/`; complete the company and invoice data (My Account > Data), then the API tab gives the token and the organization id. Creating a shipment needs funds: top up virtually in the Payments tab. Cash on delivery needs a bank account number and company data in the manager, or the purchase fails. Not every production locker exists on the sandbox.
 - A wrong token: `401` with `WWW-Authenticate: Bearer … error="invalid_token"` and `{"status":401,"error":"token_invalid","message":"Token is missing or invalid.","details":{}}` (_observed_) → `AuthExpiredError`.
@@ -204,10 +204,10 @@ and it stays like that. With cash on delivery on the account without company dat
 
 Keys taken from inside a resource (a payment's error, an unavailability reason) must be lower-case letters and `_` only. A key with digits in it could carry a phone number or a locker code.
 
-**A status the table does not have** (InPost added one), or one it has as "says nothing" (`other`, `missing`):
+**A status the table does not have** (InPost added one), or one it has as "says nothing" (`other`, `missing`, `oversized`):
 
 - in `shipments.track` the Shipment is left out of the answer, so it keeps its status, and a new name is logged through `ctx.log` (the name only);
-- in `shipments.create`, when the earlier shipment found by reference is in such a status, the answer is `created` with the least that is true: `ready` when it has a tracking number (InPost bought the label), else `pending`, with the status name as `carrierStatus`. Never a status that says the Carrier holds the parcel: that would ship the Order on a guess. (It used to throw `transient`, which threw on every repeat until the core failed, after 24 hours, a Shipment InPost may well have bought.)
+- in `shipments.create`, when the earlier shipment found by reference is in such a status, the answer is `created` with the least that is true: `ready` when it has a tracking number (InPost bought the label), else `pending`, with the status name as `carrierStatus`. Never a status that says the Carrier holds the parcel: that would ship the Order on a guess. It does not throw: a throw would repeat on every retry until the core failed the Shipment after 24 hours, although InPost may well have bought it.
 
 ### Status table (`src/statuses.ts`)
 
@@ -219,11 +219,11 @@ All 53 names of `GET /v1/statuses` (the same on production and on the sandbox, 2
 | `ready` | `confirmed` |
 | `in_transit` | `dispatched_by_sender`, `dispatched_by_sender_to_pok`, `collected_from_sender`, `taken_by_courier`, `taken_by_courier_from_pok`, `adopted_at_source_branch`, `sent_from_source_branch`, `adopted_at_sorting_center`, `sent_from_sorting_center`, `adopted_at_target_branch`, `out_for_delivery`, `out_for_delivery_to_address`, `readdressed`, `redirect_to_box`, `canceled_redirect_to_box`, `delay_in_delivery`, `stack_in_customer_service_point`, `stack_in_box_machine`, `unstack_from_customer_service_point`, `unstack_from_box_machine` |
 | `awaiting_pickup` | `ready_to_pickup`, `ready_to_pickup_from_pok`, `ready_to_pickup_from_pok_registered`, `ready_to_pickup_from_branch`, `pickup_reminder_sent`, `avizo`, `courier_avizo_in_customer_service_point` |
-| `delivery_problem` | `undelivered`, `undelivered_wrong_address`, `undelivered_incomplete_address`, `undelivered_unknown_receiver`, `undelivered_cod_cash_receiver`, `undelivered_no_mailbox`, `undelivered_not_live_address`, `undelivered_lack_of_access_letterbox`, `rejected_by_receiver`, `pickup_time_expired`, `stack_parcel_pickup_time_expired`, `stack_parcel_in_box_machine_pickup_time_expired`, `claimed`, `oversized`, `pickup_reminder_sent_address`, `taken_by_courier_from_customer_service_point` |
+| `delivery_problem` | `undelivered`, `undelivered_wrong_address`, `undelivered_incomplete_address`, `undelivered_unknown_receiver`, `undelivered_cod_cash_receiver`, `undelivered_no_mailbox`, `undelivered_not_live_address`, `undelivered_lack_of_access_letterbox`, `rejected_by_receiver`, `pickup_time_expired`, `stack_parcel_pickup_time_expired`, `stack_parcel_in_box_machine_pickup_time_expired`, `claimed`, `pickup_reminder_sent_address`, `taken_by_courier_from_customer_service_point` |
 | `delivered` | `delivered`, `return_pickup_confirmation_to_sender` |
 | `returned` | `returned_to_sender` |
 | `cancelled` | `canceled` |
-| none (kept as it is) | `other`, `missing` |
+| none (kept as it is) | `other`, `missing`, `oversized` |
 
 Every status from `in_transit` to `returned` says the Carrier has, or had, the parcel, and the first of them **ships the Order** (ADR 0024). So a name goes into one of those rows only when its own text says InPost held the parcel.
 
@@ -238,12 +238,12 @@ Names placed differently from issue #126, by their text in the live list:
 - `missing` → nothing (the issue: `delivery_problem`). Its title and description are "translation missing" in the live list, and it names no origin status: nothing says InPost ever held the parcel, and `delivery_problem` would ship the Order.
 - `taken_by_courier_from_customer_service_point` → `delivery_problem` (the issue: `returned`). "The time for you to collect the parcel has passed. It has been picked up by a courier … and will soon be on its way back to the Sender": not back yet, and `returned` is final. `returned_to_sender` follows when it is.
 - `pickup_reminder_sent_address` → `delivery_problem` (the issue: `awaiting_pickup`). Its text is "InPost courier did not find the Recipient at the indicated address": a failed delivery, not a parcel waiting at a point.
+- `oversized` → nothing (the issue: `delivery_problem`). "The parcel does not fit into the locker of the parcel machine": **who holds the parcel then is not documented**. If it is a parcel the sender could not put into a locker, InPost never had it, and `delivery_problem` would ship the Order wrongly; so the Shipment keeps its status, as for `missing`. To ask InPost.
 
 Names kept as the issue has them although their description reads differently:
 
 - `unstack_from_box_machine` → `in_transit`, though its live text is the one of a pickup deadline that passed.
 - `undelivered_lack_of_access_letterbox` → `delivery_problem`, though its text says the parcel is on its way back.
-- `oversized` → `delivery_problem`. "The parcel does not fit into the locker of the parcel machine": **who holds the parcel then is not documented**. If it is a parcel the sender could not put into a locker, InPost never had it, and this row ships the Order wrongly. To ask InPost.
 
 No status after `confirmed` can be recorded: the sandbox does not advance a shipment, so this table is tested on hand-written answers only, for good.
 

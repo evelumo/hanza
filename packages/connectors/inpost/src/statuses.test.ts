@@ -32,8 +32,8 @@ describe('the InPost status table', () => {
     expect(namesOf('failed')).toEqual([])
   })
 
-  it('leaves untranslated the status InPost itself calls unrecognized, and the one it does not describe at all', () => {
-    expect(namesOf(null)).toEqual(['missing', 'other'])
+  it('leaves untranslated the statuses that do not say InPost has the parcel: unrecognized, not described, and one that may mean it was never handed over', () => {
+    expect(namesOf(null)).toEqual(['missing', 'other', 'oversized'])
   })
 
   it('groups the names as the connector documents them', () => {
@@ -72,7 +72,6 @@ describe('the InPost status table', () => {
     ])
     expect(namesOf('delivery_problem')).toEqual([
       'claimed',
-      'oversized',
       'pickup_reminder_sent_address',
       'pickup_time_expired',
       'rejected_by_receiver',
@@ -99,6 +98,9 @@ describe('the InPost status table', () => {
     // No title, no description: "translation missing". Nothing says InPost ever held this parcel.
     expect(texts.get('missing')?.title).toMatch(/translation missing/)
     expect(INPOST_STATUSES.missing).toBeNull()
+    // "Does not fit into the locker": says nothing of who holds the parcel, and may mean the sender could not put it in.
+    expect(texts.get('oversized')?.description).toMatch(/does not fit into the locker/)
+    expect(INPOST_STATUSES.oversized).toBeNull()
     expect(texts.get('taken_by_courier_from_customer_service_point')?.description).toMatch(/will soon be on its way back/)
     expect(texts.get('pickup_reminder_sent_address')?.description).toMatch(/did not find the Recipient/)
   })

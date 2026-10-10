@@ -58,8 +58,6 @@ export const INPOST_STATUSES: Readonly<Record<string, ShipmentStatus | null>> = 
   stack_parcel_pickup_time_expired: 'delivery_problem',
   stack_parcel_in_box_machine_pickup_time_expired: 'delivery_problem',
   claimed: 'delivery_problem',
-  // "Does not fit into the locker." Who holds the parcel then is not documented.
-  oversized: 'delivery_problem',
   // "Will soon be on its way back to the Sender": not back yet, and `returned` is final.
   taken_by_courier_from_customer_service_point: 'delivery_problem',
 
@@ -75,6 +73,9 @@ export const INPOST_STATUSES: Readonly<Record<string, ShipmentStatus | null>> = 
   // No title, no description ("translation missing") and no origin status in the live list: nothing says InPost
   // ever held the parcel, and a status that says so ships the Order.
   missing: null,
+  // "Does not fit into the locker." Who holds the parcel then is not documented: it may be a parcel the sender could
+  // not put into a locker, which InPost never had, and a status that says it has the parcel ships the Order.
+  oversized: null,
 }
 
 /** The statuses in which InPost is still preparing and buying the offer, so a purchase can still fail. */

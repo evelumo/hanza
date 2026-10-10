@@ -443,7 +443,7 @@ describe('toShipmentState', () => {
     expect(toShipmentState(shipment({ tracking_number: '' }))?.trackingNumber).toBeNull()
   })
 
-  it.each(['sorted_by_drone', 'other', 'missing', 'constructor', 'toString', '__proto__', ''])('does not guess at the status "%s"', (status) => {
+  it.each(['sorted_by_drone', 'other', 'missing', 'oversized', 'constructor', 'toString', '__proto__', ''])('does not guess at the status "%s"', (status) => {
     expect(toShipmentState(shipment({ status }))).toBeNull()
   })
 
@@ -468,7 +468,7 @@ describe('lowerBoundState', () => {
   })
 
   // Whatever the name suggests: a status that says the Carrier has the parcel ships the Order.
-  it.each(['delivered_by_drone', 'out_for_delivery_by_robot', 'returned_to_sender_again', 'other', 'missing'])('never reports "%s" as handed over', (status) => {
+  it.each(['delivered_by_drone', 'out_for_delivery_by_robot', 'returned_to_sender_again', 'other', 'missing', 'oversized'])('never reports "%s" as handed over', (status) => {
     expect(['pending', 'ready']).toContain(lowerBoundState(shipment({ status })).status)
     expect(['pending', 'ready']).toContain(lowerBoundState(shipment({ status, tracking_number: '620999548227330124560017' })).status)
   })
