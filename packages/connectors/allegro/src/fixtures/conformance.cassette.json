@@ -4989,6 +4989,670 @@
         },
         "body": null
       }
+    },
+    {
+      "request": {
+        "method": "PATCH",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/sale/product-offers/7834566006",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json",
+          "content-type": "application/vnd.allegro.public.v1+json"
+        },
+        "body": {
+          "json": {
+            "sellingMode": {
+              "price": {
+                "amount": "19.99",
+                "currency": "PLN"
+              }
+            }
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/vnd.allegro.public.v1+json",
+          "date": "Sat, 10 Oct 2026 12:00:00 GMT"
+        },
+        "body": {
+          "json": {
+            "id": "7834566006",
+            "name": "Stoneware plate 27 cm",
+            "language": "pl-PL",
+            "category": {
+              "id": "257929"
+            },
+            "external": null,
+            "sellingMode": {
+              "format": "BUY_NOW",
+              "price": {
+                "amount": "19.99",
+                "currency": "PLN"
+              }
+            },
+            "stock": {
+              "available": 5,
+              "unit": "UNIT"
+            },
+            "publication": {
+              "status": "ACTIVE",
+              "endedBy": null,
+              "republish": false
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "PATCH",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/sale/product-offers/7834566005",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json",
+          "content-type": "application/vnd.allegro.public.v1+json"
+        },
+        "body": {
+          "json": {
+            "sellingMode": {
+              "price": {
+                "amount": "19.99",
+                "currency": "PLN"
+              }
+            }
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/vnd.allegro.public.v1+json",
+          "date": "Sat, 10 Oct 2026 12:00:00 GMT"
+        },
+        "body": {
+          "json": {
+            "id": "7834566005",
+            "name": "Salad bowl 24 cm, grey",
+            "language": "pl-PL",
+            "category": {
+              "id": "257929"
+            },
+            "external": {
+              "id": "BOWL-240-GRY"
+            },
+            "sellingMode": {
+              "format": "BUY_NOW",
+              "price": {
+                "amount": "19.99",
+                "currency": "PLN"
+              }
+            },
+            "stock": {
+              "available": 5,
+              "unit": "UNIT"
+            },
+            "publication": {
+              "status": "ENDED",
+              "endedBy": "USER",
+              "republish": false
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "PATCH",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/sale/product-offers/7834566004",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json",
+          "content-type": "application/vnd.allegro.public.v1+json"
+        },
+        "body": {
+          "json": {
+            "sellingMode": {
+              "price": {
+                "amount": "19.99",
+                "currency": "PLN"
+              }
+            }
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/vnd.allegro.public.v1+json",
+          "date": "Sat, 10 Oct 2026 12:00:00 GMT"
+        },
+        "body": {
+          "json": {
+            "id": "7834566004",
+            "name": "Espresso cup 90 ml, black",
+            "language": "pl-PL",
+            "category": {
+              "id": "257929"
+            },
+            "external": {
+              "id": "CUP-090-BLK"
+            },
+            "sellingMode": {
+              "format": "BUY_NOW",
+              "price": {
+                "amount": "19.99",
+                "currency": "PLN"
+              }
+            },
+            "stock": {
+              "available": 5,
+              "unit": "UNIT"
+            },
+            "publication": {
+              "status": "ACTIVE",
+              "endedBy": null,
+              "republish": false
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "PATCH",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/sale/product-offers/7834566006",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json",
+          "content-type": "application/vnd.allegro.public.v1+json"
+        },
+        "body": {
+          "json": {
+            "sellingMode": {
+              "price": {
+                "amount": "19.99",
+                "currency": "PLN"
+              }
+            }
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/vnd.allegro.public.v1+json",
+          "date": "Sat, 10 Oct 2026 12:00:00 GMT"
+        },
+        "body": {
+          "json": {
+            "id": "7834566006",
+            "name": "Stoneware plate 27 cm",
+            "language": "pl-PL",
+            "category": {
+              "id": "257929"
+            },
+            "external": null,
+            "sellingMode": {
+              "format": "BUY_NOW",
+              "price": {
+                "amount": "19.99",
+                "currency": "PLN"
+              }
+            },
+            "stock": {
+              "available": 5,
+              "unit": "UNIT"
+            },
+            "publication": {
+              "status": "ACTIVE",
+              "endedBy": null,
+              "republish": false
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "PATCH",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/sale/product-offers/7834566005",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json",
+          "content-type": "application/vnd.allegro.public.v1+json"
+        },
+        "body": {
+          "json": {
+            "sellingMode": {
+              "price": {
+                "amount": "19.99",
+                "currency": "PLN"
+              }
+            }
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/vnd.allegro.public.v1+json",
+          "date": "Sat, 10 Oct 2026 12:00:00 GMT"
+        },
+        "body": {
+          "json": {
+            "id": "7834566005",
+            "name": "Salad bowl 24 cm, grey",
+            "language": "pl-PL",
+            "category": {
+              "id": "257929"
+            },
+            "external": {
+              "id": "BOWL-240-GRY"
+            },
+            "sellingMode": {
+              "format": "BUY_NOW",
+              "price": {
+                "amount": "19.99",
+                "currency": "PLN"
+              }
+            },
+            "stock": {
+              "available": 5,
+              "unit": "UNIT"
+            },
+            "publication": {
+              "status": "ENDED",
+              "endedBy": "USER",
+              "republish": false
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "PATCH",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/sale/product-offers/7834566004",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json",
+          "content-type": "application/vnd.allegro.public.v1+json"
+        },
+        "body": {
+          "json": {
+            "sellingMode": {
+              "price": {
+                "amount": "19.99",
+                "currency": "PLN"
+              }
+            }
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/vnd.allegro.public.v1+json",
+          "date": "Sat, 10 Oct 2026 12:00:00 GMT"
+        },
+        "body": {
+          "json": {
+            "id": "7834566004",
+            "name": "Espresso cup 90 ml, black",
+            "language": "pl-PL",
+            "category": {
+              "id": "257929"
+            },
+            "external": {
+              "id": "CUP-090-BLK"
+            },
+            "sellingMode": {
+              "format": "BUY_NOW",
+              "price": {
+                "amount": "19.99",
+                "currency": "PLN"
+              }
+            },
+            "stock": {
+              "available": 5,
+              "unit": "UNIT"
+            },
+            "publication": {
+              "status": "ACTIVE",
+              "endedBy": null,
+              "republish": false
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "PATCH",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/sale/product-offers/7834566006",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json",
+          "content-type": "application/vnd.allegro.public.v1+json"
+        },
+        "body": {
+          "json": {
+            "sellingMode": {
+              "price": {
+                "amount": "25",
+                "currency": "PLN"
+              }
+            }
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/vnd.allegro.public.v1+json",
+          "date": "Sat, 10 Oct 2026 12:00:00 GMT"
+        },
+        "body": {
+          "json": {
+            "id": "7834566006",
+            "name": "Stoneware plate 27 cm",
+            "language": "pl-PL",
+            "category": {
+              "id": "257929"
+            },
+            "external": null,
+            "sellingMode": {
+              "format": "BUY_NOW",
+              "price": {
+                "amount": "25.00",
+                "currency": "PLN"
+              }
+            },
+            "stock": {
+              "available": 5,
+              "unit": "UNIT"
+            },
+            "publication": {
+              "status": "ACTIVE",
+              "endedBy": null,
+              "republish": false
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "PATCH",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/sale/product-offers/7834566005",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json",
+          "content-type": "application/vnd.allegro.public.v1+json"
+        },
+        "body": {
+          "json": {
+            "sellingMode": {
+              "price": {
+                "amount": "25",
+                "currency": "PLN"
+              }
+            }
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/vnd.allegro.public.v1+json",
+          "date": "Sat, 10 Oct 2026 12:00:00 GMT"
+        },
+        "body": {
+          "json": {
+            "id": "7834566005",
+            "name": "Salad bowl 24 cm, grey",
+            "language": "pl-PL",
+            "category": {
+              "id": "257929"
+            },
+            "external": {
+              "id": "BOWL-240-GRY"
+            },
+            "sellingMode": {
+              "format": "BUY_NOW",
+              "price": {
+                "amount": "25.00",
+                "currency": "PLN"
+              }
+            },
+            "stock": {
+              "available": 5,
+              "unit": "UNIT"
+            },
+            "publication": {
+              "status": "ENDED",
+              "endedBy": "USER",
+              "republish": false
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "PATCH",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/sale/product-offers/7834566004",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json",
+          "content-type": "application/vnd.allegro.public.v1+json"
+        },
+        "body": {
+          "json": {
+            "sellingMode": {
+              "price": {
+                "amount": "25",
+                "currency": "PLN"
+              }
+            }
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/vnd.allegro.public.v1+json",
+          "date": "Sat, 10 Oct 2026 12:00:00 GMT"
+        },
+        "body": {
+          "json": {
+            "id": "7834566004",
+            "name": "Espresso cup 90 ml, black",
+            "language": "pl-PL",
+            "category": {
+              "id": "257929"
+            },
+            "external": {
+              "id": "CUP-090-BLK"
+            },
+            "sellingMode": {
+              "format": "BUY_NOW",
+              "price": {
+                "amount": "25.00",
+                "currency": "PLN"
+              }
+            },
+            "stock": {
+              "available": 5,
+              "unit": "UNIT"
+            },
+            "publication": {
+              "status": "ACTIVE",
+              "endedBy": null,
+              "republish": false
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "PATCH",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/sale/product-offers/7834566006",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json",
+          "content-type": "application/vnd.allegro.public.v1+json"
+        },
+        "body": {
+          "json": {
+            "sellingMode": {
+              "price": {
+                "amount": "25",
+                "currency": "PLN"
+              }
+            }
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/vnd.allegro.public.v1+json",
+          "date": "Sat, 10 Oct 2026 12:00:00 GMT"
+        },
+        "body": {
+          "json": {
+            "id": "7834566006",
+            "name": "Stoneware plate 27 cm",
+            "language": "pl-PL",
+            "category": {
+              "id": "257929"
+            },
+            "external": null,
+            "sellingMode": {
+              "format": "BUY_NOW",
+              "price": {
+                "amount": "25.00",
+                "currency": "PLN"
+              }
+            },
+            "stock": {
+              "available": 5,
+              "unit": "UNIT"
+            },
+            "publication": {
+              "status": "ACTIVE",
+              "endedBy": null,
+              "republish": false
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "PATCH",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/sale/product-offers/7834566005",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json",
+          "content-type": "application/vnd.allegro.public.v1+json"
+        },
+        "body": {
+          "json": {
+            "sellingMode": {
+              "price": {
+                "amount": "25",
+                "currency": "PLN"
+              }
+            }
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/vnd.allegro.public.v1+json",
+          "date": "Sat, 10 Oct 2026 12:00:00 GMT"
+        },
+        "body": {
+          "json": {
+            "id": "7834566005",
+            "name": "Salad bowl 24 cm, grey",
+            "language": "pl-PL",
+            "category": {
+              "id": "257929"
+            },
+            "external": {
+              "id": "BOWL-240-GRY"
+            },
+            "sellingMode": {
+              "format": "BUY_NOW",
+              "price": {
+                "amount": "25.00",
+                "currency": "PLN"
+              }
+            },
+            "stock": {
+              "available": 5,
+              "unit": "UNIT"
+            },
+            "publication": {
+              "status": "ENDED",
+              "endedBy": "USER",
+              "republish": false
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "PATCH",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/sale/product-offers/7834566004",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json",
+          "content-type": "application/vnd.allegro.public.v1+json"
+        },
+        "body": {
+          "json": {
+            "sellingMode": {
+              "price": {
+                "amount": "25",
+                "currency": "PLN"
+              }
+            }
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/vnd.allegro.public.v1+json",
+          "date": "Sat, 10 Oct 2026 12:00:00 GMT"
+        },
+        "body": {
+          "json": {
+            "id": "7834566004",
+            "name": "Espresso cup 90 ml, black",
+            "language": "pl-PL",
+            "category": {
+              "id": "257929"
+            },
+            "external": {
+              "id": "CUP-090-BLK"
+            },
+            "sellingMode": {
+              "format": "BUY_NOW",
+              "price": {
+                "amount": "25.00",
+                "currency": "PLN"
+              }
+            },
+            "stock": {
+              "available": 5,
+              "unit": "UNIT"
+            },
+            "publication": {
+              "status": "ACTIVE",
+              "endedBy": null,
+              "republish": false
+            }
+          }
+        }
+      }
     }
   ]
 }

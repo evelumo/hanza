@@ -3,6 +3,384 @@
   "interactions": [
     {
       "request": {
+        "method": "PATCH",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/sale/product-offers/7782361659",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json",
+          "content-type": "application/vnd.allegro.public.v1+json"
+        },
+        "body": {
+          "json": {
+            "sellingMode": {
+              "price": {
+                "amount": "21.50",
+                "currency": "PLN"
+              }
+            }
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/vnd.allegro.public.v1+json; charset=UTF-8",
+          "date": "Sat, 10 Oct 2026 21:49:16 GMT"
+        },
+        "body": {
+          "json": {
+            "name": "Kubek emaliowany niebieski 350 ml",
+            "productSet": [
+              {
+                "product": {
+                  "id": "018a0a5a-0006-4121-b9e4-6c882728a5c4",
+                  "publication": {
+                    "status": "LISTED"
+                  },
+                  "parameters": [
+                    {
+                      "id": "248811",
+                      "name": "Marka",
+                      "values": [
+                        "bez marki"
+                      ],
+                      "valuesIds": [
+                        "248811_958954"
+                      ],
+                      "rangeValue": null
+                    },
+                    {
+                      "id": "220677",
+                      "name": "Pojemność",
+                      "values": [
+                        "350"
+                      ],
+                      "valuesIds": null,
+                      "rangeValue": null
+                    },
+                    {
+                      "id": "23389",
+                      "name": "Materiał wykonania",
+                      "values": [
+                        "metal"
+                      ],
+                      "valuesIds": [
+                        "23389_6"
+                      ],
+                      "rangeValue": null
+                    },
+                    {
+                      "id": "224017",
+                      "name": "Kod producenta",
+                      "values": [
+                        "E2E-KUBEK-350"
+                      ],
+                      "valuesIds": null,
+                      "rangeValue": null
+                    },
+                    {
+                      "id": "250792",
+                      "name": "Kod taryfy celnej",
+                      "values": [
+                        "73239400"
+                      ],
+                      "valuesIds": null,
+                      "rangeValue": null
+                    }
+                  ],
+                  "isAiCoCreated": true
+                },
+                "quantity": {
+                  "value": 1
+                },
+                "responsiblePerson": null,
+                "responsibleProducer": {
+                  "id": "749c8101-fc2e-41a9-96c2-3c7734d3d57c"
+                },
+                "safetyInformation": {
+                  "description": "List of cup safety warnings based on the requirements of General Product Safety Regulation (EU) 2023/988 (GPSR):\n\n1. Risk of burns:\n * Beware of hot drinks to avoid burns. The cup can heat up, especially if it is made of thin material. 2. Risk of breakage:\n * Ceramic and glass cups are prone to breakage. A cup can pose a risk of injury. Do not use a damaged cup. 3. Use in the microwave:\n * Check that the cup is suitable for use in the microwave. Metal decorative elements can cause sparks. 4. Dishwasher safe:\n * Make sure the mug is dishwasher safe. Some materials and designs can be destroyed. 5. Use by children:\n * Children should use cups under adult supervision, especially with hot drinks. 6. Stability:\n * Set the cup on a stable surface to avoid tipping over and spilling the drink. 7. Materials:\n * People with allergies should check the material composition of the cup to avoid allergic reactions. 8. Cleaning:\n * Clean the cup regularly to prevent the growth of bacteria and mold. 9. Condition Checking:\n * Regularly inspect the cup for cracks, nicks, and other damage. 10. Safe use:\n * Do not use the cup for purposes other than intended, e.g. as a container for chemicals. 11. Thermal Mugs:\n * For thermal mugs, make sure they are tightly closed to avoid leaks. 12. Warnings for specific materials:\n * Plastic cups: Avoid high temperatures that can cause the release of harmful substances. Melamine cups: Do not use in the microwave, as melamine can release harmful compounds under the influence of heat.",
+                  "type": "TEXT"
+                },
+                "marketedBeforeGPSRObligation": false,
+                "deposits": [],
+                "composition": null
+              }
+            ],
+            "parameters": [
+              {
+                "id": "11323",
+                "name": "Stan",
+                "values": [
+                  "Nowy"
+                ],
+                "valuesIds": [
+                  "11323_1"
+                ],
+                "rangeValue": null
+              }
+            ],
+            "images": [
+              "https://a.allegroimg.allegrosandbox.pl/original/11371e/0eb4aa94464aad0c4d2378d485f8"
+            ],
+            "afterSalesServices": {
+              "impliedWarranty": {
+                "id": "c5ad53a4-9d01-4b9f-aefa-cc3345477988"
+              },
+              "returnPolicy": {
+                "id": "810f576a-c2d6-495b-a343-720711096634"
+              },
+              "warranty": null
+            },
+            "payments": {
+              "invoice": "VAT"
+            },
+            "sellingMode": {
+              "format": "BUY_NOW",
+              "price": {
+                "amount": "21.50",
+                "currency": "PLN"
+              },
+              "startingPrice": null,
+              "minimalPrice": null
+            },
+            "stock": {
+              "available": 3,
+              "unit": "UNIT"
+            },
+            "location": {
+              "countryCode": "PL",
+              "province": "WIELKOPOLSKIE",
+              "city": "scrubbed-1",
+              "postCode": "scrubbed-2"
+            },
+            "delivery": {
+              "shippingRates": {
+                "id": "17b0bfa8-acfd-4968-936c-3c532a41e728"
+              },
+              "handlingTime": "PT24H",
+              "additionalInfo": null,
+              "shipmentDate": null
+            },
+            "description": {
+              "sections": [
+                {
+                  "items": [
+                    {
+                      "type": "IMAGE",
+                      "url": "https://a.allegroimg.allegrosandbox.pl/original/11371e/0eb4aa94464aad0c4d2378d485f8"
+                    },
+                    {
+                      "type": "TEXT",
+                      "content": "<h1>Kubek emaliowany niebieski 350 ml</h1>"
+                    }
+                  ]
+                },
+                {
+                  "items": [
+                    {
+                      "type": "TEXT",
+                      "content": "<h2>Parametry</h2>"
+                    }
+                  ]
+                },
+                {
+                  "items": [
+                    {
+                      "type": "TEXT",
+                      "content": "<h2>Wysyłka i zwroty</h2> <p>Wysyłamy w ciągu <b>24 h</b> w dni robocze, z magazynu WAW-01.</p> <ul> <li>30 dni na zwrot bez podania przyczyny</li> <li>Faktura VAT do każdego zamówienia</li> </ul>"
+                    }
+                  ]
+                }
+              ]
+            },
+            "external": {
+              "id": "HANZA-MUG-WHITE"
+            },
+            "category": {
+              "id": "110886"
+            },
+            "taxSettings": null,
+            "sizeTable": null,
+            "discounts": {
+              "wholesalePriceList": null
+            },
+            "contact": null,
+            "fundraisingCampaign": null,
+            "messageToSellerSettings": {
+              "mode": "OPTIONAL"
+            },
+            "attachments": [],
+            "b2b": null,
+            "additionalServices": null,
+            "compatibilityList": null,
+            "additionalMarketplaces": {
+              "allegro-business-pl": {
+                "sellingMode": {
+                  "price": {
+                    "amount": "19.90",
+                    "currency": "PLN"
+                  }
+                },
+                "publication": {
+                  "state": "REFUSED",
+                  "refusalReasons": [
+                    {
+                      "code": "VQR012_OFFER_HAS_NO_TAX_RATE_FOR_MARKETPLACE",
+                      "userMessage": "no VAT rate",
+                      "parameters": {}
+                    }
+                  ]
+                }
+              },
+              "allegro-sk": {
+                "sellingMode": null,
+                "publication": {
+                  "state": "NOT_REQUESTED",
+                  "refusalReasons": []
+                }
+              },
+              "allegro-cz": {
+                "sellingMode": null,
+                "publication": {
+                  "state": "NOT_REQUESTED",
+                  "refusalReasons": []
+                }
+              },
+              "allegro-hu": {
+                "sellingMode": null,
+                "publication": {
+                  "state": "NOT_REQUESTED",
+                  "refusalReasons": []
+                }
+              },
+              "allegro-business-cz": {
+                "sellingMode": null,
+                "publication": {
+                  "state": "NOT_REQUESTED",
+                  "refusalReasons": []
+                }
+              }
+            },
+            "warnings": [],
+            "aiCoCreatedContent": {
+              "images": []
+            },
+            "id": "7782361659",
+            "language": "pl-PL",
+            "publication": {
+              "status": "ENDED",
+              "duration": null,
+              "endedBy": "EMPTY_STOCK",
+              "endingAt": null,
+              "startingAt": null,
+              "republish": false,
+              "marketplaces": {
+                "base": {
+                  "id": "allegro-pl"
+                },
+                "additional": [
+                  {
+                    "id": "allegro-business-pl"
+                  }
+                ]
+              }
+            },
+            "validation": {
+              "errors": [],
+              "warnings": [],
+              "validatedAt": "2026-10-10T20:22:39.827Z"
+            },
+            "createdAt": "2026-10-10T20:22:39.000Z",
+            "updatedAt": "2026-10-10T21:49:07.713Z"
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "PATCH",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/sale/product-offers/1234567890",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json",
+          "content-type": "application/vnd.allegro.public.v1+json"
+        },
+        "body": {
+          "json": {
+            "sellingMode": {
+              "price": {
+                "amount": "21.50",
+                "currency": "PLN"
+              }
+            }
+          }
+        }
+      },
+      "response": {
+        "status": 404,
+        "headers": {
+          "content-type": "application/json; charset=UTF-8",
+          "date": "Sat, 10 Oct 2026 21:49:16 GMT"
+        },
+        "body": {
+          "json": {
+            "errors": [
+              {
+                "code": "OfferNotFoundException",
+                "message": "Not Found",
+                "details": null,
+                "path": "",
+                "userMessage": "Offer 1234567890 does not exist.",
+                "metadata": {
+                  "offerId": "1234567890"
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "PATCH",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/sale/product-offers/7782361659",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json",
+          "content-type": "application/vnd.allegro.public.v1+json"
+        },
+        "body": {
+          "json": {
+            "sellingMode": {
+              "price": {
+                "amount": "21.50",
+                "currency": "EUR"
+              }
+            }
+          }
+        }
+      },
+      "response": {
+        "status": 422,
+        "headers": {
+          "content-type": "application/json; charset=UTF-8",
+          "date": "Sat, 10 Oct 2026 21:49:16 GMT"
+        },
+        "body": {
+          "json": {
+            "errors": [
+              {
+                "code": "IncorrectBaseCurrency",
+                "message": "prices.price.currency.incorrectBaseCurrency",
+                "details": null,
+                "path": "prices[0].price.currency",
+                "userMessage": "Currency is incorrect for the specified market.",
+                "metadata": {}
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "request": {
         "method": "GET",
         "url": "https://api.allegro.pl.allegrosandbox.pl/sale/offers?limit=1000&offset=0&publication.status=ACTIVE&publication.status=ACTIVATING&publication.status=ENDED",
         "headers": {
@@ -14,7 +392,7 @@
         "status": 200,
         "headers": {
           "content-type": "application/vnd.allegro.public.v1+json",
-          "date": "Sat, 10 Oct 2026 21:48:55 GMT"
+          "date": "Sat, 10 Oct 2026 21:49:26 GMT"
         },
         "body": {
           "json": {
@@ -144,7 +522,7 @@
                 "sellingMode": {
                   "format": "BUY_NOW",
                   "price": {
-                    "amount": "19.9",
+                    "amount": "21.5",
                     "currency": "PLN"
                   },
                   "minimalPrice": null,
@@ -160,15 +538,15 @@
                   "visitsCount": 0
                 },
                 "stock": {
-                  "available": 5,
+                  "available": 3,
                   "sold": 0
                 },
                 "publication": {
-                  "status": "ACTIVE",
+                  "status": "ENDED",
                   "startingAt": null,
                   "startedAt": "2026-10-10T20:22:49.000Z",
                   "endingAt": null,
-                  "endedAt": null,
+                  "endedAt": "2026-10-10T21:49:07.000Z",
                   "marketplaces": {
                     "base": {
                       "id": "allegro-pl"
@@ -210,7 +588,7 @@
                     },
                     "sellingMode": {
                       "price": {
-                        "amount": "19.9",
+                        "amount": "21.5",
                         "currency": "PLN"
                       },
                       "priceAutomation": null

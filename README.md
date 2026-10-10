@@ -101,8 +101,9 @@ What is synchronised in version 1:
 - Offers come in (active and ended; drafts are left out; Offers fulfilled by Allegro are skipped).
 - Orders come in, including Orders still awaiting payment; Orders fulfilled by Allegro are skipped.
 - Stock goes out. Stock 0 ends the Offer on Allegro, and a number above 0 reopens an Offer that sold out. An Offer ended by the seller or by expiry is reported as rejected, not reopened.
+- Prices go out: an Offer's buy-now price on its base marketplace, in the currency Allegro reported for it. A price Allegro refuses (below its minimum, for example) is reported as rejected for that Offer.
 - The Order phase goes out (new, processing, shipped, cancelled).
-- Not yet: price push, shipments and labels, invoices.
+- Not yet: shipments and labels, invoices.
 
 ## Architecture
 

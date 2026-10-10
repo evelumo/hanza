@@ -3,12 +3,13 @@ import { allegroAuth } from './auth'
 import { pullOffers } from './capabilities/offers-pull'
 import { pullOrders } from './capabilities/orders-pull'
 import { updateOrderStatus } from './capabilities/orders-update-status'
+import { pushPrices } from './capabilities/price-push'
 import { pushStock } from './capabilities/stock-push'
 import { allegroAppConfigSchema, allegroConfigSchema, allegroCredentialsSchema } from './settings'
 
 /**
- * The Allegro marketplace: Offers and Orders in, Stock and the Order phase out. Signs in through the device flow with
- * the operator's registered application (installation settings `HANZA_CONNECTOR_ALLEGRO_*`).
+ * The Allegro marketplace: Offers and Orders in, Stock, prices and the Order phase out. Signs in through the device
+ * flow with the operator's registered application (installation settings `HANZA_CONNECTOR_ALLEGRO_*`).
  */
 export const allegroConnector = defineConnector({
   id: 'allegro',
@@ -28,6 +29,7 @@ export const allegroConnector = defineConnector({
     'offers.pull': pullOffers,
     'orders.pull': pullOrders,
     'stock.push': pushStock,
+    'price.push': pushPrices,
     'orders.updateStatus': updateOrderStatus,
   },
 })

@@ -10,7 +10,7 @@ import {
   runConformance,
   UNAUTHORIZED_CASSETTE,
 } from '@hanza/connector-sdk/testing'
-import { beforeAll, describe, expect, it } from 'vitest'
+import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import type { AllegroContext } from './client'
 import { allegroConnector } from './connector'
 import { decodeCursor, encodeCursor } from './cursor'
@@ -30,6 +30,7 @@ const { capabilities } = allegroConnector
 const pullOffers = capabilities['offers.pull']!
 const pullOrders = capabilities['orders.pull']!
 const pushStock = capabilities['stock.push']!
+const pushPrices = capabilities['price.push']!
 const updateStatus = capabilities['orders.updateStatus']!
 
 const recording = isRecording()
@@ -54,6 +55,14 @@ const forms = {
 }
 // The first BOUGHT of the seller's journal; the purchases happened 2026-10-10T20:24–20:26Z.
 const FIRST_EVENT = '1791663869066571'
+// The seller's Offers and their buy-now prices as set up (the listing writes them as doubles: `19.9`, `24.0`).
+const PRICES: Record<string, string> = {
+  '7782361660': '19.90',
+  '7782361659': '19.90',
+  '7782361658': '24.00',
+  '7782361657': '34.50',
+  '7782361656': '39.99',
+}
 
 interface RecordingAccount {
   app: AllegroApp
@@ -96,6 +105,20 @@ function tokenPersistingFetch(account: unknown): typeof fetch {
     }
     return response
   }
+}
+
+/**
+ * Recording only, sent outside any cassette: sets the Offers' prices back to `PRICES` (C13 pushes 19.99 and then 25 to
+ * the first three, `sandbox-price-push` 21.50 to one), so the next run lists what `sandbox-offers-pull` expects. The
+ * listing shows a new price some seconds after the edit answered (seen on the sandbox), hence the wait.
+ */
+async function restorePrices(): Promise<void> {
+  if (!recording) return
+  const real = await loadRecordingAccount()
+  const ctx: AllegroContext = { app: real.app, config: {}, credentials: real.credentials, fetch: tokenPersistingFetch(real.account), log: () => {} }
+  const prices = Object.entries(PRICES).map(([offerExternalId, amount]) => ({ offerExternalId, sku: null, price: { amount, currency: 'PLN' } }))
+  expect(await pushPrices(ctx, prices)).toEqual(prices.map(({ offerExternalId }) => ({ offerExternalId, outcome: 'ok' })))
+  await waitForAllegro(10_000)
 }
 
 /** Allegro applies the publication side of an Offer edit seconds after it answers; a replay needs no wait. */
@@ -174,7 +197,8 @@ describe('allegro connector against sandbox recordings', () => {
         expiredCursor,
         scrub: allegroScrub,
         // C9 pushes 0 then 5 to the first three Offers (ending and reopening them), C10 sets every phase on the first
-        // Order, C15 rotates the seller's tokens (persisted by the fetch), C16 starts a device sign-in nobody approves.
+        // Order, C13 pushes 19.99 and then 25 to the first three Offers' prices, C15 rotates the seller's tokens
+        // (persisted by the fetch), C16 starts a device sign-in nobody approves.
         recording: async () => {
           const real = await loadRecordingAccount()
           return {
@@ -249,6 +273,9 @@ describe('orders.updateStatus on the sandbox', () => {
 })
 
 describe('offers.pull on the sandbox', () => {
+  // C13 changed the first three Offers' prices.
+  beforeAll(restorePrices, timeout)
+
   it(
     "lists the seller's five Offers newest first, looking up why only a sold-out-looking one ended",
     async () => {
@@ -328,6 +355,10 @@ describe('orders.pull on the sandbox', () => {
     }
   }
 
+  // Other runs place purchases on the same account: only the three known forms are asserted on, and an Order placed
+  // between the two pulls may reach the journal.
+  const known = (items: Array<Order | OrderUpdate>) => items.filter((item) => Object.values(forms).includes(item.externalId))
+
   it(
     'starts from null: the journal position, the three open Orders, then an empty journal',
     async () => {
@@ -349,9 +380,10 @@ describe('orders.pull on the sandbox', () => {
       expect(Date.parse(cursor.boughtBefore)).toBeGreaterThan(Date.parse('2026-10-10T20:26:00.000Z'))
       expect(scenario.sent[2]!.query).toEqual({ from: [cursor.eventId], limit: ['100'] })
 
-      expect(ids(first.items).sort()).toEqual(Object.values(forms).sort())
-      for (const order of fullOrders(first.items)) expectFullOrder(order)
-      expect(second).toEqual({ items: [], nextCursor: first.nextCursor, hasMore: false })
+      expect(ids(known(first.items)).sort()).toEqual(Object.values(forms).sort())
+      for (const order of fullOrders(known(first.items))) expectFullOrder(order)
+      expect(known(second.items)).toEqual([])
+      if (second.items.length === 0) expect(second).toEqual({ items: [], nextCursor: first.nextCursor, hasMore: false })
     },
     timeout,
   )
@@ -366,20 +398,19 @@ describe('orders.pull on the sandbox', () => {
 
       expect(scenario.sent[0]).toMatchObject({ method: 'GET', path: '/order/events', query: { from: [FIRST_EVENT], limit: ['100'] } })
       // `from` is exclusive: the first BOUGHT is not on the page, its form comes back through its later events.
-      expect(ids(after.items)).toEqual(
-        expect.arrayContaining([forms.paidMugs, `update:${forms.paidMugs}`, forms.unpaidMug, forms.paidPlate, `update:${forms.paidPlate}`]),
+      expect(ids(known(after.items)).sort()).toEqual(
+        [forms.paidMugs, `update:${forms.paidMugs}`, forms.unpaidMug, forms.paidPlate, `update:${forms.paidPlate}`].sort(),
       )
-      expect(ids(after.items)).toHaveLength(5)
       expect(ids(after.items).indexOf(`update:${forms.paidMugs}`)).toBe(ids(after.items).indexOf(forms.paidMugs) + 1)
       expect(ids(after.items).indexOf(`update:${forms.paidPlate}`)).toBe(ids(after.items).indexOf(forms.paidPlate) + 1)
-      for (const order of fullOrders(after.items)) expectFullOrder(order)
-      for (const update of after.items.filter(isOrderUpdate)) {
+      for (const order of fullOrders(known(after.items))) expectFullOrder(order)
+      for (const update of known(after.items).filter(isOrderUpdate)) {
         expect(factTypes(update)).toContain('paid')
         expect(update.shippingAddress).toMatchObject({ countryCode: 'PL' })
       }
 
-      expect(ids(before.items).sort()).toEqual(Object.values(forms).map((id) => `update:${id}`).sort())
-      for (const update of before.items.filter(isOrderUpdate)) {
+      expect(ids(known(before.items)).sort()).toEqual(Object.values(forms).map((id) => `update:${id}`).sort())
+      for (const update of known(before.items).filter(isOrderUpdate)) {
         if (update.externalId === forms.unpaidMug) expect(factTypes(update)).not.toContain('paid')
         else expect(update.facts).toContainEqual(expect.objectContaining({ id: `${update.externalId}:paid`, type: 'paid' }))
       }
@@ -424,6 +455,44 @@ describe('stock.push on the sandbox', () => {
         '1234567890 {"stock":{"available":1}}',
         '7782361660 {"stock":{"available":5}}',
       ])
+    },
+    timeout,
+  )
+})
+
+describe('price.push on the sandbox', () => {
+  // Back to 19.90 for the next run's `sandbox-offers-pull`.
+  afterAll(restorePrices, timeout)
+
+  it(
+    'sets a price as sent, and rejects a currency the marketplace does not use and an unknown Offer',
+    async () => {
+      const scenario = await openScenario('sandbox-price-push')
+      const set = await pushPrices(scenario.ctx, [
+        { offerExternalId: '7782361659', sku: 'HANZA-MUG-WHITE', price: { amount: '21.50', currency: 'PLN' } },
+        { offerExternalId: '1234567890', sku: null, price: { amount: '21.50', currency: 'PLN' } },
+      ])
+      // A call of its own: two edits of one Offer in flight at once could meet each other.
+      const euro = await pushPrices(scenario.ctx, [{ offerExternalId: '7782361659', sku: 'HANZA-MUG-WHITE', price: { amount: '21.50', currency: 'EUR' } }])
+      // The listing shows a new price some seconds after the edit answered.
+      await waitForAllegro(10_000)
+      const listed = await pullOffers(scenario.ctx, null)
+      await scenario.close()
+
+      expect(set).toEqual([
+        { offerExternalId: '7782361659', outcome: 'ok' },
+        { offerExternalId: '1234567890', outcome: 'rejected', code: 'OFFER_NOT_FOUND' },
+      ])
+      // Allegro's code is `IncorrectBaseCurrency` (2026-10-10); only its shape is held here.
+      expect(euro).toEqual([{ offerExternalId: '7782361659', outcome: 'rejected', code: expect.stringMatching(/^[A-Za-z0-9_.:-]{1,100}$/) }])
+      const patches = scenario.sent.filter(({ method }) => method === 'PATCH').map(({ path, body }) => `${path.split('/').at(-1)} ${JSON.stringify(body)}`)
+      expect(patches.slice(0, 2).sort()).toEqual([
+        '1234567890 {"sellingMode":{"price":{"amount":"21.50","currency":"PLN"}}}',
+        '7782361659 {"sellingMode":{"price":{"amount":"21.50","currency":"PLN"}}}',
+      ])
+      expect(patches[2]).toBe('7782361659 {"sellingMode":{"price":{"amount":"21.50","currency":"EUR"}}}')
+      // The EUR edit changed nothing; the listing writes the new price as a double.
+      expect(listed.items.find(({ externalId }) => externalId === '7782361659')?.price).toEqual({ amount: '21.5', currency: 'PLN' })
     },
     timeout,
   )

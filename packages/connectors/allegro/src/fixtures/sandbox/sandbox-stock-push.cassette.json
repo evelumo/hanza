@@ -21,7 +21,7 @@
         "status": 200,
         "headers": {
           "content-type": "application/vnd.allegro.public.v1+json; charset=UTF-8",
-          "date": "Sat, 10 Oct 2026 20:58:01 GMT"
+          "date": "Sat, 10 Oct 2026 21:49:07 GMT"
         },
         "body": {
           "json": {
@@ -264,9 +264,9 @@
             "id": "7782361659",
             "language": "pl-PL",
             "publication": {
-              "status": "ENDED",
+              "status": "ACTIVE",
               "duration": null,
-              "endedBy": "EMPTY_STOCK",
+              "endedBy": null,
               "endingAt": null,
               "startingAt": null,
               "republish": false,
@@ -287,7 +287,7 @@
               "validatedAt": "2026-10-10T20:22:39.827Z"
             },
             "createdAt": "2026-10-10T20:22:39.000Z",
-            "updatedAt": "2026-10-10T20:54:41.533Z"
+            "updatedAt": "2026-10-10T21:48:52.057Z"
           }
         }
       }
@@ -312,7 +312,7 @@
         "status": 200,
         "headers": {
           "content-type": "application/vnd.allegro.public.v1+json; charset=UTF-8",
-          "date": "Sat, 10 Oct 2026 20:58:10 GMT"
+          "date": "Sat, 10 Oct 2026 21:49:15 GMT"
         },
         "body": {
           "json": {
@@ -578,7 +578,7 @@
               "validatedAt": "2026-10-10T20:22:39.827Z"
             },
             "createdAt": "2026-10-10T20:22:39.000Z",
-            "updatedAt": "2026-10-10T20:54:41.533Z"
+            "updatedAt": "2026-10-10T21:49:07.713Z"
           }
         }
       }
@@ -603,7 +603,7 @@
         "status": 200,
         "headers": {
           "content-type": "application/vnd.allegro.public.v1+json; charset=UTF-8",
-          "date": "Sat, 10 Oct 2026 20:58:10 GMT"
+          "date": "Sat, 10 Oct 2026 21:49:15 GMT"
         },
         "body": {
           "json": {
@@ -886,7 +886,7 @@
         "status": 404,
         "headers": {
           "content-type": "application/json; charset=UTF-8",
-          "date": "Sat, 10 Oct 2026 20:58:10 GMT"
+          "date": "Sat, 10 Oct 2026 21:49:15 GMT"
         },
         "body": {
           "json": {
@@ -926,8 +926,8 @@
         "status": 202,
         "headers": {
           "content-type": "application/vnd.allegro.public.v1+json; charset=UTF-8",
-          "date": "Sat, 10 Oct 2026 20:58:10 GMT",
-          "location": "https://api.allegro.pl.allegrosandbox.pl/sale/product-offers/7782361659/operations/db59ee15-cf16-42b9-a751-cc4f7978ac5a",
+          "date": "Sat, 10 Oct 2026 21:49:16 GMT",
+          "location": "https://api.allegro.pl.allegrosandbox.pl/sale/product-offers/7782361659/operations/f8a8ecfe-e5d7-4862-8e0b-a36004044d1b",
           "retry-after": "120"
         },
         "body": {
@@ -1197,7 +1197,7 @@
               "validatedAt": "2026-10-10T20:22:39.827Z"
             },
             "createdAt": "2026-10-10T20:22:39.000Z",
-            "updatedAt": "2026-10-10T20:54:41.533Z"
+            "updatedAt": "2026-10-10T21:49:07.713Z"
           }
         }
       }

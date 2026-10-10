@@ -17,7 +17,7 @@
         "status": 200,
         "headers": {
           "content-type": "application/json;charset=UTF-8",
-          "date": "Sat, 10 Oct 2026 20:57:59 GMT"
+          "date": "Sat, 10 Oct 2026 21:48:44 GMT"
         },
         "body": {
           "json": {
@@ -27,7 +27,7 @@
             "iss": "https://allegro.pl.allegrosandbox.pl",
             "token_type": "bearer",
             "expires_in": 43198,
-            "jti": "1c67b5b2-92de-452f-ab04-2b8d88c16e3a"
+            "jti": "f2be0076-7d7a-460f-b20b-607b94a2fd8a"
           }
         }
       }

@@ -44,6 +44,7 @@ const { capabilities } = allegroConnector
 const pullOffers = capabilities['offers.pull']!
 const pullOrders = capabilities['orders.pull']!
 const pushStock = capabilities['stock.push']!
+const pushPrices = capabilities['price.push']!
 const updateStatus = capabilities['orders.updateStatus']!
 
 // What the replay sends in place of the recorded secrets; scrubbed before matching, like the recorded ones were.
@@ -701,6 +702,59 @@ describe('stock.push', () => {
     const error = await rejection(pushStock(ctx, levels.slice(0, 3)))
     expect(error).toBeInstanceOf(PermanentError)
     expect((error as Error).message).toContain('403')
+  })
+})
+
+describe('price.push', () => {
+  const prices = [
+    { offerExternalId: '7834566001', sku: 'MUG-350-WHT', price: { amount: '42', currency: 'PLN' } },
+    { offerExternalId: '7834566004', sku: 'CUP-090-BLK', price: { amount: '12.50', currency: 'PLN' } },
+    { offerExternalId: '7834566005', sku: 'BOWL-240-GRY', price: { amount: '59.90', currency: 'EUR' } },
+    { offerExternalId: '7834566006', sku: null, price: { amount: '0.50', currency: 'PLN' } },
+    { offerExternalId: '7834566008', sku: null, price: { amount: '18.00', currency: 'PLN' } },
+    { offerExternalId: '7834566007', sku: 'MUG-350-WHT', price: { amount: '9.99', currency: 'PLN' } },
+    { offerExternalId: '7834569999', sku: null, price: { amount: '9.99', currency: 'PLN' } },
+  ]
+
+  it('sets each price as sent, and reports refusals per Offer', async () => {
+    const scenario = await openScenario('price-push', (api) => {
+      // Accepted for processing: a 202 showing the Offer as it was.
+      api.acceptLater('7834566004')
+      api.rejectOffer('7834566008', 'OfferPriceChangeLocked')
+      api.forbidOffer('7834566007')
+    })
+    const results = await pushPrices(scenario.ctx, prices)
+    const listed = await pullOffers(scenario.ctx, null)
+    // An earlier edit still being processed: a 409 fails the whole push, to be retried.
+    scenario.script((api) => api.conflictOffer('7834566001'))
+    const conflict = await rejection(pushPrices(scenario.ctx, prices.slice(0, 1)))
+    // Every Offer of the call refused with 403: a missing scope, not one Offer.
+    const forbidden = await rejection(pushPrices(scenario.ctx, prices.filter(({ offerExternalId }) => offerExternalId === '7834566007')))
+    const sentBefore = scenario.sent.length
+    expect(await pushPrices(scenario.ctx, [])).toEqual([])
+    expect(scenario.sent).toHaveLength(sentBefore)
+    await scenario.close()
+
+    expect(results).toEqual([
+      { offerExternalId: '7834566001', outcome: 'ok' },
+      // An ended Offer takes a price too (seen on the sandbox); a 202 is accepted whatever it shows.
+      { offerExternalId: '7834566004', outcome: 'ok' },
+      // Allegro's codes, as the sandbox gave them for EUR on an allegro.pl Offer and for a price below 1.00 PLN.
+      { offerExternalId: '7834566005', outcome: 'rejected', code: 'IncorrectBaseCurrency' },
+      { offerExternalId: '7834566006', outcome: 'rejected', code: 'PriceBelowMin' },
+      { offerExternalId: '7834566008', outcome: 'rejected', code: 'OfferPriceChangeLocked' },
+      { offerExternalId: '7834566007', outcome: 'rejected', code: 'FORBIDDEN' },
+      { offerExternalId: '7834569999', outcome: 'rejected', code: 'OFFER_NOT_FOUND' },
+    ])
+    const patches = scenario.sent.filter(({ method }) => method === 'PATCH')
+    expect(patches.slice(0, prices.length).map(({ path, body }) => `${path.split('/').at(-1)} ${JSON.stringify(body)}`).sort()).toEqual(
+      prices.map(({ offerExternalId, price }) => `${offerExternalId} ${JSON.stringify({ sellingMode: { price } })}`).sort(),
+    )
+    // The listing writes the price Allegro now has as a double.
+    expect(listed.items.find(({ externalId }) => externalId === '7834566001')?.price).toEqual({ amount: '42.0', currency: 'PLN' })
+    expect(conflict).toBeInstanceOf(TransientError)
+    expect(forbidden).toBeInstanceOf(PermanentError)
+    expect((forbidden as Error).message).toContain('403')
   })
 })
 

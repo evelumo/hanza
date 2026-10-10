@@ -21,6 +21,11 @@ const PESEL_LIKE = '44051401359'
 /** The data clock: every time the simulation writes (an edit, a new event) unless a test sets its own. */
 export const FAKE_ALLEGRO_NOW = '2026-10-10T12:00:00.000Z'
 
+// A buy-now price: at most two decimals (`19.999` answers 422 `VALIDATION_ERROR` on the sandbox).
+const PRICE_AMOUNT = /^\d{1,15}(\.\d{1,2})?$/
+// The lowest price the sandbox took on allegro.pl ("Price must be equal to or higher than 1.00 PLN").
+const MIN_PRICE = 1
+
 // The statuses a seller may set (`RETURNED` is Allegro's own).
 const SELLER_FULFILLMENT_STATUSES = ['NEW', 'PROCESSING', 'READY_FOR_SHIPMENT', 'READY_FOR_PICKUP', 'SENT', 'PICKED_UP', 'CANCELLED', 'SUSPENDED']
 
@@ -29,6 +34,11 @@ export interface FakeAllegroOffer {
   listing: ListingOfferPayload
   /** `publication.endedBy`, which only `GET /sale/product-offers/{id}` shows. */
   endedBy: string | null
+  /**
+   * The price as the product-offer resource shows it once one was set: with two decimals (`25` → `25.00`), while the
+   * listing writes it as a double (`19.9`, `25.0`), both seen on the sandbox. Unset: the listing's.
+   */
+  price?: { amount: string; currency: string }
 }
 
 export interface FakeAllegroEvent {
@@ -96,7 +106,7 @@ export interface FakeAllegroApi {
   setForm(form: CheckoutFormPayload): void
   /** The form is gone (merged into another): `GET` answers 404. */
   removeForm(id: string): void
-  /** Every later `PATCH` of the Offer answers 422 with this error code. */
+  /** Every later `PATCH` of the Offer (stock, publication or price) answers 422 with this error code. */
   rejectOffer(offerId: string, code: string): void
   /**
    * The next `times` `PATCH`es of the Offer answer 409 (an earlier edit still being processed). Documented, never seen
@@ -271,7 +281,7 @@ export function createFakeAllegroApi(options: FakeAllegroApiOptions = {}): FakeA
     language: 'pl-PL',
     category: { id: '257929' },
     external: offer.listing.external ?? null,
-    sellingMode: offer.listing.sellingMode ?? null,
+    sellingMode: offer.listing.sellingMode ? { ...offer.listing.sellingMode, ...(offer.price ? { price: offer.price } : {}) } : null,
     stock: { available: offer.listing.stock?.available ?? 0, unit: 'UNIT' },
     publication: { status: offer.listing.publication?.status ?? 'INACTIVE', endedBy: offer.endedBy, republish: false },
   })
@@ -361,7 +371,11 @@ export function createFakeAllegroApi(options: FakeAllegroApiOptions = {}): FakeA
     }
     const code = rejections.get(offerId)
     if (code !== undefined) return errors(422, code, 'The offer cannot be edited')
-    const body = (await request.json().catch(() => null)) as { stock?: { available?: unknown }; publication?: { status?: unknown } } | null
+    const body = (await request.json().catch(() => null)) as {
+      stock?: { available?: unknown }
+      publication?: { status?: unknown }
+      sellingMode?: { price?: { amount?: unknown; currency?: unknown } }
+    } | null
     if (body === null || typeof body !== 'object') return errors(400, 'INVALID_BODY', 'The request body is not valid JSON')
 
     const listing = offer.listing
@@ -370,6 +384,26 @@ export function createFakeAllegroApi(options: FakeAllegroApiOptions = {}): FakeA
       listing.publication = { ...(listing.publication ?? {}), status: next }
     }
     const before = productOfferBody(offer)
+    if (body.sellingMode !== undefined) {
+      const price = body.sellingMode?.price
+      const amount = price?.amount
+      if (typeof amount !== 'string' || !PRICE_AMOUNT.test(amount)) {
+        return errors(422, 'VALIDATION_ERROR', 'Enter a valid price', 'sellingMode.price.amount')
+      }
+      // The sandbox's answer to EUR on an allegro.pl Offer: a currency the Offer's marketplace does not use.
+      const currency = listing.sellingMode?.price?.currency ?? 'PLN'
+      if (price?.currency !== currency) {
+        return errors(422, 'IncorrectBaseCurrency', 'Currency is incorrect for the specified market.', 'prices[0].price.currency')
+      }
+      if (Number(amount) < MIN_PRICE) {
+        return errors(422, 'PriceBelowMin', `Price must be equal to or higher than 1.00 ${currency}.`, 'prices[0].price.amount')
+      }
+      const [units, fraction = ''] = amount.split('.')
+      offer.price = { amount: `${units}.${fraction.padEnd(2, '0')}`, currency }
+      // Java's `Double.toString`, as the listing writes prices: `19.90` → `19.9`, `25` → `25.0`.
+      const listed = String(Number(amount))
+      listing.sellingMode = { ...(listing.sellingMode ?? {}), price: { amount: listed.includes('.') ? listed : `${listed}.0`, currency } }
+    }
     let ending = false
     let reopening = false
     if (body.stock !== undefined) {

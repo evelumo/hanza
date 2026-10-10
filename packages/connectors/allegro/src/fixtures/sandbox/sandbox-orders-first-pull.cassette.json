@@ -14,13 +14,13 @@
         "status": 200,
         "headers": {
           "content-type": "application/vnd.allegro.public.v1+json",
-          "date": "Sat, 10 Oct 2026 20:59:07 GMT"
+          "date": "Sat, 10 Oct 2026 21:49:06 GMT"
         },
         "body": {
           "json": {
             "latestEvent": {
-              "id": "1791665893666644",
-              "occurredAt": "2026-10-10T20:58:00.298Z"
+              "id": "1791668937688157",
+              "occurredAt": "2026-10-10T21:48:45.183Z"
             }
           }
         }
@@ -29,7 +29,7 @@
     {
       "request": {
         "method": "GET",
-        "url": "https://api.allegro.pl.allegrosandbox.pl/order/checkout-forms?limit=100&sort=lineItems.boughtAt&lineItems.boughtAt.lte=2026-10-10T20%3A59%3A07.000Z&lineItems.boughtAt.gte=2026-09-10T20%3A59%3A07.000Z",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/order/checkout-forms?limit=100&sort=lineItems.boughtAt&lineItems.boughtAt.lte=2026-10-10T21%3A49%3A06.000Z&lineItems.boughtAt.gte=2026-09-10T21%3A49%3A06.000Z",
         "headers": {
           "accept": "application/vnd.allegro.public.v1+json"
         },
@@ -39,7 +39,7 @@
         "status": 200,
         "headers": {
           "content-type": "application/vnd.allegro.public.v1+json",
-          "date": "Sat, 10 Oct 2026 20:59:07 GMT"
+          "date": "Sat, 10 Oct 2026 21:49:06 GMT"
         },
         "body": {
           "json": {
@@ -440,7 +440,7 @@
     {
       "request": {
         "method": "GET",
-        "url": "https://api.allegro.pl.allegrosandbox.pl/order/events?from=1791665893666644&limit=100",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/order/events?from=1791668937688157&limit=100",
         "headers": {
           "accept": "application/vnd.allegro.public.v1+json"
         },
@@ -450,7 +450,7 @@
         "status": 200,
         "headers": {
           "content-type": "application/vnd.allegro.public.v1+json",
-          "date": "Sat, 10 Oct 2026 20:59:07 GMT"
+          "date": "Sat, 10 Oct 2026 21:49:06 GMT"
         },
         "body": {
           "json": {
