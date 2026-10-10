@@ -3,7 +3,7 @@ import type { Context } from '../context'
 import { DomainError } from '../errors'
 import { appendEvent } from '../events'
 import { TX_OPTIONS } from '../transaction'
-import { lockStock } from './locks'
+import { lockStockForWrite } from './locks'
 import { markOffersForStockPush, requestStockPushAfterCommit } from './push'
 import { ensureDefaultWarehouse } from './warehouse'
 
@@ -26,8 +26,10 @@ export async function setStock(
   const connectionIds = await ctx.db.$transaction(async (tx) => {
     const product = await tx.product.findFirst({ where: { id: productId, organizationId }, select: { id: true } })
     if (!product) throw new DomainError('not_found')
-    // The Warehouse is checked under its share lock, so it cannot be deactivated before this commits.
-    const warehouse = (await lockStock(tx, organizationId, [productId])).find((locked) => locked.id === targetId)
+    // The Warehouse is checked under its share lock, so it cannot be deactivated before this commits. The lock
+    // keeps the Stock rows it creates: from here on the Product has Stock, 0 where nothing was saved.
+    const { warehouses, unset: unsetBefore } = await lockStockForWrite(tx, organizationId, [productId])
+    const warehouse = warehouses.find((locked) => locked.id === targetId)
     if (!warehouse) throw new DomainError('not_found')
     if (!warehouse.active) throw new DomainError('warehouse_inactive')
 
@@ -36,14 +38,16 @@ export async function setStock(
       select: { id: true, units: true },
     })
     if (!row) throw new Error(`Stock row missing for product ${productId} in warehouse ${targetId}`)
-    if (row.units === units) return []
+    // Saving 0 over unset Stock is a change: the Channels are told 0 from now on (#137).
+    const unset = unsetBefore.has(productId)
+    if (row.units === units && !unset) return []
 
     await tx.stock.updateMany({ where: { id: row.id, organizationId }, data: { units } })
     await appendEvent(tx, {
       organizationId,
       type: 'stock.set',
       subject: { type: 'product', id: productId },
-      payload: { warehouseId: targetId, from: row.units, to: units, actor },
+      payload: { warehouseId: targetId, from: unset ? null : row.units, to: units, actor },
     })
     return markOffersForStockPush(tx, organizationId, [productId])
   }, TX_OPTIONS)

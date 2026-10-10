@@ -18,11 +18,38 @@ const lockedInTx = new WeakMap<Tx, LockedWarehouse[]>()
  * Pass every Product of the transaction to the first call; a later call must name a subset. The
  * Warehouses are read on the first call only, so a Warehouse created while the transaction runs is
  * never locked after a Stock row (that is what keeps a later call from waiting on a newer writer).
+ *
+ * A Product with no Stock row at all has unset Stock (#137), and a Reservation must not set it: the rows
+ * created for such a Product are deleted again right after they are locked. The transaction still holds
+ * them, so every other writer of the Product, whose insert of the same rows waits for this transaction,
+ * stays serialised behind it; they are gone once it commits. Only `lockStockForWrite` keeps them.
  */
 export async function lockStock(tx: Tx, organizationId: string, productIds: string[]): Promise<LockedWarehouse[]> {
+  return (await lock(tx, organizationId, productIds, false)).warehouses
+}
+
+/**
+ * `lockStock` for a writer of Stock units (setting Stock): the rows it creates stay, so from then on
+ * every one of these Products has Stock (0 where nothing was saved). Also returns the Products whose
+ * Stock was unset until this call.
+ */
+export async function lockStockForWrite(
+  tx: Tx,
+  organizationId: string,
+  productIds: string[],
+): Promise<{ warehouses: LockedWarehouse[]; unset: Set<string> }> {
+  return lock(tx, organizationId, productIds, true)
+}
+
+async function lock(
+  tx: Tx,
+  organizationId: string,
+  productIds: string[],
+  keepCreatedRows: boolean,
+): Promise<{ warehouses: LockedWarehouse[]; unset: Set<string> }> {
   assertTransaction(tx)
   const ids = [...new Set(productIds)].sort()
-  if (ids.length === 0) return lockedInTx.get(tx) ?? []
+  if (ids.length === 0) return { warehouses: lockedInTx.get(tx) ?? [], unset: new Set() }
 
   let warehouses = lockedInTx.get(tx)
   if (!warehouses) {
@@ -35,21 +62,37 @@ export async function lockStock(tx: Tx, organizationId: string, productIds: stri
   }
   const warehouseIds = warehouses.map((warehouse) => warehouse.id)
 
-  await tx.$executeRaw`
+  const created = await tx.$queryRaw<Array<{ id: string; productId: string }>>`
     INSERT INTO "stock" ("id", "organizationId", "productId", "warehouseId", "units", "updatedAt")
     SELECT gen_random_uuid()::text, p."organizationId", p."id", w."id", 0, now()
     FROM "product" p
     JOIN "warehouse" w ON w."organizationId" = p."organizationId" AND w."id" = ANY(${warehouseIds}::text[])
     WHERE p."organizationId" = ${organizationId} AND p."id" = ANY(${ids}::text[])
     ORDER BY p."id", w."id"
-    ON CONFLICT ("productId", "warehouseId") DO NOTHING`
+    ON CONFLICT ("productId", "warehouseId") DO NOTHING
+    RETURNING "id", "productId"`
 
   await tx.$queryRaw`
     SELECT "id" FROM "stock"
     WHERE "organizationId" = ${organizationId} AND "productId" = ANY(${ids}::text[]) AND "warehouseId" = ANY(${warehouseIds}::text[])
     ORDER BY "productId", "warehouseId"
     FOR UPDATE`
-  return warehouses
+
+  const unset = new Set<string>()
+  if (created.length === 0) return { warehouses, unset }
+  // Read under the locks: a Product whose only rows are the ones just created had none before.
+  const createdIds = created.map((row) => row.id)
+  const createdFor = [...new Set(created.map((row) => row.productId))]
+  const set = await tx.$queryRaw<Array<{ productId: string }>>`
+    SELECT DISTINCT "productId" FROM "stock"
+    WHERE "organizationId" = ${organizationId} AND "productId" = ANY(${createdFor}::text[]) AND NOT ("id" = ANY(${createdIds}::text[]))`
+  const hasRows = new Set(set.map((row) => row.productId))
+  for (const productId of createdFor) if (!hasRows.has(productId)) unset.add(productId)
+  if (!keepCreatedRows && unset.size > 0) {
+    const placeholders = created.filter((row) => unset.has(row.productId)).map((row) => row.id)
+    await tx.$executeRaw`DELETE FROM "stock" WHERE "organizationId" = ${organizationId} AND "id" = ANY(${placeholders}::text[])`
+  }
+  return { warehouses, unset }
 }
 
 /**

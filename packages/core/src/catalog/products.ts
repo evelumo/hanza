@@ -7,7 +7,7 @@ import { rematchAfterCommit } from '../orders/rematch'
 import { describeOfferPrice, offerPriceColumns, type OfferPriceView } from '../prices/offer-price'
 import { moneyFromColumns } from '../prices/price'
 import { requestPricePushAfterCommit } from '../prices/push'
-import { getAvailability, getWarehouseAvailability, type Availability } from '../stock/availability'
+import { getAvailability, getWarehouseAvailability, productsWithStock, type Availability } from '../stock/availability'
 import { requestStockPushAfterCommit } from '../stock/push'
 import { DEFAULT_WAREHOUSE_CODE, ensureDefaultWarehouse } from '../stock/warehouse'
 import { TX_OPTIONS } from '../transaction'
@@ -38,6 +38,8 @@ export interface ProductRow {
 
 export interface ProductDetail extends ProductRow {
   basePrice: Money | null
+  /** False while the Product has unset Stock: no Stock row in any Warehouse, nothing pushed to its Offers (#137). */
+  stockSet: boolean
   offers: Array<
     {
       id: string
@@ -97,7 +99,7 @@ export async function createProduct(
       subject: { type: 'product', id: product.id },
       payload: { sku, origin: 'manual', actor },
     })
-    const linked = await autoLinkOffersBySku(tx, organizationId, { id: product.id, sku }, actor)
+    const linked = await autoLinkOffersBySku(tx, organizationId, { id: product.id, sku }, actor, { stockSet: true })
     return { productId: product.id, connectionIds: linked.connectionIds }
   }, TX_OPTIONS)
 
@@ -213,8 +215,9 @@ export async function getProduct(ctx: Context, organizationId: string, productId
     orderBy: [{ priority: 'asc' }, { id: 'asc' }],
     select: { id: true, name: true, code: true },
   })
-  const [availability, byWarehouse, reservations] = await Promise.all([
+  const [availability, withStock, byWarehouse, reservations] = await Promise.all([
     getAvailability(ctx.db, organizationId, [product.id]),
+    productsWithStock(ctx.db, organizationId, [product.id]),
     getWarehouseAvailability(ctx.db, organizationId, product.id, warehouses.map((warehouse) => warehouse.id)),
     ctx.db.reservation.findMany({
       where: { organizationId, productId: product.id, status: 'open' },
@@ -227,6 +230,7 @@ export async function getProduct(ctx: Context, organizationId: string, productId
       },
     }),
   ])
+  const stockSet = withStock.has(product.id)
   return {
     id: product.id,
     sku: product.sku,
@@ -235,6 +239,7 @@ export async function getProduct(ctx: Context, organizationId: string, productId
     linkedOffers: product.offers.length,
     family: familyRef(product.family, product.attributeValues),
     basePrice,
+    stockSet,
     offers: product.offers.map((offer) => ({
       id: offer.id,
       connectionId: offer.connectionId,
@@ -243,7 +248,7 @@ export async function getProduct(ctx: Context, organizationId: string, productId
       name: offer.name,
       // A linked Offer always records how it was linked.
       linkedBy: offer.linkedBy ?? 'manual',
-      ...describeOfferStock(offer),
+      ...describeOfferStock(offer, stockSet),
       ...describeOfferPrice(ctx, { ...offer, connectorId: offer.connection.connectorId }, { basePrice }),
     })),
     warehouses: warehouses.map((warehouse) => ({
@@ -263,9 +268,13 @@ export async function getProduct(ctx: Context, organizationId: string, productId
 }
 
 /**
- * One Product per Offer (its SKU and name, Stock 0, no base price), the Offer linked by SKU. One transaction for all.
+ * One Product per Offer (its SKU and name, no base price), the Offer linked by SKU. One transaction for all.
  * The Channel price is never copied into the base price: auto-linking would push one Channel's price to every other
  * Channel selling the SKU without anyone having set it (ADR 0011).
+ *
+ * The Products get no Stock row: their Stock is unset until someone saves it, so the linked Offers are not marked
+ * for a stock push and no push is requested. Telling the Channels 0 for goods Hanza never counted would end every
+ * such Offer on most marketplaces (#137). Saving the Stock marks them.
  */
 export async function createProductsFromOffers(
   ctx: Context,
@@ -273,7 +282,6 @@ export async function createProductsFromOffers(
   offerIds: string[],
   actor: Actor,
 ): Promise<{ created: string[]; skipped: Array<{ offerId: string; reason: CreateProductsSkipReason }> }> {
-  const warehouseId = await ensureDefaultWarehouse(ctx.db, organizationId)
   const requested = [...new Set(offerIds)]
 
   const result = await ctx.db.$transaction(async (tx) => {
@@ -318,7 +326,6 @@ export async function createProductsFromOffers(
       select: { id: true, sku: true },
     })
     const productBySku = new Map(products.map((product) => [product.sku, product.id]))
-    await tx.stock.createMany({ data: products.map((product) => ({ organizationId, productId: product.id, warehouseId, units: 0 })) })
 
     const created: string[] = []
     const connectionIds = new Set<string>()
@@ -337,7 +344,7 @@ export async function createProductsFromOffers(
       })
       const linked = await tx.offer.updateManyAndReturn({
         where: { id: item.offerId, organizationId, productId: null },
-        data: { productId, linkedBy: 'sku', stockPushSeq: { increment: 1 }, pricePushSeq: { increment: 1 } },
+        data: { productId, linkedBy: 'sku', pricePushSeq: { increment: 1 } },
         select: { connectionId: true },
       })
       for (const offer of linked) {
@@ -349,13 +356,12 @@ export async function createProductsFromOffers(
           payload: { productId, linkedBy: 'sku', actor },
         })
       }
-      const others = await autoLinkOffersBySku(tx, organizationId, { id: productId, sku: item.sku }, actor)
+      const others = await autoLinkOffersBySku(tx, organizationId, { id: productId, sku: item.sku }, actor, { stockSet: false })
       for (const connectionId of others.connectionIds) connectionIds.add(connectionId)
     }
     return { created, skipped, connectionIds: [...connectionIds] }
   }, TX_OPTIONS)
 
-  await requestStockPushAfterCommit(ctx, organizationId, result.connectionIds)
   await requestPricePushAfterCommit(ctx, organizationId, result.connectionIds)
   if (result.created.length > 0) await rematchAfterCommit(ctx, organizationId, { productIds: result.created.join(',') })
   return { created: result.created, skipped: result.skipped }

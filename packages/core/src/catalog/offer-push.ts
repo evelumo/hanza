@@ -31,8 +31,16 @@ export type StockPushDecision = 'push' | 'skip' | 'reject'
  * Offer the Channel reports ended: 0 changes nothing there (skip), and a number above 0 is sent only to an Offer that
  * ended because it sold out, through a connector that reopens such Offers; any other ended Offer is rejected
  * without a call. Inactive and unknown Offers are pushed like active ones.
+ *
+ * `available` is null when the Offer's Product has unset Stock (no Stock row, #137): Hanza does not know the number
+ * yet, so the Offer is left out (skip) instead of being told 0, which would end it on most marketplaces.
  */
-export function decideStockPush(available: number, publication: OfferPublication | null, reopensSoldOutOffers: boolean): StockPushDecision {
+export function decideStockPush(
+  available: number | null,
+  publication: OfferPublication | null,
+  reopensSoldOutOffers: boolean,
+): StockPushDecision {
+  if (available === null) return 'skip'
   if (publication?.status !== 'ended') return 'push'
   if (available === 0) return 'skip'
   return publication.endedReason === 'sold_out' && reopensSoldOutOffers ? 'push' : 'reject'
@@ -107,8 +115,11 @@ export async function retryOfferPush(ctx: Context, organizationId: string, offer
   else await requestPricePushAfterCommit(ctx, organizationId, [connectionId])
 }
 
-/** What the panel shows about an Offer's stock on its Channel. `not_sent`: handled without a push (an ended Offer told 0). */
-export type StockPushStatus = 'not_linked' | 'pending' | 'rejected' | 'not_sent' | 'pushed'
+/**
+ * What the panel shows about an Offer's stock on its Channel. `unset`: its Product's Stock was never saved, so nothing
+ * is sent (#137). `not_sent`: handled without a push (an ended Offer told 0).
+ */
+export type StockPushStatus = 'not_linked' | 'unset' | 'pending' | 'rejected' | 'not_sent' | 'pushed'
 
 export interface OfferStockView {
   publication: OfferPublication | null
@@ -132,34 +143,44 @@ export const offerStockColumns = {
   stockRejectedAt: true,
 } as const
 
-export function describeOfferStock(offer: {
-  productId: string | null
-  channelStatus: OfferPublicationStatus | null
-  channelEndedReason: OfferEndedReason | null
-  lastPushedAvailable: number | null
-  lastPushedAt: Date | null
-  stockPushSeq: number
-  stockPushedSeq: number
-  stockRejectedCode: string | null
-  stockRejectedAt: Date | null
-}): OfferStockView {
+/**
+ * `stockSet`: whether the Offer's Product has Stock (`productsWithStock`). Unset Stock comes before every push state:
+ * whatever is waiting or was refused, nothing is sent until the Stock is saved.
+ */
+export function describeOfferStock(
+  offer: {
+    productId: string | null
+    channelStatus: OfferPublicationStatus | null
+    channelEndedReason: OfferEndedReason | null
+    lastPushedAvailable: number | null
+    lastPushedAt: Date | null
+    stockPushSeq: number
+    stockPushedSeq: number
+    stockRejectedCode: string | null
+    stockRejectedAt: Date | null
+  },
+  stockSet: boolean,
+): OfferStockView {
   const awaitingPush = offer.stockPushSeq > offer.stockPushedSeq
   const stockRejection = currentRejection(offer.stockRejectedCode, offer.stockRejectedAt, awaitingPush)
   const stockStatus: StockPushStatus =
     offer.productId === null
       ? 'not_linked'
-      : awaitingPush
-        ? 'pending'
-        : stockRejection
-          ? 'rejected'
-          : offer.lastPushedAt === null
-            ? 'not_sent'
-            : 'pushed'
+      : !stockSet
+        ? 'unset'
+        : awaitingPush
+          ? 'pending'
+          : stockRejection
+            ? 'rejected'
+            : offer.lastPushedAt === null
+              ? 'not_sent'
+              : 'pushed'
   return {
     publication: publicationFromColumns(offer.channelStatus, offer.channelEndedReason),
     lastPushedAvailable: offer.lastPushedAvailable,
     lastPushedAt: offer.lastPushedAt,
-    stockRejection,
+    // Nothing is sent while the Stock is unset, so a refusal of an earlier number no longer says anything.
+    stockRejection: stockStatus === 'unset' ? null : stockRejection,
     stockStatus,
   }
 }
