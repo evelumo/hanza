@@ -1,6 +1,6 @@
 # @hanza/connector-fake
 
-Simulated Channel implementations for demos, deterministic engine tests and SDK conformance. They are reference connectors, not live marketplace integrations.
+Simulated Channel and Carrier implementations for demos, deterministic engine tests and SDK conformance. They are reference connectors, not live marketplace integrations.
 
 | Connector id | Implementation | Panel availability |
 | --- | --- | --- |
