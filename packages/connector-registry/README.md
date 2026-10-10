@@ -9,8 +9,9 @@ The build-time list of connectors available to Hanza's apps. This is the only wo
 - `fake`: the in-memory Test channel.
 - `fake-oauth`: the simulated Test OAuth channel, usable when required installation settings are supplied.
 - `fake-courier`: the in-memory Test courier, a simulated Carrier for Shipments.
+- `inpost`: InPost (ShipX), the first Carrier: Paczkomat lockers and the InPost courier in Poland.
 
-The `fake-http` and `fake-http-oauth` implementations are test references, not registered panel connectors. There are no real connectors yet.
+The `fake-http` and `fake-http-oauth` implementations are test references, not registered panel connectors.
 
 ## Add a connector
 

@@ -169,6 +169,9 @@ importers:
       '@hanza/connector-fake':
         specifier: workspace:*
         version: link:../connectors/fake
+      '@hanza/connector-inpost':
+        specifier: workspace:*
+        version: link:../connectors/inpost
       '@hanza/connector-sdk':
         specifier: workspace:*
         version: link:../connector-sdk

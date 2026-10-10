@@ -106,8 +106,9 @@ ended, reopen it only if it sold out, and report `rejected` otherwise.
 | `fake-courier` | `@hanza/connector-fake` | courier | In-memory Carrier for tests and demos, with no credentials: a locker service (presets `small`, `medium`, `large`) and an address service (dimensions), both with cash on delivery. Each `shipments.track` moves a Shipment one step (`pending`, `ready`, `in_transit`, `delivered`); config `stuckAt` holds Shipments at a status, `rejectPickupPoints` lists pickup points it refuses (it also refuses a pickup point request without a phone), `account` keeps the Shipments of two Connections apart. The reference for a connector that makes Shipments. Not a real Carrier. |
 | `fake-http` | `@hanza/connector-fake` | marketplace | Not registered. The same fake Channel behind a small JSON API with client-credentials tokens (`src/http/`), tested only with recorded fixtures: the reference for a connector that talks HTTP. |
 | `fake-http-oauth` | `@hanza/connector-fake` | marketplace | Not registered. The same API with an OAuth life cycle shaped like Allegro's (installation settings, device flow, rotating refresh tokens; `src/http/oauth-connector.ts`), tested with recorded fixtures through `runConformance` (`app`, `refresh`, `deviceFlow`): the reference for an OAuth connector. |
+| `inpost` | `@hanza/connector-inpost` | courier | InPost through its ShipX API: Paczkomat lockers (`inpost_locker_standard`) and the InPost courier (`inpost_courier_standard`) in Poland, with `shipments.create`, `shipments.track`, `shipments.label` and `shipments.cancel`. ShipX has no idempotency key, so a create searches the organization's recent shipments for its `reference` before it posts. Its cassettes are hand-written from the documentation until they are recorded from a sandbox account; see its [`AGENTS.md`](inpost/AGENTS.md). |
 
-Allegro and WooCommerce come first among the real ones (stage 2 of the plan).
+InPost is the first real connector and the first Carrier. Allegro and WooCommerce come first among the Channels (stage 2 of the plan).
 
 ## Recorded fixtures
 
