@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto'
-import { createFakeChannel, type FakeChannel } from '@hanza/connector-fake'
+import { createFakeChannel, SEED_PHONE, type FakeChannel } from '@hanza/connector-fake'
 import {
   addConnection,
   changeOrderStatus,
@@ -21,7 +21,7 @@ const databaseUrl = inject('hanzaTestDatabaseUrl')
 const DAY = 86_400_000
 
 // Everything personal the fake Channel sends about its Buyers.
-const JOHN = ['John Test', 'john.test@example.com', 'john_test', '1 Example Street']
+const JOHN = ['John Test', 'john.test@example.com', 'john_test', '1 Example Street', SEED_PHONE]
 const MARIA = ['Maria Example', 'maria@example.com', '2 Private Road']
 
 describe.skipIf(!databaseUrl)('Buyer data privacy end to end (real Postgres, in-memory queue, fake Channel)', () => {
@@ -132,7 +132,7 @@ describe.skipIf(!databaseUrl)('Buyer data privacy end to end (real Postgres, in-
     for (const personal of MARIA) expect(await rawRow(orgA, 'fake-order-maria')).not.toContain(personal)
 
     expect(await getOrder(ctx, orgA, await orderId(orgA, 'fake-order-1'))).toMatchObject({
-      buyer: { name: 'John Test', email: 'john.test@example.com', phone: null, login: 'john_test' },
+      buyer: { name: 'John Test', email: 'john.test@example.com', phone: SEED_PHONE, login: 'john_test' },
       shippingAddress: { street: '1 Example Street', city: 'Warsaw', countryCode: 'PL' },
     })
     const list = await listOrders(ctx, orgA, { skip: 0, take: 10 })
