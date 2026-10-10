@@ -1,5 +1,5 @@
 import { randomInt, randomUUID } from 'node:crypto'
-import type { FakeChannel } from '@hanza/connector-fake'
+import type { FakeChannel, FakeCourier, FakeCourierShipment } from '@hanza/connector-fake'
 import { test as base, expect, type Locator, type Page } from '@playwright/test'
 import pg from 'pg'
 import { readRunEnv } from './run-env'
@@ -14,6 +14,21 @@ export interface FakeChannelCalls {
 export interface FakeChannelProbe {
   /** Everything the fake Channel was told since the worker started, by every organization of the run. */
   calls(): Promise<FakeChannelCalls>
+}
+
+export interface FakeCarrierCalls {
+  /** Every Shipment the fake Carrier made, oldest first, without what it was asked to send where. */
+  shipments: Array<Pick<FakeCourierShipment, 'account' | 'externalId' | 'reference' | 'status' | 'trackingNumber'>>
+  /** Every `shipments.create` call, repeated and refused ones included; `reference` is Hanza's Shipment id. */
+  creates: Array<{ reference: string; service: string }>
+  tracks: FakeCourier['tracks']
+  labels: FakeCourier['labels']
+  cancels: FakeCourier['cancels']
+}
+
+export interface FakeCarrierProbe {
+  /** Everything the fake Carrier was asked since the worker started, by every organization of the run. */
+  calls(): Promise<FakeCarrierCalls>
 }
 
 export interface Account {
@@ -32,7 +47,7 @@ export interface FakeOAuthProbe {
   revokeAll(): Promise<void>
 }
 
-export const test = base.extend<{ fakeChannel: FakeChannelProbe; fakeOAuth: FakeOAuthProbe }, { db: pg.Pool }>({
+export const test = base.extend<{ fakeChannel: FakeChannelProbe; fakeCarrier: FakeCarrierProbe; fakeOAuth: FakeOAuthProbe }, { db: pg.Pool }>({
   fakeChannel: async ({}, use) => {
     const url = `${readRunEnv('probeUrl')}/fake-channel`
     await use({
@@ -40,6 +55,16 @@ export const test = base.extend<{ fakeChannel: FakeChannelProbe; fakeOAuth: Fake
         const response = await fetch(url)
         if (!response.ok) throw new Error(`fake Channel probe answered ${response.status}`)
         return (await response.json()) as FakeChannelCalls
+      },
+    })
+  },
+  fakeCarrier: async ({}, use) => {
+    const url = `${readRunEnv('probeUrl')}/fake-courier`
+    await use({
+      async calls() {
+        const response = await fetch(url)
+        if (!response.ok) throw new Error(`fake Carrier probe answered ${response.status}`)
+        return (await response.json()) as FakeCarrierCalls
       },
     })
   },
@@ -182,6 +207,31 @@ export async function addFakeConnection(page: Page, name = 'Fake marketplace', o
   const id = new URL(page.url()).pathname.split('/').pop()
   if (!id) throw new Error(`No Connection id in ${page.url()}`)
   return id
+}
+
+/**
+ * Adds a Connection to the fake Carrier ("Test courier") under a Carrier account of its own, so the Shipments of other
+ * flows are never its; returns the Connection's id and that account, to pick its Shipments out of what the
+ * `fakeCarrier` fixture reports. `rejectPickupPoints` lists pickup point ids the Carrier refuses (comma-separated);
+ * `stuckAt` holds every Shipment of this Connection at one status, however often it is checked.
+ */
+export async function addFakeCourier(
+  page: Page,
+  name = 'Fake carrier',
+  config: { rejectPickupPoints?: string; stuckAt?: 'pending' | 'ready' | 'in_transit' } = {},
+): Promise<{ id: string; account: string }> {
+  const account = `e2e-${randomUUID()}`
+  await page.goto('/connections/new')
+  await page.getByRole('link', { name: /Test courier/ }).click()
+  await page.getByLabel('Name', { exact: true }).fill(name)
+  await page.getByLabel(/Carrier account/).fill(account)
+  if (config.rejectPickupPoints) await page.getByLabel(/Pickup points the Carrier refuses/).fill(config.rejectPickupPoints)
+  if (config.stuckAt) await page.getByLabel(/Hold every Shipment at this status/).selectOption(config.stuckAt)
+  await page.getByRole('button', { name: 'Add connection' }).click()
+  await expect(page.getByRole('heading', { level: 1, name })).toBeVisible()
+  const id = new URL(page.url()).pathname.split('/').pop()
+  if (!id) throw new Error(`No Connection id in ${page.url()}`)
+  return { id, account }
 }
 
 /**
