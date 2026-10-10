@@ -14,13 +14,15 @@ The seed contains **five Offers and four Orders**. One Order includes an Unmatch
 
 ## 2. Create Products from Offers
 
-Open **Offers** in the sidebar (the list is titled **Offers without a product**; the sidebar shows how many there are). Select the seeded Offers with SKUs and choose **Create products from selected**. Offers can also be linked to existing Products; imports link by SKU where possible.
+Open **Offers** in the sidebar (the page is titled **Offers that need attention**; the sidebar shows how many there are). In **Without a product**, select the seeded Offers with SKUs and choose **Create products from selected**. Offers can also be linked to existing Products; imports link by SKU where possible.
+
+The new Products have no Stock yet (unset Stock), so Hanza sends their Offers no number at all until you save it: they move to **Stock not set** on the same page. Telling a Channel 0 for goods Hanza never counted would end the Offers on marketplaces such as Allegro ([ADR 0023](adr/0023-unset-stock-is-no-stock-row.md)).
 
 The Ceramic mug has SKU `FAKE-SKU-1` and a price of `39.99 PLN`. The Sticker set has no SKU, so create its Product separately with **Products → Add product**, then link the Offer using that SKU. The Linen tote bag has no reported price; Hanza does not know that Offer's currency and will not push a price to it.
 
 ## 3. Set Stock and inspect Reservations
 
-Open the Ceramic mug Product. In **Stock**, set Stock in its Warehouse to **10** and choose **Save stock**. The first seed Order reserves **2** mugs after its line is matched. With only that Reservation, the Warehouse shows **Stock 10, Reserved 2, Available 8**.
+Open the Ceramic mug Product (**Set stock** beside it in **Stock not set** leads there). In **Stock**, set Stock in its Warehouse to **10** and choose **Save stock**. The first seed Order reserved **2** mugs when its line was matched to the new Product. With only that Reservation, the Warehouse shows **Stock 10, Reserved 2, Available 8**.
 
 Stock is held per Warehouse. With one Warehouse and the default Channel rules, that Available is what the Channel receives. Warehouse selection, safety buffers and channel limits can reduce what a Channel is told; they do not reduce the physical Stock.
 
