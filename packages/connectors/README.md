@@ -97,6 +97,15 @@ meaning its `stock.push` reactivates such an Offer when the number is above 0
 stale, so a connector that declares it must check at push time why the Offer
 ended, reopen it only if it sold out, and report `rejected` otherwise.
 
+A connector that makes Shipments (a `courier`, or a Channel with shipping of
+its own) implements `shipments.create`, `shipments.track` and `shipments.label`
+together and declares what it offers in `shipping.services`; `shipments.cancel`
+is optional. A create must be repeatable by its `reference`: asked twice, the
+Carrier makes one parcel (ADR 0023). `ready` means a Label, not a parcel the
+Carrier has; the first status after it ships the Order (ADR 0024). The receiver
+and the address are Buyer data and never reach a log line, an error or a code.
+Details in the skill, checks S1 to S7 in the conformance kit.
+
 ## Connectors
 
 | Id | Package | Kind | What it is |
@@ -231,7 +240,9 @@ the same data again gives the same file.
 - Phone numbers without a leading `+` are found only under phone-like keys,
   not in free text.
 - Binary bodies can be neither scrubbed nor linted: they are dropped unless
-  `keepBinaryBodies` is set, and then checking them is up to you.
+  `keepBinaryBodies` is set, and then checking them is up to you. With
+  `replaceBinaryBodies` a placeholder file takes their place (a blank PDF for a
+  PDF), for a response the connector must receive non-empty, such as a Label.
 - Requests that failed at the network level are not recorded.
 - The lint matches patterns: it can be fooled, and it can flag a harmless
   value. Review the diff of every recording.
