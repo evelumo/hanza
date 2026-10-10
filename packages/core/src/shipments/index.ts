@@ -1,5 +1,6 @@
 export { requestShipment, shipmentInputSchema, type ShipmentInput } from './request'
 export { cancelShipment } from './cancel'
+export { requestShipmentCheck } from './check'
 export { getShipmentLabel, SHIPMENT_LABEL_FAILURES, type ShipmentLabelFailure, type ShipmentLabelFile } from './label'
 export { labelFileType, MAX_LABEL_BYTES, type ConfirmedDestination, type LabelFileType } from './sealed'
 export { listOrderShipments, listShippingConnections, type ShipmentRow, type ShippingConnection } from './queries'

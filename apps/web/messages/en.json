@@ -923,7 +923,8 @@
       "shipment_buyer_data_unreadable": "The buyer data of this order cannot be read, so the shipment cannot be made.",
       "shipment_already_requested": "A shipment for this order with this carrier and service is already being created. Wait until the carrier has it, or cancel it first.",
       "shipment_not_cancellable": "This shipment can no longer be cancelled here.",
-      "shipment_cancel_unsupported": "This carrier does not cancel shipments through Hanza. Cancel it at the carrier."
+      "shipment_cancel_unsupported": "This carrier does not cancel shipments through Hanza. Cancel it at the carrier.",
+      "shipment_not_checkable": "There is nothing to check for this shipment: the carrier has not taken the request yet, or the shipment is closed."
     },
     "unexpected": "Something went wrong. Please try again.",
     "invalidInput": "Check the fields.",

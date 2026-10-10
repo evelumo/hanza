@@ -44,6 +44,7 @@ const codes: DomainErrorCode[] = [
   'shipment_already_requested',
   'shipment_not_cancellable',
   'shipment_cancel_unsupported',
+  'shipment_not_checkable',
 ]
 const t = translatorFor('en')
 

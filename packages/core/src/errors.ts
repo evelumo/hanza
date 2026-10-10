@@ -44,6 +44,7 @@ export type DomainErrorCode =
   | 'shipment_already_requested'
   | 'shipment_not_cancellable'
   | 'shipment_cancel_unsupported'
+  | 'shipment_not_checkable'
 
 /** Thrown by services for expected failures; the panel maps `code` to translated copy. */
 export class DomainError extends Error {
