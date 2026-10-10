@@ -322,20 +322,29 @@ describe('InPost scenarios', { skip: isRecording() }, () => {
     })
 
     it.each([
+      ['carrier_unavailable', { status: 400, error: 'carrier_unavailable', message: 'No carrier offers this service.', details: {} }, 'carrier_unavailable'],
+      // Word for word what the sandbox answers `inpost_courier_standard` on an account without a courier contract.
+      ['missing_trucker_id', { status: 400, error: 'missing_trucker_id', message: 'trucker_ID_is_not_set_for_organization', details: null }, 'missing_trucker_id'],
+      ['the same as the FAQ spells it', { status: 400, error: 'trucker_ID_is_not_set_for_organization', details: {} }, 'missing_trucker_id'],
+    ])('rejects a request for a service the account does not have (%s): another service would work', async (_what, body, code) => {
+      const { ctx, methods, logs } = posting(() => json(400, body))
+      await expect(create(ctx, lockerRequest('shp_refused'))).resolves.toEqual({ outcome: 'rejected', code })
+      // Refused by InPost, so nothing was made, and nothing is tried again.
+      expect(methods()).toEqual(['GET', 'POST'])
+      expect(logs).toEqual([])
+    })
+
+    it.each([
       ['debt_collection', 400, { status: 400, error: 'debt_collection', message: 'Unpaid invoices.', details: {} }, 'debt_collection'],
       ['debt_collection', 422, { status: 422, error: 'debt_collection', message: 'Unpaid invoices.', details: {} }, 'debt_collection'],
       ['no_carriers', 400, { status: 400, error: 'no_carriers', message: 'Unpaid invoices.', details: {} }, 'no_carriers'],
-      ['carrier_unavailable', 400, { status: 400, error: 'carrier_unavailable', message: 'No carrier offers this service.', details: {} }, 'carrier_unavailable'],
-      // Word for word what the sandbox answers `inpost_courier_standard` on an account without a courier contract.
-      ['missing_trucker_id', 400, { status: 400, error: 'missing_trucker_id', message: 'trucker_ID_is_not_set_for_organization', details: null }, 'missing_trucker_id'],
-      ['the same as the FAQ spells it', 400, { status: 400, error: 'trucker_ID_is_not_set_for_organization', details: {} }, 'missing_trucker_id'],
-    ])('fails the call, and rejects nothing, when InPost refuses the account with %s (%i)', async (_key, status, body, named) => {
+    ])('fails the call, and rejects nothing, when InPost refuses the whole account with %s (%i)', async (_key, status, body, named) => {
       const { ctx, methods } = posting(() => json(status, body))
       const error = await caught(create(ctx, lockerRequest('shp_blocked')))
       expect(error).toBeInstanceOf(PermanentError)
       // The key as this connector's own constant; never InPost's message.
       expect(error?.message).toContain(`(${named})`)
-      expect(error?.message).not.toMatch(/invoice|No carrier offers|trucker_ID/)
+      expect(error?.message).not.toMatch(/invoice/i)
       expect(methods()).toEqual(['GET', 'POST'])
     })
 

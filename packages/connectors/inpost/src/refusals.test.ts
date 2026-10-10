@@ -73,15 +73,23 @@ describe('createRefusal', () => {
     expect(createRefusal({ error: 'validation_failed', details: null })).toEqual({ kind: 'rejected', code: 'validation_failed' })
   })
 
+  // A service the account does not have: another one would work, so it is this request that is wrong.
+  it.each([
+    ['carrier_unavailable', 'carrier_unavailable'],
+    ['CARRIER_UNAVAILABLE', 'carrier_unavailable'],
+    ['missing_trucker_id', 'missing_trucker_id'],
+    ['trucker_ID_is_not_set_for_organization', 'missing_trucker_id'],
+  ])('rejects %s, which is about the service the request names', (key, code) => {
+    expect(createRefusal({ error: key, details: null })).toEqual({ kind: 'rejected', code })
+    // The code is the connector's constant, whatever the answer carries beside the key.
+    expect(createRefusal({ error: key, details: { phone: ['Kowalski'] } })).toEqual({ kind: 'rejected', code })
+  })
+
   it.each([
     ['debt_collection', 'debt_collection'],
     ['DEBT_COLLECTION', 'debt_collection'],
     ['no_carriers', 'no_carriers'],
-    // No contract for the service the request names: the account's to fix, so never `rejected`.
-    ['carrier_unavailable', 'carrier_unavailable'],
-    ['missing_trucker_id', 'missing_trucker_id'],
-    ['trucker_ID_is_not_set_for_organization', 'missing_trucker_id'],
-  ])('leaves %s, which is about the account, to fail the call', (key, named) => {
+  ])('leaves %s, which is about the whole account, to fail the call', (key, named) => {
     expect(createRefusal({ error: key, details: null })).toEqual({ kind: 'account', key: named })
   })
 

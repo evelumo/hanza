@@ -82,7 +82,7 @@ The recording account is prepaid. What it cannot show:
 | `inpost_locker_standard` | pickup point (`custom_attributes.target_point`) | preset `small` (A), `medium` (B), `large` (C): ShipX's `parcels.template` | yes |
 | `inpost_courier_standard` | address in Poland | dimensions in mm, weight in grams | yes |
 
-`inpost_courier_standard` needs a courier contract on the InPost account; a prepaid account does not have it [47415642], and InPost refuses its shipments with `missing_trucker_id` (_observed_), which fails the call, not the Shipment (below).
+`inpost_courier_standard` needs a courier contract on the InPost account; a prepaid account does not have it [47415642], and InPost refuses its shipments with `missing_trucker_id` (_observed_): that Shipment is `rejected` with that code, and the Connection stays healthy (below).
 
 ## Request mapping (`src/mapping.ts`)
 
@@ -121,15 +121,15 @@ Any other 4xx with a ShipX error body is sorted by its `error` key (`src/refusal
 | Key | Outcome | Why |
 | --- | --- | --- |
 | `validation_failed` | `rejected`, with a code built from `details` (below) | this request's fields |
-| `debt_collection` | thrown, `permanent`, naming the key | the account: unpaid invoices, or no credit on a prepaid account [451903492, 53706753] |
-| `no_carriers` | thrown, `permanent`, naming the key | "the organization has no carriers contracted" [18153501] |
-| `carrier_unavailable` | thrown, `permanent`, naming the key | "no carriers contracted providing the requested service" [18153501] |
-| `missing_trucker_id`, or `trucker_ID_is_not_set_for_organization` as the key | thrown, `permanent`, naming `missing_trucker_id` | _observed_ for `inpost_courier_standard` on the account without a courier contract: `{"status":400,"error":"missing_trucker_id","message":"trucker_ID_is_not_set_for_organization","details":null}`. The FAQ's "error" is the message; the key is documented nowhere |
+| `carrier_unavailable` | `rejected` `carrier_unavailable` | the service this request names: "no carriers contracted providing the requested service" [18153501] |
+| `missing_trucker_id`, or `trucker_ID_is_not_set_for_organization` as the key | `rejected` `missing_trucker_id`, for both spellings | the service this request names. _Observed_ for `inpost_courier_standard` on the account without a courier contract: `{"status":400,"error":"missing_trucker_id","message":"trucker_ID_is_not_set_for_organization","details":null}`. The FAQ's "error" is the message; the key is documented nowhere |
+| `debt_collection` | thrown, `permanent`, naming the key | the whole account: unpaid invoices, or no credit on a prepaid account [451903492, 53706753] |
+| `no_carriers` | thrown, `permanent`, naming the key | the whole account: "the organization has no carriers contracted" [18153501] |
 | any other key | thrown, `permanent`, **not naming it**; the key goes to `ctx.log` if it reads as one | see below |
 
-**`rejected` is only for what is wrong with this one request.** That is the SDK's contract: a refusal of the account (no contract for the service, no funds, unpaid invoices) is a thrown `PermanentError`, so the Connection shows as failing and the Shipment waits for a person to fix the account, instead of failing for good with a new one to be made by hand. The keys named in an error are this connector's own constants, never InPost's text.
+**`rejected` is for what is wrong with this one request, and that includes a service the account does not have.** That is the SDK's contract: another service would work, and the person chooses it in a new Shipment. So a seller on a prepaid account who picks the courier service, which needs a courier contract, gets that one Shipment failed with `missing_trucker_id`. Nothing was made at InPost when the `POST` was refused, so nothing is lost. Thrown instead, the same answer would mark the Connection as failing, which slows its creates to one Shipment a tick, lockers included, and would repeat the courier Shipment every five minutes for a day, for a problem that is not the account's.
 
-One consequence to know: an account without a courier contract whose seller picks the courier service gets a failing Connection, and its locker Shipments go on working beside it; the courier Shipment waits until the contract exists or 24 hours pass (`carrier_timeout`).
+**A refusal of the whole account is thrown**, as a `PermanentError`: no funds or unpaid invoices (`debt_collection`), no contract with any carrier (`no_carriers`). Every Shipment would get the same answer, so the Connection shows as failing and the Shipments wait for a person to fix the account, instead of failing for good one by one. The key named in the error is this connector's own constant, never InPost's text; so is every `rejected` code.
 
 **The default for a key nobody has listed is to fail the call, not the Shipment.** `rejected` is final for a Shipment. An unknown key may be about the account as easily as about the request (`missing_trucker_id` was unknown until the sandbox answered it), and as `rejected` an account problem would fail Shipments one by one while the Connection looked healthy. Thrown, nothing is lost: nothing was made at InPost (a 4xx with an error body), the Shipment waits and is asked for again, the Connection shows as failing, and a person reads the key in the worker's log and adds it to one of the two lists. The cost when the key was about the request after all: that one Shipment waits (24 hours at most, then `carrier_timeout`) instead of failing at once with a telling code.
 

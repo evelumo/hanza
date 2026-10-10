@@ -91,23 +91,30 @@ export function rejectionCode(details: unknown): string {
 }
 
 /**
- * Error keys that refuse the account, with the key each is named by in the error. The SDK's contract: a refusal of
- * the account (no contract for the service, no funds, unpaid invoices) is thrown, never `rejected`, so the Shipment
- * waits for a person to fix the account instead of failing for good.
+ * Error keys that refuse this one request, with the code each is rejected with. Both say the account does not have
+ * the service the request names, which by the SDK's contract is something wrong with the request: another service
+ * would work, and the person chooses it in a new Shipment. Nothing was made at InPost, so failing this one Shipment
+ * for good loses nothing, while a Connection marked failing would hold back the Shipments that have nothing wrong.
  *
- * - `debt_collection`: unpaid invoices, or no credit on a prepaid account [451903492, 53706753].
- * - `no_carriers`: "the organization has no carriers contracted" [18153501].
  * - `carrier_unavailable`: "no carriers contracted providing the requested service" [18153501].
  * - `missing_trucker_id`: what the sandbox answers `inpost_courier_standard` on an account without a courier
- *   contract (2026-10-10), with the FAQ's `trucker_ID_is_not_set_for_organization` as its message.
+ *   contract (2026-10-10), with the FAQ's `trucker_ID_is_not_set_for_organization` as its message. Both spellings
+ *   give the one code.
  */
-const ACCOUNT_REFUSALS: Readonly<Record<string, string>> = {
-  debt_collection: 'debt_collection',
-  no_carriers: 'no_carriers',
+const REQUEST_REFUSALS: Readonly<Record<string, string>> = {
   carrier_unavailable: 'carrier_unavailable',
   missing_trucker_id: 'missing_trucker_id',
   trucker_id_is_not_set_for_organization: 'missing_trucker_id',
 }
+
+/**
+ * Error keys that refuse the whole account: every Shipment would get the same answer, whatever its service. These
+ * are thrown, never `rejected`, so the Shipment waits for a person to fix the account.
+ *
+ * - `debt_collection`: unpaid invoices, or no credit on a prepaid account [451903492, 53706753].
+ * - `no_carriers`: "the organization has no carriers contracted" [18153501].
+ */
+const ACCOUNT_REFUSALS: readonly string[] = ['debt_collection', 'no_carriers']
 
 /**
  * `rejected`: InPost refuses this request for good, with the code to store.
@@ -119,5 +126,7 @@ export type CreateRefusal = { kind: 'rejected'; code: string } | { kind: 'accoun
 export function createRefusal(error: { error: string; details?: unknown }): CreateRefusal {
   const key = error.error.toLowerCase()
   if (key === VALIDATION_FAILED) return { kind: 'rejected', code: rejectionCode(error.details) }
-  return Object.hasOwn(ACCOUNT_REFUSALS, key) ? { kind: 'account', key: ACCOUNT_REFUSALS[key]! } : { kind: 'unknown' }
+  if (Object.hasOwn(REQUEST_REFUSALS, key)) return { kind: 'rejected', code: REQUEST_REFUSALS[key]! }
+  const account = ACCOUNT_REFUSALS.find((known) => known === key)
+  return account === undefined ? { kind: 'unknown' } : { kind: 'account', key: account }
 }
