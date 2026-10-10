@@ -1,6 +1,6 @@
 # InPost connector (`@hanza/connector-inpost`)
 
-InPost through its ShipX API: Paczkomat lockers and the InPost courier in Poland. A Carrier (`kind: 'courier'`) with `shipments.create`, `shipments.track`, `shipments.label` and `shipments.cancel`. The design is GitHub issue #126. The documentation is the Confluence space `https://dokumentacja-inpost.atlassian.net/wiki/spaces/PL/` (page ids in brackets below).
+InPost through its ShipX API: Paczkomat lockers and the InPost courier in Poland. A Carrier (`kind: 'courier'`) with `shipments.create`, `shipments.track` and `shipments.label`, and **without `shipments.cancel`, on purpose** (see "Why this connector does not cancel"). The design is GitHub issue #126. The documentation is the Confluence space `https://dokumentacja-inpost.atlassian.net/wiki/spaces/PL/` (page ids in brackets below).
 
 **What is known, and how.** Three kinds of statement are kept apart here:
 
@@ -12,17 +12,17 @@ Every cassette is still written by hand, now in the observed shapes. See "Fixtur
 
 ## The one rule: a create never posts twice
 
-ShipX has no idempotency key, and in the mode this connector uses ("simplified": the request names the `service`) InPost goes on to buy the label within a second of the `POST` and then refuses to cancel. A `POST` repeated after a lost answer is a second paid parcel.
+ShipX has no idempotency key, and in the mode this connector uses ("simplified": the request names the `service`) InPost goes on to buy the label within a second of the `POST`, and from then on it cannot be cancelled. A `POST` repeated after a lost answer is a second paid parcel.
 
 So `shipments.create` searches before it posts (`src/earlier-shipment.ts`, the one function that knows how):
 
 - `reference` (Hanza's Shipment id) is printed on the label and returned in every shipment resource, list items included (_observed_), but it is **not a list filter** and not unique [18153512].
-- The search lists `GET /v1/organizations/{id}/shipments?created_at_gteq=<requestedAt − 1 h>&sort_by=created_at&sort_order=asc&per_page=100` and returns the first shipment whose `reference` equals the request's. `requestedAt` is the same on every repeat. The time is sent as a Unix timestamp (_observed_: it filters exactly like an ISO 8601 time). Oldest first, so shipments made meanwhile only append.
-- Only when the listing was read **to its end** and has no such reference is the shipment posted. "To its end" is counted, not believed: as many different shipments seen as the highest `count` any page gave. Short of that, a page that is empty, shorter than 100, or brings nothing new is a `transient` failure, and nothing is posted. `per_page` in the answer is never read: ShipX echoes what was asked whatever it serves (_observed_ with the `id` filter: asked for 3 a page, it returned 7 on page 1 and repeated three of them on page 2). A `count` that drops between two pages is treated the same way: a shipment was cancelled meanwhile, cancelled shipments leave the listing (_observed_), and one shipment may have slipped from page 2 to page 1 unread.
+- The search lists `GET /v1/organizations/{id}/shipments?created_at_gteq=<requestedAt − 15 min>&sort_by=created_at&sort_order=asc&per_page=100` and returns the first shipment whose `reference` equals the request's. `requestedAt` is the same on every repeat. The time is sent as a Unix timestamp (_observed_: it filters exactly like an ISO 8601 time). Oldest first, so shipments made meanwhile only append.
+- Only when the listing was read **to its end** and has no such reference is the shipment posted. "To its end" is counted, not believed: as many different shipments seen as the highest `count` any page gave. Short of that, a page that is empty, shorter than 100, or brings nothing new is a `transient` failure, and nothing is posted. `per_page` in the answer is never read: ShipX echoes what was asked whatever it serves (_observed_ with the `id` filter: asked for 3 a page, it returned 7 on page 1 and repeated three of them on page 2). A `count` that drops between two pages is treated the same way: a shipment was cancelled meanwhile (in InPost's manager, say), cancelled shipments leave the listing (_observed_), and one shipment may have slipped from page 2 to page 1 unread.
 - A search that fails posts nothing, whatever it fails with (401, 403, 404, 429, 5xx, a redirect, an answer of another shape).
-- **Limit:** 20 pages, 2000 shipments in the window. Beyond it the call fails as `permanent` and posts nothing. Because the window starts an hour before the request, a seller who makes more than 2000 shipments an hour cannot create through this connector, and every create costs one request per 100 shipments of the last hour. That is the price of the clock margin below; an exact filter would remove it (last item of this list).
+- **Limit:** 20 pages, 2000 shipments in the window. Beyond it the call fails as `permanent` and posts nothing. The window is the 15 minutes of the clock margin (below) plus the age of the request, and every create costs one request per 100 shipments in it. So a first attempt reaches the limit only for a seller who makes more than 2000 shipments in 15 minutes (8000 an hour); a repeat an hour after the request lists 75 minutes and reaches it at 1600 an hour; and a create still being repeated a day later reaches it at about 83 an hour. A Shipment stuck that long behind the limit waits for a person, and fails with `carrier_timeout` after 24 hours. An exact filter would remove the limit (last item of this list).
 - A request the connector can tell InPost will refuse (below) is rejected before any request, search included.
-- A `reference` shorter than 3 or longer than 100 characters, or with spaces at its ends, is rejected (`reference_unsupported`): ShipX would refuse or could alter it, and an altered reference is never found again.
+- A `reference` shorter than 3 characters is rejected (`reference_unsupported`): ShipX takes 3 to 100. The SDK's request carries at most 64 letters, digits, `_` and `-` (the core sends the Shipment's UUID), so there is nothing ShipX would cut or trim; an altered reference would never be found again.
 - If a sandbox account that is not a broker may set and filter by `external_customer_id` (an exact-match filter [18153508]), switch `findEarlierShipment` to it. Not tried; it is not set today.
 
 ### The listing lags behind the `POST` (_observed_)
@@ -42,20 +42,19 @@ Measured six times: one `POST`, then the search every 0.2 to 0.3 s until it had 
 
 (Seconds after the `POST`'s answer arrived, by the time each search was sent.) The six shipments became visible at wall-clock seconds :01, :46, :56, :01, :06 and :16, which reads like a listing refreshed every 5 seconds: a lag anywhere between 0 and about 5.4 s. The answers are not cached (`x-proxy-cache: MISS`, a new request id each time). The first recording met the same thing: a search half a second after a `POST` was empty, the connector posted again, and InPost made a second shipment.
 
-**The connector cannot close this by itself**: it has no memory, the reference is not a filter, and the lookups that do not lag need the id that was lost. It relies on a rule of the SDK contract: **the core does not repeat a create whose outcome it does not know sooner than 5 minutes after the earlier call began.** Against the worst sample (5.4 s) that leaves a factor of 55. What is not known: the lag on production, and under load. If it ever comes near minutes, this design does not hold and has to be rethought.
+**The connector cannot close this by itself**: it has no memory, the reference is not a filter, and the lookups that do not lag need the id that was lost. It relies on a rule of the SDK contract (the comment of `shipments.create` in `packages/connector-sdk/src/connector.ts`): **the core does not repeat a create whose outcome it does not know sooner than `SHIPMENT_CREATE_RETRY_DELAY_MS` (300 000 ms, 5 minutes) after the earlier call began**, and it never runs two creates of one Shipment at once. Against the worst sample (5.4 s) that leaves a factor of 55. The one repeat the core makes sooner is of a call in which only reads had left, which is what the search is: nothing is ever made at InPost with a `GET`. What is not known: the lag on production, and under load. If it ever comes near minutes, this design does not hold and has to be rethought.
 
-The remaining gap is the one the core covers: two creates of the same Shipment in flight at once (the job is coalesced per Shipment, under a lease).
 
 ### The two clocks
 
 `requestedAt` is Hanza's clock, `created_at` InPost's. With Hanza's ahead by more than the margin, the earlier shipment falls before the window and the repeat posts again. Two defences:
 
-- The margin is **1 hour**.
+- The margin is **15 minutes**.
 - The `Date` header of the listing's answer is compared with this server's clock before "none" is concluded: more than **5 minutes** apart is a `permanent` failure that says the server's clock is wrong, and nothing is posted. (_Observed_: ShipX sends `Date`; it was 0.25 s from the local clock.) A shipment that was found is returned whatever the clocks say.
 
-The margin is far above the tolerance on purpose: it also covers a `requestedAt` stamped by another machine than the worker that asks. An answer without a readable `Date` skips the check, which is what a replayed cassette does, since the recorder keeps no `Date` header; ShipX itself always sent one.
+The margin is three times the tolerance on purpose: it also covers a `requestedAt` stamped by another machine than the worker that asks (the core stamps it with the database's clock), up to 10 minutes from the worker's. It was an hour at first; that made every create of a busy seller page through an hour of shipments, for a skew the check already refuses. An answer without a readable `Date` skips the check, which is what a replayed cassette does, since the recorder keeps no `Date` header; ShipX itself always sent one.
 
-The conformance replay and the scenario tests serve every recorded answer once (`inpostMatch`: `exhausted: 'error'`), so a second `POST` fails the test instead of getting the first one's answer again.
+The conformance replay and the scenario tests serve every recorded answer once (`inpostMatch`: `exhausted: 'error'`), so a second `POST` fails the test instead of getting the first one's answer again. The kit does that for writes by itself (`repeat-reads`); `error` adds the reads, so a create that searched once more than the recording is a miss too.
 
 ## Auth and environments
 
@@ -83,7 +82,7 @@ The recording account is prepaid. What it cannot show:
 | `inpost_locker_standard` | pickup point (`custom_attributes.target_point`) | preset `small` (A), `medium` (B), `large` (C): ShipX's `parcels.template` | yes |
 | `inpost_courier_standard` | address in Poland | dimensions in mm, weight in grams | yes |
 
-`inpost_courier_standard` needs a courier contract on the InPost account; a prepaid account does not have it [47415642] and is refused with `missing_trucker_id` (_observed_; below).
+`inpost_courier_standard` needs a courier contract on the InPost account; a prepaid account does not have it [47415642], and InPost refuses its shipments with `missing_trucker_id` (_observed_), which fails the call, not the Shipment (below).
 
 ## Request mapping (`src/mapping.ts`)
 
@@ -122,14 +121,18 @@ Any other 4xx with a ShipX error body is sorted by its `error` key (`src/refusal
 | Key | Outcome | Why |
 | --- | --- | --- |
 | `validation_failed` | `rejected`, with a code built from `details` (below) | this request's fields |
-| `carrier_unavailable` | `rejected` `carrier_unavailable` | "no carriers contracted providing the requested service" [18153501]: about the service this request names |
-| `missing_trucker_id`, or `trucker_ID_is_not_set_for_organization` as the key | `rejected` `missing_trucker_id` | _observed_ for `inpost_courier_standard` on the account without a courier contract: `{"status":400,"error":"missing_trucker_id","message":"trucker_ID_is_not_set_for_organization","details":null}`. The FAQ's "error" is the message; the key is documented nowhere |
-| `debt_collection`, `no_carriers` | thrown, `permanent`, naming the key | the account: unpaid invoices or no credit [451903492, 53706753]; "the organization has no carriers contracted" [18153501]. Every Shipment would get the same answer |
+| `debt_collection` | thrown, `permanent`, naming the key | the account: unpaid invoices, or no credit on a prepaid account [451903492, 53706753] |
+| `no_carriers` | thrown, `permanent`, naming the key | "the organization has no carriers contracted" [18153501] |
+| `carrier_unavailable` | thrown, `permanent`, naming the key | "no carriers contracted providing the requested service" [18153501] |
+| `missing_trucker_id`, or `trucker_ID_is_not_set_for_organization` as the key | thrown, `permanent`, naming `missing_trucker_id` | _observed_ for `inpost_courier_standard` on the account without a courier contract: `{"status":400,"error":"missing_trucker_id","message":"trucker_ID_is_not_set_for_organization","details":null}`. The FAQ's "error" is the message; the key is documented nowhere |
 | any other key | thrown, `permanent`, **not naming it**; the key goes to `ctx.log` if it reads as one | see below |
+
+**`rejected` is only for what is wrong with this one request.** That is the SDK's contract: a refusal of the account (no contract for the service, no funds, unpaid invoices) is a thrown `PermanentError`, so the Connection shows as failing and the Shipment waits for a person to fix the account, instead of failing for good with a new one to be made by hand. The keys named in an error are this connector's own constants, never InPost's text.
+
+One consequence to know: an account without a courier contract whose seller picks the courier service gets a failing Connection, and its locker Shipments go on working beside it; the courier Shipment waits until the contract exists or 24 hours pass (`carrier_timeout`).
 
 **The default for a key nobody has listed is to fail the call, not the Shipment.** `rejected` is final for a Shipment. An unknown key may be about the account as easily as about the request (`missing_trucker_id` was unknown until the sandbox answered it), and as `rejected` an account problem would fail Shipments one by one while the Connection looked healthy. Thrown, nothing is lost: nothing was made at InPost (a 4xx with an error body), the Shipment waits and is asked for again, the Connection shows as failing, and a person reads the key in the worker's log and adds it to one of the two lists. The cost when the key was about the request after all: that one Shipment waits (24 hours at most, then `carrier_timeout`) instead of failing at once with a telling code.
 
-`trucker_ID_is_not_set_for_organization` was listed as an account error before. It is refused as `rejected` now: it is the service the request names that the account lacks, the account's locker service keeps working, and a Connection marked failing for it would hold back Shipments that have nothing wrong.
 
 `debt_collection` was not seen as the answer to a `POST`. On the prepaid test account without funds the `POST` is accepted and the _payment_ fails with it (next section). The FAQ's "API returns error debt_collection" may be a postpaid account's answer.
 
@@ -151,9 +154,26 @@ A new validation key therefore shows as plain `validation_failed` until it is ad
 
 `externalId` is the ShipX id, `trackingNumber` its `tracking_number` (null until `confirmed`), `carrierStatus` the ShipX status name. Statuses are read from the shipment resource, not from `GET /v1/tracking/{number}`, which returns nothing on the sandbox and answers errors in an undocumented shape.
 
-**A ShipX id is digits, and nothing else is taken for one.** The response schema refuses any other id (`..`, a path), so an id InPost returned cannot steer a later request, and `label`, `cancel` and `track` check the ids they are given before they build a path or a query: `label` fails as `permanent`, `cancel` answers `refused` `not_found`, `track` leaves the Shipment out. None of them makes a request for such an id.
+**A ShipX id is a whole number above 0 of at most 18 digits, without a leading zero, and nothing else is taken for one.** The response schema refuses any other id (`..`, a path, `0`), so an id InPost returned cannot steer a later request, and `label` and `track` check the ids they are given before they build a path or a query: `label` fails as `permanent`, `track` leaves the Shipment out and logs how many. Neither makes a request for such an id.
 
-`shipments.track` is one request for up to 100 ids (`?id=1,2,…&per_page=100`). _Observed_: the filter takes a comma list (2 and 7 ids; 100 could not be tried, the account had 13 shipments), leaves out ids of other organizations and ids that do not exist, and answers `400 validation_failed` to an id that is not a number. An ignored filter shows as a `count` above the number of ids asked: `permanent`. Pages are read until every id was seen, `count` shipments were seen, or a page brings nothing new, whatever size ShipX makes them. Shipments nobody asked for are ignored.
+`shipments.track` is one request for up to 100 ids (`?id=1,2,…&per_page=100`). What the `id` filter does with an id it does not have depends on the id (_observed_, each time next to a real id of the account):
+
+| Asked beside a real id | Answer |
+| --- | --- |
+| a number the account does not have (`999999999999`, 18 and 19 digits), an id of another organization, `1`, `-1`, `1.5`, an empty item | `200`, the real shipment alone, `count: 1` |
+| the real id twice, with a leading zero, or with a space around it | `200`, the shipment once |
+| `0`, `00`, a word (`abc`), a number near 2^63 (`9223372036854775807`, 20 digits) | **`400 validation_failed` for the whole list**, with the id inside a key: `{"shipment":["id_0_does_not_exist"]}` |
+
+So an id of ShipX's own form that is gone is simply left out, and the Shipments beside it get their state. The comma list was tried with 2 and 7 ids; 100 could not be, the account had 13 shipments.
+
+Two things keep one bad id from costing the others their answer:
+
+- ids outside the form above are never asked for (that is every case of the third row);
+- should ShipX still answer `400 validation_failed` to a list, the list is asked again in halves until the id it will not take stands alone, and that one is left out: 5 lists for one such id among three, 15 among a hundred. At most 20 lists a call (`MAX_ID_LISTS`); past that the ids not yet answered for are left out as well and asked for next time. Not seen for an id of the right form; the scenario `track-id-refused` is hand-written.
+
+Of that answer only the status and the `error` key are read. Its `details` and its message echo what was asked, so they reach no code, no error message and no log: the log line says how many ids were refused, never which.
+
+An ignored filter shows as a `count` above the number of ids asked: `permanent`. Pages are read until every id was seen, `count` shipments were seen, or a page brings nothing new, whatever size ShipX makes them. Shipments nobody asked for are ignored.
 
 ### A purchase that does not go through
 
@@ -227,7 +247,7 @@ Names kept as the issue has them although their description reads differently:
 
 No status after `confirmed` can be recorded: the sandbox does not advance a shipment, so this table is tested on hand-written answers only, for good.
 
-## Label and cancel
+## Label
 
 - **Label:** `GET /v1/shipments/{id}/label?format=pdf`, with `&type=A6` when the setting is `A6` and **no `type` at all when it is `normal`**: without `type` ShipX returns a normal label, and A6 for courier services, which have no normal one [18153509]; what an explicit `type=normal` does for a courier shipment is not documented, so it is never sent.
   - Only from `confirmed` on. Before: `400` with `{"error":"invalid_action","message":"shipment_status_incorrect","details":{"action":"get_label","shipment_status":"offer_selected",…}}` (_observed_) → `TransientError`, by the key, on any 4xx. For a cancelled shipment the answer is another one: `400 validation_failed` with `{"tracking_number":["you_can_not_generate_labels_for_unpaid_shipments"]}` (_observed_) → `permanent`.
@@ -235,27 +255,24 @@ No status after `confirmed` can be recorded: the sandbox does not advance a ship
   - At most 5 MB, the core's limit: a `Content-Length` above it is not read at all, and a body that turns out longer is dropped where it passes it. Both `permanent`.
   - `label_generation_failed` and `label_template_not_found` follow their HTTP status.
   - _Verify on the sandbox_ (funds): the real content type and size of a label, and that a locker shipment without `type` gets the normal one.
-- **Cancel:** `DELETE /v1/shipments/{id}` [18153504], possible only in `created` or `offers_prepared`. _Observed_: that is the first 0.1 to 0.5 s after the `POST`. Of four cancels sent 0.1 s after the `POST`'s answer, one came in time.
-  - `204` → `cancelled`. No other success is believed: on another 2xx the shipment's status decides, and one that is not `canceled` is a `transient` failure.
-  - `invalid_action` (`400`, with `details.action: "cancel"` and `details.shipment_status`; _observed_) → the connector reads the shipment by id: `canceled` → `cancelled`; any other status → `refused` `too_late`; not listed → `refused` `not_found`. This is also the repeat of a cancel: ShipX **keeps** a cancelled shipment, as `canceled`, and answers a second `DELETE` with `invalid_action` and `shipment_status: "canceled"` (_observed_). It is never a 404.
-  - `404` → `refused` `not_found`, with any body. The documentation's 404 is "no access to the resource or the shipment does not exist": a token of another organization gets it for a label that is bought. It used to be read as `cancelled`.
-  - An unused label is cancelled by InPost itself after 45 days.
 
-### A cancel that InPost takes back (_observed_ once, unresolved)
+## Why this connector does not cancel
 
-Shipment 14588080: `POST` at 22:31:40.975; `DELETE` 0.1 s after the answer → `204`; read at once: `status: "canceled"` (`updated_at` 22:31:41.395); a second `DELETE` → `invalid_action`, `shipment_status: "canceled"`. Eight seconds later the same shipment was **`offer_selected`** (`updated_at` 22:31:41.758), with a selected offer and a payment attempt that failed only for lack of funds. InPost's own purchase, already running when the cancel arrived, wrote over it 0.36 s later.
+`shipments.cancel` is optional in the SDK, and this connector leaves it out: the core then tells a person that this Carrier cannot be asked to cancel. A seller cancels a shipment in InPost's manager, and a label that is never used is cancelled by InPost itself after 45 days [451903492].
 
-So in simplified mode a `204` can be followed by InPost buying the label anyway, and the only moment a cancel is accepted at all is the moment that purchase runs. The connector reports `cancelled` for that `204`, which is final in Hanza: **on an account with funds this may be a paid label for a Shipment Hanza shows as cancelled.** The exposure is small (a person does not cancel within half a second of the create; later InPost answers `invalid_action`), but it is not closed. Once seen, with no funds, on the sandbox. Open, for the owner of #126:
+What ShipX offers is `DELETE /v1/shipments/{id}` [18153504], answering `204`, and only while the shipment is `created` or `offers_prepared`; otherwise `400 invalid_action`. In simplified mode that is no offer at all. All of the following is _observed_ on the sandbox, 2026-10-10:
 
-- have the connector read the shipment again a few seconds after a `204` and report `cancelled` only if it is still `canceled` (how long is enough is a guess);
-- or have the core track a cancelled Shipment once more later;
-- or not offer `shipments.cancel` for InPost in simplified mode.
+- **The window is 0.1 to 0.5 s.** A shipment is `offer_selected` that soon after its `POST`. Of four cancels sent 0.1 s after the `POST`'s answer, one came in time; the others got `invalid_action` with `details: {"action":"cancel","shipment_status":"offer_selected",…}`. No person presses a button in that time, so in practice every cancel would be refused as too late.
+- **A cancel that came in time was taken back.** Shipment 14588080: `POST` at 22:31:40.975; `DELETE` 0.1 s after the answer → `204`; read at once: `status: "canceled"` (`updated_at` 22:31:41.395); a second `DELETE` → `invalid_action` with `shipment_status: "canceled"`. Eight seconds later the same shipment was `offer_selected` (`updated_at` 22:31:41.758), with a selected offer and a payment attempt that failed only for lack of funds. InPost's own purchase, already running when the cancel arrived, wrote over it 0.36 s later. The only moment ShipX accepts a cancel is the moment that purchase runs, so a `204` proves nothing: on an account with funds it would have been a paid label for a Shipment Hanza showed as cancelled, for good. Seen once; forty minutes later the shipment was still `offer_selected`.
+- **A cancelled shipment leaves every listing.** ShipX keeps it, as `canceled`, and a second `DELETE` gets `invalid_action`, never a 404; but the plain list and the `created_at_gteq` search no longer have it, and `status=canceled` lists nothing. Only `GET /v1/shipments/{id}` and the `id` filter do. 14588080 stayed out of the listings after it came back to life, which is also why the search before a create treats a `count` that drops as a reason to stop.
+- A `404` on a shipment is "no access to the resource or the shipment does not exist" [18153611]: a token of another organization gets it for a label that is bought. It says nothing about a cancel.
 
-Such a shipment also **leaves the listings**: 24 minutes later 14588080 was still alive and still in neither the search nor the plain list. Cancelled shipments are listed nowhere (`status=canceled` gives 0); only `GET /v1/shipments/{id}` and the `id` filter have them.
+To offer a cancel again, InPost would have to accept one after the purchase, or the connector would have to create in offer mode (no `service` in the `POST`, then an explicit buy [18153503, 18153611]), where by the documentation a shipment waits in `offers_prepared` until it is bought. Neither is the case today.
+
 
 ## Rate limits
 
-InPost publishes none; the API is behind Cloudflare. Declared, as an **assumption**: per Connection 60 requests a minute and 2 at a time. A create costs 1 request for every 100 shipments the organization made in the last hour (at least 1), then the `POST`; a track 1; a label 1; a cancel 1 or 2. A 429 goes through `errorFromResponse` with its `Retry-After`. To confirm with InPost support. Nothing was limited during the probes (three or four requests a second for 5 s, several times).
+InPost publishes none; the API is behind Cloudflare. Declared, as an **assumption**: per Connection 60 requests a minute and 2 at a time. A create costs 1 request for every 100 shipments the organization made in the search's window (the last 15 minutes for a first attempt; at least 1), then the `POST`; a track 1; a label 1. A 429 goes through `errorFromResponse` with its `Retry-After`. To confirm with InPost support. Nothing was limited during the probes (three or four requests a second for 5 s, several times).
 
 ## Paging (_observed_)
 
@@ -277,22 +294,23 @@ A first recording of the conformance run was made on 2026-10-10 and not committe
 
 | Cassette | What it shows |
 | --- | --- |
-| `conformance`, `conformance-unauthorized` | the conformance kit's run (S1 to S7, C11) for a locker Shipment: create, repeated create, track, label too early then ready, a rejected create, cancel twice (too late). The unauthorized one also holds the search, for the auth checks the kit is to run on `shipments.create` |
+| `conformance`, `conformance-unauthorized` | the conformance kit's run (S1 to S6, C11) for a locker Shipment: create, repeated create, track beside an id InPost does not have, label too early then ready, a rejected create. The unauthorized one holds the track answered 401 and then the search of a create answered 401, and no `POST`. C14 and S8 answer with the kit's own 403 and 500 and record nothing |
 | `create-lost-answer` | the repeat of a create finds the shipment by reference; one `POST` in all |
 | `create-list-lag` | as on the sandbox: the search right after the `POST` is empty; the one after the wait finds the shipment; one `POST` in all |
 | `create-search-inconsistent` | the listing counts five shipments and serves two: no `POST` |
-| `create-clock-skew` | the answer's `Date` an hour from the server's clock: no `POST`. The `date` header is put in by hand; a recording keeps none |
+| `create-clock-skew` | the answer's `Date` ten minutes from the server's clock: no `POST`. The `date` header is put in by hand; a recording keeps none |
 | `create-untranslatable-status` | the repeat finds the shipment in a status InPost added: `created`, `ready`, no `POST` |
 | `create-unknown-target-point` | `validation_failed`, nested, for a locker that does not exist |
 | `create-redirect` | a 307 on the `POST`: one `POST`, to InPost, and nothing to the other host |
 | `create-courier-cod`, `create-locker-cod` | cash on delivery with insurance, for each service (hand-written: the account could do neither) |
 | `track-failed-purchase` | the failed payment as observed (`debt_collection`, `company_data_missing`); an unavailable offer; an expired one |
 | `track-status-groups` | one shipment per Shipment status, a status InPost added, a shipment nobody asked for, an id InPost does not have, two pages |
+| `track-unknown-id` | as on the sandbox: an id InPost does not have, asked beside a real one, is left out of the list |
+| `track-id-refused` | a list refused for one of its ids (`400 validation_failed`, the id inside a key): asked again in halves, that id left out. Hand-written: not seen for an id of ShipX's own form |
 | `label-too-early`, `label-not-pdf` | `invalid_action`; an HTML page answered with 200, then the PDF |
-| `cancel-in-time`, `cancel-too-late`, `cancel-not-found` | 204 and its repeat (kept as `canceled`); `invalid_action` once InPost went on; 404 |
 | `errors` | 401, 403, 404 on the organization, 429 with `Retry-After`, 500 |
 
-**Recording the conformance cassettes from the sandbox.** It needs an account **with funds**, and the SDK's kit with `shipment.repeatWaitMs` (not in the kit yet: without it the repeated create is sent at once, meets the lag and posts a second parcel).
+**Recording the conformance cassettes from the sandbox.** It needs an account **with funds**: checked four times on 2026-10-10 (22:28, 22:55, 23:11, 23:19), there were none. The test already waits 10 s before the kit's repeated create (`shipment.repeatWaitMs`, twice the worst lag measured), so the repeat finds the shipment instead of posting a second parcel, and asks the kit to track an id InPost does not have (`unknownExternalId: '999999999999'`).
 
 1. Put `packages/connectors/inpost/.recording/credentials.json` in place (ignored by git):
 
@@ -300,16 +318,15 @@ A first recording of the conformance run was made on 2026-10-10 and not committe
    { "apiToken": "…", "organizationId": "12345", "targetPoint": "KRA010" }
    ```
 
-   `targetPoint` is a locker that exists on the sandbox. The account should have made **no shipment in the last hour**: the search lists those, and their receivers would shift the placeholder numbers.
-2. Set `repeatWaitMs` in `src/connector.test.ts` above the lag (10 s; the `TODO` marks the place).
-3. From the repository root:
+   `targetPoint` is a locker that exists on the sandbox. The account should have made **no shipment in the last 15 minutes**: the search lists those, and their receivers would shift the placeholder numbers.
+2. From the repository root:
 
    ```sh
    HANZA_RECORD_FIXTURES=1 pnpm --filter @hanza/connector-inpost exec vitest run src/connector.test.ts
    ```
 
    It creates **one locker shipment that InPost buys** (sandbox funds), under a fresh `reference` and `requestedAt`, and one request InPost refuses. It waits 3 s between label attempts. The cassettes are written even when a check fails: do not commit a recording that did not reach a Label.
-4. Read the diff, run `pnpm --filter @hanza/connector-inpost test` without the variable, delete `.recording/`.
+3. Read the diff, run `pnpm --filter @hanza/connector-inpost test` without the variable, delete `.recording/`.
 
 **A recording commits the organization id of the account it was made with**: it is in every organization path (`/organizations/7008/…` for the owner's sandbox account), in the `href` and `Link` of every list, and the resource carries the account's `application_id` and `owner_id`. None of them is a secret, and none can be scrubbed without breaking the replay. The token, the sender and the receiver are scrubbed.
 
@@ -317,4 +334,4 @@ A replay reads the organization id, the locker and the two references back from 
 
 Expect these differences from the hand-written cassettes, and fix the connector or this file where they contradict it: ids, tracking number and timestamps; the organization id in every path; how many label attempts the purchase took, and whether the status seen between them is `offer_selected`; the label's content type; whether a shipment past `confirmed` still carries `offers` and `transactions`.
 
-The scenario cassettes (`src/scenarios.test.ts`) are skipped when recording and are never overwritten. Those that could be recorded once someone writes the steps: lost answer, list lag, unknown target point, label too early, cancel in time and too late, the failed payment (an account without funds). The rest cannot: statuses after `confirmed`, unavailable offers on demand, an inconsistent listing, a skewed clock, a redirect, and error statuses.
+The scenario cassettes (`src/scenarios.test.ts`) are skipped when recording and are never overwritten. Those that could be recorded once someone writes the steps: lost answer, list lag, unknown target point, label too early, an id InPost does not have, the failed payment (an account without funds). The rest cannot: statuses after `confirmed`, unavailable offers on demand, an inconsistent listing, a skewed clock, a redirect, and error statuses.
