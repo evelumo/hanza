@@ -1,4 +1,5 @@
 import type { AttentionReason, ConnectionHealth, SyncErrorKind, SyncStream } from '@hanza/db'
+import { STOCK_UNSET_SECTION_ID } from '../products/offers/form-id'
 
 export type SetupStepId = 'connect' | 'products' | 'stock'
 
@@ -66,6 +67,7 @@ export type AttentionItem =
   | { kind: 'connection_sign_in'; href: string; name: string }
   | ({ kind: 'orders'; href: string } & AttentionOrders)
   | { kind: 'unlinked_offers'; href: string; count: number }
+  | { kind: 'stock_unset_offers'; href: string; count: number }
 
 /**
  * What waits for a person, most blocking first: a Connection that does not synchronise makes every number
@@ -75,6 +77,8 @@ export function attentionItems(state: {
   connections: ConnectionState[]
   orders: AttentionOrders
   unlinkedOffers: number
+  /** Linked Offers whose Product has unset Stock: nothing is sent to them until it is saved (#137). */
+  stockUnsetOffers: number
 }): AttentionItem[] {
   const items: AttentionItem[] = []
   const href = (connectionId: string) => `/connections/${connectionId}`
@@ -89,6 +93,9 @@ export function attentionItems(state: {
   }
   if (state.orders.total > 0) items.push({ kind: 'orders', href: '/orders?attention=1', ...state.orders })
   if (state.unlinkedOffers > 0) items.push({ kind: 'unlinked_offers', href: '/products/offers', count: state.unlinkedOffers })
+  if (state.stockUnsetOffers > 0) {
+    items.push({ kind: 'stock_unset_offers', href: `/products/offers#${STOCK_UNSET_SECTION_ID}`, count: state.stockUnsetOffers })
+  }
   return items
 }
 

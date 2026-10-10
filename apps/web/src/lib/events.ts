@@ -40,7 +40,8 @@ function detail(t: Translator, format: EventFormatters, type: string, payload: P
   const { number } = format
   switch (type) {
     case 'stock.set':
-      return arrow(formatted(payload.from, number), formatted(payload.to, number))
+      // `from` is null when the Stock was saved for the first time (#137).
+      return arrow(payload.from === null ? t('events.stockNotSet') : formatted(payload.from, number), formatted(payload.to, number))
     case 'stock.reserved':
     case 'stock.released':
     case 'stock.consumed':

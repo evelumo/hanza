@@ -50,7 +50,7 @@ test('a second organization sees none of the first one’s data and cannot act o
   await other.goto('/products')
   await expect(other.getByText('No products yet', { exact: true })).toBeVisible()
   await other.goto('/products/offers')
-  await expect(other.getByText('Every offer has a product.')).toBeVisible()
+  await expect(other.getByText('Every offer has a product, and every product its stock.')).toBeVisible()
   await other.goto('/connections')
   await expect(other.getByText('There are no connections yet.')).toBeVisible()
   for (const path of [`/orders/${orderId}`, `/products/${productId}`, `/connections/${connectionId}`]) {

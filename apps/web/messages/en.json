@@ -54,7 +54,7 @@
     },
     "count": {
       "orders": "Orders, {count, plural, one {# needs attention} other {# need attention}}",
-      "offers": "Offers, {count, plural, one {# has no product} other {# have no product}}"
+      "offers": "Offers, {count, plural, one {# needs attention} other {# need attention}}"
     },
     "search": {
       "label": "Search"
@@ -170,7 +170,9 @@
       "connectionSignIn": "Connection {name} needs to sign in again",
       "connectionSignInHint": "It does not sync until someone signs in again.",
       "unlinkedOffers": "{count, plural, one {# offer has no product} other {# offers have no product}}",
-      "unlinkedOffersHint": "Stock and prices are not sent to an offer until it is linked to a product."
+      "unlinkedOffersHint": "Stock and prices are not sent to an offer until it is linked to a product.",
+      "stockUnsetOffers": "{count, plural, one {# offer waits for its product's stock} other {# offers wait for their products' stock}}",
+      "stockUnsetOffersHint": "Nothing is sent to them until the stock is saved."
     },
     "phases": {
       "title": "Orders by phase",
@@ -226,6 +228,8 @@
       "stockDescription": "Hanza is the source of truth for stock. Set it per warehouse. A line of an order is never split between warehouses, so each channel is told the most that one of its warehouses can cover (and never more than all of them together), less its safety buffer, and at most its channel limit.",
       "stockSaved": "Saved. The new stock will be sent to the channels.",
       "saveStock": "Save stock",
+      "stockUnsetTitle": "Stock not set",
+      "stockUnset": "Nothing is sent to the channels until you save this product's stock. Enter the units you have in each warehouse, 0 included.",
       "priceTitle": "Price",
       "priceDescription": "Hanza owns prices. The base price goes to every linked offer without a price of its own, wherever the channel sells in the same currency. Without a base price, nothing is sent.",
       "offersTitle": "Offers",
@@ -331,10 +335,12 @@
     }
   },
   "offers": {
-    "title": "Offers without a product",
-    "description": "Offers pulled from channels whose SKU does not match any product. Link each one to a product or create products from them: until then Hanza sends them neither stock nor a price.",
+    "title": "Offers that need attention",
+    "description": "Hanza sends an offer its stock and price only once the offer is linked to a product, and its stock only once that product's stock is saved. These offers still miss one of the two.",
+    "unlinkedTitle": "Without a product",
+    "unlinkedDescription": "Offers pulled from channels whose SKU does not match any product. Link each one to a product or create products from them: until then Hanza sends them neither stock nor a price.",
     "createTitle": "Create products from offers",
-    "createDescription": "Select the offers that have a SKU in the table. A product gets the offer's SKU and name and a stock of 0. It gets no price: set one on the product, and only then is it sent to the channels.",
+    "createDescription": "Select the offers that have a SKU in the table. A product gets the offer's SKU and name, but no stock: nothing is sent to the channels until you save its stock on the product. It gets no price either: set one on the product, and only then is it sent to the channels.",
     "create": "Create products from selected",
     "creating": "Creating…",
     "created": "{count, plural, one {Created # product.} other {Created # products.}}",
@@ -346,8 +352,22 @@
       "already_linked": "the offer is already linked"
     },
     "selected": "{count, plural, =0 {No offers selected} one {# offer selected} other {# offers selected}}",
-    "emptyTitle": "Nothing to link",
-    "empty": "Every offer has a product. New offers will appear after a connection syncs.",
+    "emptyTitle": "Nothing needs attention",
+    "empty": "Every offer has a product, and every product its stock. New offers will appear after a connection syncs.",
+    "stockUnset": {
+      "title": "Stock not set",
+      "description": "These offers are linked to a product whose stock nobody has saved yet. Nothing is sent to their channels until you save it on the product, so each channel keeps the number it has.",
+      "badge": "Stock not set",
+      "columns": {
+        "offer": "Offer",
+        "product": "Product",
+        "connection": "Connection",
+        "stock": "Stock"
+      },
+      "setStock": "Set stock",
+      "setStockOf": "Set stock of {product}",
+      "more": "{count, plural, one {# more offer is not shown.} other {# more offers are not shown.}}"
+    },
     "newTab": "opens in a new tab",
     "columns": {
       "connection": "Connection",
@@ -850,6 +870,7 @@
     "retentionOff": "kept",
     "ordersErased": "{count, plural, one {# order erased} other {# orders erased}}",
     "allWarehouses": "all warehouses",
+    "stockNotSet": "not set",
     "someWarehouses": "{count, plural, one {# chosen warehouse} other {# chosen warehouses}}",
     "priority": "priority {change}",
     "feedRestartGap": "orders placed and closed meanwhile may be missing",
@@ -1067,6 +1088,7 @@
     "retryPrice": "Retry sending the price",
     "stock": {
       "not_linked": "Not sent: the offer is not linked to a product.",
+      "unset": "Not sent: the product's stock is not set. Nothing is sent to the channel until you save it.",
       "pending": "Waiting to be sent.",
       "not_sent": "Not sent: the offer has ended on the channel, and there is no stock to reopen it with.",
       "pushed": "{count, plural, one {# unit} other {# units}} sent {date}."
