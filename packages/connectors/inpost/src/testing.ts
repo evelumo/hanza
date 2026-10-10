@@ -25,6 +25,9 @@ export const inpostScrub: ScrubConfig = {
     comments: 'text',
     // A recording sends a fresh reference every time; as a placeholder the cassette stays the same.
     reference: 'text',
+    // The code the sender opens a locker with to hand the parcel in, on the resource from `confirmed` on. Whoever
+    // has it can hand in a parcel as this shipment, so it is kept out even though a recording is a sandbox's.
+    customer_delivering_code: 'secret',
   },
   paths: { 'receiver.name': 'text', 'items.receiver.name': 'text' },
   // The Label prints the receiver's name and address and cannot be scrubbed: the recorder puts a blank PDF in its place.

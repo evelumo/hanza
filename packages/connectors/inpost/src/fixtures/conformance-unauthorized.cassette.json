@@ -4,7 +4,7 @@
     {
       "request": {
         "method": "GET",
-        "url": "https://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?id=1600000101&page=1&per_page=100",
+        "url": "https://sandbox-api-shipx-pl.easypack24.net/v1/organizations/7008/shipments?id=14588109&page=1&per_page=100",
         "headers": {
           "accept": "application/json"
         },
@@ -28,7 +28,7 @@
     {
       "request": {
         "method": "GET",
-        "url": "https://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?created_at_gteq=1791621900&sort_by=created_at&sort_order=asc&page=1&per_page=100",
+        "url": "https://sandbox-api-shipx-pl.easypack24.net/v1/organizations/7008/shipments?created_at_gteq=1791673182&sort_by=created_at&sort_order=asc&page=1&per_page=100",
         "headers": {
           "accept": "application/json"
         },

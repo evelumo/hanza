@@ -145,7 +145,8 @@
                 "additional_services": [],
                 "custom_attributes": {
                   "target_point": "KRA010",
-                  "sending_method": "any_point"
+                  "sending_method": "any_point",
+                  "customer_delivering_code": "[scrubbed]"
                 },
                 "cod": {
                   "amount": null,
@@ -187,7 +188,7 @@
                 "selected_offer": {
                   "id": 1600700402,
                   "status": "bought",
-                  "expires_at": "2026-10-10T11:05:02.807+02:00",
+                  "expires_at": null,
                   "rate": null,
                   "currency": "PLN",
                   "additional_services": [],
@@ -207,7 +208,7 @@
                   {
                     "id": 1600700402,
                     "status": "bought",
-                    "expires_at": "2026-10-10T11:05:02.807+02:00",
+                    "expires_at": null,
                     "rate": null,
                     "currency": "PLN",
                     "additional_services": [],
@@ -275,7 +276,8 @@
                 "additional_services": [],
                 "custom_attributes": {
                   "target_point": "KRA010",
-                  "sending_method": "any_point"
+                  "sending_method": "any_point",
+                  "customer_delivering_code": "[scrubbed]"
                 },
                 "cod": {
                   "amount": null,
@@ -317,7 +319,7 @@
                 "selected_offer": {
                   "id": 1600700403,
                   "status": "bought",
-                  "expires_at": "2026-10-10T11:05:02.807+02:00",
+                  "expires_at": null,
                   "rate": null,
                   "currency": "PLN",
                   "additional_services": [],
@@ -337,7 +339,7 @@
                   {
                     "id": 1600700403,
                     "status": "bought",
-                    "expires_at": "2026-10-10T11:05:02.807+02:00",
+                    "expires_at": null,
                     "rate": null,
                     "currency": "PLN",
                     "additional_services": [],
@@ -405,7 +407,8 @@
                 "additional_services": [],
                 "custom_attributes": {
                   "target_point": "KRA010",
-                  "sending_method": "any_point"
+                  "sending_method": "any_point",
+                  "customer_delivering_code": "[scrubbed]"
                 },
                 "cod": {
                   "amount": null,
@@ -447,7 +450,7 @@
                 "selected_offer": {
                   "id": 1600700404,
                   "status": "bought",
-                  "expires_at": "2026-10-10T11:05:02.807+02:00",
+                  "expires_at": null,
                   "rate": null,
                   "currency": "PLN",
                   "additional_services": [],
@@ -467,7 +470,7 @@
                   {
                     "id": 1600700404,
                     "status": "bought",
-                    "expires_at": "2026-10-10T11:05:02.807+02:00",
+                    "expires_at": null,
                     "rate": null,
                     "currency": "PLN",
                     "additional_services": [],
@@ -535,7 +538,8 @@
                 "additional_services": [],
                 "custom_attributes": {
                   "target_point": "KRA010",
-                  "sending_method": "any_point"
+                  "sending_method": "any_point",
+                  "customer_delivering_code": "[scrubbed]"
                 },
                 "cod": {
                   "amount": null,
@@ -577,7 +581,7 @@
                 "selected_offer": {
                   "id": 1600700405,
                   "status": "bought",
-                  "expires_at": "2026-10-10T11:05:02.807+02:00",
+                  "expires_at": null,
                   "rate": null,
                   "currency": "PLN",
                   "additional_services": [],
@@ -597,7 +601,7 @@
                   {
                     "id": 1600700405,
                     "status": "bought",
-                    "expires_at": "2026-10-10T11:05:02.807+02:00",
+                    "expires_at": null,
                     "rate": null,
                     "currency": "PLN",
                     "additional_services": [],
@@ -692,7 +696,8 @@
                 "additional_services": [],
                 "custom_attributes": {
                   "target_point": "KRA010",
-                  "sending_method": "any_point"
+                  "sending_method": "any_point",
+                  "customer_delivering_code": "[scrubbed]"
                 },
                 "cod": {
                   "amount": null,
@@ -734,7 +739,7 @@
                 "selected_offer": {
                   "id": 1600700406,
                   "status": "bought",
-                  "expires_at": "2026-10-10T11:05:02.807+02:00",
+                  "expires_at": null,
                   "rate": null,
                   "currency": "PLN",
                   "additional_services": [],
@@ -754,7 +759,7 @@
                   {
                     "id": 1600700406,
                     "status": "bought",
-                    "expires_at": "2026-10-10T11:05:02.807+02:00",
+                    "expires_at": null,
                     "rate": null,
                     "currency": "PLN",
                     "additional_services": [],
@@ -822,7 +827,8 @@
                 "additional_services": [],
                 "custom_attributes": {
                   "target_point": "KRA010",
-                  "sending_method": "any_point"
+                  "sending_method": "any_point",
+                  "customer_delivering_code": "[scrubbed]"
                 },
                 "cod": {
                   "amount": null,
@@ -864,7 +870,7 @@
                 "selected_offer": {
                   "id": 1600700407,
                   "status": "bought",
-                  "expires_at": "2026-10-10T11:05:02.807+02:00",
+                  "expires_at": null,
                   "rate": null,
                   "currency": "PLN",
                   "additional_services": [],
@@ -884,7 +890,7 @@
                   {
                     "id": 1600700407,
                     "status": "bought",
-                    "expires_at": "2026-10-10T11:05:02.807+02:00",
+                    "expires_at": null,
                     "rate": null,
                     "currency": "PLN",
                     "additional_services": [],
@@ -1035,7 +1041,8 @@
                 "additional_services": [],
                 "custom_attributes": {
                   "target_point": "KRA010",
-                  "sending_method": "any_point"
+                  "sending_method": "any_point",
+                  "customer_delivering_code": "[scrubbed]"
                 },
                 "cod": {
                   "amount": null,
@@ -1077,7 +1084,7 @@
                 "selected_offer": {
                   "id": 1600700409,
                   "status": "bought",
-                  "expires_at": "2026-10-10T11:05:02.807+02:00",
+                  "expires_at": null,
                   "rate": null,
                   "currency": "PLN",
                   "additional_services": [],
@@ -1097,7 +1104,7 @@
                   {
                     "id": 1600700409,
                     "status": "bought",
-                    "expires_at": "2026-10-10T11:05:02.807+02:00",
+                    "expires_at": null,
                     "rate": null,
                     "currency": "PLN",
                     "additional_services": [],
@@ -1165,7 +1172,8 @@
                 "additional_services": [],
                 "custom_attributes": {
                   "target_point": "KRA010",
-                  "sending_method": "any_point"
+                  "sending_method": "any_point",
+                  "customer_delivering_code": "[scrubbed]"
                 },
                 "cod": {
                   "amount": null,
@@ -1207,7 +1215,7 @@
                 "selected_offer": {
                   "id": 1600700499,
                   "status": "bought",
-                  "expires_at": "2026-10-10T11:05:02.807+02:00",
+                  "expires_at": null,
                   "rate": null,
                   "currency": "PLN",
                   "additional_services": [],
@@ -1227,7 +1235,7 @@
                   {
                     "id": 1600700499,
                     "status": "bought",
-                    "expires_at": "2026-10-10T11:05:02.807+02:00",
+                    "expires_at": null,
                     "rate": null,
                     "currency": "PLN",
                     "additional_services": [],

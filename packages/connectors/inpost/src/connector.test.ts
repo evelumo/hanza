@@ -1,7 +1,10 @@
 import type { ShipmentRequest } from '@hanza/connector-sdk'
 import { isRecording, loadCassette, runConformance, Scrubber } from '@hanza/connector-sdk/testing'
 import { describe, expect, it } from 'vitest'
+import { z } from 'zod'
+import { shipxShipmentSchema } from './api'
 import { inpostConnector } from './index'
+import { toShipmentState } from './mapping'
 import { inpostMatch, inpostScrub, loadRecordingCredentials, recordedConformance } from './testing'
 
 const fixtures = new URL('./fixtures/', import.meta.url)
@@ -82,6 +85,57 @@ describe('the conformance cassette', { skip: isRecording() }, () => {
       ['GET', 'by id', 401],
       ['GET', 'search', 401],
     ])
+  })
+
+  // The resources ShipX really answered, through the connector's own schema and mapping.
+  const recordedShipments = async () => {
+    const body = z.object({ json: z.unknown() })
+    const resource = z.object({ id: z.number(), status: z.string() }).passthrough()
+    const list = z.object({ items: z.array(resource) })
+    const { interactions } = await loadCassette(conformanceCassette)
+    return interactions.flatMap(({ response }) => {
+      const json = body.safeParse(response.body).data?.json
+      const items = list.safeParse(json)
+      if (items.success) return items.data.items
+      const one = resource.safeParse(json)
+      return one.success ? [one.data] : []
+    })
+  }
+
+  it('was recorded with a shipment InPost bought: a tracking number of 24 digits, a bought offer, a payment that went through', async () => {
+    const bought = (await recordedShipments()).filter((shipment) => shipment.status === 'confirmed')
+    expect(bought.length).toBeGreaterThan(0)
+    for (const shipment of bought) {
+      expect(shipment.tracking_number).toMatch(/^\d{24}$/)
+      expect(shipment).toMatchObject({ offers: [{ status: 'bought' }], selected_offer: { status: 'bought' }, transactions: [{ status: 'success' }] })
+    }
+  })
+
+  it('maps every resource of the recording, and keeps nothing of it but the state', async () => {
+    const shipments = await recordedShipments()
+    expect(shipments.length).toBeGreaterThan(1)
+    for (const raw of shipments) {
+      const parsed = shipxShipmentSchema.parse(raw)
+      // The receiver, the sender and the code the parcel is handed in with stay behind in the answer.
+      expect(Object.keys(parsed).sort()).toEqual(['id', 'offers', 'reference', 'service', 'status', 'tracking_number', 'transactions'])
+      const state = toShipmentState(parsed)
+      expect(state).toEqual({
+        externalId: String(raw.id),
+        status: raw.status === 'confirmed' ? 'ready' : 'pending',
+        trackingNumber: raw.status === 'confirmed' ? raw.tracking_number : null,
+        carrierStatus: raw.status,
+      })
+    }
+  })
+
+  it('keeps the code a parcel is handed in with out of the cassette', async () => {
+    const codes = (await recordedShipments()).flatMap((shipment) => {
+      const attributes = z.object({ customer_delivering_code: z.string() }).safeParse(shipment.custom_attributes)
+      return attributes.success ? [attributes.data.customer_delivering_code] : []
+    })
+    // ShipX sends it from `confirmed` on; the scrub config declares it a secret.
+    expect(codes.length).toBeGreaterThan(0)
+    expect(new Set(codes)).toEqual(new Set(['[scrubbed]']))
   })
 
   it('holds the placeholder of the recorder where the Label was, never a real one', async () => {
