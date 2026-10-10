@@ -15,7 +15,8 @@ import { pushRejectionCodeSchema } from './push-result'
  * - `delivered`: the Buyer has it. Final.
  * - `returned`: back with the sender. Final.
  * - `cancelled`: cancelled or expired before the Carrier took it. Final.
- * - `failed`: the Carrier never confirmed it (no offer, payment failed). Final.
+ * - `failed`: the Carrier will never confirm it (no offer is left to buy). Final, so not for a payment that failed
+ *   while the Carrier may still take another: that Shipment stays `pending`, with the reason as its carrier status.
  */
 export const SHIPMENT_STATUSES = [
   'pending',
