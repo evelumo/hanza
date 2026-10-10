@@ -22,11 +22,13 @@ const CANCEL_UNSUPPORTED_CODE = 'cancel_unsupported'
  * people asked for, then one call for the states, each applied under its Order's lock (the first status that means the
  * Carrier has the parcel ships the Order, ADR 0024), then the Label of every Shipment that is confirmed and has none.
  *
- * Cancelling is done here and not in a job of its own, so one job per Connection is the only writer of what a Carrier
- * says about a Shipment it knows: a cancel and a status of the same Shipment never race, a lost enqueue is found by
- * the same sweep (`nextCheckAt`), and a failure lands on the same stream.
+ * Cancelling is done here and not in a job of its own, so the run that claimed a Shipment is the only writer of what
+ * a Carrier says about it: a cancel and a status of the same Shipment never race, a lost enqueue is found by the same
+ * sweep (`nextCheckAt`), and a failure lands on the same stream.
  *
- * The job claims its batch (see `claimDueShipmentChecks`). What fails for one Shipment stays that Shipment's: a
+ * The job claims its batch (see `claimDueShipmentChecks`), which is what keeps two runs apart: the Connection's runs
+ * are coalesced, but the delayed first check of a new Shipment (`shipments.create`) is a run of its own and may come
+ * beside another one. What fails for one Shipment stays that Shipment's: a
  * cancel the Carrier's API refuses, or a Label that cannot be had, never costs the others of the batch their status,
  * since a pickup that is not applied leaves an Order open and its Stock reserved. The failure is recorded like any
  * connector call's, the rest of the batch is tracked and applied, and the first such error is thrown when the batch

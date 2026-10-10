@@ -36,6 +36,8 @@ describe.skipIf(!databaseUrl)('requestShipmentCheck', () => {
     const track = () => shipmentsTrackJob.handler(ctx, { organizationId: org, connectionId: carrierId }, jobRun)
     const confirmed = async () => {
       await shipmentsCreateJob.handler(ctx, { organizationId: org, shipmentId }, jobRun)
+      // The delayed first check of a new Shipment: not what these tests are about.
+      ctx.queue.waiting.length = 0
       const { externalId } = carrier.byReference(shipmentId)!
       carrier.advance(externalId, 'ready')
       await ctx.db.$executeRaw`UPDATE "shipment" SET "nextCheckAt" = now() WHERE "id" = ${shipmentId}`

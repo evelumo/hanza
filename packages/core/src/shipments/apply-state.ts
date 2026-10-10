@@ -9,7 +9,14 @@ import { shipOrderOnPickup, type PickupOutcome } from '../orders/ship-on-pickup'
 import { lockOrder } from '../stock/locks'
 import { ensureDefaultWarehouse } from '../stock/warehouse'
 import { TX_OPTIONS } from '../transaction'
-import { CARRIER_TIMEOUT_CODE, confirmationTimedOut, databaseNow, nextShipmentCheck, SHIPMENT_CONFIRM_TIMEOUT_MS } from './schedule'
+import {
+  CARRIER_TIMEOUT_CODE,
+  confirmationTimedOut,
+  databaseNow,
+  nextShipmentCheck,
+  SHIPMENT_CONFIRM_TIMEOUT_MS,
+  SHIPMENT_FIRST_CHECK_MS,
+} from './schedule'
 import { isFinalStatus, isHandedOver, isUnconfirmed, statusStage, type ShipmentStatus } from './statuses'
 
 const shipmentSelect = {
@@ -80,15 +87,28 @@ interface StatusWrite {
  * cancel is due at once, whatever its status says about when to look again, so the cancel goes out with the next run.
  * Caller holds the lock of `lockShipment`.
  *
+ * The write that stores the Carrier's answer to the request (`answered`) leaves a Shipment that is not confirmed yet,
+ * or has no Label, due within seconds instead of at its interval (`SHIPMENT_FIRST_CHECK_MS`): `firstCheck` in the
+ * result says so, for the caller to enqueue the check that the tick would otherwise make a minute later.
+ *
  * Events: `shipment.failed` or `shipment.status_changed` for a new status. A Shipment that stays unconfirmed while
  * its Carrier's own status changes to another one gets `shipment.carrier_status_changed`, because that status is
  * then the only thing that says what it waits for (funds on the account, say); a Carrier status that moves under a
  * later Shipment status is tracking detail and is only stored, so a poll never floods the timeline.
  */
-export async function writeShipmentStatus(tx: Tx, organizationId: string, shipment: LockedShipment, write: StatusWrite): Promise<void> {
+export async function writeShipmentStatus(
+  tx: Tx,
+  organizationId: string,
+  shipment: LockedShipment,
+  write: StatusWrite,
+): Promise<{ firstCheck: boolean }> {
   const { status, now } = write
   const final = isFinalStatus(status)
-  const next = nextShipmentCheck(status, shipment.createdAt, now, { awaitsLabel: awaitsLabel(shipment, status) })
+  const labelAwaited = awaitsLabel(shipment, status)
+  const firstCheck = write.answered === true && (isUnconfirmed(status) || labelAwaited)
+  const next = firstCheck
+    ? new Date(now.getTime() + SHIPMENT_FIRST_CHECK_MS)
+    : nextShipmentCheck(status, shipment.createdAt, now, { awaitsLabel: labelAwaited })
   const unknownOutcome = !write.answered && mayExistAtCarrier(shipment)
   await tx.shipment.updateMany({
     where: { id: shipment.id, organizationId },
@@ -123,7 +143,7 @@ export async function writeShipmentStatus(tx: Tx, organizationId: string, shipme
         payload: { shipmentId: shipment.id, status, from: shipment.carrierStatus, to: reported },
       })
     }
-    return
+    return { firstCheck }
   }
   if (status === 'failed') {
     const payload = {
@@ -133,7 +153,7 @@ export async function writeShipmentStatus(tx: Tx, organizationId: string, shipme
       ...(unknownOutcome ? { createAttempted: true } : {}),
     }
     await appendEvent(tx, { organizationId, type: 'shipment.failed', subject, payload })
-    return
+    return { firstCheck }
   }
   await appendEvent(tx, {
     organizationId,
@@ -147,12 +167,20 @@ export async function writeShipmentStatus(tx: Tx, organizationId: string, shipme
       ...(write.actor ? { actor: write.actor } : {}),
     },
   })
+  return { firstCheck }
 }
 
 export type AppliedState =
   /** There is no such Shipment, it is final already, or the state is another Shipment's. */
   | { applied: false; reason: 'not_found' | 'final' | 'other_shipment' }
-  | { applied: true; status: ShipmentStatus; pickup: PickupOutcome['outcome'] | null; cancelRequested: boolean }
+  | {
+      applied: true
+      status: ShipmentStatus
+      pickup: PickupOutcome['outcome'] | null
+      cancelRequested: boolean
+      /** The Carrier's answer to the request was stored and the Shipment is due within seconds (`SHIPMENT_FIRST_CHECK_MS`). */
+      firstCheck: boolean
+    }
 
 /**
  * Applies what a Carrier says about a Shipment, under its Order's lock: status, tracking number, the Carrier's own
@@ -193,13 +221,13 @@ export async function applyShipmentState(
     if (statusStage(state.status) < statusStage(shipment.status)) {
       ctx.log.info('shipment status not moved back', { organizationId, shipmentId, status: shipment.status, reported: state.status })
       await writeShipmentStatus(tx, organizationId, shipment, { status: shipment.status, now })
-      return { applied: true as const, status: shipment.status, orderId: shipment.orderId, pickup: null, cancelRequested }
+      return { applied: true as const, status: shipment.status, orderId: shipment.orderId, pickup: null, cancelRequested, firstCheck: false }
     }
 
     const timedOut = isUnconfirmed(shipment.status) && confirmationTimedOut(state.status, shipment.createdAt, now)
     const status: ShipmentStatus = timedOut ? 'failed' : state.status
     const handedOver = isHandedOver(status) && shipment.handedOverAt === null
-    await writeShipmentStatus(tx, organizationId, shipment, {
+    const { firstCheck } = await writeShipmentStatus(tx, organizationId, shipment, {
       status,
       now,
       // A Carrier that gives up on a Shipment says why in its own status.
@@ -214,12 +242,18 @@ export async function applyShipmentState(
       },
     })
     const pickup = handedOver ? await shipOrderOnPickup(ctx, tx, organizationId, shipment.orderId, shipment.id) : null
-    return { applied: true as const, status, orderId: shipment.orderId, pickup, cancelRequested: cancelRequested && !isFinalStatus(status) }
+    return { applied: true as const, status, orderId: shipment.orderId, pickup, cancelRequested: cancelRequested && !isFinalStatus(status), firstCheck }
   }, TX_OPTIONS)
 
   if (!result.applied) return result
   if (result.pickup?.outcome === 'shipped') await requestPushesAfterStatusMove(ctx, organizationId, result.orderId, result.pickup.move)
-  return { applied: true, status: result.status, pickup: result.pickup?.outcome ?? null, cancelRequested: result.cancelRequested }
+  return {
+    applied: true,
+    status: result.status,
+    pickup: result.pickup?.outcome ?? null,
+    cancelRequested: result.cancelRequested,
+    firstCheck: result.firstCheck,
+  }
 }
 
 /**
@@ -235,7 +269,7 @@ export async function keepShipmentState(ctx: Context, organizationId: string, sh
     const timedOut = confirmationTimedOut(shipment.status, shipment.createdAt, now)
     const status: ShipmentStatus = timedOut ? 'failed' : shipment.status
     await writeShipmentStatus(tx, organizationId, shipment, { status, now, failureCode: CARRIER_TIMEOUT_CODE })
-    return { applied: true as const, status, pickup: null, cancelRequested: shipment.cancelRequestedAt !== null && !timedOut }
+    return { applied: true as const, status, pickup: null, cancelRequested: shipment.cancelRequestedAt !== null && !timedOut, firstCheck: false }
   }, TX_OPTIONS)
 }
 

@@ -17,6 +17,14 @@ export const SHIPMENT_CHECK_MS = {
   handedOver: 3_600_000,
 } as const
 
+/**
+ * How long after its Carrier took the request a Shipment is first checked, when it is not confirmed yet or has no
+ * Label: a person is waiting to print it, and a Carrier confirms within seconds. Measured on InPost's sandbox on
+ * 2026-10-10, a new Shipment shows in the Carrier's list after 5.4 s at most, so the check comes just after that.
+ * Only the first check: the ones after it keep the intervals above.
+ */
+export const SHIPMENT_FIRST_CHECK_MS = 6_000
+
 /** How long after it was requested an unconfirmed Shipment counts as fresh. */
 export const SHIPMENT_FRESH_MS = 600_000
 

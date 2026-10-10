@@ -12,13 +12,14 @@ import { buildShipmentRequest } from '../shipments/build-request'
 import { cancelUnansweredShipment } from '../shipments/cancel'
 import { parseCreateResult } from '../shipments/carrier-answers'
 import { claimShipmentCreate, holdShipmentCreate, releaseShipmentCreate } from '../shipments/claims'
-import { confirmationTimedOut, databaseNow } from '../shipments/schedule'
+import { confirmationTimedOut, databaseNow, SHIPMENT_FIRST_CHECK_MS } from '../shipments/schedule'
 import { withSyncRun } from '../sync/begin-run'
 import { runConnectorCall } from '../sync/run-connector'
 import { coalesceKeys, shipmentsCreateRef, shipmentsTrackRef } from './refs'
 
 /**
- * Stores the Shipment the Carrier answered with; true when a cancel is waiting for it. An answer naming a Shipment
+ * Stores the Shipment the Carrier answered with, and says what it is owed next: `cancelRequested` when a cancel is
+ * waiting for it, `firstCheck` when it is due within seconds. An answer naming a Shipment
  * another row already holds means the connector did not key the request by its `reference`: asking again would only
  * repeat it, so the Shipment fails. An answer for a Shipment that was made final meanwhile is dropped, and the
  * Carrier's id of it is logged, because that Shipment exists at the Carrier and no row follows it.
@@ -27,20 +28,21 @@ async function storeCreated(
   ctx: Context,
   ids: { organizationId: string; connectionId: string; shipmentId: string },
   state: ShipmentState,
-): Promise<boolean> {
+): Promise<{ cancelRequested: boolean; firstCheck: boolean }> {
   const { organizationId, shipmentId } = ids
+  const nothing = { cancelRequested: false, firstCheck: false }
   try {
     const applied = await applyShipmentState(ctx, organizationId, shipmentId, state, 'created')
-    if (applied.applied) return applied.cancelRequested
+    if (applied.applied) return { cancelRequested: applied.cancelRequested, firstCheck: applied.firstCheck }
     // Ids only: the Carrier's id is what a person looks the parcel up by.
     ctx.log.error('shipment create answer dropped', { ...ids, externalId: state.externalId, reason: applied.reason })
-    return false
+    return nothing
   } catch (error) {
     if (!isUniqueViolation(error)) throw error
     ctx.log.error('shipment create answered with the id of another Shipment', ids)
     // The Carrier answered: nothing about this request is unknown.
     await failShipment(ctx, organizationId, shipmentId, 'duplicate_external_id', { answered: true })
-    return false
+    return nothing
   }
 }
 
@@ -64,6 +66,12 @@ async function storeCreated(
  * `shipments_create` stream record it and the Shipment keeps waiting. A transient failure marks the Connection
  * failing at once, since no retry of this job will ask again. Only the Carrier refusing the request, the Buyer data
  * being gone, or 24 hours without an answer fail the Shipment itself.
+ *
+ * A Shipment the Carrier took and has not confirmed yet (or confirmed without a Label) is checked a few seconds
+ * later, not at the next tick: the row is due then (`SHIPMENT_FIRST_CHECK_MS`) and a `shipments.track` of its
+ * Connection is enqueued with that delay. That job is one more run of the Connection's tracking beside the coalesced
+ * one, and two runs never have the same Shipment, because each takes its own by claiming them
+ * (`claimDueShipmentChecks`). If the enqueue is lost, the tick finds the Shipment due.
  */
 export const shipmentsCreateJob = defineJob({
   ...shipmentsCreateRef,
@@ -131,7 +139,7 @@ export const shipmentsCreateJob = defineJob({
 
       const sentBefore = writesSent()
       let refused = false
-      let cancelRequested = false
+      let next = { cancelRequested: false, firstCheck: false }
       let outcome: 'created' | 'rejected'
       try {
         // This job does not ask again whatever the queue does, so a transient failure is its last word.
@@ -149,7 +157,7 @@ export const shipmentsCreateJob = defineJob({
           await failShipment(ctx, organizationId, shipmentId, result.code, { answered: true })
         } else {
           const { outcome: _, ...state } = result
-          cancelRequested = await storeCreated(ctx, { organizationId, connectionId, shipmentId }, state)
+          next = await storeCreated(ctx, { organizationId, connectionId, shipmentId }, state)
         }
       } catch (error) {
         // The call threw, or its answer could not be stored. Nothing that could make a Shipment left for the Carrier:
@@ -165,12 +173,21 @@ export const shipmentsCreateJob = defineJob({
         throw error
       }
       await finishSyncRun(ctx, organizationId, connectionId, 'shipments_create', { [outcome]: 1 })
-      if (!cancelRequested) return
-      // A person asked to cancel it while the Carrier was being asked: now it has an id to cancel by. Lost, the tick
-      // finds the Shipment due.
-      await afterCommit(ctx, { job: shipmentsTrackRef.name, organizationId, connectionId }, () =>
-        ctx.queue.enqueue(shipmentsTrackRef, { organizationId, connectionId }, { coalesceKey: coalesceKeys.shipmentsTrack(connectionId) }),
-      )
+      if (next.cancelRequested) {
+        // A person asked to cancel it while the Carrier was being asked: now it has an id to cancel by, and it is due
+        // at once. Lost, the tick finds the Shipment due.
+        await afterCommit(ctx, { job: shipmentsTrackRef.name, organizationId, connectionId }, () =>
+          ctx.queue.enqueue(shipmentsTrackRef, { organizationId, connectionId }, { coalesceKey: coalesceKeys.shipmentsTrack(connectionId) }),
+        )
+      } else if (next.firstCheck) {
+        await afterCommit(ctx, { job: shipmentsTrackRef.name, organizationId, connectionId }, () =>
+          ctx.queue.enqueue(
+            shipmentsTrackRef,
+            { organizationId, connectionId },
+            { coalesceKey: coalesceKeys.shipmentsFirstCheck(shipmentId), delayMs: SHIPMENT_FIRST_CHECK_MS },
+          ),
+        )
+      }
     })
   },
 })

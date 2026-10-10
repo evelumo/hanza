@@ -5,7 +5,9 @@ import { PermanentJobError, RetryLaterError } from '../jobs'
 import { importOrder } from '../orders/import'
 import { RequestRefusedError } from '../rate-limit'
 import { listOrderShipments } from '../shipments/queries'
+import { requestShipmentCheck } from '../shipments/check'
 import { requestShipment } from '../shipments/request'
+import { SHIPMENT_FIRST_CHECK_MS } from '../shipments/schedule'
 import { createTestCarrier, TEST_CARRIER_SERVICES } from '../testing/carrier'
 import { createTestOrganization } from '../testing/context'
 import { databaseUrl, useTestContext } from '../testing/db-test'
@@ -24,6 +26,7 @@ import {
   user,
 } from '../testing/fixtures'
 import { shipmentsCreateJob } from './shipments-create'
+import { shipmentsTrackJob } from './shipments-track'
 
 const carrier = createTestCarrier({ id: 'create-carrier' })
 
@@ -114,13 +117,115 @@ describe.skipIf(!databaseUrl)('shipments.create', () => {
       createOutcomeUnknown: false,
       createLeaseUntil: null,
     })
-    // Fresh and unconfirmed: due again at the next tick.
+    // Taken and not confirmed yet: first checked within seconds, not at the next tick.
     const wait = await secondsUntilDue(ctx, shipmentId)
     expect(wait).toBeGreaterThan(0)
-    expect(wait).toBeLessThanOrEqual(30)
+    expect(wait).toBeLessThanOrEqual(SHIPMENT_FIRST_CHECK_MS / 1000)
     expect((await events()).map(([type]) => type)).toEqual(['shipment.requested', 'shipment.status_changed'])
     expect((await events())[1]![1]).toEqual({ shipmentId, from: 'requested', to: 'pending', carrierStatus: null })
     expect(await connection()).toMatchObject({ health: 'ok', sync: { lastResult: { created: 1 }, lastErrorKind: null } })
+  })
+
+  it('checks a Shipment the Carrier took a few seconds later, with a delayed job of its own, and at its interval after that', async () => {
+    const { ctx, org, carrierId, shipmentId, create, shipment } = await setup()
+    const track = () => shipmentsTrackJob.handler(ctx, { organizationId: org, connectionId: carrierId }, jobRun)
+    const firstCheck = {
+      name: 'shipments.track',
+      payload: { organizationId: org, connectionId: carrierId },
+      options: { coalesceKey: `shipments.track:first:${shipmentId}`, delayMs: SHIPMENT_FIRST_CHECK_MS },
+    }
+
+    await create()
+
+    expect(ctx.queue.waiting).toEqual([firstCheck])
+    const first = await secondsUntilDue(ctx, shipmentId)
+    expect(first).toBeGreaterThan(SHIPMENT_FIRST_CHECK_MS / 1000 - 3)
+    expect(first).toBeLessThanOrEqual(SHIPMENT_FIRST_CHECK_MS / 1000)
+
+    // A run that comes before the Shipment is due (the tick's, for another Shipment) leaves it for its own check.
+    carrier.calls.track.length = 0
+    await track()
+    expect(carrier.calls.track).toEqual([])
+    expect(await secondsUntilDue(ctx, shipmentId)).toBeGreaterThan(0)
+
+    // The delay has passed: the Carrier confirmed it meanwhile, and the Label comes with the same run.
+    const { externalId } = carrier.byReference(shipmentId)!
+    carrier.advance(externalId, 'ready')
+    await ctx.db.$executeRaw`UPDATE "shipment" SET "nextCheckAt" = now() WHERE "id" = ${shipmentId}`
+    await track()
+    expect(carrier.calls.track).toEqual([[externalId]])
+    expect(await shipment()).toMatchObject({ status: 'ready', labelContentType: 'application/pdf' })
+    // Only the first check is early: the next one is the interval of a confirmed Shipment.
+    expect(await secondsUntilDue(ctx, shipmentId)).toBeGreaterThan(60)
+  })
+
+  it('a Carrier that has not confirmed it at the first check is asked again at the usual interval, not every few seconds', async () => {
+    const { ctx, org, carrierId, shipmentId, create } = await setup()
+    await create()
+    await ctx.db.$executeRaw`UPDATE "shipment" SET "nextCheckAt" = now() WHERE "id" = ${shipmentId}`
+
+    await shipmentsTrackJob.handler(ctx, { organizationId: org, connectionId: carrierId }, jobRun)
+
+    const next = await secondsUntilDue(ctx, shipmentId)
+    expect(next).toBeGreaterThan(SHIPMENT_FIRST_CHECK_MS / 1000)
+    expect(next).toBeLessThanOrEqual(30)
+  })
+
+  it('the delayed first check neither swallows a check a person asks for meanwhile, nor the first check of another Shipment', async () => {
+    const { ctx, org, carrierId, shipmentId, create } = await setup()
+    await create()
+    const keys = () => ctx.queue.waiting.map((job) => job.options.coalesceKey)
+    expect(keys()).toEqual([`shipments.track:first:${shipmentId}`])
+
+    // A person presses "Check status" while the delayed job waits: the Connection's own job is enqueued beside it.
+    await requestShipmentCheck(ctx, org, shipmentId)
+    expect(keys()).toEqual([`shipments.track:first:${shipmentId}`, `shipments.track:${carrierId}`])
+    expect(await secondsUntilDue(ctx, shipmentId)).toBeLessThanOrEqual(0)
+
+    // Another Shipment through the same Connection, made while both wait: it gets a first check of its own.
+    const channelId = await createTestConnection(ctx, org, 'Second channel')
+    const second = await importOrder(ctx, org, channelId, buildOrder({ externalId: 'second-order', lines: [orderLine('l1', { sku: 'P', quantity: 1 })] }))
+    const other = await requestShipment(ctx, org, second.orderId, lockerShipment(carrierId), user)
+    ctx.queue.waiting.splice(ctx.queue.waiting.findIndex((job) => job.name === 'shipments.create'), 1)
+    await shipmentsCreateJob.handler(ctx, { organizationId: org, shipmentId: other.shipmentId }, jobRun)
+    expect(keys()).toEqual([`shipments.track:first:${shipmentId}`, `shipments.track:${carrierId}`, `shipments.track:first:${other.shipmentId}`])
+
+    // Whichever run comes first takes what is due; the ones after it find nothing of it left, so nothing is asked twice.
+    carrier.calls.track.length = 0
+    await ctx.db.$executeRaw`UPDATE "shipment" SET "nextCheckAt" = now() WHERE "id" = ${other.shipmentId}`
+    expect(await ctx.queue.drain(ctx, [shipmentsTrackJob])).toEqual({ ran: 3, failed: [] })
+    const asked = carrier.calls.track.flat()
+    expect(asked.sort()).toEqual([carrier.byReference(shipmentId)!.externalId, carrier.byReference(other.shipmentId)!.externalId].sort())
+  })
+
+  it('a Shipment a repeat finds confirmed without its Label is checked within seconds too; one the Carrier already has is not', async () => {
+    const lost = await setup()
+    carrier.loseAnswers = 1
+    await expect(lost.create()).rejects.toThrow()
+    carrier.advance(carrier.byReference(lost.shipmentId)!.externalId, 'ready')
+    await createWaitPasses(lost.ctx, lost.shipmentId)
+    lost.ctx.queue.waiting.length = 0
+
+    await lost.create()
+
+    expect(await lost.shipment()).toMatchObject({ status: 'ready', labelContentType: null })
+    expect(await secondsUntilDue(lost.ctx, lost.shipmentId)).toBeLessThanOrEqual(SHIPMENT_FIRST_CHECK_MS / 1000)
+    expect(lost.ctx.queue.waiting.map((job) => job.options)).toEqual([
+      { coalesceKey: `shipments.track:first:${lost.shipmentId}`, delayMs: SHIPMENT_FIRST_CHECK_MS },
+    ])
+
+    const taken = await setup()
+    carrier.loseAnswers = 1
+    await expect(taken.create()).rejects.toThrow()
+    carrier.advance(carrier.byReference(taken.shipmentId)!.externalId, 'in_transit')
+    await createWaitPasses(taken.ctx, taken.shipmentId)
+    taken.ctx.queue.waiting.length = 0
+
+    await taken.create()
+
+    expect(await taken.shipment()).toMatchObject({ status: 'in_transit' })
+    expect(await secondsUntilDue(taken.ctx, taken.shipmentId)).toBeGreaterThan(60)
+    expect(taken.ctx.queue.waiting.filter((job) => job.name === 'shipments.track')).toEqual([])
   })
 
   it('stores the Carrier\'s own status of a Shipment it has not confirmed, such as a purchase waiting for funds', async () => {

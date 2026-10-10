@@ -89,4 +89,10 @@ export const coalesceKeys = {
   signInPoll: (signInId: string) => `connections.signIn.poll:${signInId}`,
   shipmentsCreate: (shipmentId: string) => `shipments.create:${shipmentId}`,
   shipmentsTrack: (connectionId: string) => `shipments.track:${connectionId}`,
+  /**
+   * The delayed `shipments.track` that makes a new Shipment's first check. A key of its own, per Shipment: under the
+   * Connection's key a job that waits for its delay drops every request that comes meanwhile, and is itself dropped
+   * while another one waits, which would leave the check of this Shipment (or of the next one made) to the tick.
+   */
+  shipmentsFirstCheck: (shipmentId: string) => `shipments.track:first:${shipmentId}`,
 }
