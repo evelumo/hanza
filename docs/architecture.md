@@ -53,7 +53,7 @@ Steps are **at-least-once**, with a ten-minute lease and no heartbeat yet. Keep 
 
 Tenant-owned records carry `organizationId`. Panel operations derive it from the session; jobs carry it in validated payloads. Composite keys protect selected cross-record relationships. Global schedulers have narrowly defined cross-organization reads; they do not authorize panel access across tenants.
 
-Buyer data is sealed with AES-256-GCM, bound to its organization/Connection/Order. Privacy services handle read access, retention and erasure of Closed Orders. Credentials use the same installation key. Keep the key with backups: replacing it makes existing sealed values unreadable. Encryption-key rotation is not implemented. See [ADR 0016](adr/0016-buyer-data-is-sealed-and-erased-in-place.md).
+Buyer data is sealed with AES-256-GCM, bound to its organization/Connection/Order. A Shipment's Label and the destination a person confirmed for it are Buyer data as well, sealed and bound to the organization and the Shipment ([ADR 0023](adr/0023-a-shipment-row-is-its-own-request-and-its-label-is-fetched-by-the-worker-and-sealed.md)). Privacy services handle read access, retention and erasure of Closed Orders. Credentials use the same installation key. Keep the key with backups: replacing it makes existing sealed values unreadable. Encryption-key rotation is not implemented. See [ADR 0016](adr/0016-buyer-data-is-sealed-and-erased-in-place.md).
 
 ## Decisions to read first
 
@@ -65,5 +65,7 @@ Buyer data is sealed with AES-256-GCM, bound to its organization/Connection/Orde
 - [0019: Shared connector request limits](adr/0019-connectors-declare-rate-limits-the-core-enforces-them-in-redis.md)
 - [0020: Core-owned token lifetime](adr/0020-the-core-owns-token-lifetime.md)
 - [0021: Order feed starts with open Orders](adr/0021-an-order-feed-starts-with-the-orders-open-now.md)
+- [0023: A Shipment row is its own request](adr/0023-a-shipment-row-is-its-own-request-and-its-label-is-fetched-by-the-worker-and-sealed.md)
+- [0024: A carrier pickup ships the Order](adr/0024-a-carrier-pickup-ships-the-order.md)
 
 Read the [roadmap](roadmap.md) before treating the Polish architecture plan's public APIs, automations or AI tools as implemented features.
