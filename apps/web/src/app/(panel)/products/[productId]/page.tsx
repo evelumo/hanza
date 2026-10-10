@@ -178,6 +178,7 @@ export default async function ProductPage({ params }: { params: Promise<{ produc
         </Panel>
 
         <Section
+          id="stock"
           title={t('products.detail.stockTitle')}
           description={t('products.detail.stockDescription')}
           actions={
@@ -186,6 +187,14 @@ export default async function ProductPage({ params }: { params: Promise<{ produc
             </TextLink>
           }
         >
+          {product.stockSet ? null : (
+            // Unset Stock (#137): the figures count it as 0, but no Channel is told anything until it is saved.
+            <SectionContent className="border-b border-border">
+              <Notice tone="attention" title={t('products.detail.stockUnsetTitle')}>
+                {t('products.detail.stockUnset')}
+              </Notice>
+            </SectionContent>
+          )}
           <DataTable align="top">
             <DataTableHeader>
               <DataTableHead>{t('products.detail.warehouseColumns.warehouse')}</DataTableHead>
@@ -208,7 +217,12 @@ export default async function ProductPage({ params }: { params: Promise<{ produc
                     </DataTableMeta>
                   </DataTableRowHeader>
                   <DataTableCell narrowLabel={t('products.detail.warehouseColumns.stock')}>
-                    <StockForm productId={product.id} warehouseId={warehouse.id} warehouseName={warehouse.name} stock={warehouse.stock} />
+                    <StockForm
+                      productId={product.id}
+                      warehouseId={warehouse.id}
+                      warehouseName={warehouse.name}
+                      stock={product.stockSet ? warehouse.stock : null}
+                    />
                   </DataTableCell>
                   <DataTableCell numeric hide="narrow">
                     {format.number(warehouse.reserved)}
@@ -289,7 +303,7 @@ export default async function ProductPage({ params }: { params: Promise<{ produc
                       ) : (
                         <span className="text-muted-foreground">{t('products.detail.notPushed')}</span>
                       )}
-                      {offer.stockStatus === 'rejected' || offer.stockStatus === 'not_sent' ? (
+                      {offer.stockStatus === 'rejected' || offer.stockStatus === 'not_sent' || offer.stockStatus === 'unset' ? (
                         <PushWarning className="mt-0.5">{stockStatusText(t, offer, format.dateTime)}</PushWarning>
                       ) : null}
                     </DataTableCell>

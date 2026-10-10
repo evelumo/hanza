@@ -105,7 +105,7 @@ test('the sidebar marks the destination a page belongs to, and the breadcrumb le
   // Offers live under /products/offers and are a destination of their own: the longest match wins, and the
   // page has no "back" to Products.
   await item('Offers').click()
-  await expect(page.getByRole('heading', { level: 1, name: 'Offers without a product' })).toBeVisible()
+  await expect(page.getByRole('heading', { level: 1, name: 'Offers that need attention' })).toBeVisible()
   await expect(item('Offers')).toHaveAttribute('aria-current', 'page')
   await expect(item('Products')).not.toHaveAttribute('aria-current')
   await expect(page.getByRole('main').getByRole('link', { name: /^Back to/ })).toHaveCount(0)

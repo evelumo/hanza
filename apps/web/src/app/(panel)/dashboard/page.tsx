@@ -32,9 +32,9 @@ export default async function DashboardPage() {
   const noRows = { skip: 0, take: 0 }
   const countOrders = async (filter: { phase?: OrderPhase; awaitingPayment?: boolean }) =>
     (await listOrders(ctx, organizationId, { ...filter, ...noRows })).total
-  const countOffers = async (linked: boolean) => (await listOffers(ctx, organizationId, { linked, ...noRows })).total
+  const countOffers = async (filter: { linked: boolean } | { stockUnset: true }) => (await listOffers(ctx, organizationId, { ...filter, ...noRows })).total
 
-  const [connections, events, phaseCounts, awaitingPayment, attentionGroups, unlinkedOffers, linkedOffers, stockRows] = await Promise.all([
+  const [connections, events, phaseCounts, awaitingPayment, attentionGroups, unlinkedOffers, stockUnsetOffers, linkedOffers, stockRows] = await Promise.all([
     listConnections(ctx, organizationId),
     listEvents(ctx, organizationId, null, 10),
     Promise.all(ORDER_PHASES.map(async (phase) => ({ phase, count: await countOrders({ phase }) }))),
@@ -46,8 +46,9 @@ export default async function DashboardPage() {
       where: { organizationId, attentionReasons: { isEmpty: false } },
       _count: { _all: true },
     }),
-    countOffers(false),
-    countOffers(true),
+    countOffers({ linked: false }),
+    countOffers({ stockUnset: true }),
+    countOffers({ linked: true }),
     ctx.db.stock.count({ where: { organizationId, units: { not: 0 } } }),
   ])
 
@@ -58,6 +59,7 @@ export default async function DashboardPage() {
     connections,
     orders: summarizeAttention(attentionGroups.map((group) => ({ reasons: group.attentionReasons, orders: group._count._all }))),
     unlinkedOffers,
+    stockUnsetOffers,
   })
 
   return (

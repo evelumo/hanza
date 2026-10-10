@@ -17,7 +17,7 @@ export interface ReserveLineInput {
 /**
  * Makes the line's Reservation in the Warehouse the placement rule picks among the Channel's
  * Warehouses (`chooseWarehouse`); `consumed` also takes the units off Stock there (linking a line on
- * a shipped Order). The caller must hold the Order lock. The Stock lock is (re)taken here, so
+ * a shipped Order; nothing while the Product's Stock is unset). The caller must hold the Order lock. The Stock lock is (re)taken here, so
  * Available is read only while every other writer of this Product is blocked; only Warehouses this
  * transaction has share-locked are candidates.
  */
@@ -111,5 +111,9 @@ async function takeFromStock(tx: Tx, organizationId: string, productId: string, 
   const updated = await tx.$executeRaw`
     UPDATE "stock" SET "units" = "units" - ${units}, "updatedAt" = now()
     WHERE "organizationId" = ${organizationId} AND "productId" = ${productId} AND "warehouseId" = ${warehouseId}`
-  if (updated !== 1) throw new Error(`Stock row missing for product ${productId} in warehouse ${warehouseId}`)
+  if (updated === 1) return
+  // Unset Stock has no rows (lockStock leaves none): nothing was counted, so nothing is taken, and the count saved
+  // later already leaves out what was shipped (#137).
+  if ((await tx.stock.count({ where: { organizationId, productId } })) === 0) return
+  throw new Error(`Stock row missing for product ${productId} in warehouse ${warehouseId}`)
 }

@@ -51,7 +51,7 @@ describe('summarizeAttention', () => {
 describe('attentionItems', () => {
   it('is empty when nothing waits', () => {
     const connections = [connection('a', 'ok'), connection('b', 'unknown')]
-    expect(attentionItems({ connections, orders: noOrders, unlinkedOffers: 0 })).toEqual([])
+    expect(attentionItems({ connections, orders: noOrders, unlinkedOffers: 0, stockUnsetOffers: 0 })).toEqual([])
   })
 
   it('puts Connections that do not synchronise before Orders and Offers', () => {
@@ -66,12 +66,20 @@ describe('attentionItems', () => {
       ],
       orders: { total: 3, reasons: [{ reason: 'shortage', count: 3 }] },
       unlinkedOffers: 5,
+      stockUnsetOffers: 2,
     })
     expect(items).toEqual([
       { kind: 'connection_failing', href: '/connections/c', name: 'Connection c', errors: [{ stream: 'orders_pull', kind: 'permanent' }] },
       { kind: 'connection_sign_in', href: '/connections/a', name: 'Connection a' },
       { kind: 'orders', href: '/orders?attention=1', total: 3, reasons: [{ reason: 'shortage', count: 3 }] },
       { kind: 'unlinked_offers', href: '/products/offers', count: 5 },
+      { kind: 'stock_unset_offers', href: '/products/offers#stock-not-set', count: 2 },
+    ])
+  })
+
+  it('counts Offers whose Product has unset Stock on their own, after the Offers without a Product', () => {
+    expect(attentionItems({ connections: [], orders: noOrders, unlinkedOffers: 0, stockUnsetOffers: 3 })).toEqual([
+      { kind: 'stock_unset_offers', href: '/products/offers#stock-not-set', count: 3 },
     ])
   })
 })

@@ -35,7 +35,7 @@ describe('stockStatusText', () => {
     expect(stockStatusText(en, { ...offer, stockStatus: 'rejected', stockRejection: { code: 'LOCKED', at } }, dateTime)).toBe(
       'Rejected by the channel: LOCKED.',
     )
-    for (const status of ['not_linked', 'pending', 'not_sent'] as const) {
+    for (const status of ['not_linked', 'unset', 'pending', 'not_sent'] as const) {
       expect(stockStatusText(en, { ...offer, stockStatus: status }, dateTime)).toBe(catalogues.en.offerPush.stock[status])
       expect(stockStatusText(pl, { ...offer, stockStatus: status }, dateTime)).toBe(catalogues.pl.offerPush.stock[status])
     }

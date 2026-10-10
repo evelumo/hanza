@@ -19,9 +19,9 @@ import { NoValue } from '@/components/no-value'
 import { PageHeader } from '@/components/page-header'
 import { Page } from '@/components/page-layout'
 import { Pagination } from '@/components/pagination'
-import { Panel } from '@/components/section'
-import { PublicationBadge } from '@/components/status-badge'
-import { textLinkClass } from '@/components/text-link'
+import { Panel, Section } from '@/components/section'
+import { AttentionBadge, PublicationBadge } from '@/components/status-badge'
+import { TextLink, textLinkClass } from '@/components/text-link'
 import { Checkbox } from '@/components/ui/checkbox'
 import { getT } from '@/i18n/server'
 import { getContext } from '@/lib/context'
@@ -30,7 +30,7 @@ import { outOfRangeRedirect, pageWindow, parsePage } from '@/lib/pagination'
 import { safeHttpUrl } from '@/lib/safe-url'
 import { requireTenant } from '@/lib/session'
 import { CreateProductsForm } from './create-products-form'
-import { CREATE_PRODUCTS_FORM_ID } from './form-id'
+import { CREATE_PRODUCTS_FORM_ID, STOCK_UNSET_SECTION_ID } from './form-id'
 import { LinkOfferForm } from './link-offer-form'
 import { SelectAll } from './select-all'
 
@@ -41,15 +41,26 @@ export const dynamic = 'force-dynamic'
 const boxLine = 'flex h-5 items-center'
 const lineStart = '\u200b'
 
+/** How many Offers with unset Stock the page lists; each leads to its Product, where one save clears all of its Offers. */
+const STOCK_UNSET_SHOWN = 100
+
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getT())('offers.title') }
 }
 
-export default async function UnlinkedOffersPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
+/**
+ * The Offers that wait for a person: without a Product (paged, with the forms that link them or create Products), and
+ * linked to a Product whose Stock is unset, which get no stock pushed until it is saved (#137).
+ */
+export default async function OffersPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const { organizationId } = await requireTenant()
   const [t, format] = await Promise.all([getT(), getFormatters()])
   const page = parsePage((await searchParams).page)
-  const { total, items } = await listOffers(getContext(), organizationId, { linked: false, ...pageWindow(page) })
+  const ctx = getContext()
+  const [{ total, items }, stockUnset] = await Promise.all([
+    listOffers(ctx, organizationId, { linked: false, ...pageWindow(page) }),
+    listOffers(ctx, organizationId, { stockUnset: true, skip: 0, take: STOCK_UNSET_SHOWN }),
+  ])
   const outOfRange = outOfRangeRedirect(page, total, '/products/offers')
   if (outOfRange) redirect(outOfRange)
   // A Product is created from an Offer's SKU, so only Offers that have one can be selected.
@@ -60,14 +71,18 @@ export default async function UnlinkedOffersPage({ searchParams }: { searchParam
       {/* A destination of its own in the sidebar, so it has no way "back" to Products. */}
       <PageHeader title={t('offers.title')} description={t('offers.description')} />
 
-      <Panel>
-        {total === 0 ? (
+      {total === 0 && stockUnset.total === 0 ? (
+        <Panel>
           <EmptyState icon={CircleCheck} title={t('offers.emptyTitle')}>
             {t('offers.empty')}
           </EmptyState>
-        ) : (
-          // One query container for the toolbar and the table: on a narrow one "select all" moves from the table's
-          // header row, which is not shown there, into the toolbar.
+        </Panel>
+      ) : null}
+
+      {total > 0 ? (
+        <Section title={t('offers.unlinkedTitle')} description={t('offers.unlinkedDescription')}>
+          {/* One query container for the toolbar and the table: on a narrow one "select all" moves from the table's
+          header row, which is not shown there, into the toolbar. */}
           <div className="@container/table">
             <CreateProductsForm offers={items.map((offer) => ({ id: offer.id, name: offer.name }))} selectableIds={selectableIds} />
             <DataTable align="top">
@@ -145,10 +160,68 @@ export default async function UnlinkedOffersPage({ searchParams }: { searchParam
               </DataTableBody>
             </DataTable>
           </div>
-        )}
-      </Panel>
+        </Section>
+      ) : null}
 
       {total > 0 ? <Pagination page={page} total={total} basePath="/products/offers" /> : null}
+
+      {stockUnset.total > 0 ? (
+        <Section id={STOCK_UNSET_SECTION_ID} title={t('offers.stockUnset.title')} description={t('offers.stockUnset.description')}>
+          <DataTable align="top">
+            <DataTableHeader>
+              <DataTableHead>{t('offers.stockUnset.columns.offer')}</DataTableHead>
+              <DataTableHead>{t('offers.stockUnset.columns.product')}</DataTableHead>
+              <DataTableHead hide="medium">{t('offers.stockUnset.columns.connection')}</DataTableHead>
+              <DataTableHead>{t('offers.stockUnset.columns.stock')}</DataTableHead>
+            </DataTableHeader>
+            <DataTableBody>
+              {stockUnset.items.map((offer) => (
+                <DataTableRow key={offer.id}>
+                  <DataTableCell narrow="primary" className="@4xl/table:min-w-56">
+                    <TextLink href={`/products/offers/${offer.id}`}>{offer.name}</TextLink>
+                    <Identifier className="block text-muted-foreground">{offer.externalId}</Identifier>
+                    <DataTableMeta below="medium">
+                      <DataTableMetaItem label={t('offers.stockUnset.columns.connection')} labelHidden>
+                        {offer.connectionName}
+                      </DataTableMetaItem>
+                    </DataTableMeta>
+                  </DataTableCell>
+                  <DataTableCell narrowLabel={t('offers.stockUnset.columns.product')}>
+                    {offer.productId ? (
+                      <>
+                        <TextLink href={`/products/${offer.productId}`}>{offer.productName}</TextLink>
+                        <Identifier className="block text-muted-foreground">{offer.productSku}</Identifier>
+                      </>
+                    ) : (
+                      <NoValue />
+                    )}
+                  </DataTableCell>
+                  <DataTableCell hide="medium">{offer.connectionName}</DataTableCell>
+                  <DataTableCell narrow="end">
+                    <span className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                      <AttentionBadge label={t('offers.stockUnset.badge')} />
+                      {offer.productId ? (
+                        <TextLink
+                          href={`/products/${offer.productId}#stock`}
+                          aria-label={t('offers.stockUnset.setStockOf', { product: offer.productName ?? '' })}
+                          className="text-meta whitespace-nowrap"
+                        >
+                          {t('offers.stockUnset.setStock')}
+                        </TextLink>
+                      ) : null}
+                    </span>
+                  </DataTableCell>
+                </DataTableRow>
+              ))}
+            </DataTableBody>
+          </DataTable>
+          {stockUnset.total > stockUnset.items.length ? (
+            <p className="border-t border-border px-4 py-2.5 text-meta text-muted-foreground">
+              {t('offers.stockUnset.more', { count: stockUnset.total - stockUnset.items.length })}
+            </p>
+          ) : null}
+        </Section>
+      ) : null}
     </Page>
   )
 }
