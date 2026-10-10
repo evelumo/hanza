@@ -539,16 +539,24 @@
       "downloadLabel": "Pobierz etykietę",
       "check": "Sprawdź status",
       "checking": "Sprawdzanie…",
-      "checkRequested": "Zapytanie do przewoźnika wysłane. Odśwież stronę za chwilę.",
+      "checkRequested": "Zapytanie do przewoźnika wysłane. Odpowiedź pojawi się tutaj za chwilę.",
       "cancel": "Anuluj przesyłkę",
       "cancelling": "Anulowanie…",
       "confirmCancel": "Anulować tę przesyłkę? Jej etykiety nie będzie już można użyć. Jeśli przewoźnik przyjął już zlecenie, Hanza poprosi go o anulowanie.",
       "note": {
         "arranging": "Przesyłka jest zlecana przewoźnikowi. Etykieta pojawi się tutaj, gdy przewoźnik potwierdzi przesyłkę.",
+        "unconfirmed": "Przewoźnik przyjął zlecenie, ale jeszcze go nie potwierdził. Podaje taki status:",
+        "retrying": "Przewoźnik nie odpowiedział na zlecenie. Hanza ponowi je {minutes, plural, one {# minutę} few {# minuty} many {# minut} other {# minuty}} po tamtej próbie. Etykieta mogła mimo to zostać kupiona: sprawdź u przewoźnika, zanim utworzysz kolejną przesyłkę.",
+        "connectionWaiting": "Połączenie z tym przewoźnikiem nie działa, więc zlecenie nie zostało jeszcze wysłane.",
+        "mayExistAtCarrier": "Przewoźnik dostał zlecenie tej przesyłki, ale jego odpowiedź nie dotarła, więc etykieta mogła zostać tam kupiona. Sprawdź u przewoźnika i anuluj ją tam, jeśli istnieje.",
         "ready": "Etykieta jest gotowa. Wydrukuj ją i naklej na paczkę.",
         "labelPending": "Przewoźnik potwierdził przesyłkę. Etykieta jest pobierana.",
+        "labelFailed": "Nie udało się pobrać etykiety tej przesyłki, więc wydrukuj ją z panelu przewoźnika.",
         "cancelRequested": "Przewoźnik został poproszony o anulowanie tej przesyłki.",
+        "cancelQueued": "Ta przesyłka zostanie anulowana, gdy minie czas oczekiwania na odpowiedź przewoźnika na zlecenie, najpóźniej {minutes, plural, one {# minutę} few {# minuty} many {# minut} other {# minuty}} po ostatniej próbie. Jeśli tamta próba dotarła do przewoźnika, etykieta mogła zostać kupiona: sprawdź u niego.",
         "cancelRefused": "Tutaj jest już za późno na anulowanie tej przesyłki. Anuluj ją u przewoźnika.",
+        "cancelUnsupported": "Ten przewoźnik nie anuluje już przesyłek przez Hanzę. Anuluj ją w panelu przewoźnika.",
+        "cancelAtCarrier": "Ten przewoźnik nie anuluje przesyłek przez Hanzę. Etykietę anulujesz w panelu przewoźnika; niewykorzystana etykieta sama tam wygasa.",
         "failed": "Przewoźnik nie przyjął tej przesyłki.",
         "failedByCarrier": "Przewoźnik odrzucił tę przesyłkę.",
         "code": "Odpowiedź przewoźnika:"
@@ -580,6 +588,7 @@
       "cashOnDelivery": "Pobranie ({currency})",
       "cashOnDeliveryHint": "Kwota, którą przewoźnik pobierze od kupującego. Zostaw puste, żeby nie pobierać nic.",
       "submit": "Utwórz przesyłkę",
+      "confirm": "Utworzyć tę przesyłkę? To zamówienie etykiety u przewoźnika: może on za nią pobrać opłatę, a u niektórych przewoźników nie da się jej potem anulować.",
       "submitting": "Tworzenie…",
       "created": "Przesyłka zlecona. Etykieta pojawi się wyżej, gdy przewoźnik potwierdzi przesyłkę."
     },
@@ -860,6 +869,11 @@
       "request_invalid": "W zamówieniu brakuje danych potrzebnych przewoźnikowi, na przykład nazwy lub adresu odbiorcy.",
       "service_unavailable": "Połączenie nie oferuje już wybranej usługi.",
       "duplicate_external_id": "Przewoźnik odpowiedział przesyłką, którą Hanza już ma. Sprawdź u przewoźnika, zanim utworzysz kolejną."
+    },
+    "shipmentLabelFailure": {
+      "too_large": "Plik jest większy, niż Hanza przechowuje.",
+      "invalid": "To, co przysłał przewoźnik, nie jest plikiem etykiety.",
+      "refused": "Przewoźnik odmówił jej wydania."
     }
   },
   "sync": {
@@ -936,6 +950,7 @@
       "connection_signed_in": "Zalogowano do kanału",
       "shipment_requested": "Zlecono przesyłkę",
       "shipment_status_changed": "Zmienił się status przesyłki",
+      "shipment_carrier_status_changed": "Przewoźnik jeszcze nie potwierdził przesyłki",
       "shipment_failed": "Nie udało się nadać przesyłki",
       "shipment_cancel_requested": "Zlecono anulowanie przesyłki",
       "shipment_cancel_refused": "Przewoźnik odmówił anulowania przesyłki",
@@ -953,6 +968,8 @@
     "priority": "priorytet {change}",
     "feedRestartGap": "może brakować zamówień złożonych i zamkniętych w międzyczasie",
     "pickupPointChanged": "inny punkt odbioru",
+    "labelMayExist": "etykieta mogła zostać kupiona u przewoźnika",
+    "cancelUnsupported": "ten przewoźnik nie anuluje przesyłek przez Hanzę",
     "addresses": "{which, select, shipping {adres dostawy} billing {adres do faktury} other {adres dostawy i adres do faktury}}",
     "push": {
       "stock": "stan",

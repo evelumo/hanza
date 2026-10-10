@@ -18,25 +18,18 @@ export interface ShipmentFormConnection {
 }
 
 /**
- * A select whose choice is kept in state, because other fields follow it. React resets a form once its action has
- * run, which puts such a select back on its first option while the state still holds the choice, and the two would
- * then disagree about which fields are sent. The choice is put back right after every reset.
+ * A select whose choice is kept in state, because other fields follow it. To React such a select has no default:
+ * when React resets the form after its action, the browser puts it back on its first option while the state still
+ * holds the choice, and the two would then disagree about which fields are sent. So the chosen option is also
+ * marked as the default one. A reset then lands on the choice, and the select never looks like something a person
+ * left half filled in (see `AutoRefresh`).
  */
 function ChoiceSelect({ value, ...select }: ComponentProps<typeof Select> & { value: string }) {
   const node = useRef<HTMLSelectElement>(null)
-  const chosen = useRef(value)
+  // After every render: the options are replaced when the list they come from changes.
   useEffect(() => {
-    chosen.current = value
-  }, [value])
-  useEffect(() => {
-    const element = node.current
-    const form = element?.form
-    if (!element || !form) return
-    // The event comes before the reset itself, so the value is restored once the reset is done.
-    const restore = () => queueMicrotask(() => (element.value = chosen.current))
-    form.addEventListener('reset', restore)
-    return () => form.removeEventListener('reset', restore)
-  }, [])
+    for (const option of node.current?.options ?? []) option.defaultSelected = option.value === value
+  })
   return <Select ref={node} value={value} {...select} />
 }
 
@@ -70,6 +63,8 @@ export function CreateShipmentForm({
       action={createShipmentAction}
       // Below the two-column layout the section is as wide as the page; a form of a few short fields is not.
       className="grid max-w-md gap-3"
+      // It orders a label from the Carrier, so it asks first, like every form with a consequence.
+      confirm={t('orders.createShipment.confirm')}
       success={t('orders.createShipment.created')}
       actions={
         <ActionButton variant="secondary" pendingLabel={t('orders.createShipment.submitting')}>

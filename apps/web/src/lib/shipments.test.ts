@@ -1,24 +1,44 @@
 import { SHIPMENT_STATUSES, type ShippingService } from '@hanza/connector-sdk'
-import type { ShipmentRow } from '@hanza/core'
+import { SHIPMENT_LABEL_FAILURES, type ShipmentRow } from '@hanza/core'
 import type { ShipmentStatus } from '@hanza/db'
 import { describe, expect, it } from 'vitest'
 import { catalogues } from '@/i18n/catalogues'
+import { isMessageKey } from '@/i18n/keys'
 import { translatorFor } from '@/i18n/testing'
 import { shipmentStatusLabel } from './labels'
-import { canCheckShipment, defaultServiceId, pickupSettling, shipmentBlocker, shipmentNote, shipmentSettling, shipmentStatusTone } from './shipments'
+import {
+  defaultServiceId,
+  labelFailureKey,
+  pickupSettling,
+  shipmentBlocker,
+  shipmentFailureKey,
+  shipmentNotes,
+  shipmentSettling,
+  shipmentStatusTone,
+  type ShipmentNote,
+} from './shipments'
 
 const statuses: ShipmentStatus[] = ['requested', ...SHIPMENT_STATUSES]
+const created = new Date('2026-10-10T10:00:00Z')
 
+/** A ready Shipment with its Label, at a Carrier that cancels through Hanza. */
 const row = (overrides: Partial<ShipmentRow> = {}) => ({
   status: 'ready' as ShipmentStatus,
-  externalId: 'carrier-1' as string | null,
-  failureCode: null,
-  cancelRefusedCode: null,
-  cancelRequestedAt: null,
+  carrierStatus: null as string | null,
+  failureCode: null as string | null,
+  cancelRefusedCode: null as string | null,
+  cancelRequestedAt: null as Date | null,
+  canCancel: true,
+  canCheck: true,
   hasLabel: true,
-  createdAt: new Date('2026-10-10T10:00:00Z'),
+  labelFailureCode: null as ShipmentRow['labelFailureCode'],
+  mayExistAtCarrier: false,
+  handedOverAt: null as Date | null,
+  createdAt: created,
   ...overrides,
 })
+const working = { trouble: false, canCancel: true }
+const kinds = (notes: ShipmentNote[]) => notes.map((note) => note.kind)
 
 describe('the Shipment status badge', () => {
   it('has a tone and a name in both languages for every status, Hanza’s own `requested` included', () => {
@@ -41,69 +61,137 @@ describe('the Shipment status badge', () => {
   })
 })
 
-describe('shipmentNote', () => {
-  it('explains a failure of Hanza’s own by its reason, and hands a Carrier’s code on as it is', () => {
-    expect(shipmentNote(row({ status: 'failed', failureCode: 'carrier_timeout' }))).toEqual({ kind: 'failed', reason: 'carrier_timeout', code: null })
-    expect(shipmentNote(row({ status: 'failed', failureCode: 'target_point.does_not_exist' }))).toEqual({
-      kind: 'failed',
-      reason: null,
-      code: 'target_point.does_not_exist',
-    })
-    expect(shipmentNote(row({ status: 'failed', failureCode: null }))).toEqual({ kind: 'failed', reason: null, code: null })
-    // A name every object has is not a reason the catalogue explains.
-    expect(shipmentNote(row({ status: 'failed', failureCode: 'toString' }))).toEqual({ kind: 'failed', reason: null, code: 'toString' })
-  })
+describe('shipmentFailureKey', () => {
+  const reasons = ['carrier_timeout', 'buyer_data_erased', 'buyer_data_unreadable', 'request_invalid', 'service_unavailable', 'duplicate_external_id']
 
-  it('has a sentence in both languages for every reason the core sets', () => {
-    const reasons = ['carrier_timeout', 'buyer_data_erased', 'buyer_data_unreadable', 'request_invalid', 'service_unavailable', 'duplicate_external_id']
+  it('has a sentence in both languages for every reason the core sets, and for nothing else in the catalogue', () => {
+    for (const reason of reasons) expect(shipmentFailureKey(reason)).toBe(`labels.shipmentFailure.${reason}`)
     expect(Object.keys(catalogues.en.labels.shipmentFailure).sort()).toEqual([...reasons].sort())
     expect(Object.keys(catalogues.pl.labels.shipmentFailure).sort()).toEqual([...reasons].sort())
+    for (const failure of SHIPMENT_LABEL_FAILURES) expect(isMessageKey(labelFailureKey[failure]), failure).toBe(true)
   })
 
-  it('says what is happening to a Shipment that is not final, the cancel first', () => {
-    expect(shipmentNote(row({ status: 'requested', externalId: null, hasLabel: false }))).toEqual({ kind: 'arranging' })
-    expect(shipmentNote(row({ status: 'pending', hasLabel: false }))).toEqual({ kind: 'arranging' })
-    expect(shipmentNote(row({ status: 'ready', hasLabel: false }))).toEqual({ kind: 'labelPending' })
-    expect(shipmentNote(row({ status: 'ready' }))).toEqual({ kind: 'ready' })
-    expect(shipmentNote(row({ status: 'ready', cancelRequestedAt: new Date() }))).toEqual({ kind: 'cancelRequested' })
-    expect(shipmentNote(row({ status: 'ready', cancelRefusedCode: 'too_late' }))).toEqual({ kind: 'cancelRefused', code: 'too_late' })
-    expect(shipmentNote(row({ status: 'in_transit', cancelRefusedCode: 'too_late' }))).toEqual({ kind: 'cancelRefused', code: 'too_late' })
+  it('never turns a Carrier’s code into a message key, whatever it spells', () => {
+    // Dots are a path to the message library; these name real messages and real object members.
+    for (const code of ['target_point.does_not_exist', 'labels.shipmentFailure.carrier_timeout', 'common.saving', 'toString', '__proto__', 'constructor', '']) {
+      expect(shipmentFailureKey(code), code).toBeNull()
+    }
+    expect(shipmentFailureKey(null)).toBeNull()
+  })
+})
+
+describe('shipmentNotes', () => {
+  it('explains a failure of Hanza’s own by its sentence, and hands a Carrier’s code on as text', () => {
+    expect(shipmentNotes(row({ status: 'failed', canCheck: false, canCancel: false, hasLabel: false, failureCode: 'carrier_timeout' }), working)).toEqual([
+      { kind: 'failed', reason: 'labels.shipmentFailure.carrier_timeout', code: null },
+    ])
+    const refused = row({ status: 'failed', canCheck: false, canCancel: false, hasLabel: false, failureCode: 'common.saving' })
+    expect(shipmentNotes(refused, working)).toEqual([{ kind: 'failed', reason: null, code: 'common.saving' }])
+    expect(shipmentNotes({ ...refused, failureCode: null }, working)).toEqual([{ kind: 'failed', reason: null, code: null }])
   })
 
-  it('has nothing to add once the Carrier has the parcel or the Shipment is over', () => {
-    for (const status of ['in_transit', 'awaiting_pickup', 'delivery_problem', 'delivered', 'returned', 'cancelled'] as const) {
-      expect(shipmentNote(row({ status })), status).toBeNull()
+  it('says of a Shipment the Carrier was asked for without an answer that a label may exist there, also once it is over', () => {
+    const waiting = row({ status: 'requested', canCheck: false, hasLabel: false, mayExistAtCarrier: true })
+    // Still to be asked for again: that, not "being arranged", and not the Connection, which fails at the same time.
+    expect(kinds(shipmentNotes(waiting, { trouble: true, canCancel: true }))).toEqual(['retrying'])
+    const over = { canCheck: false, canCancel: false, hasLabel: false, mayExistAtCarrier: true }
+    expect(kinds(shipmentNotes(row({ ...over, status: 'cancelled' }), working))).toEqual(['mayExistAtCarrier'])
+    expect(kinds(shipmentNotes(row({ ...over, status: 'failed', failureCode: 'carrier_timeout' }), working))).toEqual(['failed', 'mayExistAtCarrier'])
+    // A Shipment the Carrier itself refused is not one.
+    expect(kinds(shipmentNotes(row({ ...over, status: 'failed', failureCode: 'no_phone', mayExistAtCarrier: false }), working))).toEqual(['failed'])
+  })
+
+  it('tells a request that waits for its Connection from one the worker is about to send', () => {
+    const requested = row({ status: 'requested', canCheck: false, hasLabel: false })
+    expect(kinds(shipmentNotes(requested, working))).toEqual(['arranging'])
+    expect(kinds(shipmentNotes(requested, { trouble: true, canCancel: true }))).toEqual(['connectionWaiting'])
+    expect(kinds(shipmentNotes(requested, null))).toEqual(['arranging'])
+  })
+
+  it('shows what the Carrier says about a Shipment it has not confirmed, since nothing else says what it waits for', () => {
+    const pending = row({ status: 'pending', hasLabel: false })
+    expect(shipmentNotes({ ...pending, carrierStatus: 'debt_collection' }, working)).toEqual([{ kind: 'unconfirmed', code: 'debt_collection' }])
+    expect(shipmentNotes(pending, working)).toEqual([{ kind: 'arranging' }])
+  })
+
+  it('says where the Label is: ready, on its way, or not to be had here', () => {
+    expect(kinds(shipmentNotes(row(), working))).toEqual(['ready'])
+    expect(kinds(shipmentNotes(row({ hasLabel: false }), working))).toEqual(['labelPending'])
+    expect(shipmentNotes(row({ hasLabel: false, labelFailureCode: 'refused' }), working)).toEqual([
+      { kind: 'labelFailed', reason: 'labels.shipmentLabelFailure.refused' },
+    ])
+    // Once the Carrier has the parcel nobody prints anything.
+    expect(shipmentNotes(row({ status: 'in_transit', hasLabel: false, labelFailureCode: 'too_large', canCancel: false, handedOverAt: created }), working)).toEqual([])
+  })
+
+  it('says of a cancel asked while the request was still out that it is done here, not put to the Carrier', () => {
+    const asked = row({ status: 'requested', canCheck: false, canCancel: false, hasLabel: false, cancelRequestedAt: created })
+    expect(kinds(shipmentNotes(asked, working))).toEqual(['cancelQueued'])
+    // Not "asked again in 5 minutes": the next thing that happens to it is the cancel.
+    expect(kinds(shipmentNotes({ ...asked, mayExistAtCarrier: true }, { trouble: true, canCancel: false }))).toEqual(['cancelQueued'])
+  })
+
+  it('says what became of a cancel: asked, refused with the Carrier’s code, or not something this Carrier does', () => {
+    expect(kinds(shipmentNotes(row({ cancelRequestedAt: created, canCancel: false }), working))).toEqual(['cancelRequested', 'ready'])
+    expect(shipmentNotes(row({ cancelRefusedCode: 'too_late' }), working)).toEqual([{ kind: 'cancelRefused', code: 'too_late' }, { kind: 'ready' }])
+    expect(kinds(shipmentNotes(row({ cancelRefusedCode: 'cancel_unsupported', canCancel: false }), { trouble: false, canCancel: false }))).toEqual([
+      'cancelUnsupported',
+      'ready',
+    ])
+  })
+
+  it('says once, for a Shipment at a Carrier that cannot cancel through Hanza, where it is cancelled instead', () => {
+    const noCancel = { trouble: false, canCancel: false }
+    expect(kinds(shipmentNotes(row({ canCancel: false }), noCancel))).toEqual(['ready', 'cancelAtCarrier'])
+    expect(kinds(shipmentNotes(row({ status: 'pending', hasLabel: false, canCancel: false, carrierStatus: 'created' }), noCancel))).toEqual([
+      'unconfirmed',
+      'cancelAtCarrier',
+    ])
+    // Not before the Carrier has it (it is cancelled here then), not once the parcel is taken, not when it is over.
+    expect(kinds(shipmentNotes(row({ status: 'requested', canCheck: false, hasLabel: false }), noCancel))).toEqual(['arranging'])
+    expect(kinds(shipmentNotes(row({ status: 'in_transit', canCancel: false, handedOverAt: created }), noCancel))).toEqual([])
+    expect(kinds(shipmentNotes(row({ status: 'delivered', canCheck: false, canCancel: false, hasLabel: false, handedOverAt: created }), noCancel))).toEqual([])
+    // And not for a Carrier that can: there the button is missing for another reason (a cancel is on its way).
+    expect(kinds(shipmentNotes(row({ canCancel: false, cancelRequestedAt: created }), working))).toEqual(['cancelRequested', 'ready'])
+  })
+
+  it('has a sentence in both languages for every note', () => {
+    const all: ShipmentNote['kind'][] = [
+      'failed', 'mayExistAtCarrier', 'retrying', 'connectionWaiting', 'arranging', 'unconfirmed', 'cancelRequested', 'cancelQueued', 'cancelRefused',
+      'cancelUnsupported', 'ready', 'labelPending', 'labelFailed', 'cancelAtCarrier',
+    ]
+    for (const kind of all) {
+      expect(isMessageKey(`orders.shipments.note.${kind}`), kind).toBe(true)
+      expect(catalogues.pl.orders.shipments.note[kind]).not.toBe(catalogues.en.orders.shipments.note[kind])
     }
   })
 })
 
-describe('canCheckShipment', () => {
-  it('is for a Shipment the Carrier knows and may still say something about', () => {
-    expect(canCheckShipment(row({ status: 'pending' }))).toBe(true)
-    expect(canCheckShipment(row({ status: 'in_transit' }))).toBe(true)
-    expect(canCheckShipment(row({ status: 'requested', externalId: null }))).toBe(false)
-    for (const status of ['delivered', 'returned', 'cancelled', 'failed'] as const) expect(canCheckShipment(row({ status })), status).toBe(false)
-  })
-})
-
 describe('shipmentSettling', () => {
-  const created = new Date('2026-10-10T10:00:00Z')
-  const soon = new Date('2026-10-10T10:01:00Z')
-  const later = new Date('2026-10-10T10:11:00Z')
+  const soon = new Date('2026-10-10T10:00:08Z')
+  const later = new Date('2026-10-10T10:00:30Z')
 
-  it('holds while the Carrier is being asked for the Shipment, its Label or its cancellation', () => {
-    expect(shipmentSettling(row({ status: 'requested', hasLabel: false, createdAt: created }), soon)).toBe(true)
-    expect(shipmentSettling(row({ status: 'pending', hasLabel: false, createdAt: created }), soon)).toBe(true)
-    expect(shipmentSettling(row({ status: 'ready', hasLabel: false, createdAt: created }), soon)).toBe(true)
-    expect(shipmentSettling(row({ status: 'in_transit', cancelRequestedAt: soon, createdAt: created }), later)).toBe(true)
+  it('holds for the few seconds in which a new Shipment gets its Carrier’s answer and its Label', () => {
+    expect(shipmentSettling(row({ status: 'requested', hasLabel: false }), soon)).toBe(true)
+    expect(shipmentSettling(row({ status: 'pending', hasLabel: false }), soon)).toBe(true)
+    expect(shipmentSettling(row({ status: 'ready', hasLabel: false }), soon)).toBe(true)
   })
 
-  it('ends with the Label, with a final status, and for a Shipment the Carrier keeps waiting', () => {
-    expect(shipmentSettling(row({ status: 'ready', createdAt: created }), soon)).toBe(false)
-    expect(shipmentSettling(row({ status: 'in_transit', hasLabel: false, createdAt: created }), soon)).toBe(false)
-    expect(shipmentSettling(row({ status: 'failed', hasLabel: false, createdAt: created }), soon)).toBe(false)
-    expect(shipmentSettling(row({ status: 'cancelled', cancelRequestedAt: soon, createdAt: created }), soon)).toBe(false)
-    expect(shipmentSettling(row({ status: 'pending', hasLabel: false, createdAt: created }), later)).toBe(false)
+  it('holds for a few seconds after a person asked to cancel, however old the Shipment is', () => {
+    expect(shipmentSettling(row({ cancelRequestedAt: new Date('2026-10-10T10:00:25Z') }), later)).toBe(true)
+    expect(shipmentSettling(row({ cancelRequestedAt: created }), later)).toBe(false)
+  })
+
+  it('ends with the Label, and never polls a Shipment that waits for longer than moments', () => {
+    expect(shipmentSettling(row(), soon)).toBe(false)
+    expect(shipmentSettling(row({ status: 'ready', hasLabel: false, labelFailureCode: 'refused' }), soon)).toBe(false)
+    expect(shipmentSettling(row({ status: 'in_transit', hasLabel: false }), soon)).toBe(false)
+    expect(shipmentSettling(row({ status: 'failed', hasLabel: false }), soon)).toBe(false)
+    // A Connection that is failing, a Carrier that takes its time: the window is over, whatever the status.
+    expect(shipmentSettling(row({ status: 'requested', hasLabel: false }), later)).toBe(false)
+    expect(shipmentSettling(row({ status: 'pending', hasLabel: false }), later)).toBe(false)
+    // Waiting five minutes for the next attempt.
+    expect(shipmentSettling(row({ status: 'requested', hasLabel: false, mayExistAtCarrier: true }), soon)).toBe(false)
   })
 })
 
@@ -123,7 +211,7 @@ describe('pickupSettling', () => {
     expect(pickupSettling({ phase: 'cancelled' }, [{ handedOverAt: taken }], justNow)).toBe(false)
     expect(pickupSettling({ phase: 'new' }, [{ handedOverAt: null }], justNow)).toBe(false)
     expect(pickupSettling({ phase: 'new' }, [], justNow)).toBe(false)
-    expect(pickupSettling({ phase: 'new' }, [{ handedOverAt: taken }], new Date('2026-10-10T10:01:00Z'))).toBe(false)
+    expect(pickupSettling({ phase: 'new' }, [{ handedOverAt: taken }], new Date('2026-10-10T10:00:20Z'))).toBe(false)
   })
 })
 

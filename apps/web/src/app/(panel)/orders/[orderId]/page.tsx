@@ -56,8 +56,8 @@ export default async function OrderPage({ params }: { params: Promise<{ orderId:
     orderOpen ? listWarehouses(ctx, organizationId) : [],
     nextPhase ? ctx.db.orderStatus.findFirst({ where: { organizationId, phase: nextPhase, isDefault: true }, select: { id: true } }) : null,
     listOrderShipments(ctx, organizationId, order.id),
-    // Only an open Order can get a new Shipment, so only it needs to know through what.
-    orderOpen ? listShippingConnections(ctx, organizationId) : [],
+    // For the form of a new Shipment, and for what a Shipment's row says about the Connection it went through.
+    listShippingConnections(ctx, organizationId),
   ])
   const activeWarehouses = warehouses.filter((warehouse) => warehouse.active).map(({ id, name }) => ({ id, name }))
 

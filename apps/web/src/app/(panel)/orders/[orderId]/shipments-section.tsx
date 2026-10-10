@@ -1,4 +1,4 @@
-import type { OrderDetail, ShipmentRow, ShippingConnection } from '@hanza/core'
+import { SHIPMENT_CREATE_RETRY_DELAY_MS, type OrderDetail, type ShipmentRow, type ShippingConnection } from '@hanza/core'
 import { OctagonAlert, TriangleAlert, Truck } from 'lucide-react'
 import Link from 'next/link'
 import type { ReactNode } from 'react'
@@ -12,12 +12,13 @@ import { Identifier } from '@/components/identifier'
 import { NoValue } from '@/components/no-value'
 import { Section, SectionContent } from '@/components/section'
 import { ShipmentStatusBadge } from '@/components/status-badge'
+import { TextLink } from '@/components/text-link'
 import { toneTextClass } from '@/components/tone'
 import { useT } from '@/i18n/use-t'
-import type { MessageKey } from '@/i18n/types'
-import { canCheckShipment, pickupSettling, shipmentBlocker, shipmentNote, shipmentSettling } from '@/lib/shipments'
+import { pickupSettling, shipmentBlocker, shipmentNotes, shipmentSettling, type ShipmentConnection, type ShipmentNote } from '@/lib/shipments'
 import { cn } from '@/lib/utils'
-import { cancelShipmentAction, checkShipmentAction } from './actions'
+import { cancelShipmentAction } from './actions'
+import { CheckShipmentForm } from './check-shipment-form'
 import { CreateShipmentForm } from './create-shipment-form'
 
 // How often the page re-reads itself while a Shipment is about to change; the worker's answer takes a few seconds.
@@ -32,6 +33,18 @@ function Note({ tone, children }: { tone?: 'warning' | 'critical'; children: Rea
       <span>{children}</span>
     </p>
   )
+}
+
+// What a person has to do something about, and how urgently; the rest only informs.
+const NOTE_TONE: Partial<Record<ShipmentNote['kind'], 'warning' | 'critical'>> = {
+  failed: 'critical',
+  mayExistAtCarrier: 'warning',
+  retrying: 'warning',
+  cancelQueued: 'warning',
+  connectionWaiting: 'warning',
+  cancelRefused: 'warning',
+  cancelUnsupported: 'warning',
+  labelFailed: 'warning',
 }
 
 /**
@@ -51,30 +64,47 @@ export function ShipmentsSection({
   const blocker = shipmentBlocker(order)
   const offered = connections.filter((connection) => connection.services.length > 0)
   const now = new Date()
+  const through = new Map(
+    connections.map(({ id, health, canCancel }): [string, ShipmentConnection] => [id, { canCancel, trouble: health === 'failing' || health === 'auth_expired' }]),
+  )
 
-  // The Carrier's own code cannot be translated: it stands beside the sentence, in the identifier face.
+  // A Carrier's own code cannot be translated, and is never read as anything but text: it stands beside the
+  // sentence, in the identifier face.
   const withCode = (sentence: string, code: string) => (
     <>
-      {sentence} {t('orders.shipments.note.code')}{' '}
+      {sentence}{' '}
       {/* A whole code moves to the next line when it fits there; only one longer than the line breaks inside. */}
       <Identifier wrap className="break-normal wrap-anywhere">
         {code}
       </Identifier>
     </>
   )
-  const noteOf = (shipment: ShipmentRow): ReactNode => {
-    const note = shipmentNote(shipment)
-    if (!note) return null
-    if (note.kind === 'failed') {
-      const text = note.reason
-        ? t(`labels.shipmentFailure.${note.reason}` as MessageKey)
-        : note.code
-          ? withCode(t('orders.shipments.note.failedByCarrier'), note.code)
-          : t('orders.shipments.note.failed')
-      return <Note tone="critical">{text}</Note>
+  const noteText = (note: ShipmentNote, shipment: ShipmentRow): ReactNode => {
+    switch (note.kind) {
+      case 'failed':
+        if (note.reason) return t(note.reason)
+        return note.code ? withCode(`${t('orders.shipments.note.failedByCarrier')} ${t('orders.shipments.note.code')}`, note.code) : t('orders.shipments.note.failed')
+      case 'retrying':
+      case 'cancelQueued':
+        return t(`orders.shipments.note.${note.kind}`, { minutes: Math.round(SHIPMENT_CREATE_RETRY_DELAY_MS / 60_000) })
+      case 'connectionWaiting':
+        return (
+          <>
+            {t('orders.shipments.note.connectionWaiting')}{' '}
+            <TextLink href={`/connections/${shipment.connectionId}`} className="text-foreground underline">
+              {t('orders.detail.attention.toConnection', { connection: shipment.connectionName })}
+            </TextLink>
+          </>
+        )
+      case 'unconfirmed':
+        return withCode(t('orders.shipments.note.unconfirmed'), note.code)
+      case 'cancelRefused':
+        return withCode(`${t('orders.shipments.note.cancelRefused')} ${t('orders.shipments.note.code')}`, note.code)
+      case 'labelFailed':
+        return `${t('orders.shipments.note.labelFailed')} ${t(note.reason)}`
+      default:
+        return t(`orders.shipments.note.${note.kind}`)
     }
-    if (note.kind === 'cancelRefused') return <Note tone="warning">{withCode(t('orders.shipments.note.cancelRefused'), note.code)}</Note>
-    return <Note>{t(`orders.shipments.note.${note.kind}`)}</Note>
   }
 
   return (
@@ -92,8 +122,7 @@ export function ShipmentsSection({
           <DataTableBody>
             {shipments.map((shipment) => {
               const service = shipment.serviceName ?? <Identifier>{shipment.service}</Identifier>
-              const note = noteOf(shipment)
-              const checkable = canCheckShipment(shipment)
+              const notes = shipmentNotes(shipment, through.get(shipment.connectionId) ?? null)
               return (
                 <DataTableRow key={shipment.id}>
                   <DataTableCell narrow="primary" className="font-medium">
@@ -119,8 +148,12 @@ export function ShipmentsSection({
                   </DataTableCell>
                   <DataTableCell className="@2xl/table:min-w-56">
                     <div className="grid gap-2">
-                      {note}
-                      {shipment.hasLabel || checkable || shipment.canCancel ? (
+                      {notes.map((note) => (
+                        <Note key={note.kind} tone={NOTE_TONE[note.kind]}>
+                          {noteText(note, shipment)}
+                        </Note>
+                      ))}
+                      {shipment.hasLabel || shipment.canCheck || shipment.canCancel ? (
                         // Each button is a form of its own, laid out as if it were not there (`contents`), so the buttons
                         // share one row and whatever an action answers takes a row of its own below all of them.
                         <div className="flex flex-wrap items-center gap-2 [&>form>div]:order-last">
@@ -130,13 +163,13 @@ export function ShipmentsSection({
                               {t('orders.shipments.downloadLabel')}
                             </a>
                           ) : null}
-                          {checkable ? (
-                            <ActionForm action={checkShipmentAction} className="contents" success={t('orders.shipments.checkRequested')}>
-                              <input type="hidden" name="shipmentId" value={shipment.id} />
-                              <ActionButton variant="secondary" size="sm" pendingLabel={t('orders.shipments.checking')}>
-                                {t('orders.shipments.check')}
-                              </ActionButton>
-                            </ActionForm>
+                          {shipment.canCheck ? (
+                            <CheckShipmentForm
+                              shipmentId={shipment.id}
+                              label={t('orders.shipments.check')}
+                              pendingLabel={t('orders.shipments.checking')}
+                              requested={t('orders.shipments.checkRequested')}
+                            />
                           ) : null}
                           {shipment.canCancel ? (
                             <ActionForm action={cancelShipmentAction} className="contents" confirm={t('orders.shipments.confirmCancel')}>

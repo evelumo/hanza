@@ -26,7 +26,6 @@ type OpenGroup =
   | 'labels.channelFact'
   | 'labels.erasureCause'
   | 'labels.shipmentStatus'
-  | 'labels.shipmentFailure'
   | 'sync.result'
   | 'events.title'
 

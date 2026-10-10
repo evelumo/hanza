@@ -27,6 +27,8 @@ export async function GET(_request: Request, { params }: { params: Promise<{ ord
       // From the core's allow-list, and not to be guessed otherwise: a Label is a file from outside.
       'Content-Type': label.contentType,
       'X-Content-Type-Options': 'nosniff',
+      // Whatever the file turns out to be, a browser that opens it runs nothing in it and loads nothing for it.
+      'Content-Security-Policy': "default-src 'none'; sandbox",
       'Content-Disposition': `attachment; filename="${labelFileName(shipment, label.extension)}"`,
       'Content-Length': String(label.data.byteLength),
       'Cache-Control': 'no-store',

@@ -1,5 +1,6 @@
 import { moneySchema, type Money } from '@hanza/connector-sdk'
 import { hasLabel, labelOrRaw } from './labels'
+import { CANCEL_UNSUPPORTED_CODE, shipmentFailureKey } from './shipments'
 import type { Translator } from '@/i18n/types'
 
 type Payload = Record<string, unknown>
@@ -94,14 +95,22 @@ function detail(t: Translator, format: EventFormatters, type: string, payload: P
     case 'order.status_changed':
       return arrow(statusName(t, payload.fromStatus, text(payload.from)), statusName(t, payload.toStatus, text(payload.to)))
     case 'shipment.status_changed':
-      return arrow(shipmentStatus(t, text(payload.from)), shipmentStatus(t, text(payload.to)))
-    case 'shipment.failed': {
-      // One of Hanza's own reasons has a sentence; a Carrier's code is shown as it is.
-      const code = text(payload.code)
-      return code === null ? null : labelOrRaw(t, 'labels.shipmentFailure', code)
+      return both(arrow(shipmentStatus(t, text(payload.from)), shipmentStatus(t, text(payload.to))), labelMayExist(t, payload))
+    case 'shipment.carrier_status_changed': {
+      // The Carrier's own status keys: plain text, whatever they hold.
+      const to = text(payload.to)
+      return arrow(text(payload.from), to) ?? to
     }
-    case 'shipment.cancel_refused':
-      return text(payload.code)
+    case 'shipment.failed': {
+      // One of Hanza's own reasons has a sentence; a Carrier's code is shown as it is, never looked up.
+      const code = text(payload.code)
+      const reason = shipmentFailureKey(code)
+      return both(reason ? t(reason) : code, labelMayExist(t, payload))
+    }
+    case 'shipment.cancel_refused': {
+      const code = text(payload.code)
+      return code === CANCEL_UNSUPPORTED_CODE ? t('events.cancelUnsupported') : code
+    }
     case 'order.delivery_updated':
       return payload.pickupPoint === true ? t('events.pickupPointChanged') : null
     case 'connection.status_mapping_changed': {
@@ -182,6 +191,11 @@ function publicationText(t: Translator, status: unknown, endedReason: string | n
 
 const healthLabel = (t: Translator, value: string | null) => (value === null ? null : labelOrRaw(t, 'labels.health', value))
 const shipmentStatus = (t: Translator, value: string | null) => (value === null ? null : labelOrRaw(t, 'labels.shipmentStatus', value))
+
+/** The Carrier was asked for the Shipment and its answer was never stored: said wherever such a Shipment ends. */
+const labelMayExist = (t: Translator, payload: Payload) => (payload.createAttempted === true ? t('events.labelMayExist') : null)
+
+const both = (first: string | null, second: string | null) => (first !== null && second !== null ? `${first} · ${second}` : (first ?? second))
 
 /** Null in the payload means retention off; anything that is not a number is unknown. */
 function retentionLabel(t: Translator, value: unknown): string | null {

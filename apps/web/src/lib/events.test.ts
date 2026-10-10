@@ -86,6 +86,39 @@ describe('describeEvent', () => {
       title: 'The carrier refused to cancel the shipment',
       detail: 'too_late',
     })
+    // A cancel asked through a connector that no longer has the call: Hanza's own code, with its own sentence.
+    expect(describeEvent('shipment.cancel_refused', { shipmentId: 's1', code: 'cancel_unsupported' }, t, format).detail).toBe(
+      'this carrier does not cancel shipments through Hanza',
+    )
+  })
+
+  it('shows the Carrier\'s own status of a Shipment it has not confirmed, as the text it is', () => {
+    const waiting = { shipmentId: 's1', status: 'pending', from: 'created', to: 'debt_collection' }
+    expect(describeEvent('shipment.carrier_status_changed', waiting, t, format)).toEqual({
+      title: 'The carrier has not confirmed the shipment yet',
+      detail: 'created → debt_collection',
+    })
+    expect(describeEvent('shipment.carrier_status_changed', { ...waiting, from: null }, translatorFor('pl'), formatPl)).toEqual({
+      title: catalogues.pl.events.title.shipment_carrier_status_changed,
+      detail: 'debt_collection',
+    })
+    // A code that spells the path of a message is still only a code.
+    expect(describeEvent('shipment.carrier_status_changed', { ...waiting, to: 'common.saving' }, t, format).detail).toBe('created → common.saving')
+    expect(describeEvent('shipment.failed', { code: 'labels.shipmentFailure.carrier_timeout' }, t, format).detail).toBe('labels.shipmentFailure.carrier_timeout')
+    expect(describeEvent('shipment.cancel_refused', { code: 'events.cancelUnsupported' }, t, format).detail).toBe('events.cancelUnsupported')
+  })
+
+  it('says when a Shipment ended while a label may have been bought at the Carrier', () => {
+    expect(describeEvent('shipment.failed', { shipmentId: 's1', from: 'requested', code: 'carrier_timeout', createAttempted: true }, t, format).detail).toBe(
+      'The carrier did not confirm the shipment within 24 hours. · a label may have been bought at the carrier',
+    )
+    expect(describeEvent('shipment.status_changed', { from: 'requested', to: 'cancelled', createAttempted: true }, t, format).detail).toBe(
+      'Sending to carrier → Cancelled · a label may have been bought at the carrier',
+    )
+    expect(describeEvent('shipment.failed', { code: null, createAttempted: true }, translatorFor('pl'), formatPl).detail).toBe(catalogues.pl.events.labelMayExist)
+    expect(describeEvent('shipment.status_changed', { from: 'requested', to: 'cancelled', createAttempted: 'yes' }, t, format).detail).toBe(
+      'Sending to carrier → Cancelled',
+    )
   })
 
   it('explains a failed Shipment by Hanza\'s own reason, and shows a Carrier\'s code as it is', () => {

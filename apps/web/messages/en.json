@@ -539,16 +539,24 @@
       "downloadLabel": "Download label",
       "check": "Check status",
       "checking": "Asking…",
-      "checkRequested": "The carrier is being asked. Refresh the page in a moment.",
+      "checkRequested": "The carrier is being asked. Its answer shows here in a moment.",
       "cancel": "Cancel shipment",
       "cancelling": "Cancelling…",
       "confirmCancel": "Cancel this shipment? Its label can no longer be used. If the carrier already has the request, Hanza asks the carrier to cancel it.",
       "note": {
         "arranging": "Being arranged with the carrier. The label appears here once the carrier confirms the shipment.",
+        "unconfirmed": "The carrier has the request and has not confirmed it yet. It gives this status:",
+        "retrying": "The carrier did not answer the request. Hanza asks again {minutes, plural, one {# minute} other {# minutes}} after that attempt. A label may have been bought all the same: check at the carrier before you create another shipment.",
+        "connectionWaiting": "The connection to this carrier is not working, so the request has not been sent.",
+        "mayExistAtCarrier": "The carrier was asked for this shipment and its answer never arrived, so a label may have been bought there. Check at the carrier, and cancel it there if it exists.",
         "ready": "The label is ready. Print it and stick it on the parcel.",
         "labelPending": "The carrier confirmed the shipment. Its label is being fetched.",
+        "labelFailed": "No label could be fetched for this shipment, so print it from the carrier’s own panel.",
         "cancelRequested": "The carrier is being asked to cancel this shipment.",
+        "cancelQueued": "This shipment is cancelled as soon as the wait for the carrier’s answer to the request is over, at most {minutes, plural, one {# minute} other {# minutes}} after the last attempt. If that attempt reached the carrier, a label may have been bought: check there.",
         "cancelRefused": "It is too late to cancel this shipment here. Cancel it at the carrier.",
+        "cancelUnsupported": "This carrier no longer cancels shipments through Hanza. Cancel it in the carrier’s own panel.",
+        "cancelAtCarrier": "This carrier does not cancel shipments through Hanza. To cancel the label, use the carrier’s own panel; a label that is not used expires there.",
         "failed": "The carrier did not accept this shipment.",
         "failedByCarrier": "The carrier refused this shipment.",
         "code": "The carrier’s answer:"
@@ -580,6 +588,7 @@
       "cashOnDelivery": "Cash on delivery ({currency})",
       "cashOnDeliveryHint": "What the carrier collects from the buyer. Leave it empty to collect nothing.",
       "submit": "Create shipment",
+      "confirm": "Create this shipment? It orders a label from the carrier, which may charge for it, and with some carriers it cannot be cancelled afterwards.",
       "submitting": "Creating…",
       "created": "Shipment requested. Its label appears above once the carrier confirms it."
     },
@@ -860,6 +869,11 @@
       "request_invalid": "The order lacks what the carrier needs, such as the name or the address of the receiver.",
       "service_unavailable": "The connection no longer offers the chosen service.",
       "duplicate_external_id": "The carrier answered with a shipment Hanza already has. Check at the carrier before creating another one."
+    },
+    "shipmentLabelFailure": {
+      "too_large": "The file is larger than Hanza keeps.",
+      "invalid": "What the carrier sent is not a label file.",
+      "refused": "The carrier refused to hand it over."
     }
   },
   "sync": {
@@ -936,6 +950,7 @@
       "connection_signed_in": "Signed in to the channel",
       "shipment_requested": "Shipment requested",
       "shipment_status_changed": "Shipment status changed",
+      "shipment_carrier_status_changed": "The carrier has not confirmed the shipment yet",
       "shipment_failed": "Shipment failed",
       "shipment_cancel_requested": "Shipment cancellation requested",
       "shipment_cancel_refused": "The carrier refused to cancel the shipment",
@@ -953,6 +968,8 @@
     "priority": "priority {change}",
     "feedRestartGap": "orders placed and closed meanwhile may be missing",
     "pickupPointChanged": "another pickup point",
+    "labelMayExist": "a label may have been bought at the carrier",
+    "cancelUnsupported": "this carrier does not cancel shipments through Hanza",
     "addresses": "{which, select, shipping {shipping address} billing {billing address} other {shipping and billing address}}",
     "push": {
       "stock": "stock",
