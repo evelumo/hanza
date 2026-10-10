@@ -2,7 +2,7 @@
 
 A Channel that lives in memory. It exists to prove the whole path (pull Offers and Orders, push Available and prices, push Order status) without a real marketplace, and to give tests and demos something to talk to.
 
-**Real connectors must never do what this one does:** it keeps data in module-level state (`fakeChannel`), reads nothing from the network, and ignores `ctx.fetch`. A real connector holds no state between calls; everything comes from the Channel's API and the cursor.
+**Real connectors must never do what this one does:** it keeps data in module-level state (`fakeChannel`, `fakeCourier`), reads nothing from the network, and ignores `ctx.fetch`. A real connector holds no state between calls; everything comes from the Channel's API and the cursor.
 
 ## Behaviour
 
@@ -13,6 +13,10 @@ A Channel that lives in memory. It exists to prove the whole path (pull Offers a
 - `updateOrder(id, { facts?, shippingAddress?, billingAddress? })` changes the Order and appends exactly that change as an Order update. `removeOrder(id, fact)` deletes the Order (a merged purchase): every entry of it is pulled as an update with that `cancelled` fact. `forgetJournal()` drops the journal so far: an older cursor fails with `CursorExpiredError`.
 - `offers.pull` reports a PLN price on the seed Offers except `fake-offer-5`, which has none (its currency is unknown, so Hanza never pushes a price to it).
 - `stock.push` and `orders.updateStatus` only record their input (`stockPushes`, `statusUpdates`; each status update is `{ orderExternalId, phase }`; the list keeps the capability's name). `price.push` records its input (`pricePushes`) and sets the Offer's price, so the next `offers.pull` reports it.
+
+## The courier (`fake-courier`)
+
+`createFakeCourier()` (registered instance: `fakeCourier`, `src/courier.ts`) is an in-memory Carrier with no credentials; see the package README for its services, progress and config. `shipments` and the calls `creates`, `tracks`, `labels`, `cancels` are for tests (emptied in place by `reset()`). State is per Carrier account (config `account`), as the Channel's publications are per API key. `shipments.track` moves a Shipment one step per call, so a test controls time by the number of calls, or holds it with `stuckAt`.
 
 ## The OAuth variant (`fake-oauth`)
 
