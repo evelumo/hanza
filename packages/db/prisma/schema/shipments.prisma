@@ -44,16 +44,23 @@ model Shipment {
   /// The Label file, base64, sealed like `destination`. Deleted at a final status and with the Order's Buyer data.
   label             String?
   labelContentType  String?
+  /// Why no Label is fetched for it any more (`too_large`, `invalid`, `refused`): a person prints it at the Carrier.
+  /// Null while a Label is stored, still awaited or not wanted.
+  labelFailureCode  String?
   /// Non-null while a job owes this Shipment something: when `sync.tick` may next have it asked for or checked.
   nextCheckAt       DateTime?
   /// When it was first seen with the Carrier (in transit or later); the Order is shipped then (ADR 0024).
   handedOverAt      DateTime?
   /// Set while a person's request to cancel it has not been put to the Carrier.
   cancelRequestedAt DateTime?
-  /// How many times the Carrier was asked to create it. Above 0 without an `externalId`, an answer may have been lost.
+  /// How many times the Carrier was asked to create it (a call refused before anything was sent is not counted).
   createAttempts    Int            @default(0)
-  /// Set while a job is asking the Carrier to create it, so no second job asks at the same time. A job that dies
-  /// leaves it to run out.
+  /// True from the moment the Carrier is asked to create it until its answer is stored. While true without an
+  /// `externalId`, a Shipment may exist at the Carrier that Hanza does not know of: the call threw or the job died.
+  createOutcomeUnknown Boolean     @default(false)
+  /// Until when no job may ask the Carrier to create it: while one is asking, and after a call whose outcome is not
+  /// known for the SDK's retry delay counted from it (`SHIPMENT_CREATE_RETRY_DELAY_MS`). A job that dies leaves it to
+  /// run out.
   createLeaseUntil  DateTime?
   createdByUserId   String?
   createdAt         DateTime       @default(now())
