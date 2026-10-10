@@ -6,7 +6,7 @@ Prisma schema, migrations, generated client and database test helpers. This pack
 
 - `prisma/schema/*.prisma`: schema split by module; `base.prisma` holds generator/datasource configuration.
 - `prisma/migrations`: versioned SQL migrations.
-- `src/index.ts`: client factory/export surface.
+- `src/index.ts`: client factory/export surface. `createDb` is the only way a client is made: it pins every session's time zone to UTC (`withUtcSession`), whatever the server, the database, the role or `DATABASE_URL` asks for. `DateTime` columns are `timestamp` without a zone holding UTC, and services compare them with SQL's `now()`; in a session with another zone those comparisons, and every `now()` read through Prisma, are off by the offset ([ADR 0023](../../docs/adr/0023-a-shipment-row-is-its-own-request-and-its-label-is-fetched-by-the-worker-and-sealed.md)).
 - `src/testing.ts`: throwaway database helpers, exported as `@hanza/db/testing`.
 - `src/generated`: generated, git-ignored Prisma client; never hand-edit it.
 
