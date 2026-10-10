@@ -81,6 +81,34 @@ describe('createReplayFetch', () => {
     expect(miss.message).toBe(`All 1 recorded responses in tasks.cassette.json for GET ${API}/task/1 were already served.`)
   })
 
+  it('with repeat-reads, repeats a GET for ever but serves a write only as often as it was recorded', async () => {
+    const body = { headers: { 'content-type': 'application/json' }, body: { json: { reference: 'shp_1' } } }
+    const replay = createReplayFetch(
+      cassette(
+        entry('GET', '/shipments?reference=shp_1', { body: { json: { items: [] } } }),
+        entry('POST', '/shipments', { status: 201 }, body),
+        entry('DELETE', '/shipments/1', { status: 204, body: null }),
+        entry('DELETE', '/shipments/1', { status: 404 }),
+      ),
+      { match: { exhausted: 'repeat-reads' }, name: 'conformance.cassette.json' },
+    )
+    const post = () => replay.fetch(`${API}/shipments`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{"reference":"shp_1"}' })
+    for (let i = 0; i < 3; i++) expect((await replay.fetch(`${API}/shipments?reference=shp_1`)).status).toBe(200)
+    expect((await post()).status).toBe(201)
+    const miss = await missOf(post())
+    expect(miss.message).toBe(`All 1 recorded responses in conformance.cassette.json for POST ${API}/shipments were already served.`)
+    // Recorded twice, served twice, in order; a third is one the recording never made.
+    expect((await replay.fetch(`${API}/shipments/1`, { method: 'DELETE' })).status).toBe(204)
+    expect((await replay.fetch(`${API}/shipments/1`, { method: 'DELETE' })).status).toBe(404)
+    await missOf(replay.fetch(`${API}/shipments/1`, { method: 'DELETE' }))
+    expect(replay.misses).toHaveLength(2)
+
+    // The default still answers a repeated write with the last response, which is what hides a second POST.
+    const lenient = createReplayFetch(cassette(entry('POST', '/shipments', { status: 201 }, body)))
+    const again = () => lenient.fetch(`${API}/shipments`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{"reference":"shp_1"}' })
+    expect([(await again()).status, (await again()).status]).toEqual([201, 201])
+  })
+
   it('names the nearest recorded requests on a miss, with what differs, never headers or bodies', async () => {
     const replay = createReplayFetch(
       cassette(

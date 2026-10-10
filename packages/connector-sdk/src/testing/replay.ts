@@ -8,9 +8,17 @@ export interface MatchOptions {
   ignoreQueryParams?: string[]
   /** Compare request bodies by the SHA-256 of their scrubbed, canonical form. Default true. */
   body?: boolean
-  /** When every recorded response for a request was served: repeat the last one (default) or fail. */
-  exhausted?: 'repeat-last' | 'error'
+  /**
+   * When every recorded response for a request was served: repeat the last one (`repeat-last`, the default), fail
+   * (`error`), or repeat it for a read and fail for a write (`repeat-reads`). A read is a `GET` or a `HEAD`; any
+   * other method changes something at the API, so one more of it than was recorded is a request the recording never
+   * made, such as a second `POST` of the same Shipment. `runConformance` uses `repeat-reads` for a connector with
+   * `shipments.create`.
+   */
+  exhausted?: 'repeat-last' | 'error' | 'repeat-reads'
 }
+
+const READ_METHODS = new Set(['GET', 'HEAD'])
 
 export interface ReplayOptions {
   match?: MatchOptions
@@ -114,7 +122,7 @@ function toBodyInit(interaction: CassetteInteraction['response']): ArrayBuffer |
 /**
  * A `fetch` that answers from a cassette and never touches the network. Incoming requests are scrubbed
  * like the recording was, then matched on method, URL (query sorted) and body hash; identical requests
- * get the recorded responses in order.
+ * get the recorded responses in order, and `match.exhausted` says what happens after the last one.
  */
 export function createReplayFetch(cassette: Cassette, options: ReplayOptions = {}): ReplayFetch {
   const match = options.match ?? {}
@@ -173,7 +181,8 @@ export function createReplayFetch(cassette: Cassette, options: ReplayOptions = {
     }
 
     const count = served.get(id) ?? 0
-    if (count >= indices.length && match.exhausted === 'error') {
+    const failsWhenExhausted = match.exhausted === 'error' || (match.exhausted === 'repeat-reads' && !READ_METHODS.has(key.method))
+    if (count >= indices.length && failsWhenExhausted) {
       return miss(`All ${indices.length} recorded responses${label} for ${description} were already served.`)
     }
     served.set(id, count + 1)
