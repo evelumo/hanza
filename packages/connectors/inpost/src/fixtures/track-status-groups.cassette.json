@@ -1,0 +1,1293 @@
+{
+  "version": 1,
+  "interactions": [
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?id=1600000401%2C1600000402%2C1600000403%2C1600000404%2C1600000405%2C1600000406%2C1600000407%2C1600000408%2C1600000409%2C1600000410&page=1&per_page=100",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8",
+          "link": "<http://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?id=1600000401%2C1600000402%2C1600000403%2C1600000404%2C1600000405%2C1600000406%2C1600000407%2C1600000408%2C1600000409%2C1600000410&owner_id=54321&per_page=100&sort_by=id&sort_order=desc>; rel=\"next\", <http://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?id=1600000401%2C1600000402%2C1600000403%2C1600000404%2C1600000405%2C1600000406%2C1600000407%2C1600000408%2C1600000409%2C1600000410&owner_id=54321&per_page=100&sort_by=id&sort_order=desc>; rel=\"last\", <http://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?id=1600000401%2C1600000402%2C1600000403%2C1600000404%2C1600000405%2C1600000406%2C1600000407%2C1600000408%2C1600000409%2C1600000410&owner_id=54321&per_page=100&sort_by=id&sort_order=desc>; rel=\"previous\", <http://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?id=1600000401%2C1600000402%2C1600000403%2C1600000404%2C1600000405%2C1600000406%2C1600000407%2C1600000408%2C1600000409%2C1600000410&owner_id=54321&page=1&per_page=100&sort_by=id&sort_order=desc>; rel=\"first\""
+        },
+        "body": {
+          "json": {
+            "href": "http://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?id=1600000401%2C1600000402%2C1600000403%2C1600000404%2C1600000405%2C1600000406%2C1600000407%2C1600000408%2C1600000409%2C1600000410&page=1&per_page=100&sort_by=id&sort_order=desc",
+            "count": 10,
+            "page": 1,
+            "per_page": 100,
+            "items": [
+              {
+                "href": "https://sandbox-api-shipx-pl.easypack24.net/v1/shipments/1600000401",
+                "id": 1600000401,
+                "status": "offers_prepared",
+                "tracking_number": null,
+                "return_tracking_number": null,
+                "service": "inpost_locker_standard",
+                "reference": "scrubbed-1",
+                "is_return": false,
+                "application_id": 4321,
+                "created_by_id": null,
+                "external_customer_id": null,
+                "sending_method": "any_point",
+                "end_of_week_collection": false,
+                "comments": null,
+                "mpk": null,
+                "additional_services": [],
+                "custom_attributes": {
+                  "target_point": "KRA010",
+                  "sending_method": "any_point"
+                },
+                "cod": {
+                  "amount": null,
+                  "currency": null
+                },
+                "insurance": {
+                  "amount": null,
+                  "currency": null
+                },
+                "sender": {
+                  "id": 0,
+                  "name": null,
+                  "company_name": "scrubbed-2",
+                  "first_name": "scrubbed-3",
+                  "last_name": "scrubbed-4",
+                  "email": "scrubbed-5",
+                  "phone": "scrubbed-6",
+                  "address": {
+                    "id": 0,
+                    "street": "scrubbed-7",
+                    "building_number": "scrubbed-8",
+                    "line1": null,
+                    "line2": null,
+                    "city": "scrubbed-9",
+                    "post_code": "scrubbed-10",
+                    "country_code": "scrubbed-11"
+                  }
+                },
+                "receiver": {
+                  "id": 1600300401,
+                  "name": null,
+                  "company_name": null,
+                  "first_name": "scrubbed-12",
+                  "last_name": "scrubbed-13",
+                  "email": "jan.kowalski@example.com",
+                  "phone": "+00000000001",
+                  "address": null
+                },
+                "selected_offer": null,
+                "offers": [
+                  {
+                    "id": 1600700401,
+                    "status": "available",
+                    "expires_at": "2026-10-10T11:05:02.807+02:00",
+                    "rate": null,
+                    "currency": "PLN",
+                    "additional_services": [],
+                    "carrier": {
+                      "id": "inpost_locker",
+                      "name": "InPost Paczkomaty",
+                      "description": "InPost Paczkomaty - Przesyłki paczkomatowe"
+                    },
+                    "service": {
+                      "id": "inpost_locker_standard",
+                      "name": "Paczkomatowa standardowa",
+                      "description": "Przesyłka paczkomatowa standardowa"
+                    },
+                    "unavailability_reasons": null
+                  }
+                ],
+                "transactions": [],
+                "parcels": [
+                  {
+                    "id": 1600500401,
+                    "identify_number": null,
+                    "tracking_number": null,
+                    "is_non_standard": false,
+                    "template": "small",
+                    "dimensions": {
+                      "length": 380,
+                      "width": 640,
+                      "height": 80,
+                      "unit": "mm"
+                    },
+                    "weight": {
+                      "amount": 25,
+                      "unit": "kg"
+                    }
+                  }
+                ],
+                "created_at": "2026-10-10T11:00:02.375+02:00",
+                "updated_at": "2026-10-10T11:00:03.552+02:00"
+              },
+              {
+                "href": "https://sandbox-api-shipx-pl.easypack24.net/v1/shipments/1600000402",
+                "id": 1600000402,
+                "status": "confirmed",
+                "tracking_number": "620999548227330124500402",
+                "return_tracking_number": null,
+                "service": "inpost_locker_standard",
+                "reference": "scrubbed-14",
+                "is_return": false,
+                "application_id": 4321,
+                "created_by_id": null,
+                "external_customer_id": null,
+                "sending_method": "any_point",
+                "end_of_week_collection": false,
+                "comments": null,
+                "mpk": null,
+                "additional_services": [],
+                "custom_attributes": {
+                  "target_point": "KRA010",
+                  "sending_method": "any_point",
+                  "customer_delivering_code": "[scrubbed]"
+                },
+                "cod": {
+                  "amount": null,
+                  "currency": null
+                },
+                "insurance": {
+                  "amount": null,
+                  "currency": null
+                },
+                "sender": {
+                  "id": 0,
+                  "name": null,
+                  "company_name": "scrubbed-2",
+                  "first_name": "scrubbed-3",
+                  "last_name": "scrubbed-4",
+                  "email": "scrubbed-5",
+                  "phone": "scrubbed-6",
+                  "address": {
+                    "id": 0,
+                    "street": "scrubbed-7",
+                    "building_number": "scrubbed-8",
+                    "line1": null,
+                    "line2": null,
+                    "city": "scrubbed-9",
+                    "post_code": "scrubbed-10",
+                    "country_code": "scrubbed-11"
+                  }
+                },
+                "receiver": {
+                  "id": 1600300402,
+                  "name": null,
+                  "company_name": null,
+                  "first_name": "scrubbed-12",
+                  "last_name": "scrubbed-13",
+                  "email": "jan.kowalski@example.com",
+                  "phone": "+00000000001",
+                  "address": null
+                },
+                "selected_offer": {
+                  "id": 1600700402,
+                  "status": "bought",
+                  "expires_at": null,
+                  "rate": null,
+                  "currency": "PLN",
+                  "additional_services": [],
+                  "carrier": {
+                    "id": "inpost_locker",
+                    "name": "InPost Paczkomaty",
+                    "description": "InPost Paczkomaty - Przesyłki paczkomatowe"
+                  },
+                  "service": {
+                    "id": "inpost_locker_standard",
+                    "name": "Paczkomatowa standardowa",
+                    "description": "Przesyłka paczkomatowa standardowa"
+                  },
+                  "unavailability_reasons": null
+                },
+                "offers": [
+                  {
+                    "id": 1600700402,
+                    "status": "bought",
+                    "expires_at": null,
+                    "rate": null,
+                    "currency": "PLN",
+                    "additional_services": [],
+                    "carrier": {
+                      "id": "inpost_locker",
+                      "name": "InPost Paczkomaty",
+                      "description": "InPost Paczkomaty - Przesyłki paczkomatowe"
+                    },
+                    "service": {
+                      "id": "inpost_locker_standard",
+                      "name": "Paczkomatowa standardowa",
+                      "description": "Przesyłka paczkomatowa standardowa"
+                    },
+                    "unavailability_reasons": null
+                  }
+                ],
+                "transactions": [
+                  {
+                    "id": 1600900402,
+                    "status": "success",
+                    "offer_id": 1600700402,
+                    "details": {},
+                    "created_at": "2026-10-10T11:00:03.108+02:00",
+                    "updated_at": "2026-10-10T11:00:03.552+02:00"
+                  }
+                ],
+                "parcels": [
+                  {
+                    "id": 1600500402,
+                    "identify_number": null,
+                    "tracking_number": "620999548227330124500402",
+                    "is_non_standard": false,
+                    "template": "small",
+                    "dimensions": {
+                      "length": 380,
+                      "width": 640,
+                      "height": 80,
+                      "unit": "mm"
+                    },
+                    "weight": {
+                      "amount": 25,
+                      "unit": "kg"
+                    }
+                  }
+                ],
+                "created_at": "2026-10-10T11:00:02.375+02:00",
+                "updated_at": "2026-10-10T11:00:03.552+02:00"
+              },
+              {
+                "href": "https://sandbox-api-shipx-pl.easypack24.net/v1/shipments/1600000403",
+                "id": 1600000403,
+                "status": "adopted_at_sorting_center",
+                "tracking_number": "620999548227330124500403",
+                "return_tracking_number": null,
+                "service": "inpost_locker_standard",
+                "reference": "scrubbed-15",
+                "is_return": false,
+                "application_id": 4321,
+                "created_by_id": null,
+                "external_customer_id": null,
+                "sending_method": "any_point",
+                "end_of_week_collection": false,
+                "comments": null,
+                "mpk": null,
+                "additional_services": [],
+                "custom_attributes": {
+                  "target_point": "KRA010",
+                  "sending_method": "any_point",
+                  "customer_delivering_code": "[scrubbed]"
+                },
+                "cod": {
+                  "amount": null,
+                  "currency": null
+                },
+                "insurance": {
+                  "amount": null,
+                  "currency": null
+                },
+                "sender": {
+                  "id": 0,
+                  "name": null,
+                  "company_name": "scrubbed-2",
+                  "first_name": "scrubbed-3",
+                  "last_name": "scrubbed-4",
+                  "email": "scrubbed-5",
+                  "phone": "scrubbed-6",
+                  "address": {
+                    "id": 0,
+                    "street": "scrubbed-7",
+                    "building_number": "scrubbed-8",
+                    "line1": null,
+                    "line2": null,
+                    "city": "scrubbed-9",
+                    "post_code": "scrubbed-10",
+                    "country_code": "scrubbed-11"
+                  }
+                },
+                "receiver": {
+                  "id": 1600300403,
+                  "name": null,
+                  "company_name": null,
+                  "first_name": "scrubbed-12",
+                  "last_name": "scrubbed-13",
+                  "email": "jan.kowalski@example.com",
+                  "phone": "+00000000001",
+                  "address": null
+                },
+                "selected_offer": {
+                  "id": 1600700403,
+                  "status": "bought",
+                  "expires_at": null,
+                  "rate": null,
+                  "currency": "PLN",
+                  "additional_services": [],
+                  "carrier": {
+                    "id": "inpost_locker",
+                    "name": "InPost Paczkomaty",
+                    "description": "InPost Paczkomaty - Przesyłki paczkomatowe"
+                  },
+                  "service": {
+                    "id": "inpost_locker_standard",
+                    "name": "Paczkomatowa standardowa",
+                    "description": "Przesyłka paczkomatowa standardowa"
+                  },
+                  "unavailability_reasons": null
+                },
+                "offers": [
+                  {
+                    "id": 1600700403,
+                    "status": "bought",
+                    "expires_at": null,
+                    "rate": null,
+                    "currency": "PLN",
+                    "additional_services": [],
+                    "carrier": {
+                      "id": "inpost_locker",
+                      "name": "InPost Paczkomaty",
+                      "description": "InPost Paczkomaty - Przesyłki paczkomatowe"
+                    },
+                    "service": {
+                      "id": "inpost_locker_standard",
+                      "name": "Paczkomatowa standardowa",
+                      "description": "Przesyłka paczkomatowa standardowa"
+                    },
+                    "unavailability_reasons": null
+                  }
+                ],
+                "transactions": [
+                  {
+                    "id": 1600900403,
+                    "status": "success",
+                    "offer_id": 1600700403,
+                    "details": {},
+                    "created_at": "2026-10-10T11:00:03.108+02:00",
+                    "updated_at": "2026-10-10T11:00:03.552+02:00"
+                  }
+                ],
+                "parcels": [
+                  {
+                    "id": 1600500403,
+                    "identify_number": null,
+                    "tracking_number": "620999548227330124500403",
+                    "is_non_standard": false,
+                    "template": "small",
+                    "dimensions": {
+                      "length": 380,
+                      "width": 640,
+                      "height": 80,
+                      "unit": "mm"
+                    },
+                    "weight": {
+                      "amount": 25,
+                      "unit": "kg"
+                    }
+                  }
+                ],
+                "created_at": "2026-10-10T11:00:02.375+02:00",
+                "updated_at": "2026-10-10T11:00:03.552+02:00"
+              },
+              {
+                "href": "https://sandbox-api-shipx-pl.easypack24.net/v1/shipments/1600000404",
+                "id": 1600000404,
+                "status": "ready_to_pickup",
+                "tracking_number": "620999548227330124500404",
+                "return_tracking_number": null,
+                "service": "inpost_locker_standard",
+                "reference": "scrubbed-16",
+                "is_return": false,
+                "application_id": 4321,
+                "created_by_id": null,
+                "external_customer_id": null,
+                "sending_method": "any_point",
+                "end_of_week_collection": false,
+                "comments": null,
+                "mpk": null,
+                "additional_services": [],
+                "custom_attributes": {
+                  "target_point": "KRA010",
+                  "sending_method": "any_point",
+                  "customer_delivering_code": "[scrubbed]"
+                },
+                "cod": {
+                  "amount": null,
+                  "currency": null
+                },
+                "insurance": {
+                  "amount": null,
+                  "currency": null
+                },
+                "sender": {
+                  "id": 0,
+                  "name": null,
+                  "company_name": "scrubbed-2",
+                  "first_name": "scrubbed-3",
+                  "last_name": "scrubbed-4",
+                  "email": "scrubbed-5",
+                  "phone": "scrubbed-6",
+                  "address": {
+                    "id": 0,
+                    "street": "scrubbed-7",
+                    "building_number": "scrubbed-8",
+                    "line1": null,
+                    "line2": null,
+                    "city": "scrubbed-9",
+                    "post_code": "scrubbed-10",
+                    "country_code": "scrubbed-11"
+                  }
+                },
+                "receiver": {
+                  "id": 1600300404,
+                  "name": null,
+                  "company_name": null,
+                  "first_name": "scrubbed-12",
+                  "last_name": "scrubbed-13",
+                  "email": "jan.kowalski@example.com",
+                  "phone": "+00000000001",
+                  "address": null
+                },
+                "selected_offer": {
+                  "id": 1600700404,
+                  "status": "bought",
+                  "expires_at": null,
+                  "rate": null,
+                  "currency": "PLN",
+                  "additional_services": [],
+                  "carrier": {
+                    "id": "inpost_locker",
+                    "name": "InPost Paczkomaty",
+                    "description": "InPost Paczkomaty - Przesyłki paczkomatowe"
+                  },
+                  "service": {
+                    "id": "inpost_locker_standard",
+                    "name": "Paczkomatowa standardowa",
+                    "description": "Przesyłka paczkomatowa standardowa"
+                  },
+                  "unavailability_reasons": null
+                },
+                "offers": [
+                  {
+                    "id": 1600700404,
+                    "status": "bought",
+                    "expires_at": null,
+                    "rate": null,
+                    "currency": "PLN",
+                    "additional_services": [],
+                    "carrier": {
+                      "id": "inpost_locker",
+                      "name": "InPost Paczkomaty",
+                      "description": "InPost Paczkomaty - Przesyłki paczkomatowe"
+                    },
+                    "service": {
+                      "id": "inpost_locker_standard",
+                      "name": "Paczkomatowa standardowa",
+                      "description": "Przesyłka paczkomatowa standardowa"
+                    },
+                    "unavailability_reasons": null
+                  }
+                ],
+                "transactions": [
+                  {
+                    "id": 1600900404,
+                    "status": "success",
+                    "offer_id": 1600700404,
+                    "details": {},
+                    "created_at": "2026-10-10T11:00:03.108+02:00",
+                    "updated_at": "2026-10-10T11:00:03.552+02:00"
+                  }
+                ],
+                "parcels": [
+                  {
+                    "id": 1600500404,
+                    "identify_number": null,
+                    "tracking_number": "620999548227330124500404",
+                    "is_non_standard": false,
+                    "template": "small",
+                    "dimensions": {
+                      "length": 380,
+                      "width": 640,
+                      "height": 80,
+                      "unit": "mm"
+                    },
+                    "weight": {
+                      "amount": 25,
+                      "unit": "kg"
+                    }
+                  }
+                ],
+                "created_at": "2026-10-10T11:00:02.375+02:00",
+                "updated_at": "2026-10-10T11:00:03.552+02:00"
+              },
+              {
+                "href": "https://sandbox-api-shipx-pl.easypack24.net/v1/shipments/1600000405",
+                "id": 1600000405,
+                "status": "undelivered_wrong_address",
+                "tracking_number": "620999548227330124500405",
+                "return_tracking_number": null,
+                "service": "inpost_locker_standard",
+                "reference": "scrubbed-17",
+                "is_return": false,
+                "application_id": 4321,
+                "created_by_id": null,
+                "external_customer_id": null,
+                "sending_method": "any_point",
+                "end_of_week_collection": false,
+                "comments": null,
+                "mpk": null,
+                "additional_services": [],
+                "custom_attributes": {
+                  "target_point": "KRA010",
+                  "sending_method": "any_point",
+                  "customer_delivering_code": "[scrubbed]"
+                },
+                "cod": {
+                  "amount": null,
+                  "currency": null
+                },
+                "insurance": {
+                  "amount": null,
+                  "currency": null
+                },
+                "sender": {
+                  "id": 0,
+                  "name": null,
+                  "company_name": "scrubbed-2",
+                  "first_name": "scrubbed-3",
+                  "last_name": "scrubbed-4",
+                  "email": "scrubbed-5",
+                  "phone": "scrubbed-6",
+                  "address": {
+                    "id": 0,
+                    "street": "scrubbed-7",
+                    "building_number": "scrubbed-8",
+                    "line1": null,
+                    "line2": null,
+                    "city": "scrubbed-9",
+                    "post_code": "scrubbed-10",
+                    "country_code": "scrubbed-11"
+                  }
+                },
+                "receiver": {
+                  "id": 1600300405,
+                  "name": null,
+                  "company_name": null,
+                  "first_name": "scrubbed-12",
+                  "last_name": "scrubbed-13",
+                  "email": "jan.kowalski@example.com",
+                  "phone": "+00000000001",
+                  "address": null
+                },
+                "selected_offer": {
+                  "id": 1600700405,
+                  "status": "bought",
+                  "expires_at": null,
+                  "rate": null,
+                  "currency": "PLN",
+                  "additional_services": [],
+                  "carrier": {
+                    "id": "inpost_locker",
+                    "name": "InPost Paczkomaty",
+                    "description": "InPost Paczkomaty - Przesyłki paczkomatowe"
+                  },
+                  "service": {
+                    "id": "inpost_locker_standard",
+                    "name": "Paczkomatowa standardowa",
+                    "description": "Przesyłka paczkomatowa standardowa"
+                  },
+                  "unavailability_reasons": null
+                },
+                "offers": [
+                  {
+                    "id": 1600700405,
+                    "status": "bought",
+                    "expires_at": null,
+                    "rate": null,
+                    "currency": "PLN",
+                    "additional_services": [],
+                    "carrier": {
+                      "id": "inpost_locker",
+                      "name": "InPost Paczkomaty",
+                      "description": "InPost Paczkomaty - Przesyłki paczkomatowe"
+                    },
+                    "service": {
+                      "id": "inpost_locker_standard",
+                      "name": "Paczkomatowa standardowa",
+                      "description": "Przesyłka paczkomatowa standardowa"
+                    },
+                    "unavailability_reasons": null
+                  }
+                ],
+                "transactions": [
+                  {
+                    "id": 1600900405,
+                    "status": "success",
+                    "offer_id": 1600700405,
+                    "details": {},
+                    "created_at": "2026-10-10T11:00:03.108+02:00",
+                    "updated_at": "2026-10-10T11:00:03.552+02:00"
+                  }
+                ],
+                "parcels": [
+                  {
+                    "id": 1600500405,
+                    "identify_number": null,
+                    "tracking_number": "620999548227330124500405",
+                    "is_non_standard": false,
+                    "template": "small",
+                    "dimensions": {
+                      "length": 380,
+                      "width": 640,
+                      "height": 80,
+                      "unit": "mm"
+                    },
+                    "weight": {
+                      "amount": 25,
+                      "unit": "kg"
+                    }
+                  }
+                ],
+                "created_at": "2026-10-10T11:00:02.375+02:00",
+                "updated_at": "2026-10-10T11:00:03.552+02:00"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?id=1600000401%2C1600000402%2C1600000403%2C1600000404%2C1600000405%2C1600000406%2C1600000407%2C1600000408%2C1600000409%2C1600000410&page=2&per_page=100",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8",
+          "link": "<http://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?id=1600000401%2C1600000402%2C1600000403%2C1600000404%2C1600000405%2C1600000406%2C1600000407%2C1600000408%2C1600000409%2C1600000410&owner_id=54321&per_page=100&sort_by=id&sort_order=desc>; rel=\"next\", <http://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?id=1600000401%2C1600000402%2C1600000403%2C1600000404%2C1600000405%2C1600000406%2C1600000407%2C1600000408%2C1600000409%2C1600000410&owner_id=54321&per_page=100&sort_by=id&sort_order=desc>; rel=\"last\", <http://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?id=1600000401%2C1600000402%2C1600000403%2C1600000404%2C1600000405%2C1600000406%2C1600000407%2C1600000408%2C1600000409%2C1600000410&owner_id=54321&per_page=100&sort_by=id&sort_order=desc>; rel=\"previous\", <http://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?id=1600000401%2C1600000402%2C1600000403%2C1600000404%2C1600000405%2C1600000406%2C1600000407%2C1600000408%2C1600000409%2C1600000410&owner_id=54321&page=1&per_page=100&sort_by=id&sort_order=desc>; rel=\"first\""
+        },
+        "body": {
+          "json": {
+            "href": "http://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?id=1600000401%2C1600000402%2C1600000403%2C1600000404%2C1600000405%2C1600000406%2C1600000407%2C1600000408%2C1600000409%2C1600000410&page=2&per_page=100&sort_by=id&sort_order=desc",
+            "count": 10,
+            "page": 2,
+            "per_page": 100,
+            "items": [
+              {
+                "href": "https://sandbox-api-shipx-pl.easypack24.net/v1/shipments/1600000406",
+                "id": 1600000406,
+                "status": "delivered",
+                "tracking_number": "620999548227330124500406",
+                "return_tracking_number": null,
+                "service": "inpost_locker_standard",
+                "reference": "scrubbed-18",
+                "is_return": false,
+                "application_id": 4321,
+                "created_by_id": null,
+                "external_customer_id": null,
+                "sending_method": "any_point",
+                "end_of_week_collection": false,
+                "comments": null,
+                "mpk": null,
+                "additional_services": [],
+                "custom_attributes": {
+                  "target_point": "KRA010",
+                  "sending_method": "any_point",
+                  "customer_delivering_code": "[scrubbed]"
+                },
+                "cod": {
+                  "amount": null,
+                  "currency": null
+                },
+                "insurance": {
+                  "amount": null,
+                  "currency": null
+                },
+                "sender": {
+                  "id": 0,
+                  "name": null,
+                  "company_name": "scrubbed-2",
+                  "first_name": "scrubbed-3",
+                  "last_name": "scrubbed-4",
+                  "email": "scrubbed-5",
+                  "phone": "scrubbed-6",
+                  "address": {
+                    "id": 0,
+                    "street": "scrubbed-7",
+                    "building_number": "scrubbed-8",
+                    "line1": null,
+                    "line2": null,
+                    "city": "scrubbed-9",
+                    "post_code": "scrubbed-10",
+                    "country_code": "scrubbed-11"
+                  }
+                },
+                "receiver": {
+                  "id": 1600300406,
+                  "name": null,
+                  "company_name": null,
+                  "first_name": "scrubbed-12",
+                  "last_name": "scrubbed-13",
+                  "email": "jan.kowalski@example.com",
+                  "phone": "+00000000001",
+                  "address": null
+                },
+                "selected_offer": {
+                  "id": 1600700406,
+                  "status": "bought",
+                  "expires_at": null,
+                  "rate": null,
+                  "currency": "PLN",
+                  "additional_services": [],
+                  "carrier": {
+                    "id": "inpost_locker",
+                    "name": "InPost Paczkomaty",
+                    "description": "InPost Paczkomaty - Przesyłki paczkomatowe"
+                  },
+                  "service": {
+                    "id": "inpost_locker_standard",
+                    "name": "Paczkomatowa standardowa",
+                    "description": "Przesyłka paczkomatowa standardowa"
+                  },
+                  "unavailability_reasons": null
+                },
+                "offers": [
+                  {
+                    "id": 1600700406,
+                    "status": "bought",
+                    "expires_at": null,
+                    "rate": null,
+                    "currency": "PLN",
+                    "additional_services": [],
+                    "carrier": {
+                      "id": "inpost_locker",
+                      "name": "InPost Paczkomaty",
+                      "description": "InPost Paczkomaty - Przesyłki paczkomatowe"
+                    },
+                    "service": {
+                      "id": "inpost_locker_standard",
+                      "name": "Paczkomatowa standardowa",
+                      "description": "Przesyłka paczkomatowa standardowa"
+                    },
+                    "unavailability_reasons": null
+                  }
+                ],
+                "transactions": [
+                  {
+                    "id": 1600900406,
+                    "status": "success",
+                    "offer_id": 1600700406,
+                    "details": {},
+                    "created_at": "2026-10-10T11:00:03.108+02:00",
+                    "updated_at": "2026-10-10T11:00:03.552+02:00"
+                  }
+                ],
+                "parcels": [
+                  {
+                    "id": 1600500406,
+                    "identify_number": null,
+                    "tracking_number": "620999548227330124500406",
+                    "is_non_standard": false,
+                    "template": "small",
+                    "dimensions": {
+                      "length": 380,
+                      "width": 640,
+                      "height": 80,
+                      "unit": "mm"
+                    },
+                    "weight": {
+                      "amount": 25,
+                      "unit": "kg"
+                    }
+                  }
+                ],
+                "created_at": "2026-10-10T11:00:02.375+02:00",
+                "updated_at": "2026-10-10T11:00:03.552+02:00"
+              },
+              {
+                "href": "https://sandbox-api-shipx-pl.easypack24.net/v1/shipments/1600000407",
+                "id": 1600000407,
+                "status": "returned_to_sender",
+                "tracking_number": "620999548227330124500407",
+                "return_tracking_number": null,
+                "service": "inpost_locker_standard",
+                "reference": "scrubbed-19",
+                "is_return": false,
+                "application_id": 4321,
+                "created_by_id": null,
+                "external_customer_id": null,
+                "sending_method": "any_point",
+                "end_of_week_collection": false,
+                "comments": null,
+                "mpk": null,
+                "additional_services": [],
+                "custom_attributes": {
+                  "target_point": "KRA010",
+                  "sending_method": "any_point",
+                  "customer_delivering_code": "[scrubbed]"
+                },
+                "cod": {
+                  "amount": null,
+                  "currency": null
+                },
+                "insurance": {
+                  "amount": null,
+                  "currency": null
+                },
+                "sender": {
+                  "id": 0,
+                  "name": null,
+                  "company_name": "scrubbed-2",
+                  "first_name": "scrubbed-3",
+                  "last_name": "scrubbed-4",
+                  "email": "scrubbed-5",
+                  "phone": "scrubbed-6",
+                  "address": {
+                    "id": 0,
+                    "street": "scrubbed-7",
+                    "building_number": "scrubbed-8",
+                    "line1": null,
+                    "line2": null,
+                    "city": "scrubbed-9",
+                    "post_code": "scrubbed-10",
+                    "country_code": "scrubbed-11"
+                  }
+                },
+                "receiver": {
+                  "id": 1600300407,
+                  "name": null,
+                  "company_name": null,
+                  "first_name": "scrubbed-12",
+                  "last_name": "scrubbed-13",
+                  "email": "jan.kowalski@example.com",
+                  "phone": "+00000000001",
+                  "address": null
+                },
+                "selected_offer": {
+                  "id": 1600700407,
+                  "status": "bought",
+                  "expires_at": null,
+                  "rate": null,
+                  "currency": "PLN",
+                  "additional_services": [],
+                  "carrier": {
+                    "id": "inpost_locker",
+                    "name": "InPost Paczkomaty",
+                    "description": "InPost Paczkomaty - Przesyłki paczkomatowe"
+                  },
+                  "service": {
+                    "id": "inpost_locker_standard",
+                    "name": "Paczkomatowa standardowa",
+                    "description": "Przesyłka paczkomatowa standardowa"
+                  },
+                  "unavailability_reasons": null
+                },
+                "offers": [
+                  {
+                    "id": 1600700407,
+                    "status": "bought",
+                    "expires_at": null,
+                    "rate": null,
+                    "currency": "PLN",
+                    "additional_services": [],
+                    "carrier": {
+                      "id": "inpost_locker",
+                      "name": "InPost Paczkomaty",
+                      "description": "InPost Paczkomaty - Przesyłki paczkomatowe"
+                    },
+                    "service": {
+                      "id": "inpost_locker_standard",
+                      "name": "Paczkomatowa standardowa",
+                      "description": "Przesyłka paczkomatowa standardowa"
+                    },
+                    "unavailability_reasons": null
+                  }
+                ],
+                "transactions": [
+                  {
+                    "id": 1600900407,
+                    "status": "success",
+                    "offer_id": 1600700407,
+                    "details": {},
+                    "created_at": "2026-10-10T11:00:03.108+02:00",
+                    "updated_at": "2026-10-10T11:00:03.552+02:00"
+                  }
+                ],
+                "parcels": [
+                  {
+                    "id": 1600500407,
+                    "identify_number": null,
+                    "tracking_number": "620999548227330124500407",
+                    "is_non_standard": false,
+                    "template": "small",
+                    "dimensions": {
+                      "length": 380,
+                      "width": 640,
+                      "height": 80,
+                      "unit": "mm"
+                    },
+                    "weight": {
+                      "amount": 25,
+                      "unit": "kg"
+                    }
+                  }
+                ],
+                "created_at": "2026-10-10T11:00:02.375+02:00",
+                "updated_at": "2026-10-10T11:00:03.552+02:00"
+              },
+              {
+                "href": "https://sandbox-api-shipx-pl.easypack24.net/v1/shipments/1600000408",
+                "id": 1600000408,
+                "status": "canceled",
+                "tracking_number": null,
+                "return_tracking_number": null,
+                "service": "inpost_locker_standard",
+                "reference": "scrubbed-20",
+                "is_return": false,
+                "application_id": 4321,
+                "created_by_id": null,
+                "external_customer_id": null,
+                "sending_method": "any_point",
+                "end_of_week_collection": false,
+                "comments": null,
+                "mpk": null,
+                "additional_services": [],
+                "custom_attributes": {
+                  "target_point": "KRA010",
+                  "sending_method": "any_point"
+                },
+                "cod": {
+                  "amount": null,
+                  "currency": null
+                },
+                "insurance": {
+                  "amount": null,
+                  "currency": null
+                },
+                "sender": {
+                  "id": 0,
+                  "name": null,
+                  "company_name": "scrubbed-2",
+                  "first_name": "scrubbed-3",
+                  "last_name": "scrubbed-4",
+                  "email": "scrubbed-5",
+                  "phone": "scrubbed-6",
+                  "address": {
+                    "id": 0,
+                    "street": "scrubbed-7",
+                    "building_number": "scrubbed-8",
+                    "line1": null,
+                    "line2": null,
+                    "city": "scrubbed-9",
+                    "post_code": "scrubbed-10",
+                    "country_code": "scrubbed-11"
+                  }
+                },
+                "receiver": {
+                  "id": 1600300408,
+                  "name": null,
+                  "company_name": null,
+                  "first_name": "scrubbed-12",
+                  "last_name": "scrubbed-13",
+                  "email": "jan.kowalski@example.com",
+                  "phone": "+00000000001",
+                  "address": null
+                },
+                "selected_offer": null,
+                "offers": [],
+                "transactions": [],
+                "parcels": [
+                  {
+                    "id": 1600500408,
+                    "identify_number": null,
+                    "tracking_number": null,
+                    "is_non_standard": false,
+                    "template": "small",
+                    "dimensions": {
+                      "length": 380,
+                      "width": 640,
+                      "height": 80,
+                      "unit": "mm"
+                    },
+                    "weight": {
+                      "amount": 25,
+                      "unit": "kg"
+                    }
+                  }
+                ],
+                "created_at": "2026-10-10T11:00:02.375+02:00",
+                "updated_at": "2026-10-10T11:00:03.552+02:00"
+              },
+              {
+                "href": "https://sandbox-api-shipx-pl.easypack24.net/v1/shipments/1600000409",
+                "id": 1600000409,
+                "status": "sorted_by_drone",
+                "tracking_number": "620999548227330124500409",
+                "return_tracking_number": null,
+                "service": "inpost_locker_standard",
+                "reference": "scrubbed-21",
+                "is_return": false,
+                "application_id": 4321,
+                "created_by_id": null,
+                "external_customer_id": null,
+                "sending_method": "any_point",
+                "end_of_week_collection": false,
+                "comments": null,
+                "mpk": null,
+                "additional_services": [],
+                "custom_attributes": {
+                  "target_point": "KRA010",
+                  "sending_method": "any_point",
+                  "customer_delivering_code": "[scrubbed]"
+                },
+                "cod": {
+                  "amount": null,
+                  "currency": null
+                },
+                "insurance": {
+                  "amount": null,
+                  "currency": null
+                },
+                "sender": {
+                  "id": 0,
+                  "name": null,
+                  "company_name": "scrubbed-2",
+                  "first_name": "scrubbed-3",
+                  "last_name": "scrubbed-4",
+                  "email": "scrubbed-5",
+                  "phone": "scrubbed-6",
+                  "address": {
+                    "id": 0,
+                    "street": "scrubbed-7",
+                    "building_number": "scrubbed-8",
+                    "line1": null,
+                    "line2": null,
+                    "city": "scrubbed-9",
+                    "post_code": "scrubbed-10",
+                    "country_code": "scrubbed-11"
+                  }
+                },
+                "receiver": {
+                  "id": 1600300409,
+                  "name": null,
+                  "company_name": null,
+                  "first_name": "scrubbed-12",
+                  "last_name": "scrubbed-13",
+                  "email": "jan.kowalski@example.com",
+                  "phone": "+00000000001",
+                  "address": null
+                },
+                "selected_offer": {
+                  "id": 1600700409,
+                  "status": "bought",
+                  "expires_at": null,
+                  "rate": null,
+                  "currency": "PLN",
+                  "additional_services": [],
+                  "carrier": {
+                    "id": "inpost_locker",
+                    "name": "InPost Paczkomaty",
+                    "description": "InPost Paczkomaty - Przesyłki paczkomatowe"
+                  },
+                  "service": {
+                    "id": "inpost_locker_standard",
+                    "name": "Paczkomatowa standardowa",
+                    "description": "Przesyłka paczkomatowa standardowa"
+                  },
+                  "unavailability_reasons": null
+                },
+                "offers": [
+                  {
+                    "id": 1600700409,
+                    "status": "bought",
+                    "expires_at": null,
+                    "rate": null,
+                    "currency": "PLN",
+                    "additional_services": [],
+                    "carrier": {
+                      "id": "inpost_locker",
+                      "name": "InPost Paczkomaty",
+                      "description": "InPost Paczkomaty - Przesyłki paczkomatowe"
+                    },
+                    "service": {
+                      "id": "inpost_locker_standard",
+                      "name": "Paczkomatowa standardowa",
+                      "description": "Przesyłka paczkomatowa standardowa"
+                    },
+                    "unavailability_reasons": null
+                  }
+                ],
+                "transactions": [
+                  {
+                    "id": 1600900409,
+                    "status": "success",
+                    "offer_id": 1600700409,
+                    "details": {},
+                    "created_at": "2026-10-10T11:00:03.108+02:00",
+                    "updated_at": "2026-10-10T11:00:03.552+02:00"
+                  }
+                ],
+                "parcels": [
+                  {
+                    "id": 1600500409,
+                    "identify_number": null,
+                    "tracking_number": "620999548227330124500409",
+                    "is_non_standard": false,
+                    "template": "small",
+                    "dimensions": {
+                      "length": 380,
+                      "width": 640,
+                      "height": 80,
+                      "unit": "mm"
+                    },
+                    "weight": {
+                      "amount": 25,
+                      "unit": "kg"
+                    }
+                  }
+                ],
+                "created_at": "2026-10-10T11:00:02.375+02:00",
+                "updated_at": "2026-10-10T11:00:03.552+02:00"
+              },
+              {
+                "href": "https://sandbox-api-shipx-pl.easypack24.net/v1/shipments/1600000499",
+                "id": 1600000499,
+                "status": "delivered",
+                "tracking_number": "620999548227330124500499",
+                "return_tracking_number": null,
+                "service": "inpost_locker_standard",
+                "reference": "scrubbed-22",
+                "is_return": false,
+                "application_id": 4321,
+                "created_by_id": null,
+                "external_customer_id": null,
+                "sending_method": "any_point",
+                "end_of_week_collection": false,
+                "comments": null,
+                "mpk": null,
+                "additional_services": [],
+                "custom_attributes": {
+                  "target_point": "KRA010",
+                  "sending_method": "any_point",
+                  "customer_delivering_code": "[scrubbed]"
+                },
+                "cod": {
+                  "amount": null,
+                  "currency": null
+                },
+                "insurance": {
+                  "amount": null,
+                  "currency": null
+                },
+                "sender": {
+                  "id": 0,
+                  "name": null,
+                  "company_name": "scrubbed-2",
+                  "first_name": "scrubbed-3",
+                  "last_name": "scrubbed-4",
+                  "email": "scrubbed-5",
+                  "phone": "scrubbed-6",
+                  "address": {
+                    "id": 0,
+                    "street": "scrubbed-7",
+                    "building_number": "scrubbed-8",
+                    "line1": null,
+                    "line2": null,
+                    "city": "scrubbed-9",
+                    "post_code": "scrubbed-10",
+                    "country_code": "scrubbed-11"
+                  }
+                },
+                "receiver": {
+                  "id": 1600300499,
+                  "name": null,
+                  "company_name": null,
+                  "first_name": "scrubbed-12",
+                  "last_name": "scrubbed-13",
+                  "email": "jan.kowalski@example.com",
+                  "phone": "+00000000001",
+                  "address": null
+                },
+                "selected_offer": {
+                  "id": 1600700499,
+                  "status": "bought",
+                  "expires_at": null,
+                  "rate": null,
+                  "currency": "PLN",
+                  "additional_services": [],
+                  "carrier": {
+                    "id": "inpost_locker",
+                    "name": "InPost Paczkomaty",
+                    "description": "InPost Paczkomaty - Przesyłki paczkomatowe"
+                  },
+                  "service": {
+                    "id": "inpost_locker_standard",
+                    "name": "Paczkomatowa standardowa",
+                    "description": "Przesyłka paczkomatowa standardowa"
+                  },
+                  "unavailability_reasons": null
+                },
+                "offers": [
+                  {
+                    "id": 1600700499,
+                    "status": "bought",
+                    "expires_at": null,
+                    "rate": null,
+                    "currency": "PLN",
+                    "additional_services": [],
+                    "carrier": {
+                      "id": "inpost_locker",
+                      "name": "InPost Paczkomaty",
+                      "description": "InPost Paczkomaty - Przesyłki paczkomatowe"
+                    },
+                    "service": {
+                      "id": "inpost_locker_standard",
+                      "name": "Paczkomatowa standardowa",
+                      "description": "Przesyłka paczkomatowa standardowa"
+                    },
+                    "unavailability_reasons": null
+                  }
+                ],
+                "transactions": [
+                  {
+                    "id": 1600900499,
+                    "status": "success",
+                    "offer_id": 1600700499,
+                    "details": {},
+                    "created_at": "2026-10-10T11:00:03.108+02:00",
+                    "updated_at": "2026-10-10T11:00:03.552+02:00"
+                  }
+                ],
+                "parcels": [
+                  {
+                    "id": 1600500499,
+                    "identify_number": null,
+                    "tracking_number": "620999548227330124500499",
+                    "is_non_standard": false,
+                    "template": "small",
+                    "dimensions": {
+                      "length": 380,
+                      "width": 640,
+                      "height": 80,
+                      "unit": "mm"
+                    },
+                    "weight": {
+                      "amount": 25,
+                      "unit": "kg"
+                    }
+                  }
+                ],
+                "created_at": "2026-10-10T11:00:02.375+02:00",
+                "updated_at": "2026-10-10T11:00:03.552+02:00"
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

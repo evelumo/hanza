@@ -169,6 +169,9 @@ importers:
       '@hanza/connector-fake':
         specifier: workspace:*
         version: link:../connectors/fake
+      '@hanza/connector-inpost':
+        specifier: workspace:*
+        version: link:../connectors/inpost
       '@hanza/connector-sdk':
         specifier: workspace:*
         version: link:../connector-sdk
@@ -194,6 +197,25 @@ importers:
         version: 5.0.3(@types/node@24.19.1)(vite@8.3.2(@types/node@24.19.1)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15))
 
   packages/connectors/fake:
+    dependencies:
+      '@hanza/connector-sdk':
+        specifier: workspace:*
+        version: link:../../connector-sdk
+      zod:
+        specifier: ^4.6.5
+        version: 4.6.5
+    devDependencies:
+      '@types/node':
+        specifier: ^24.0.0
+        version: 24.19.1
+      typescript:
+        specifier: ^6.0.3
+        version: 6.0.3
+      vitest:
+        specifier: ^5.0.3
+        version: 5.0.3(@types/node@24.19.1)(vite@8.3.2(@types/node@24.19.1)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15))
+
+  packages/connectors/inpost:
     dependencies:
       '@hanza/connector-sdk':
         specifier: workspace:*
