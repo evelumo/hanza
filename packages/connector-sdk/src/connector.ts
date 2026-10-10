@@ -113,8 +113,9 @@ export interface Capabilities<TConfig, TCredentials, TApp = unknown> {
    * create whose outcome it does not know (the call threw, or its answer could not be stored) sooner than
    * `SHIPMENT_CREATE_RETRY_DELAY_MS` (5 minutes) after that call started. A Carrier's list may lag behind its own
    * create, so a lookup made at once would find nothing and the repeat would buy a second parcel; the lookup may
-   * rely on that delay, and on nothing shorter. Only a failure that provably came before any request was sent (the
-   * core's own rate limiter refusing) is repeated sooner.
+   * rely on that delay, and on nothing shorter. One call is repeated sooner: one in which the core's own rate limiter
+   * refused a request before sending it (`ctx.fetch` rejects with a `RateLimitedError`; let it through unchanged)
+   * and nothing but reads (`GET`, `HEAD`) had been sent. So never make anything at the Carrier with a read.
    *
    * The request names one of the connector's `shipping.services` and fits it (destination type, parcel preset or
    * dimensions, cash on delivery only where the service takes it): the core refuses anything else before the call.
