@@ -17,6 +17,7 @@
   "devDependencies": {
     "@hanza/connector-fake": "workspace:*",
     "@hanza/connector-sdk": "workspace:*",
+    "@hanza/connector-woocommerce": "workspace:*",
     "@hanza/db": "workspace:*",
     "@types/node": "^24.0.0",
     "typescript": "^6.0.3",

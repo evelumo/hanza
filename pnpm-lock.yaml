@@ -148,6 +148,9 @@ importers:
       '@hanza/connector-sdk':
         specifier: workspace:*
         version: link:../../packages/connector-sdk
+      '@hanza/connector-woocommerce':
+        specifier: workspace:*
+        version: link:../../packages/connectors/woocommerce
       '@hanza/db':
         specifier: workspace:*
         version: link:../../packages/db
