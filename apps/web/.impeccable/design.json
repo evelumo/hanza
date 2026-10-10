@@ -1,0 +1,232 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-10T00:00:00.000Z",
+  "title": "Design System: Hanza",
+  "extensions": {
+    "colorMeta": {
+      "primary": { "role": "primary", "displayName": "Ink", "canonical": "oklch(0.25 0 0)", "dark": "oklch(0.94 0 0)", "tonalRamp": ["oklch(0.18 0 0)", "oklch(0.25 0 0)", "oklch(0.34 0 0)", "oklch(0.49 0 0)", "oklch(0.63 0 0)", "oklch(0.82 0 0)", "oklch(0.9 0 0)", "oklch(0.958 0 0)"] },
+      "primary-foreground": { "role": "primary", "displayName": "On Ink", "canonical": "oklch(1 0 0)", "dark": "oklch(0.2 0 0)" },
+      "link": { "role": "secondary", "displayName": "Link Blue", "canonical": "oklch(0.5 0.185 258)", "dark": "oklch(0.76 0.12 255)", "tonalRamp": ["oklch(0.15 0.185 258)", "oklch(0.27 0.185 258)", "oklch(0.38 0.185 258)", "oklch(0.5 0.185 258)", "oklch(0.62 0.185 258)", "oklch(0.74 0.185 258)", "oklch(0.86 0.185 258)", "oklch(0.95 0.185 258)"] },
+      "ring": { "role": "secondary", "displayName": "Focus Blue", "canonical": "oklch(0.58 0.2 258)", "dark": "oklch(0.7 0.15 255)", "tonalRamp": ["oklch(0.15 0.2 258)", "oklch(0.27 0.2 258)", "oklch(0.38 0.2 258)", "oklch(0.5 0.2 258)", "oklch(0.58 0.2 258)", "oklch(0.74 0.2 258)", "oklch(0.86 0.2 258)", "oklch(0.95 0.2 258)"] },
+      "selection": { "role": "secondary", "displayName": "Selection", "canonical": "oklch(0.58 0.2 258 / 0.22)", "dark": "oklch(0.7 0.15 255 / 0.32)" },
+      "destructive": { "role": "tertiary", "displayName": "Destructive Red", "canonical": "oklch(0.55 0.21 27)", "dark": "oklch(0.52 0.19 27)", "tonalRamp": ["oklch(0.15 0.21 27)", "oklch(0.27 0.21 27)", "oklch(0.38 0.21 27)", "oklch(0.55 0.21 27)", "oklch(0.62 0.21 27)", "oklch(0.74 0.21 27)", "oklch(0.86 0.21 27)", "oklch(0.95 0.21 27)"] },
+      "background": { "role": "neutral", "displayName": "Canvas", "canonical": "oklch(0.958 0 0)", "dark": "oklch(0.205 0 0)", "tonalRamp": ["oklch(0.18 0 0)", "oklch(0.25 0 0)", "oklch(0.34 0 0)", "oklch(0.49 0 0)", "oklch(0.63 0 0)", "oklch(0.82 0 0)", "oklch(0.9 0 0)", "oklch(0.958 0 0)"] },
+      "foreground": { "role": "neutral", "displayName": "Foreground", "canonical": "oklch(0.27 0 0)", "dark": "oklch(0.94 0 0)" },
+      "card": { "role": "neutral", "displayName": "Card", "canonical": "oklch(1 0 0)", "dark": "oklch(0.25 0 0)" },
+      "popover": { "role": "neutral", "displayName": "Popover", "canonical": "oklch(1 0 0)", "dark": "oklch(0.27 0 0)" },
+      "secondary": { "role": "neutral", "displayName": "Secondary Fill", "canonical": "oklch(0.94 0 0)", "dark": "oklch(0.31 0 0)" },
+      "muted": { "role": "neutral", "displayName": "Muted Fill", "canonical": "oklch(0.965 0 0)", "dark": "oklch(0.29 0 0)" },
+      "muted-foreground": { "role": "neutral", "displayName": "Muted Foreground", "canonical": "oklch(0.49 0 0)", "dark": "oklch(0.74 0 0)" },
+      "accent": { "role": "neutral", "displayName": "Accent Fill", "canonical": "oklch(0.945 0 0)", "dark": "oklch(0.32 0 0)" },
+      "border": { "role": "neutral", "displayName": "Border", "canonical": "oklch(0.9 0 0)", "dark": "oklch(0.34 0 0)" },
+      "border-strong": { "role": "neutral", "displayName": "Border Strong", "canonical": "oklch(0.82 0 0)", "dark": "oklch(0.42 0 0)" },
+      "input": { "role": "neutral", "displayName": "Input Border", "canonical": "oklch(0.63 0 0)", "dark": "oklch(0.54 0 0)" },
+      "overlay": { "role": "neutral", "displayName": "Overlay Scrim", "canonical": "oklch(0 0 0 / 0.4)", "dark": "oklch(0 0 0 / 0.6)" },
+      "scrollbar-thumb": { "role": "neutral", "displayName": "Scrollbar Thumb", "canonical": "oklch(0.78 0 0)", "dark": "oklch(0.42 0 0)" },
+      "sidebar": { "role": "neutral", "displayName": "Sidebar", "canonical": "oklch(0.94 0 0)", "dark": "oklch(0.18 0 0)" },
+      "sidebar-accent": { "role": "neutral", "displayName": "Sidebar Hover", "canonical": "oklch(0.895 0 0)", "dark": "oklch(0.27 0 0)" },
+      "sidebar-accent-foreground": { "role": "neutral", "displayName": "Sidebar Active Text", "canonical": "oklch(0.2 0 0)", "dark": "oklch(0.97 0 0)" },
+      "sidebar-border": { "role": "neutral", "displayName": "Sidebar Border", "canonical": "oklch(0.88 0 0)", "dark": "oklch(0.29 0 0)" },
+      "status-gray": { "role": "tertiary", "displayName": "Gray (tone: neutral)", "canonical": "oklch(0.42 0 0)", "dark": "oklch(0.86 0 0)", "tonalRamp": ["oklch(0.31 0 0)", "oklch(0.42 0 0)", "oklch(0.43 0 0)", "oklch(0.86 0 0)", "oklch(0.87 0 0)", "oklch(0.955 0 0)"] },
+      "status-blue": { "role": "tertiary", "displayName": "Blue (tone: info)", "canonical": "oklch(0.45 0.15 255)", "dark": "oklch(0.84 0.08 250)", "tonalRamp": ["oklch(0.31 0.06 255)", "oklch(0.44 0.09 255)", "oklch(0.45 0.15 255)", "oklch(0.84 0.08 250)", "oklch(0.86 0.07 250)", "oklch(0.955 0.025 250)"] },
+      "status-teal": { "role": "tertiary", "displayName": "Teal (Order status only)", "canonical": "oklch(0.42 0.075 195)", "dark": "oklch(0.85 0.08 190)", "tonalRamp": ["oklch(0.31 0.04 195)", "oklch(0.42 0.075 195)", "oklch(0.44 0.06 195)", "oklch(0.85 0.06 190)", "oklch(0.85 0.08 190)", "oklch(0.955 0.03 190)"] },
+      "status-green": { "role": "tertiary", "displayName": "Green (tone: success)", "canonical": "oklch(0.42 0.11 152)", "dark": "oklch(0.85 0.11 155)", "tonalRamp": ["oklch(0.31 0.05 155)", "oklch(0.42 0.11 152)", "oklch(0.44 0.08 155)", "oklch(0.85 0.08 155)", "oklch(0.85 0.11 155)", "oklch(0.955 0.04 155)"] },
+      "status-amber": { "role": "tertiary", "displayName": "Amber (tone: warning)", "canonical": "oklch(0.44 0.095 75)", "dark": "oklch(0.87 0.12 88)", "tonalRamp": ["oklch(0.32 0.05 80)", "oklch(0.44 0.095 75)", "oklch(0.46 0.08 80)", "oklch(0.86 0.11 85)", "oklch(0.87 0.12 88)", "oklch(0.96 0.05 90)"] },
+      "status-orange": { "role": "tertiary", "displayName": "Orange (tone: attention)", "canonical": "oklch(0.46 0.125 48)", "dark": "oklch(0.85 0.1 60)", "tonalRamp": ["oklch(0.32 0.05 50)", "oklch(0.46 0.09 50)", "oklch(0.46 0.125 48)", "oklch(0.85 0.1 60)", "oklch(0.86 0.09 58)", "oklch(0.955 0.03 60)"] },
+      "status-red": { "role": "tertiary", "displayName": "Red (tone: critical)", "canonical": "oklch(0.46 0.17 27)", "dark": "oklch(0.83 0.09 22)", "tonalRamp": ["oklch(0.31 0.06 25)", "oklch(0.45 0.1 25)", "oklch(0.46 0.17 27)", "oklch(0.83 0.09 22)", "oklch(0.86 0.07 22)", "oklch(0.955 0.025 20)"] },
+      "status-violet": { "role": "tertiary", "displayName": "Violet (Order status only)", "canonical": "oklch(0.45 0.16 295)", "dark": "oklch(0.84 0.085 295)", "tonalRamp": ["oklch(0.31 0.06 295)", "oklch(0.45 0.1 295)", "oklch(0.45 0.16 295)", "oklch(0.84 0.085 295)", "oklch(0.86 0.07 295)", "oklch(0.955 0.025 295)"] }
+    },
+    "toneAliases": {
+      "neutral": "status-gray",
+      "info": "status-blue",
+      "success": "status-green",
+      "warning": "status-amber",
+      "attention": "status-orange",
+      "critical": "status-red"
+    },
+    "typographyMeta": {
+      "headline": { "displayName": "Headline", "purpose": "The page's only h1: page header, auth cards, whole-page states." },
+      "title": { "displayName": "Title", "purpose": "Section and card headings, empty-state and notice titles." },
+      "body": { "displayName": "Body", "purpose": "The default for everything; running text capped at 54ch (about 70 characters)." },
+      "label": { "displayName": "Label", "purpose": "Form labels, buttons, primary cells, row titles, link text." },
+      "meta": { "displayName": "Meta", "purpose": "Descriptions, hints, errors, folded table meta, description-list terms; at weight 500 column headers, tabs, chips and small buttons." },
+      "caption": { "displayName": "Caption", "purpose": "Badges, sidebar group labels and counts; at weight 400 timestamps, tooltips and keyboard hints." },
+      "mono": { "displayName": "Identifier", "purpose": "Identifiers only: SKUs, external ids, connection ids, codes, environment variable names. Platform monospace stack by deliberate exception. Never Order numbers." }
+    },
+    "shadows": [
+      { "name": "card", "value": "0 1px 0 0 oklch(0 0 0 / 0.04), 0 1px 3px -1px oklch(0 0 0 / 0.08)", "dark": "0 1px 0 0 oklch(0 0 0 / 0.2)", "purpose": "Cards, sections, panels and the current sidebar item: a hairline that sharpens the lower edge." },
+      { "name": "overlay", "value": "0 4px 6px -2px oklch(0 0 0 / 0.06), 0 12px 28px -6px oklch(0 0 0 / 0.16)", "dark": "0 4px 6px -2px oklch(0 0 0 / 0.3), 0 12px 28px -6px oklch(0 0 0 / 0.5)", "purpose": "Dialogs, popovers, menus, sheets, the command palette." },
+      { "name": "control", "value": "0 1px 2px 0 rgb(0 0 0 / 0.05)", "purpose": "Filled and outline buttons, inputs, checkboxes (Tailwind shadow-xs)." },
+      { "name": "scroll-shade", "value": "linear-gradient(oklch(0 0 0 / 0.14), transparent) top / 100% 0.625rem", "dark": "linear-gradient(oklch(0 0 0 / 0.5), transparent) top / 100% 0.625rem", "purpose": "The edge of a list that scrolls inside a popover, only where more lies beyond it." }
+    ],
+    "focus": { "name": "ring", "value": "outline: 2px solid var(--ring); outline-offset: 2px", "purpose": "The one focus ring for everything a keyboard can reach; moved inside the box (-2px) only where a clipped edge would cut it off." },
+    "motion": [
+      { "name": "duration-default", "value": "150ms", "purpose": "Every colour transition and every overlay's fade and scale." },
+      { "name": "ease-default", "value": "cubic-bezier(0.2, 0, 0, 1)", "purpose": "Default easing for state transitions." },
+      { "name": "reduced-motion", "value": "0.01ms", "purpose": "Under prefers-reduced-motion all animation and transition durations collapse." }
+    ],
+    "breakpoints": [
+      { "name": "table-narrow", "value": "42rem", "kind": "container", "purpose": "Below it a table's rows are stacked blocks and the header row is gone." },
+      { "name": "table-medium", "value": "56rem", "kind": "container", "purpose": "Below it medium-hidden columns fold into a meta line under the primary cell." },
+      { "name": "timeline-inline", "value": "28rem", "kind": "container", "purpose": "From it a timeline's timestamp sits on the title's line." },
+      { "name": "dashboard-pair", "value": "48rem", "kind": "container", "purpose": "From it Orders by phase sits beside Connection health." },
+      { "name": "detail-columns", "value": "64rem", "kind": "container", "purpose": "From it a detail page is a main column beside a 21rem aside." },
+      { "name": "sm", "value": "640px", "kind": "viewport", "purpose": "Full breadcrumb trail, wide command palette trigger, 24px page padding." },
+      { "name": "md", "value": "768px", "kind": "viewport", "purpose": "Sidebar is docked rather than a sheet; text controls drop from 16px to 14px." },
+      { "name": "lg", "value": "1024px", "kind": "viewport", "purpose": "32px page padding." }
+    ],
+    "controlHeights": [
+      { "name": "badge", "value": "22px" },
+      { "name": "control-sm", "value": "28px", "purpose": "Small buttons, compact inputs, filter tabs and chips." },
+      { "name": "control", "value": "32px", "purpose": "Buttons, inputs, selects, sidebar items." },
+      { "name": "control-lg", "value": "36px", "purpose": "The full-width submit on auth pages; table header row." },
+      { "name": "row", "value": "44px", "purpose": "Table rows and whole-row links." },
+      { "name": "top-bar", "value": "48px" }
+    ],
+    "layout": [
+      { "name": "content-max", "value": "75rem" },
+      { "name": "sidebar", "value": "16rem" },
+      { "name": "sidebar-icon", "value": "3rem" },
+      { "name": "sidebar-mobile", "value": "18rem" },
+      { "name": "detail-aside", "value": "21rem" },
+      { "name": "measure", "value": "54ch" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The page's one primary action: top-right in the page header, or the submit of a focused create or commit form.",
+      "html": "<button class=\"ds-btn ds-btn-primary\">New product</button>",
+      "css": ".ds-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 32px; padding: 0 12px; border-radius: 8px; border: 1px solid transparent; font: 500 14px/20px 'Inter Variable', ui-sans-serif, system-ui, sans-serif; white-space: nowrap; cursor: pointer; box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); transition: background-color 150ms cubic-bezier(0.2, 0, 0, 1), border-color 150ms cubic-bezier(0.2, 0, 0, 1); } .ds-btn:focus-visible { outline: 2px solid var(--ring, oklch(0.58 0.2 258)); outline-offset: 2px; } .ds-btn-primary { background: var(--primary, oklch(0.25 0 0)); color: var(--primary-foreground, oklch(1 0 0)); } .ds-btn-primary:hover { background: color-mix(in oklab, var(--primary, oklch(0.25 0 0)) 85%, transparent); } .ds-btn-primary:active { background: color-mix(in oklab, var(--primary, oklch(0.25 0 0)) 75%, transparent); }"
+    },
+    {
+      "name": "Outline Button",
+      "kind": "button",
+      "refersTo": "button-outline",
+      "description": "Every in-place save and every non-primary action.",
+      "html": "<button class=\"ds-btn-outline\">Save name</button>",
+      "css": ".ds-btn-outline { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 32px; padding: 0 12px; border-radius: 8px; border: 1px solid var(--border-strong, oklch(0.82 0 0)); background: var(--card, oklch(1 0 0)); color: var(--foreground, oklch(0.27 0 0)); font: 500 14px/20px 'Inter Variable', ui-sans-serif, system-ui, sans-serif; white-space: nowrap; cursor: pointer; box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); transition: background-color 150ms cubic-bezier(0.2, 0, 0, 1); } .ds-btn-outline:hover { background: var(--accent, oklch(0.945 0 0)); } .ds-btn-outline:active { background: var(--secondary, oklch(0.94 0 0)); } .ds-btn-outline:focus-visible { outline: 2px solid var(--ring, oklch(0.58 0.2 258)); outline-offset: 2px; }"
+    },
+    {
+      "name": "Danger Button",
+      "kind": "button",
+      "refersTo": "button-danger",
+      "description": "A destructive action: an outline in critical red, confirmed in an alert dialog before it runs.",
+      "html": "<button class=\"ds-btn-danger\">Delete warehouse</button>",
+      "css": ".ds-btn-danger { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 32px; padding: 0 12px; border-radius: 8px; border: 1px solid var(--status-red-border, oklch(0.86 0.07 22)); background: var(--card, oklch(1 0 0)); color: var(--status-red, oklch(0.46 0.17 27)); font: 500 14px/20px 'Inter Variable', ui-sans-serif, system-ui, sans-serif; white-space: nowrap; cursor: pointer; box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); transition: background-color 150ms cubic-bezier(0.2, 0, 0, 1); } .ds-btn-danger:hover, .ds-btn-danger:active { background: var(--status-red-subtle, oklch(0.955 0.025 20)); } .ds-btn-danger:focus-visible { outline: 2px solid var(--ring, oklch(0.58 0.2 258)); outline-offset: 2px; }"
+    },
+    {
+      "name": "Text Field",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Label, control, then hint or error, 6px apart. Input, textarea and native select share one box.",
+      "html": "<div class=\"ds-field\"><label class=\"ds-field-label\" for=\"ds-sku\">SKU</label><input class=\"ds-input\" id=\"ds-sku\" value=\"MUG-BLUE-330\"><p class=\"ds-field-hint\">Unique within the organization.</p></div>",
+      "css": ".ds-field { display: grid; gap: 6px; max-width: 320px; font-family: 'Inter Variable', ui-sans-serif, system-ui, sans-serif; } .ds-field-label { font-size: 14px; line-height: 20px; font-weight: 500; color: var(--foreground, oklch(0.27 0 0)); } .ds-input { width: 100%; height: 32px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--input, oklch(0.63 0 0)); background: var(--card, oklch(1 0 0)); color: var(--foreground, oklch(0.27 0 0)); font: 400 14px/20px 'Inter Variable', ui-sans-serif, system-ui, sans-serif; box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); transition: border-color 150ms cubic-bezier(0.2, 0, 0, 1); } .ds-input:hover { border-color: color-mix(in oklab, var(--foreground, oklch(0.27 0 0)) 60%, transparent); } .ds-input:focus-visible { outline: 2px solid var(--ring, oklch(0.58 0.2 258)); outline-offset: 2px; } .ds-input[aria-invalid='true'] { border-color: var(--status-red, oklch(0.46 0.17 27)); } .ds-field-hint { margin: 0; font-size: 13px; line-height: 18px; color: var(--muted-foreground, oklch(0.49 0 0)); }"
+    },
+    {
+      "name": "Badge",
+      "kind": "chip",
+      "refersTo": "badge",
+      "description": "States a state in words: tone plus icon shape plus text. Only a neutral tag goes without an icon.",
+      "html": "<span class=\"ds-badge ds-badge-attention\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"10\"/><line x1=\"12\" x2=\"12\" y1=\"8\" y2=\"12\"/><line x1=\"12\" x2=\"12.01\" y1=\"16\" y2=\"16\"/></svg>Needs attention</span> <span class=\"ds-badge ds-badge-success\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"m9 12 2 2 4-4\"/></svg>Shipped</span> <span class=\"ds-badge ds-badge-neutral\">Default</span>",
+      "css": ".ds-badge { display: inline-flex; align-items: center; gap: 4px; height: 22px; padding: 0 8px; border: 1px solid; border-radius: 9999px; font: 500 12px/16px 'Inter Variable', ui-sans-serif, system-ui, sans-serif; white-space: nowrap; } .ds-badge:has(> svg) { padding-left: 6px; } .ds-badge > svg { width: 14px; height: 14px; flex-shrink: 0; } .ds-badge-neutral { background: var(--status-gray-subtle, oklch(0.955 0 0)); border-color: var(--status-gray-border, oklch(0.87 0 0)); color: var(--status-gray, oklch(0.42 0 0)); } .ds-badge-attention { background: var(--status-orange-subtle, oklch(0.955 0.03 60)); border-color: var(--status-orange-border, oklch(0.86 0.09 58)); color: var(--status-orange, oklch(0.46 0.125 48)); } .ds-badge-success { background: var(--status-green-subtle, oklch(0.955 0.04 155)); border-color: var(--status-green-border, oklch(0.85 0.08 155)); color: var(--status-green, oklch(0.42 0.11 152)); }"
+    },
+    {
+      "name": "Section Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "The one raised surface: a region named by its heading, content flush to its edges.",
+      "html": "<section class=\"ds-section\"><div class=\"ds-section-head\"><h2 class=\"ds-section-title\">Stock</h2><p class=\"ds-section-desc\">What is on hand in each Warehouse.</p></div><div class=\"ds-section-body\">Main warehouse <span class=\"ds-section-num\">128</span></div></section>",
+      "css": ".ds-section { max-width: 420px; border: 1px solid var(--border, oklch(0.9 0 0)); border-radius: 8px; background: var(--card, oklch(1 0 0)); color: var(--foreground, oklch(0.27 0 0)); box-shadow: var(--card-shadow, 0 1px 0 0 oklch(0 0 0 / 0.04), 0 1px 3px -1px oklch(0 0 0 / 0.08)); overflow: hidden; font: 400 14px/20px 'Inter Variable', ui-sans-serif, system-ui, sans-serif; } .ds-section-head { padding: 12px 16px; border-bottom: 1px solid var(--border, oklch(0.9 0 0)); } .ds-section-title { margin: 0; font-size: 14px; line-height: 20px; font-weight: 600; } .ds-section-desc { margin: 4px 0 0; font-size: 13px; line-height: 18px; color: var(--muted-foreground, oklch(0.49 0 0)); } .ds-section-body { display: flex; justify-content: space-between; padding: 16px; } .ds-section-num { font-variant-numeric: tabular-nums; font-weight: 500; }"
+    },
+    {
+      "name": "Notice",
+      "kind": "custom",
+      "refersTo": "notice",
+      "description": "Standing information a person should not miss: a toned box with an icon, a title and body text in full foreground.",
+      "html": "<div class=\"ds-notice\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3\"/><path d=\"M12 9v4\"/><path d=\"M12 17h.01\"/></svg><div class=\"ds-notice-title\">Sign in again</div><div class=\"ds-notice-body\">This Connection's sign-in has expired, so nothing is synchronised.</div></div>",
+      "css": ".ds-notice { display: grid; grid-template-columns: auto 1fr; column-gap: 10px; row-gap: 4px; align-items: start; max-width: 480px; padding: 10px 12px; border: 1px solid var(--status-amber-border, oklch(0.86 0.11 85)); border-radius: 8px; background: var(--status-amber-subtle, oklch(0.96 0.05 90)); color: var(--status-amber, oklch(0.44 0.095 75)); font: 400 14px/20px 'Inter Variable', ui-sans-serif, system-ui, sans-serif; } .ds-notice > svg { width: 16px; height: 16px; margin-top: 2px; } .ds-notice-title { font-weight: 600; } .ds-notice-body { grid-column: 2; color: var(--foreground, oklch(0.27 0 0)); }"
+    },
+    {
+      "name": "Filter Tabs and Chips",
+      "kind": "chip",
+      "refersTo": "filter-chip",
+      "description": "The filter bar of a list: tabs for exclusive views, chips for on/off filters; on shows a tick, not only a fill.",
+      "html": "<div class=\"ds-filterbar\"><a class=\"ds-tab ds-tab-active\" href=\"#\">All</a><a class=\"ds-tab\" href=\"#\">New</a><a class=\"ds-tab\" href=\"#\">Processing</a><a class=\"ds-fchip ds-fchip-on\" href=\"#\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M20 6 9 17l-5-5\"/></svg>Needs attention</a><a class=\"ds-fchip\" href=\"#\">Awaiting payment</a></div>",
+      "css": ".ds-filterbar { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; padding: 8px 12px; font-family: 'Inter Variable', ui-sans-serif, system-ui, sans-serif; } .ds-tab, .ds-fchip { display: inline-flex; align-items: center; gap: 4px; height: 28px; padding: 0 10px; font-size: 13px; line-height: 18px; font-weight: 500; white-space: nowrap; text-decoration: none; color: var(--muted-foreground, oklch(0.49 0 0)); transition: background-color 150ms cubic-bezier(0.2, 0, 0, 1), color 150ms cubic-bezier(0.2, 0, 0, 1); } .ds-tab { border-radius: 6px; } .ds-tab:hover { background: color-mix(in oklab, var(--foreground, oklch(0.27 0 0)) 5%, transparent); color: var(--foreground, oklch(0.27 0 0)); } .ds-tab-active, .ds-tab-active:hover { background: color-mix(in oklab, var(--foreground, oklch(0.27 0 0)) 8%, transparent); color: var(--foreground, oklch(0.27 0 0)); } .ds-fchip { margin-left: 8px; border: 1px dashed var(--border-strong, oklch(0.82 0 0)); border-radius: 9999px; } .ds-fchip:hover { border-style: solid; background: color-mix(in oklab, var(--foreground, oklch(0.27 0 0)) 5%, transparent); color: var(--foreground, oklch(0.27 0 0)); } .ds-fchip-on { padding-left: 8px; border: 1px solid color-mix(in oklab, var(--foreground, oklch(0.27 0 0)) 25%, transparent); background: color-mix(in oklab, var(--foreground, oklch(0.27 0 0)) 8%, transparent); color: var(--foreground, oklch(0.27 0 0)); } .ds-fchip-on:hover { background: color-mix(in oklab, var(--foreground, oklch(0.27 0 0)) 12%, transparent); } .ds-fchip > svg { width: 14px; height: 14px; } .ds-tab:focus-visible, .ds-fchip:focus-visible { outline: 2px solid var(--ring, oklch(0.58 0.2 258)); outline-offset: 2px; }"
+    },
+    {
+      "name": "Sidebar Navigation",
+      "kind": "nav",
+      "refersTo": "sidebar-item",
+      "description": "Destinations grouped by job; the current item is a card-coloured tile; a count says what waits behind an item.",
+      "html": "<nav class=\"ds-nav\"><div class=\"ds-nav-group\">Sales</div><a class=\"ds-nav-item ds-nav-item-active\" href=\"#\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"8\" cy=\"21\" r=\"1\"/><circle cx=\"19\" cy=\"21\" r=\"1\"/><path d=\"M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12\"/></svg><span>Orders</span><span class=\"ds-nav-count\">3</span></a><div class=\"ds-nav-group\">Catalogue</div><a class=\"ds-nav-item\" href=\"#\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"m7.5 4.27 9 5.15\"/><path d=\"M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z\"/><path d=\"m3.3 7 8.7 5 8.7-5\"/><path d=\"M12 22V12\"/></svg><span>Products</span></a></nav>",
+      "css": ".ds-nav { display: flex; flex-direction: column; gap: 4px; width: 240px; padding: 8px; background: var(--sidebar, oklch(0.94 0 0)); font-family: 'Inter Variable', ui-sans-serif, system-ui, sans-serif; } .ds-nav-group { display: flex; align-items: center; height: 32px; padding: 0 8px; font-size: 12px; line-height: 16px; font-weight: 500; color: var(--muted-foreground, oklch(0.49 0 0)); } .ds-nav-item { display: flex; align-items: center; gap: 8px; height: 32px; padding: 8px; border-radius: 8px; font-size: 14px; line-height: 20px; color: var(--sidebar-foreground, oklch(0.27 0 0)); text-decoration: none; transition: background-color 150ms cubic-bezier(0.2, 0, 0, 1); } .ds-nav-item > svg { width: 16px; height: 16px; flex-shrink: 0; color: var(--muted-foreground, oklch(0.49 0 0)); } .ds-nav-item:hover { background: var(--sidebar-accent, oklch(0.895 0 0)); color: var(--sidebar-accent-foreground, oklch(0.2 0 0)); } .ds-nav-item-active, .ds-nav-item-active:hover { background: var(--card, oklch(1 0 0)); color: var(--sidebar-accent-foreground, oklch(0.2 0 0)); font-weight: 500; box-shadow: var(--card-shadow, 0 1px 0 0 oklch(0 0 0 / 0.04), 0 1px 3px -1px oklch(0 0 0 / 0.08)); } .ds-nav-item-active > svg { color: var(--foreground, oklch(0.27 0 0)); } .ds-nav-count { margin-left: auto; min-width: 20px; height: 20px; padding: 0 6px; display: inline-flex; align-items: center; justify-content: center; border-radius: 9999px; background: color-mix(in oklab, var(--foreground, oklch(0.27 0 0)) 8%, transparent); font-size: 12px; font-weight: 500; font-variant-numeric: tabular-nums; } .ds-nav-item:focus-visible { outline: 2px solid var(--ring, oklch(0.58 0.2 258)); outline-offset: 2px; }"
+    },
+    {
+      "name": "Command Palette Trigger",
+      "kind": "custom",
+      "refersTo": "button-outline",
+      "description": "The signature interaction's way in, at the right of the top bar: opens search over every destination and Products by name or SKU.",
+      "html": "<button class=\"ds-cmdk\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"11\" cy=\"11\" r=\"8\"/><path d=\"m21 21-4.3-4.3\"/></svg><span>Search</span><kbd class=\"ds-cmdk-key\">⌘K</kbd></button>",
+      "css": ".ds-cmdk { display: inline-flex; align-items: center; gap: 8px; width: 224px; height: 32px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--border-strong, oklch(0.82 0 0)); background: var(--card, oklch(1 0 0)); color: var(--muted-foreground, oklch(0.49 0 0)); font: 400 14px/20px 'Inter Variable', ui-sans-serif, system-ui, sans-serif; cursor: pointer; box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); transition: background-color 150ms cubic-bezier(0.2, 0, 0, 1); } .ds-cmdk > svg { width: 16px; height: 16px; flex-shrink: 0; } .ds-cmdk:hover { background: var(--accent, oklch(0.945 0 0)); } .ds-cmdk:focus-visible { outline: 2px solid var(--ring, oklch(0.58 0.2 258)); outline-offset: 2px; } .ds-cmdk-key { margin-left: auto; padding: 0 4px; border: 1px solid var(--border, oklch(0.9 0 0)); border-radius: 4px; background: var(--muted, oklch(0.965 0 0)); font: inherit; font-size: 12px; line-height: 16px; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Dispatch Desk",
+    "overview": "The Hanza panel is the commerce admin a Shopify-fluent team trusts on sight. It does not try to be a visual world of its own: by the owner's decision it follows the category standard for commerce admins, built on shadcn/ui, and is judged against Shopify Admin. A gray canvas carries white bordered cards; a collapsible sidebar groups destinations by the job they serve; a top bar holds breadcrumbs and a command palette. Familiarity is the feature. A warehouse picker, a customer-service agent and an owner each spend whole working days here, and none of them should have to learn the furniture.\n\nWhat the system does insist on is order of attention. What needs a person leads every screen: the dashboard opens with a Needs attention list instead of KPI cards, sidebar items carry counts of what waits behind them, and state is always written out in words beside a shape and a tone. Neutrals carry no hue at all; colour is reserved for links, focus and state, so that when colour appears it means something happened.\n\nDensity is that of a working tool: 14px body text, 32px controls, 44px table rows, 20px between blocks. Everything is tokenised for light and dark, and everything is translated (English and Polish), so no screen hard-codes a colour or a sentence.\n\nThe name of the North Star is provisional: it was chosen while recording the build and has not been confirmed by the owner.",
+    "keyCharacteristics": [
+      "Category-standard commerce admin on shadcn/ui; quality bar Shopify Admin.",
+      "Achromatic neutrals; blue only for links, focus and selection; eight hues only for state.",
+      "One raised surface (white card, 1px border, hairline shadow) on a gray canvas.",
+      "One near-black primary action per page, top-right in the page header.",
+      "State is always tone plus icon shape plus text.",
+      "Tables follow the width of their container, not the window.",
+      "Light and dark from one token set; copy only from the message catalogues."
+    ],
+    "rules": [
+      { "name": "The Tokens Only Rule", "body": "Screens style with the semantic tokens and nothing else: no raw palette classes (`bg-red-500`, `text-slate-600`), no hex, no `white` or `black`. A new colour need is a new token in both themes, or it is not needed.", "section": "colors" },
+      { "name": "The Colour Means State Rule", "body": "Neutrals carry no hue. Blue belongs to links, focus and selection; the eight status hues belong to state. No hue is used for decoration, emphasis or branding inside the panel.", "section": "colors" },
+      { "name": "The Never Colour Alone Rule", "body": "A tone is never the only signal. It is always paired with an icon shape and with text, so a state reads in grayscale and to a screen reader.", "section": "colors" },
+      { "name": "The Identifier Rule", "body": "Monospace is for identifiers and nothing else: SKUs, external ids, connection ids, codes, environment variable names. They are set through the `Identifier` component (or `TextLink mono`), stay on one line in a table column, and may break anywhere in a narrow place. The face is the platform monospace stack, not a self-hosted one: a deliberate exception, because adding a production dependency needs the owner's approval and Operate mode permits system stacks.", "section": "typography" },
+      { "name": "The Order Number Rule", "body": "An Order number is not an identifier in this sense. People read it out and type it, so it is set in Inter with proportional figures (`orderNumberClass`, `normal-nums`). Tabular figures would widen Inter's hyphen (\"fake - order - 1\"), and Order numbers are read, not summed down a column.", "section": "typography" },
+      { "name": "The Tabular Rule", "body": "Quantities and amounts are right-aligned in tabular figures so digits line up down a column; dates, counts and pagination summaries take tabular figures without the alignment.", "section": "typography" },
+      { "name": "The Real Minus Rule", "body": "A negative number is written with the typographic minus (U+2212), which is as wide as a digit in tabular figures, never with the hyphen `Intl` produces. The formatters in `src/lib/format.ts` do this; screens never format numbers or money by hand.", "section": "typography" },
+      { "name": "The Empty Value Rule", "body": "A value that is not there is an em dash in muted foreground with words for a screen reader (`NoValue`). Never an empty cell, never \"N/A\", never a bare hyphen.", "section": "typography" },
+      { "name": "The One Primary Rule", "body": "A page has one near-black primary button. It sits top-right in the page header, or it is the submit of a focused create or commit form. In-place saves on detail and settings pages are outline buttons everywhere, however many there are.", "section": "layout" },
+      { "name": "The Warehouses Exception", "body": "The Warehouses list keeps its inline two-field create form as the page's one primary, instead of a header action leading to a create page. This is deliberate: routes were not to change in this build.", "section": "layout" },
+      { "name": "The Needs A Person First Rule", "body": "On any screen that summarises, what waits for a person comes before totals. The dashboard opens with the Needs attention list; Orders by phase and Connection health follow, then recent activity.", "section": "layout" },
+      { "name": "The One Surface Rule", "body": "The card is the panel's one raised surface. Never nest two: inside a card, structure comes from hairlines, a muted fill or a toned notice.", "section": "elevation" },
+      { "name": "The One Ring Rule", "body": "Everything a keyboard can reach shows the same focus ring: a 2px solid outline in Focus Blue, offset 2px. A component overrides it only to move it inside its own box, where a clipped edge would otherwise cut it off (whole-row links in a card use a -2px offset).", "section": "elevation" },
+      { "name": "The Badge Rule", "body": "A badge is tone plus icon shape plus text. Each tone has its own shape (info: circled i; success: circled check; warning: triangle; attention: circled exclamation; critical: octagon), so a badge reads without its colour. Only a neutral tag (\"Default\", \"Inactive\") may go without an icon.", "section": "components" }
+    ],
+    "dos": [
+      "Do build screens from the kit in `src/components` (`Page`, `PageHeader`, `Section`, `Panel`, `DataTable`, `FilterBar`, `Notice`, `EmptyState`, the form kit) before reaching for a primitive in `src/components/ui`.",
+      "Do style with tokens only: `bg-card`, `text-muted-foreground`, `border-border`, `text-<tone>`, `bg-<tone>-subtle`, `border-<tone>-border`.",
+      "Do give every page exactly one `<h1>` through `PageHeader` and one primary button, top-right, or as the submit of a focused create or commit form.",
+      "Do make every in-place save an outline button.",
+      "Do state every state as tone plus icon shape plus text, through `Badge` or `Notice`.",
+      "Do mark each table's primary cell, its end cell and its medium-hidden columns, and fold what a hidden column said into a `DataTableMeta` line.",
+      "Do set identifiers with `Identifier`, Order numbers with `orderNumberClass`, missing values with `NoValue`, and numbers, money and dates through the formatters.",
+      "Do take every user-facing string from `messages/en.json` and `messages/pl.json`, adding the key to both.",
+      "Do give every control an accessible name; the end-to-end flows and screen readers both find elements by role and name.",
+      "Do check every new screen in light and dark and at a narrow container width."
+    ],
+    "donts": [
+      "Don't use raw palette classes, hex values, `white` or `black` in a screen.",
+      "Don't hard-code copy in a component or an action, in either language.",
+      "Don't put a second near-black button on a page. The Warehouses list's inline create form is the one recorded exception.",
+      "Don't open a summary screen with KPI cards or totals; what needs a person comes first.",
+      "Don't carry meaning by colour alone, and don't leave an icon off a badge unless it is a neutral tag.",
+      "Don't nest a card inside a card.",
+      "Don't use a hue for decoration or emphasis; colour is for links, focus and state.",
+      "Don't set anything but identifiers in monospace, and don't set Order numbers in monospace or tabular figures.",
+      "Don't write a negative number with a hyphen, or leave an empty cell where a value is missing.",
+      "Don't size layouts from the viewport where the kit uses container queries; a table or a detail page must hold with the sidebar open or collapsed.",
+      "Don't override the focus ring except to move it inside a clipped box.",
+      "Don't ship raster images. This build ships none: the only image is the vector mark `src/app/icon.svg`, which predates the rebuild."
+    ]
+  }
+}

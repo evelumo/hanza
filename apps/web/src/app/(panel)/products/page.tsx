@@ -1,15 +1,36 @@
 import { listFamilyOptions, listProducts } from '@hanza/core'
+import { Package, SearchX } from 'lucide-react'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { buttonClass } from '@/components/button-class'
+import {
+  DataTable,
+  DataTableBody,
+  DataTableCell,
+  DataTableHead,
+  DataTableHeader,
+  DataTableLinkRow,
+  DataTableMeta,
+  DataTableMetaItem,
+} from '@/components/data-table'
+import { EmptyState } from '@/components/empty-state'
+import { FilterBar, FilterClear, FilterForm, FilterSelect, SearchField } from '@/components/filter-bar'
+import { Identifier } from '@/components/identifier'
+import { NoValue } from '@/components/no-value'
+import { PageHeader } from '@/components/page-header'
+import { Page } from '@/components/page-layout'
 import { Pagination } from '@/components/pagination'
-import { EmptyState, linkClass, rowClass, tableClass, tdClass, thClass } from '@/components/section'
+import { Panel } from '@/components/section'
+import { AttentionBadge } from '@/components/status-badge'
+import { TextLink } from '@/components/text-link'
+import { Button } from '@/components/ui/button'
 import { getT } from '@/i18n/server'
 import { getContext } from '@/lib/context'
 import { getFormatters } from '@/lib/formatters'
 import { firstParam, outOfRangeRedirect, pageWindow, parsePage } from '@/lib/pagination'
 import { requireTenant } from '@/lib/session'
+import { cn } from '@/lib/utils'
 
 export const dynamic = 'force-dynamic'
 
@@ -36,114 +57,168 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
   const filters = { q: search, family: familyParam }
   const outOfRange = outOfRangeRedirect(page, total, '/products', filters)
   if (outOfRange) redirect(outOfRange)
+  const filtered = Boolean(search || familyParam)
+  const noProducts = total === 0 && !filtered
+
+  const addLink = (
+    <Link href="/products/new" className={buttonClass('primary')}>
+      {t('products.add')}
+    </Link>
+  )
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold tracking-tight">{t('products.title')}</h1>
-        <div className="flex gap-2">
-          <Link href="/products/offers" className={buttonClass('secondary')}>
-            {t('products.unlinkedOffers')}
-          </Link>
-          <Link href="/products/new" className={buttonClass('primary')}>
-            {t('products.add')}
-          </Link>
-        </div>
-      </div>
+    <Page>
+      {/* With no Product the empty state carries the actions, so the page never has two links with the same name. */}
+      <PageHeader
+        title={t('products.title')}
+        actions={
+          noProducts ? undefined : (
+            <>
+              <Link href="/products/offers" className={buttonClass('secondary')}>
+                {t('products.unlinkedOffers')}
+              </Link>
+              {addLink}
+            </>
+          )
+        }
+      />
 
-      <form method="get" role="search" className="flex gap-2">
-        <label className="sr-only" htmlFor="q">
-          {t('products.searchLabel')}
-        </label>
-        <input
-          id="q"
-          name="q"
-          type="search"
-          defaultValue={search ?? ''}
-          placeholder={t('products.searchPlaceholder')}
-          className="w-full max-w-sm rounded-md border border-line bg-white px-3 py-1.5 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-accent/20"
-        />
-        <label className="sr-only" htmlFor="family">
-          {t('products.familyFilter.label')}
-        </label>
-        <select
-          id="family"
-          name="family"
-          defaultValue={familyParam ?? ''}
-          className="rounded-md border border-line bg-white px-3 py-1.5 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-accent/20"
-        >
-          <option value="">{t('products.familyFilter.all')}</option>
-          <option value="none">{t('products.familyFilter.none')}</option>
-          {families.map((family) => (
-            <option key={family.id} value={family.id}>
-              {family.name}
-            </option>
-          ))}
-        </select>
-        <button type="submit" className={buttonClass('secondary')}>
-          {t('products.search')}
-        </button>
-        {search || familyParam ? (
-          <Link href="/products" className={buttonClass('secondary')}>
-            {t('products.clear')}
-          </Link>
-        ) : null}
-      </form>
+      <Panel>
+        {noProducts ? null : (
+          <FilterBar>
+            <FilterForm action="/products" role="search" className="min-w-0 flex-1">
+              <SearchField label={t('products.searchLabel')} placeholder={t('products.searchPlaceholder')} defaultValue={search ?? ''} maxLength={100} />
+              <FilterSelect name="family" label={t('products.familyFilter.label')} defaultValue={familyParam ?? ''}>
+                <option value="">{t('products.familyFilter.all')}</option>
+                <option value="none">{t('products.familyFilter.none')}</option>
+                {families.map((family) => (
+                  <option key={family.id} value={family.id}>
+                    {family.name}
+                  </option>
+                ))}
+              </FilterSelect>
+              <Button type="submit" variant="outline" size="sm">
+                {t('products.search')}
+              </Button>
+            </FilterForm>
+            {filtered ? <FilterClear href="/products" /> : null}
+          </FilterBar>
+        )}
 
-      <div className="rounded-lg border border-line bg-white">
         {total === 0 ? (
-          <EmptyState>
-            {search || familyParam ? t('products.emptySearch') : t('products.empty')}
-          </EmptyState>
+          filtered ? (
+            <EmptyState
+              icon={SearchX}
+              title={t('products.emptySearchTitle')}
+              action={
+                <Link href="/products" className={buttonClass('secondary')}>
+                  {t('common.clearFilters')}
+                </Link>
+              }
+            >
+              {t('products.emptySearch')}
+            </EmptyState>
+          ) : (
+            <EmptyState
+              icon={Package}
+              title={t('products.emptyTitle')}
+              action={
+                <>
+                  <Link href="/products/offers" className={buttonClass('secondary')}>
+                    {t('products.emptyFromOffers')}
+                  </Link>
+                  {addLink}
+                </>
+              }
+            >
+              {t('products.empty')}
+            </EmptyState>
+          )
         ) : (
-          <div className="overflow-x-auto">
-            <table className={tableClass}>
-              <thead>
-                <tr>
-                  <th scope="col" className={thClass}>{t('products.columns.sku')}</th>
-                  <th scope="col" className={thClass}>{t('products.columns.name')}</th>
-                  <th scope="col" className={thClass}>{t('products.columns.family')}</th>
-                  <th scope="col" className={`${thClass} text-right`}>{t('products.columns.stock')}</th>
-                  <th scope="col" className={`${thClass} text-right`}>{t('products.columns.reserved')}</th>
-                  <th scope="col" className={`${thClass} text-right`}>{t('products.columns.available')}</th>
-                  <th scope="col" className={`${thClass} text-right`}>{t('products.columns.offers')}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {items.map((product) => (
-                  <tr key={product.id} className={rowClass}>
-                    <td className={`${tdClass} font-mono`}>
-                      <Link href={`/products/${product.id}`} className={linkClass}>
-                        {product.sku}
-                      </Link>
-                    </td>
-                    <td className={tdClass}>{product.name}</td>
-                    <td className={tdClass}>
+          <DataTable>
+            <DataTableHeader>
+              <DataTableHead>{t('products.columns.name')}</DataTableHead>
+              <DataTableHead hide="medium">{t('products.columns.sku')}</DataTableHead>
+              <DataTableHead hide="medium">{t('products.columns.family')}</DataTableHead>
+              <DataTableHead numeric hide="narrow">
+                {t('products.columns.stock')}
+              </DataTableHead>
+              <DataTableHead numeric hide="narrow">
+                {t('products.columns.reserved')}
+              </DataTableHead>
+              <DataTableHead numeric>{t('products.columns.available')}</DataTableHead>
+              <DataTableHead numeric hide="medium">
+                {t('products.columns.offers')}
+              </DataTableHead>
+            </DataTableHeader>
+            <DataTableBody>
+              {items.map((product) => {
+                const shortage = product.available < 0
+                return (
+                  <DataTableLinkRow key={product.id} href={`/products/${product.id}`}>
+                    <DataTableCell narrow="primary" className="@4xl/table:min-w-48">
+                      <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                        <TextLink href={`/products/${product.id}`}>{product.name}</TextLink>
+                        {shortage ? <AttentionBadge label={t('products.shortage')} /> : null}
+                      </span>
+                      <DataTableMeta below="medium">
+                        <DataTableMetaItem label={t('products.columns.sku')} labelHidden>
+                          <Identifier>{product.sku}</Identifier>
+                        </DataTableMetaItem>
+                        {product.family ? (
+                          <DataTableMetaItem label={t('products.columns.family')} labelHidden>
+                            {product.family.name}
+                          </DataTableMetaItem>
+                        ) : null}
+                        <DataTableMetaItem label={t('products.columns.offers')}>{format.number(product.linkedOffers)}</DataTableMetaItem>
+                      </DataTableMeta>
+                      <DataTableMeta>
+                        <DataTableMetaItem label={t('products.columns.stock')}>{format.number(product.stock)}</DataTableMetaItem>
+                        <DataTableMetaItem label={t('products.columns.reserved')}>{format.number(product.reserved)}</DataTableMetaItem>
+                      </DataTableMeta>
+                    </DataTableCell>
+                    <DataTableCell hide="medium">
+                      <Identifier>{product.sku}</Identifier>
+                    </DataTableCell>
+                    <DataTableCell hide="medium">
                       {product.family ? (
                         <>
-                          <Link href={`/families/${product.family.id}`} className={linkClass}>
-                            {product.family.name}
-                          </Link>
-                          <span className="block text-xs text-muted">{product.family.attributes.map((attribute) => `${attribute.name}: ${attribute.value}`).join(' · ')}</span>
+                          <TextLink href={`/families/${product.family.id}`}>{product.family.name}</TextLink>
+                          <span className="block text-meta text-muted-foreground">
+                            {product.family.attributes.map((attribute) => `${attribute.name}: ${attribute.value}`).join(' · ')}
+                          </span>
                         </>
-                      ) : null}
-                    </td>
-                    <td className={`${tdClass} text-right tabular-nums`}>{format.number(product.stock)}</td>
-                    <td className={`${tdClass} text-right tabular-nums`}>{format.number(product.reserved)}</td>
-                    <td className={`${tdClass} text-right tabular-nums ${product.available < 0 ? 'font-semibold text-red-700' : ''}`}>
+                      ) : (
+                        <NoValue />
+                      )}
+                    </DataTableCell>
+                    <DataTableCell numeric hide="narrow">
+                      {format.number(product.stock)}
+                    </DataTableCell>
+                    <DataTableCell numeric hide="narrow">
+                      {format.number(product.reserved)}
+                    </DataTableCell>
+                    {/* The minus sign and the badge beside the name say Shortage; the colour only repeats it. */}
+                    <DataTableCell
+                      numeric
+                      narrow="end"
+                      narrowLabel={t('products.columns.available')}
+                      className={cn(shortage && 'font-semibold text-attention')}
+                    >
                       {format.number(product.available)}
-                      {product.available < 0 ? <span className="sr-only"> {t('products.shortageHint')}</span> : null}
-                    </td>
-                    <td className={`${tdClass} text-right tabular-nums`}>{format.number(product.linkedOffers)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                    </DataTableCell>
+                    <DataTableCell numeric hide="medium">
+                      {format.number(product.linkedOffers)}
+                    </DataTableCell>
+                  </DataTableLinkRow>
+                )
+              })}
+            </DataTableBody>
+          </DataTable>
         )}
-      </div>
+      </Panel>
 
-      <Pagination page={page} total={total} basePath="/products" params={filters} />
-    </div>
+      {total > 0 ? <Pagination page={page} total={total} basePath="/products" params={filters} /> : null}
+    </Page>
   )
 }

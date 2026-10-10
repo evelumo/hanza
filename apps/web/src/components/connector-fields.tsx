@@ -1,5 +1,5 @@
 import { useT } from '@/i18n/use-t'
-import { Field, Select } from './form'
+import { CheckboxField, Field, Select } from './form'
 import type { ConnectorField } from '@/lib/connector-form'
 
 /** Renders the fields computed by `describeFields`; credentials are password inputs and never prefilled. */
@@ -20,23 +20,17 @@ export function ConnectorFields({
         const label = field.required ? field.label : t('connections.new.optionalField', { label: field.label })
         if (field.control === 'checkbox') {
           const checked = field.name in values ? values[field.name] === 'on' : field.defaultValue === true
-          return (
-            <label key={field.name} className="flex items-center gap-2 text-sm font-medium">
-              <input
-                type="checkbox"
-                name={field.name}
-                defaultChecked={checked}
-                className="size-4 rounded border-line accent-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
-              />
-              {field.label}
-            </label>
-          )
+          return <CheckboxField key={field.name} name={field.name} label={field.label} defaultChecked={checked} />
         }
         if (field.control === 'select') {
           const value = values[field.name] ?? (field.defaultValue === null ? '' : String(field.defaultValue))
           return (
             <Select key={field.name} name={field.name} label={label} error={error} defaultValue={value}>
-              {field.required || field.defaultValue === null ? <option value="">—</option> : null}
+              {field.required || field.defaultValue === null ? (
+                <option value="" aria-label={t('common.noValue')}>
+                  —
+                </option>
+              ) : null}
               {field.options.map((option) => (
                 <option key={option} value={option}>
                   {option}

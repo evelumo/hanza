@@ -1,15 +1,22 @@
 import { listConnections } from '@hanza/core'
+import { Cable } from 'lucide-react'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { buttonClass } from '@/components/button-class'
-import { EmptyState, linkClass, rowClass, tableClass, tdClass, thClass } from '@/components/section'
+import { DataTable, DataTableBody, DataTableCell, DataTableHead, DataTableHeader, DataTableLinkRow, DataTableMeta, DataTableMetaItem } from '@/components/data-table'
+import { EmptyState } from '@/components/empty-state'
+import { PageHeader } from '@/components/page-header'
+import { Page } from '@/components/page-layout'
+import { Panel } from '@/components/section'
 import { HealthBadge } from '@/components/status-badge'
+import { TextLink } from '@/components/text-link'
 import { getActiveLocale, getT } from '@/i18n/server'
 import { getContext } from '@/lib/context'
 import { getFormatters } from '@/lib/formatters'
-import { streamLabel, syncErrorLabel } from '@/lib/labels'
+import { streamLabel } from '@/lib/labels'
 import { requireTenant } from '@/lib/session'
 import { isSyncRunning } from '@/lib/sync-status'
+import { SyncErrorText } from './sync-status-badge'
 import { formatSyncResult } from './sync-summary'
 
 export const dynamic = 'force-dynamic'
@@ -25,72 +32,96 @@ export default async function ConnectionsPage() {
   const connections = await listConnections(ctx, organizationId)
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold tracking-tight">{t('connections.title')}</h1>
-        <Link href="/connections/new" className={buttonClass('primary')}>
-          {t('connections.add')}
-        </Link>
-      </div>
+    <Page>
+      <PageHeader
+        title={t('connections.title')}
+        actions={
+          <Link href="/connections/new" className={buttonClass('primary')}>
+            {t('connections.add')}
+          </Link>
+        }
+      />
 
-      <div className="rounded-lg border border-line bg-white">
+      <Panel>
         {connections.length === 0 ? (
-          <EmptyState>{t('connections.empty')}</EmptyState>
+          <EmptyState
+            icon={Cable}
+            title={t('connections.emptyTitle')}
+            action={
+              <Link href="/connections/new" className={buttonClass('secondary')}>
+                {t('connections.add')}
+              </Link>
+            }
+          >
+            {t('connections.empty')}
+          </EmptyState>
         ) : (
-          <div className="overflow-x-auto">
-            <table className={tableClass}>
-              <thead>
-                <tr>
-                  <th scope="col" className={thClass}>{t('connections.columns.name')}</th>
-                  <th scope="col" className={thClass}>{t('connections.columns.connector')}</th>
-                  <th scope="col" className={thClass}>{t('connections.columns.health')}</th>
-                  <th scope="col" className={thClass}>{t('connections.columns.lastSync')}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {connections.map((connection) => (
-                  <tr key={connection.id} className={rowClass}>
-                    <td className={tdClass}>
-                      <Link href={`/connections/${connection.id}`} className={linkClass}>
-                        {connection.name}
-                      </Link>
-                    </td>
-                    <td className={tdClass}>{ctx.connectors.get(connection.connectorId)?.name ?? connection.connectorId}</td>
-                    <td className={tdClass}>
-                      <HealthBadge health={connection.health} />
-                    </td>
-                    <td className={tdClass}>
-                      {connection.syncStates.length === 0 ? (
-                        <span className="text-muted">{t('connections.neverSynced')}</span>
-                      ) : (
-                        <ul className="space-y-1">
-                          {connection.syncStates.map((state) => (
-                            <li key={state.stream}>
-                              <span className="font-medium">{streamLabel(t, state.stream)}:</span>{' '}
+          <DataTable align="top">
+            <DataTableHeader>
+              <DataTableHead>{t('connections.columns.name')}</DataTableHead>
+              <DataTableHead hide="medium">{t('connections.columns.connector')}</DataTableHead>
+              <DataTableHead>{t('connections.columns.health')}</DataTableHead>
+              <DataTableHead>{t('connections.columns.lastSync')}</DataTableHead>
+            </DataTableHeader>
+            <DataTableBody>
+              {connections.map((connection) => (
+                <DataTableLinkRow key={connection.id} href={`/connections/${connection.id}`}>
+                  <DataTableCell narrow="primary">
+                    <TextLink href={`/connections/${connection.id}`}>{connection.name}</TextLink>
+                    <DataTableMeta below="medium">
+                      <DataTableMetaItem label={t('connections.columns.connector')} labelHidden>
+                        {ctx.connectors.get(connection.connectorId)?.name ?? connection.connectorId}
+                      </DataTableMetaItem>
+                      {connection.accountLabel}
+                    </DataTableMeta>
+                  </DataTableCell>
+                  <DataTableCell hide="medium">
+                    <span className="block whitespace-nowrap">{ctx.connectors.get(connection.connectorId)?.name ?? connection.connectorId}</span>
+                    {connection.accountLabel ? <span className="block text-meta text-muted-foreground">{connection.accountLabel}</span> : null}
+                  </DataTableCell>
+                  <DataTableCell narrow="end">
+                    <HealthBadge health={connection.health} />
+                  </DataTableCell>
+                  {/* On a narrow container it has the row's whole width and no label: each line names its own kind of data. */}
+                  <DataTableCell className="@4xl/table:min-w-72">
+                    {connection.syncStates.length === 0 ? (
+                      <span className="text-muted-foreground">{t('connections.syncStatus.notRun')}</span>
+                    ) : (
+                      // One line per kind of data: when it last worked and what it did, or why it did not.
+                      <ul className="grid gap-1 text-meta">
+                        {connection.syncStates.map((state) => {
+                          const result = formatSyncResult(state.lastResult, t, locale)
+                          return (
+                            <li key={state.stream} className="flex gap-3">
+                              <span className="w-32 shrink-0 text-muted-foreground @max-2xl/table:w-24">{streamLabel(t, state.stream)}</span>
                               {state.lastErrorKind ? (
-                                <span className="text-red-800">{syncErrorLabel(t, state.lastErrorKind)}</span>
+                                <SyncErrorText kind={state.lastErrorKind} />
                               ) : state.lastSucceededAt ? (
-                                <>
-                                  {format.dateTime(state.lastSucceededAt)}
-                                  {formatSyncResult(state.lastResult, t, locale) ? (
-                                    <span className="text-muted"> · {formatSyncResult(state.lastResult, t, locale)}</span>
-                                  ) : null}
-                                </>
+                                <span className="min-w-0">
+                                  <span className="whitespace-nowrap tabular-nums">{format.dateTime(state.lastSucceededAt)}</span>
+                                  {result ? <span className="text-muted-foreground"> · {result}</span> : null}
+                                </span>
                               ) : (
-                                <span className="text-muted">{isSyncRunning(state) ? t('connections.running') : '—'}</span>
+                                <span className="text-muted-foreground">
+                                  {isSyncRunning(state)
+                                    ? t('connections.syncStatus.running')
+                                    : state.lastFinishedAt
+                                      ? t('connections.syncStatus.nothingToSend')
+                                      : t('connections.syncStatus.notRun')}
+                                </span>
                               )}
                             </li>
-                          ))}
-                        </ul>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                          )
+                        })}
+                      </ul>
+                    )}
+                  </DataTableCell>
+                </DataTableLinkRow>
+              ))}
+            </DataTableBody>
+          </DataTable>
         )}
-      </div>
-    </div>
+      </Panel>
+    </Page>
   )
 }

@@ -1,37 +1,63 @@
-import { getProduct } from '@hanza/core'
+import { getProduct, listEvents } from '@hanza/core'
 import type { Metadata } from 'next'
-import Link from 'next/link'
-import { ActionForm } from '@/components/action-form'
-import { ActionButton } from '@/components/form'
-import { PriceForm } from '@/components/price-form'
-import { EmptyState, Section, linkClass, rowClass, tableClass, tdClass, thClass } from '@/components/section'
-import { TagBadge } from '@/components/status-badge'
-import { getContext } from '@/lib/context'
-import { getT } from '@/i18n/server'
-import { getFormatters } from '@/lib/formatters'
-import { publicationLabel, stockStatusText } from '@/lib/offer-push-status'
-import { isPriceBlocked, priceStatusText } from '@/lib/price-status'
-import { requireTenant } from '@/lib/session'
 import { notFound } from 'next/navigation'
 import { useId } from 'react'
+import { ActionForm } from '@/components/action-form'
+import {
+  DataTable,
+  DataTableBody,
+  DataTableCell,
+  DataTableHead,
+  DataTableHeader,
+  DataTableMeta,
+  DataTableMetaItem,
+  DataTableRow,
+  DataTableRowHeader,
+} from '@/components/data-table'
+import { DescriptionItem, DescriptionList } from '@/components/description-list'
+import { EmptyState } from '@/components/empty-state'
+import { EventTimeline } from '@/components/event-timeline'
+import { ActionButton } from '@/components/form'
+import { Identifier } from '@/components/identifier'
+import { NoValue } from '@/components/no-value'
+import { Notice } from '@/components/notice'
+import { PageHeader } from '@/components/page-header'
+import { Page, PageColumns } from '@/components/page-layout'
+import { PriceForm } from '@/components/price-form'
+import { PushWarning } from '@/components/push-warning'
+import { Panel, Section, SectionContent } from '@/components/section'
+import { AttentionBadge, PublicationBadge, TagBadge } from '@/components/status-badge'
+import { orderNumberClass, TextLink } from '@/components/text-link'
+import { Badge } from '@/components/ui/badge'
+import { getT } from '@/i18n/server'
+import { getContext } from '@/lib/context'
+import { getFormatters } from '@/lib/formatters'
+import { stockStatusText } from '@/lib/offer-push-status'
+import { isPriceBlocked, priceStatusText } from '@/lib/price-status'
+import { requireTenant } from '@/lib/session'
+import { cn } from '@/lib/utils'
 import { setBasePriceAction, unlinkOfferAction } from './actions'
 import { NameForm } from './name-form'
 import { StockForm } from './stock-form'
 
 export const dynamic = 'force-dynamic'
 
+const HISTORY_LENGTH = 20
+
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getT())('products.detail.title') }
 }
 
-function Figure({ label, value, negative, note }: { label: string; value: string; negative?: boolean; note?: string }) {
+/** One of the Product's three totals. A negative Available carries its minus sign; the colour only repeats it. */
+function Figure({ label, value, attention = false }: { label: string; value: string; attention?: boolean }) {
   const labelId = useId()
   // A named group ties the number to its label for assistive technology (and tests).
   return (
-    <div role="group" aria-labelledby={labelId} className="rounded-lg border border-line bg-white px-5 py-4">
-      <p id={labelId} className="text-sm text-muted">{label}</p>
-      <p className={`mt-1 text-2xl font-semibold tabular-nums ${negative ? 'text-red-700' : ''}`}>{value}</p>
-      {negative && note ? <p className="text-xs font-medium text-red-700">{note}</p> : null}
+    <div role="group" aria-labelledby={labelId} className="flex items-baseline justify-between gap-3 px-4 py-2.5 @md:block @md:py-3">
+      <p id={labelId} className="text-meta text-muted-foreground">
+        {label}
+      </p>
+      <p className={cn('text-lg leading-7 font-semibold tabular-nums', attention && 'text-attention')}>{value}</p>
     </div>
   )
 }
@@ -40,199 +66,272 @@ export default async function ProductPage({ params }: { params: Promise<{ produc
   const { organizationId } = await requireTenant()
   const [t, format] = await Promise.all([getT(), getFormatters()])
   const { productId } = await params
-  const product = await getProduct(getContext(), organizationId, productId)
+  const ctx = getContext()
+  const product = await getProduct(ctx, organizationId, productId)
   if (!product) notFound()
+  const events = await listEvents(ctx, organizationId, { type: 'product', id: product.id }, HISTORY_LENGTH)
   // Offered as a suggestion only when every Channel reports the same price, so no Channel's price is picked over another's.
-  const channelPrices = [...new Map(product.offers.flatMap((offer) => (offer.channelPrice ? [[`${offer.channelPrice.amount} ${offer.channelPrice.currency}`, offer.channelPrice] as const] : []))).values()]
+  const channelPrices = [
+    ...new Map(
+      product.offers.flatMap((offer) =>
+        offer.channelPrice ? [[`${offer.channelPrice.amount} ${offer.channelPrice.currency}`, offer.channelPrice] as const] : [],
+      ),
+    ).values(),
+  ]
   const channelPrice = channelPrices.length === 1 ? channelPrices[0]! : null
 
+  // One Warehouse can owe units while the others still have some: the total hides it, the Warehouse rows do not.
+  const shortTotal = product.available < 0
+  const shortage = shortTotal || product.warehouses.some((warehouse) => warehouse.available < 0)
+  // The names this page already holds for what its history points at.
+  const eventIdentifiers = {
+    order: new Map(product.openReservations.map((reservation) => [reservation.orderId, reservation.orderExternalId])),
+    offer: new Map(product.offers.map((offer) => [offer.id, offer.externalId])),
+    warehouse: new Map(product.warehouses.map((warehouse) => [warehouse.id, warehouse.name])),
+  }
+  const pushRejected = product.offers.some((offer) => offer.stockStatus === 'rejected' || offer.priceStatus === 'rejected')
+
   return (
-    <div className="space-y-6">
-      <div>
-        <Link href="/products" className={linkClass}>
-          ← {t('products.title')}
-        </Link>
-        <h1 className="mt-2 text-2xl font-semibold tracking-tight">{product.name}</h1>
-        <p className="font-mono text-sm text-muted">{t('products.detail.skuLine', { sku: product.sku })}</p>
-        {product.family ? (
-          <p className="text-sm text-muted">
-            <Link href={`/families/${product.family.id}`} className={linkClass}>
-              {t('products.detail.familyLine', { name: product.family.name })}
-            </Link>{' '}
-            · {product.family.attributes.map((attribute) => `${attribute.name}: ${attribute.value}`).join(' · ')}
-          </p>
-        ) : null}
-      </div>
+    <Page>
+      <PageHeader
+        back={{ href: '/products', label: t('products.title') }}
+        title={product.name}
+        badges={
+          shortage || pushRejected ? (
+            <>
+              {shortage ? <AttentionBadge label={t('products.shortage')} /> : null}
+              {pushRejected ? <Badge tone="warning">{t('products.detail.pushRejected')}</Badge> : null}
+            </>
+          ) : undefined
+        }
+        meta={
+          <>
+            {t('products.columns.sku')} <Identifier wrap>{product.sku}</Identifier>
+          </>
+        }
+      />
 
-      <div className="grid gap-4 sm:grid-cols-3">
-        <Figure label={t('products.columns.stock')} value={format.number(product.stock)} />
-        <Figure label={t('products.columns.reserved')} value={format.number(product.reserved)} />
-        <Figure
-          label={t('products.columns.available')}
-          value={format.number(product.available)}
-          negative={product.available < 0}
-          note={t('products.detail.shortage')}
-        />
-      </div>
+      <PageColumns
+        aside={
+          <>
+            <Section title={t('products.detail.dataTitle')}>
+              <SectionContent className="grid gap-4">
+                <NameForm productId={product.id} name={product.name} />
+                <DescriptionList className="border-t border-border pt-4">
+                  <DescriptionItem term={t('products.columns.sku')}>
+                    <Identifier wrap>{product.sku}</Identifier>
+                    <span className="mt-0.5 block text-meta text-muted-foreground">{t('products.detail.dataDescription')}</span>
+                  </DescriptionItem>
+                  <DescriptionItem term={t('products.columns.family')}>
+                    {product.family ? (
+                      <>
+                        <TextLink href={`/families/${product.family.id}`}>{product.family.name}</TextLink>
+                        {product.family.attributes.length > 0 ? (
+                          <span className="mt-0.5 block text-meta text-muted-foreground">
+                            {product.family.attributes.map((attribute) => `${attribute.name}: ${attribute.value}`).join(' · ')}
+                          </span>
+                        ) : null}
+                      </>
+                    ) : (
+                      <NoValue />
+                    )}
+                  </DescriptionItem>
+                </DescriptionList>
+              </SectionContent>
+            </Section>
 
-      <Section title={t('products.detail.dataTitle')} description={t('products.detail.dataDescription')}>
-        <div className="px-5 py-4">
-          <NameForm productId={product.id} name={product.name} />
-        </div>
-      </Section>
-
-      <Section
-        title={t('products.detail.stockTitle')}
-        description={t('products.detail.stockDescription')}
-        actions={
-          <Link href="/warehouses" className={linkClass}>
-            {t('products.detail.manageWarehouses')}
-          </Link>
+            <Section title={t('products.detail.priceTitle')} description={t('products.detail.priceDescription')}>
+              <SectionContent>
+                <PriceForm
+                  action={setBasePriceAction}
+                  idField="productId"
+                  id={product.id}
+                  price={product.basePrice}
+                  defaultCurrency={product.offers.find((offer) => offer.channelPrice)?.channelPrice?.currency ?? null}
+                  suggestion={channelPrice ? { price: channelPrice, label: format.money(channelPrice) } : null}
+                />
+              </SectionContent>
+            </Section>
+          </>
+        }
+        after={
+          <Section title={t('products.detail.historyTitle')}>
+            {events.length === 0 ? (
+              <EmptyState>{t('products.detail.historyEmpty')}</EmptyState>
+            ) : (
+              <EventTimeline events={events} format={format} current={{ type: 'product', id: product.id }} identifiers={eventIdentifiers} />
+            )}
+          </Section>
         }
       >
-        <div className="overflow-x-auto">
-          <table className={tableClass}>
-            <thead>
-              <tr>
-                <th scope="col" className={thClass}>{t('products.detail.warehouseColumns.warehouse')}</th>
-                <th scope="col" className={thClass}>{t('products.detail.warehouseColumns.stock')}</th>
-                <th scope="col" className={`${thClass} text-right`}>{t('products.detail.warehouseColumns.reserved')}</th>
-                <th scope="col" className={`${thClass} text-right`}>{t('products.detail.warehouseColumns.available')}</th>
-              </tr>
-            </thead>
-            <tbody>
+        {shortage ? (
+          <Notice tone="attention" title={t('products.shortage')}>
+            {shortTotal ? t('products.detail.shortage') : t('products.detail.shortageWarehouse')}
+          </Notice>
+        ) : null}
+
+        {/* The totals over every Warehouse; the Stock section below splits them per Warehouse. */}
+        <Panel className="grid divide-y divide-border @md:grid-cols-3 @md:divide-x @md:divide-y-0">
+          <Figure label={t('products.columns.stock')} value={format.number(product.stock)} />
+          <Figure label={t('products.columns.reserved')} value={format.number(product.reserved)} />
+          <Figure label={t('products.columns.available')} value={format.number(product.available)} attention={shortTotal} />
+        </Panel>
+
+        <Section
+          title={t('products.detail.stockTitle')}
+          description={t('products.detail.stockDescription')}
+          actions={
+            <TextLink href="/warehouses" className="text-meta">
+              {t('products.detail.manageWarehouses')}
+            </TextLink>
+          }
+        >
+          <DataTable align="top">
+            <DataTableHeader>
+              <DataTableHead>{t('products.detail.warehouseColumns.warehouse')}</DataTableHead>
+              <DataTableHead>{t('products.detail.warehouseColumns.stock')}</DataTableHead>
+              <DataTableHead numeric hide="narrow">
+                {t('products.detail.warehouseColumns.reserved')}
+              </DataTableHead>
+              <DataTableHead numeric>{t('products.detail.warehouseColumns.available')}</DataTableHead>
+            </DataTableHeader>
+            <DataTableBody>
               {product.warehouses.map((warehouse) => (
-                <tr key={warehouse.id} className={rowClass}>
-                  <th scope="row" className={`${tdClass} font-medium`}>
-                    <span className="flex flex-wrap items-center gap-1.5">
+                <DataTableRow key={warehouse.id}>
+                  <DataTableRowHeader narrow="primary">
+                    <span className="flex flex-wrap items-baseline gap-1.5">
                       {warehouse.name}
                       {warehouse.isDefault ? <TagBadge label={t('warehouses.default')} /> : null}
                     </span>
-                  </th>
-                  <td className={tdClass}>
+                    <DataTableMeta>
+                      <DataTableMetaItem label={t('products.detail.warehouseColumns.reserved')}>{format.number(warehouse.reserved)}</DataTableMetaItem>
+                    </DataTableMeta>
+                  </DataTableRowHeader>
+                  <DataTableCell narrowLabel={t('products.detail.warehouseColumns.stock')}>
                     <StockForm productId={product.id} warehouseId={warehouse.id} warehouseName={warehouse.name} stock={warehouse.stock} />
-                  </td>
-                  <td className={`${tdClass} text-right tabular-nums`}>{format.number(warehouse.reserved)}</td>
-                  <td className={`${tdClass} text-right tabular-nums ${warehouse.available < 0 ? 'font-medium text-red-700' : ''}`}>
-                    {format.number(warehouse.available)}
-                  </td>
-                </tr>
+                  </DataTableCell>
+                  <DataTableCell numeric hide="narrow">
+                    {format.number(warehouse.reserved)}
+                  </DataTableCell>
+                  <DataTableCell numeric narrow="end" narrowLabel={t('products.detail.warehouseColumns.available')}>
+                    <span className="inline-flex items-baseline gap-2">
+                      {warehouse.available < 0 ? <AttentionBadge label={t('products.shortage')} /> : null}
+                      <span className={cn(warehouse.available < 0 && 'font-semibold text-attention')}>{format.number(warehouse.available)}</span>
+                    </span>
+                  </DataTableCell>
+                </DataTableRow>
               ))}
-            </tbody>
-          </table>
-        </div>
-      </Section>
+            </DataTableBody>
+          </DataTable>
+        </Section>
 
-      <Section title={t('products.detail.priceTitle')} description={t('products.detail.priceDescription')}>
-        <div className="px-5 py-4">
-          <PriceForm
-            action={setBasePriceAction}
-            idField="productId"
-            id={product.id}
-            price={product.basePrice}
-            defaultCurrency={product.offers.find((offer) => offer.channelPrice)?.channelPrice?.currency ?? null}
-            suggestion={channelPrice ? { price: channelPrice, label: format.money(channelPrice) } : null}
-          />
-        </div>
-      </Section>
+        <Section title={t('products.detail.reservationsTitle')} description={t('products.detail.reservationsDescription')}>
+          {product.openReservations.length === 0 ? (
+            <EmptyState>{t('products.detail.reservationsEmpty')}</EmptyState>
+          ) : (
+            <ul className="divide-y divide-border">
+              {product.openReservations.map((reservation, index) => (
+                <li key={`${reservation.orderId}-${index}`} className="flex items-baseline justify-between gap-x-4 px-4 py-2.5">
+                  <div className="min-w-0">
+                    <TextLink href={`/orders/${reservation.orderId}`} className={cn(orderNumberClass, 'wrap-anywhere')}>
+                      {t('products.detail.reservationOrder', { id: reservation.orderExternalId })}
+                    </TextLink>
+                    <p className="text-meta text-muted-foreground">
+                      {t('products.detail.reservationWarehouse', { warehouse: reservation.warehouseName })} ·{' '}
+                      <time dateTime={reservation.createdAt.toISOString()} className="whitespace-nowrap tabular-nums">
+                        {format.dateTime(reservation.createdAt)}
+                      </time>
+                    </p>
+                  </div>
+                  <span className="font-medium whitespace-nowrap tabular-nums">{t('common.units', { count: reservation.units })}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Section>
 
-      <Section title={t('products.detail.offersTitle')} description={t('products.detail.offersDescription')}>
-        {product.offers.length === 0 ? (
-          <EmptyState>{t('products.detail.offersEmpty')}</EmptyState>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className={tableClass}>
-              <thead>
-                <tr>
-                  <th scope="col" className={thClass}>{t('products.detail.offerColumns.connection')}</th>
-                  <th scope="col" className={thClass}>{t('products.detail.offerColumns.offer')}</th>
-                  <th scope="col" className={thClass}>{t('products.detail.offerColumns.link')}</th>
-                  <th scope="col" className={thClass}>{t('products.detail.offerColumns.publication')}</th>
-                  <th scope="col" className={thClass}>{t('products.detail.offerColumns.lastPushed')}</th>
-                  <th scope="col" className={thClass}>{t('products.detail.offerColumns.price')}</th>
-                  <th scope="col" className={thClass}>
-                    <span className="sr-only">{t('products.detail.offerColumns.actions')}</span>
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
+        <Section title={t('products.detail.offersTitle')} description={t('products.detail.offersDescription')}>
+          {product.offers.length === 0 ? (
+            <EmptyState>{t('products.detail.offersEmpty')}</EmptyState>
+          ) : (
+            <DataTable align="top">
+              <DataTableHeader>
+                <DataTableHead>{t('products.detail.offerColumns.offer')}</DataTableHead>
+                <DataTableHead>{t('products.detail.offerColumns.lastPushed')}</DataTableHead>
+                <DataTableHead>{t('products.detail.offerColumns.price')}</DataTableHead>
+                <DataTableHead>{t('products.detail.offerColumns.link')}</DataTableHead>
+              </DataTableHeader>
+              <DataTableBody>
                 {product.offers.map((offer) => (
-                  <tr key={offer.id} className={rowClass}>
-                    <td className={tdClass}>{offer.connectionName}</td>
-                    <td className={tdClass}>
-                      <Link href={`/products/offers/${offer.id}`} className={linkClass}>
-                        {offer.name}
-                      </Link>
-                      <span className="block font-mono text-xs text-muted">{offer.externalId}</span>
-                    </td>
-                    <td className={tdClass}>{offer.linkedBy === 'manual' ? t('products.detail.linkedManually') : t('products.detail.linkedBySku')}</td>
-                    <td className={tdClass}>{publicationLabel(t, offer.publication)}</td>
-                    <td className={tdClass}>
+                  <DataTableRow key={offer.id}>
+                    <DataTableCell narrow="primary" className="@2xl/table:min-w-48">
+                      {/* The Offer publication sits beside the name, as a state does everywhere else in the panel. */}
+                      <span className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                        <TextLink href={`/products/offers/${offer.id}`}>{offer.name}</TextLink>
+                        <PublicationBadge publication={offer.publication} />
+                      </span>
+                      {/* The Offers of one Product tend to share its name: the Connection is what tells them apart. */}
+                      <span className="mt-0.5 block text-meta text-muted-foreground">
+                        {offer.connectionName} · <Identifier>{offer.externalId}</Identifier>
+                      </span>
+                    </DataTableCell>
+                    <DataTableCell narrowLabel={t('products.detail.offerColumns.lastPushed')} className="@2xl/table:min-w-36">
                       {offer.lastPushedAt ? (
                         <>
-                          {t('common.units', { count: offer.lastPushedAvailable ?? 0 })}
-                          <span className="block text-xs text-muted">{format.dateTime(offer.lastPushedAt)}</span>
+                          <span className="whitespace-nowrap tabular-nums">{t('common.units', { count: offer.lastPushedAvailable ?? 0 })}</span>
+                          <time
+                            dateTime={offer.lastPushedAt.toISOString()}
+                            className="block text-meta whitespace-nowrap text-muted-foreground tabular-nums"
+                          >
+                            {format.dateTime(offer.lastPushedAt)}
+                          </time>
                         </>
                       ) : (
-                        <span className="text-muted">{t('products.detail.notPushed')}</span>
+                        <span className="text-muted-foreground">{t('products.detail.notPushed')}</span>
                       )}
                       {offer.stockStatus === 'rejected' || offer.stockStatus === 'not_sent' ? (
-                        <span className="block max-w-xs text-xs font-medium text-amber-800">{stockStatusText(t, offer, format.dateTime)}</span>
+                        <PushWarning className="mt-0.5">{stockStatusText(t, offer, format.dateTime)}</PushWarning>
                       ) : null}
-                    </td>
-                    <td className={tdClass}>
+                    </DataTableCell>
+                    <DataTableCell narrowLabel={t('products.detail.offerColumns.price')} className="@2xl/table:min-w-44">
                       {offer.effectivePrice ? (
                         <>
-                          <span className="tabular-nums">{format.money(offer.effectivePrice)}</span>
-                          <span className="text-xs text-muted">
+                          <span className="whitespace-nowrap tabular-nums">{format.money(offer.effectivePrice)}</span>
+                          <span className="text-meta text-muted-foreground">
                             {' · '}
                             {offer.priceOverride ? t('products.detail.priceFromOffer') : t('products.detail.priceFromBase')}
                           </span>
                         </>
                       ) : (
-                        <span className="text-muted">{t('prices.none')}</span>
+                        <span className="text-muted-foreground">{t('prices.none')}</span>
                       )}
-                      <span className={`block max-w-xs text-xs ${isPriceBlocked(offer.priceStatus) ? 'font-medium text-amber-800' : 'text-muted'}`}>
-                        {priceStatusText(t, offer, format.dateTime)}
-                      </span>
-                    </td>
-                    <td className={`${tdClass} text-right`}>
-                      <ActionForm action={unlinkOfferAction} confirm={t('products.detail.unlinkConfirm')}>
-                        <input type="hidden" name="offerId" value={offer.id} />
-                        <ActionButton variant="secondary" pendingLabel={t('products.detail.unlinking')}>
-                          {t('products.detail.unlink')}
-                        </ActionButton>
+                      {isPriceBlocked(offer.priceStatus) ? (
+                        <PushWarning className="mt-0.5">{priceStatusText(t, offer, format.dateTime)}</PushWarning>
+                      ) : (
+                        <span className="mt-0.5 block max-w-xs text-meta text-muted-foreground">{priceStatusText(t, offer, format.dateTime)}</span>
+                      )}
+                    </DataTableCell>
+                    {/* How the Offer was linked, next to the button that undoes it. */}
+                    <DataTableCell narrowLabel={t('products.detail.offerColumns.link')}>
+                      <ActionForm action={unlinkOfferAction} confirm={t('products.detail.unlinkConfirm')} className="grid gap-2">
+                        <div className="flex items-baseline justify-between gap-3">
+                          <span className="whitespace-nowrap">
+                            {offer.linkedBy === 'manual' ? t('products.detail.linkedManually') : t('products.detail.linkedBySku')}
+                          </span>
+                          <input type="hidden" name="offerId" value={offer.id} />
+                          <ActionButton variant="secondary" size="sm" pendingLabel={t('products.detail.unlinking')}>
+                            {t('products.detail.unlink')}
+                          </ActionButton>
+                        </div>
                       </ActionForm>
-                    </td>
-                  </tr>
+                    </DataTableCell>
+                  </DataTableRow>
                 ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </Section>
-
-      <Section title={t('products.detail.reservationsTitle')} description={t('products.detail.reservationsDescription')}>
-        {product.openReservations.length === 0 ? (
-          <EmptyState>{t('products.detail.reservationsEmpty')}</EmptyState>
-        ) : (
-          <ul className="divide-y divide-line">
-            {product.openReservations.map((reservation, index) => (
-              <li key={`${reservation.orderId}-${index}`} className="flex flex-wrap items-center justify-between gap-3 px-5 py-3 text-sm">
-                <Link href={`/orders/${reservation.orderId}`} className={linkClass}>
-                  {t('products.detail.reservationOrder', { id: reservation.orderExternalId })}
-                </Link>
-                <span>
-                  {t('common.units', { count: reservation.units })}{' '}
-                  <span className="text-muted">
-                    {t('products.detail.reservationWarehouse', { warehouse: reservation.warehouseName })} · {format.dateTime(reservation.createdAt)}
-                  </span>
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </Section>
-    </div>
+              </DataTableBody>
+            </DataTable>
+          )}
+        </Section>
+      </PageColumns>
+    </Page>
   )
 }

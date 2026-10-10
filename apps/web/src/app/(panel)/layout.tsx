@@ -1,33 +1,51 @@
+import { listOffers, listOrders } from '@hanza/core'
+import { cookies } from 'next/headers'
 import type { ReactNode } from 'react'
-import { LanguageSwitcher } from '@/components/language-switcher'
-import { NavLinks } from '@/components/nav-links'
-import { SignOutButton } from '@/components/sign-out-button'
+import { AppSidebar } from '@/components/shell/app-sidebar'
+import { TopBar } from '@/components/shell/top-bar'
+import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
+import { SIDEBAR_COOKIE_NAME } from '@/components/ui/sidebar-cookie'
+import { getT } from '@/i18n/server'
 import { getContext } from '@/lib/context'
 import { requireTenant } from '@/lib/session'
 
+const MAIN_ID = 'main-content'
+
 export default async function PanelLayout({ children }: { children: ReactNode }) {
   const { user, organizationId } = await requireTenant()
-  const organization = await getContext().db.organization.findUnique({ where: { id: organizationId } })
+  const ctx = getContext()
+  // The same two counts the dashboard's "Needs attention" shows, from the same services, so the sidebar and the
+  // lists it leads to cannot disagree. A page of no rows makes each call a count.
+  const noRows = { skip: 0, take: 0 }
+  const [organization, attentionOrders, unlinkedOffers, cookieStore, t] = await Promise.all([
+    ctx.db.organization.findUnique({ where: { id: organizationId } }),
+    listOrders(ctx, organizationId, { needsAttention: true, ...noRows }),
+    listOffers(ctx, organizationId, { linked: false, ...noRows }),
+    cookies(),
+    getT(),
+  ])
 
   return (
-    <div className="min-h-screen">
-      <header className="border-b border-line bg-white">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-6 gap-y-2 px-6 py-3">
-          <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
-            <div className="flex items-baseline gap-3">
-              <span className="text-lg font-semibold tracking-tight text-accent">Hanza</span>
-              <span className="text-sm text-muted">{organization?.name}</span>
-            </div>
-            <NavLinks />
-          </div>
-          <div className="flex items-center gap-4 text-sm">
-            <LanguageSwitcher />
-            <span className="text-muted">{user.email}</span>
-            <SignOutButton />
-          </div>
-        </div>
-      </header>
-      <main className="mx-auto max-w-6xl px-6 py-8">{children}</main>
-    </div>
+    // Rendered collapsed when the person left it so, so the page does not shift after hydration.
+    <SidebarProvider defaultOpen={cookieStore.get(SIDEBAR_COOKIE_NAME)?.value !== 'false'}>
+      <a
+        href={`#${MAIN_ID}`}
+        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:rounded-lg focus:bg-primary focus:px-3 focus:py-2 focus:text-sm focus:font-medium focus:text-primary-foreground"
+      >
+        {t('shell.skipToContent')}
+      </a>
+      <AppSidebar
+        organizationName={organization?.name ?? ''}
+        user={{ name: user.name, email: user.email }}
+        counts={{ orders: attentionOrders.total, offers: unlinkedOffers.total }}
+      />
+      <SidebarInset>
+        <TopBar />
+        {/* Focusable only by the skip link, which is why it shows no ring of its own. */}
+        <main id={MAIN_ID} tabIndex={-1} className="mx-auto w-full max-w-[75rem] flex-1 px-4 py-5 outline-none sm:px-6 lg:px-8">
+          {children}
+        </main>
+      </SidebarInset>
+    </SidebarProvider>
   )
 }

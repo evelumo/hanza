@@ -1,22 +1,28 @@
 'use client'
 
+import { LogOut } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+import { Button } from '@/components/ui/button'
 import { useT } from '@/i18n/use-t'
 import { authClient } from '@/lib/auth-client'
 
-export function SignOutButton() {
+/** Ends the session and lands on the sign-in page; shared by this button and the user menu. */
+export function useSignOut() {
   const router = useRouter()
-  const t = useT()
-
-  async function signOut() {
+  return async function signOut() {
     await authClient.signOut()
     router.push('/login')
     router.refresh()
   }
+}
 
+export function SignOutButton() {
+  const signOut = useSignOut()
+  const t = useT()
   return (
-    <button type="button" onClick={signOut} className="font-medium text-accent underline">
+    <Button type="button" variant="ghost" size="sm" onClick={signOut}>
+      <LogOut aria-hidden="true" />
       {t('auth.signOut')}
-    </button>
+    </Button>
   )
 }

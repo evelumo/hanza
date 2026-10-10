@@ -181,17 +181,140 @@ function retentionLabel(t: Translator, value: unknown): string | null {
 /** Event types have dots, which message keys cannot contain: `order.status_changed` is `order_status_changed`. */
 const titleKey = (type: string) => type.replaceAll('.', '_')
 
+/** The subjects of Events that have a page of their own in the panel. */
+export const EVENT_LINK_KINDS = ['order', 'product', 'offer', 'connection', 'warehouse', 'product_family'] as const
+
+export type EventLinkKind = (typeof EVENT_LINK_KINDS)[number]
+
+export interface EventRef {
+  type: EventLinkKind
+  id: string
+}
+
+/** How people know each subject, by kind and id: an Order number, a SKU, an Offer's external id, a name. */
+export type EventIdentifiers = Partial<Record<EventLinkKind, ReadonlyMap<string, string>>>
+
+export interface EventContext {
+  /** What the Event is about, as the Event log keeps it. */
+  subject?: { type: string; id: string } | null
+  /** The page's own subject, which a row of its history never links to. */
+  current?: EventRef
+  /** What the page already knows; an Event's own payload fills in the rest where it carries an identifier. */
+  identifiers?: EventIdentifiers
+}
+
+export interface EventLink {
+  href: string
+  kind: EventLinkKind
+  /** The name of the kind in the viewer's language ("Order"). */
+  noun: string
+  identifier: string | null
+  /** The link's whole text: "Order 1042", or "View order" when the identifier is not known. */
+  label: string
+}
+
+const HREF: Record<EventLinkKind, (id: string) => string> = {
+  order: (id) => `/orders/${id}`,
+  product: (id) => `/products/${id}`,
+  offer: (id) => `/products/offers/${id}`,
+  connection: (id) => `/connections/${id}`,
+  warehouse: (id) => `/warehouses/${id}`,
+  product_family: (id) => `/families/${id}`,
+}
+
+// A Warehouse and a Product family can be deleted, and their Events outlive them. They are linked only when the
+// page holds their name, which is its proof that they are still there; the other kinds are never deleted.
+const DELETABLE: ReadonlySet<EventLinkKind> = new Set(['warehouse', 'product_family'])
+
+const isLinkKind = (type: string): type is EventLinkKind => (EVENT_LINK_KINDS as readonly string[]).includes(type)
+
+// The other records a payload points at, the most telling first: the Order behind a Reservation, the Product
+// behind a linked line, the Warehouse stock was set in.
+const PAYLOAD_REFS: Array<[key: string, kind: EventLinkKind]> = [
+  ['orderId', 'order'],
+  ['productId', 'product'],
+  ['connectionId', 'connection'],
+  ['toWarehouseId', 'warehouse'],
+  ['warehouseId', 'warehouse'],
+]
+
+// A Product joining, changing in or leaving a family is about the Product: its row leads there, not to the family.
+const aboutItsProduct = (type: string) => type.startsWith('family.product_')
+
+/** Every record an Event points at that has a page: its subject first, then the ids in its payload. */
+function refsOf(type: string, payload: Payload, subject: EventContext['subject']): EventRef[] {
+  const refs: EventRef[] = []
+  const productId = aboutItsProduct(type) ? text(payload.productId) : null
+  if (productId) refs.push({ type: 'product', id: productId })
+  if (subject && isLinkKind(subject.type) && subject.id) refs.push({ type: subject.type, id: subject.id })
+  for (const [key, kind] of PAYLOAD_REFS) {
+    const id = text(payload[key])
+    if (id && !refs.some((ref) => ref.type === kind && ref.id === id)) refs.push({ type: kind, id })
+  }
+  return refs
+}
+
+/** The identifier an Event's own payload carries for a record it points at; never a Buyer's data. */
+function payloadIdentifier(type: string, payload: Payload, ref: EventRef, subject: EventContext['subject']): string | null {
+  const isSubject = subject?.type === ref.type && subject.id === ref.id
+  if (ref.type === 'order' && isSubject && type === 'order.imported') return text(payload.externalId)
+  if (ref.type === 'product' && isSubject && type === 'product.created') return text(payload.sku)
+  if (ref.type === 'product' && type.startsWith('family.product_') && payload.productId === ref.id) return text(payload.sku)
+  return null
+}
+
+function linkOf(t: Translator, type: string, payload: Payload, context: EventContext): EventLink | null {
+  const { current, identifiers = {} } = context
+  for (const ref of refsOf(type, payload, context.subject)) {
+    if (current && current.type === ref.type && current.id === ref.id) continue
+    const known = identifiers[ref.type]?.get(ref.id) ?? null
+    if (DELETABLE.has(ref.type) && known === null) continue
+    const identifier = (known ?? payloadIdentifier(type, payload, ref, context.subject))?.trim() || null
+    const noun = t(`events.subject.${ref.type}`)
+    return { href: HREF[ref.type](ref.id), kind: ref.type, noun, identifier, label: identifier ? `${noun} ${identifier}` : t(`events.view.${ref.type}`) }
+  }
+  return null
+}
+
+/**
+ * The records a list of Events points at whose identifier neither the page nor the payload holds, by kind: what
+ * the dashboard looks up (one query a kind) before it describes its Events. Warehouses and Product families are
+ * always among them, since only a lookup shows that they still exist.
+ */
+export function eventRefsToResolve(events: Array<{ type: string; payload: Payload; subject?: EventContext['subject'] }>): Record<EventLinkKind, string[]> {
+  const ids = Object.fromEntries(EVENT_LINK_KINDS.map((kind) => [kind, new Set<string>()])) as Record<EventLinkKind, Set<string>>
+  for (const event of events) {
+    for (const ref of refsOf(event.type, event.payload, event.subject)) {
+      if (DELETABLE.has(ref.type) || payloadIdentifier(event.type, event.payload, ref, event.subject) === null) ids[ref.type].add(ref.id)
+    }
+  }
+  return Object.fromEntries(EVENT_LINK_KINDS.map((kind) => [kind, [...ids[kind]]])) as Record<EventLinkKind, string[]>
+}
+
+function familyName(context: EventContext | undefined): string | null {
+  const subject = context?.subject
+  if (!subject || subject.type !== 'product_family') return null
+  if (context.current?.type === 'product_family' && context.current.id === subject.id) return null
+  return context.identifiers?.product_family?.get(subject.id) ?? null
+}
+
 /**
  * One-liner for an Event in the request's language; payloads are untrusted JSON, so every field is type-checked.
- * `format` holds the locale's number and money formatters (`getFormatters()`).
+ * `format` holds the locale's number and money formatters (`getFormatters()`). With a `context`, `link` leads to
+ * what the Event is about (its subject, or on the subject's own page the other record its payload names) and
+ * is absent when there is nowhere to go.
  */
 export function describeEvent(
   type: string,
   payload: Payload,
   t: Translator,
   format: EventFormatters,
-): { title: string; detail: string | null } {
+  context?: EventContext,
+): { title: string; detail: string | null; link?: EventLink } {
   const result = detail(t, format, type, payload)
   const title = hasLabel('events.title', titleKey(type)) ? labelOrRaw(t, 'events.title', titleKey(type)) : type
-  return { title, detail: result && result.trim() !== '' ? result : null }
+  const link = context ? linkOf(t, type, payload, context) : null
+  // The link already names the Product by its SKU, so the line says which family, where the page is not that family's.
+  const shown = link?.kind === 'product' && aboutItsProduct(type) ? familyName(context) : result
+  return { title, detail: shown && shown.trim() !== '' ? shown : null, ...(link ? { link } : {}) }
 }

@@ -1,14 +1,27 @@
-import { getOrder, listWarehouses, ORDER_PHASES } from '@hanza/core'
+import { getOrder, listWarehouses, ORDER_PHASES, type OrderDetail, type OrderPhase } from '@hanza/core'
+import type { AttentionReason } from '@hanza/db'
+import { OctagonAlert } from 'lucide-react'
 import type { Metadata } from 'next'
-import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import { Fragment, type ReactNode } from 'react'
 import { ActionForm } from '@/components/action-form'
+import { DataTable, DataTableBody, DataTableCell, DataTableHead, DataTableHeader, DataTableMeta, DataTableMetaItem, DataTableRow } from '@/components/data-table'
+import { DescriptionItem, DescriptionList } from '@/components/description-list'
+import { EmptyState } from '@/components/empty-state'
+import { EventTimeline } from '@/components/event-timeline'
 import { ActionButton } from '@/components/form'
-import { EmptyState, Section, linkClass, rowClass, tableClass, tdClass, thClass } from '@/components/section'
+import { Identifier } from '@/components/identifier'
+import { NoValue } from '@/components/no-value'
+import { Notice } from '@/components/notice'
+import { PageHeader } from '@/components/page-header'
+import { Page, PageColumns } from '@/components/page-layout'
+import { Section, SectionContent } from '@/components/section'
 import { AttentionBadge, AwaitingPaymentBadge, OrderStatusBadge } from '@/components/status-badge'
+import { orderNumberClass, TextLink } from '@/components/text-link'
+import { Timeline, TimelineItem } from '@/components/timeline'
+import { Alert } from '@/components/ui/alert'
 import { getT } from '@/i18n/server'
 import { getContext } from '@/lib/context'
-import { describeEvent } from '@/lib/events'
 import { getFormatters } from '@/lib/formatters'
 import { attentionReasonLabel, factLabel, orderPhaseLabel, orderStatusName, paymentLabel, reservationLabel } from '@/lib/labels'
 import { showsAwaitingPayment } from '@/lib/payment'
@@ -24,6 +37,10 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getT())('orders.detail.title') }
 }
 
+const lineSku = (sku: string | null) => (sku ? <Identifier>{sku}</Identifier> : <NoValue />)
+
+const NEXT_PHASE: Partial<Record<OrderPhase, OrderPhase>> = { new: 'processing', processing: 'shipped' }
+
 export default async function OrderPage({ params }: { params: Promise<{ orderId: string }> }) {
   const { organizationId } = await requireTenant()
   const [t, format] = await Promise.all([getT(), getFormatters()])
@@ -33,153 +50,365 @@ export default async function OrderPage({ params }: { params: Promise<{ orderId:
   if (!order) notFound()
   // Reservations move only while the Order is in an open phase (the core refuses it otherwise).
   const orderOpen = order.phase === 'new' || order.phase === 'processing'
-  const activeWarehouses = orderOpen
-    ? (await listWarehouses(ctx, organizationId)).filter((warehouse) => warehouse.active).map(({ id, name }) => ({ id, name }))
-    : []
+  const nextPhase = NEXT_PHASE[order.phase]
+  const [warehouses, nextDefault] = await Promise.all([
+    orderOpen ? listWarehouses(ctx, organizationId) : [],
+    nextPhase ? ctx.db.orderStatus.findFirst({ where: { organizationId, phase: nextPhase, isDefault: true }, select: { id: true } }) : null,
+  ])
+  const activeWarehouses = warehouses.filter((warehouse) => warehouse.active).map(({ id, name }) => ({ id, name }))
 
   const unmatchedLines = order.lines.filter((line) => !line.productId).length
   const awaitingPayment = showsAwaitingPayment(order)
+  const needsAttention = order.attentionReasons.length > 0
   const manualReasons = order.attentionReasons.filter((reason) => reason !== 'unmatched_line')
-  const statusGroups = ORDER_PHASES.map((phase) => ({ phase, statuses: order.allowedStatuses.filter((status) => status.phase === phase) })).filter(
-    (group) => group.statuses.length > 0,
-  )
+  // The page's one primary action: on to the next phase. An Order that may not go there (it waits for its
+  // payment) and a closed one have none.
+  const primaryStatus = order.allowedStatuses.find((status) => status.id === nextDefault?.id) ?? null
+  const statusGroups = ORDER_PHASES.map((phase) => ({
+    phase,
+    statuses: order.allowedStatuses.filter((status) => status.phase === phase && status.id !== primaryStatus?.id),
+  })).filter((group) => group.statuses.length > 0)
+
+  const statusForm = (status: OrderDetail['allowedStatuses'][number], look: 'primary' | 'listed'): ReactNode => {
+    // Only a change of phase takes goods off stock or releases them; a move within the phase is a label.
+    const phaseChange = status.phase !== order.phase
+    const cancels = phaseChange && status.phase === 'cancelled'
+    return (
+      <ActionForm
+        // A new key after lines get linked drops the stale "link the lines first" error.
+        key={`${status.id}:${unmatchedLines}`}
+        action={changeOrderStatusAction}
+        // In the header the answer of a refused change sits under the button, at the width of a sentence.
+        className={look === 'primary' ? 'grid max-w-sm justify-items-end gap-2' : 'grid gap-2'}
+        confirm={phaseChange && status.phase === 'shipped' ? t('orders.detail.confirmShipped') : cancels ? t('orders.detail.confirmCancelled') : undefined}
+      >
+        <input type="hidden" name="orderId" value={order.id} />
+        <input type="hidden" name="statusId" value={status.id} />
+        <ActionButton
+          variant={look === 'primary' ? 'primary' : cancels ? 'danger' : 'secondary'}
+          pendingLabel={t('common.saving')}
+          className={look === 'primary' ? undefined : 'justify-self-start'}
+        >
+          {t('orders.detail.changeTo', { status: orderStatusName(t, status) })}
+        </ActionButton>
+      </ActionForm>
+    )
+  }
+
+  // What each reason asks of a person, with the way there. Only from what this page has already loaded.
+  const shortLines = order.lines.filter((line) => line.shortage && line.productId)
+  const recovery: Record<AttentionReason, { hint: string; links: Array<{ href: string; label: ReactNode }> }> = {
+    unmatched_line: { hint: t('orders.detail.attention.unmatched_line'), links: [{ href: '#lines', label: t('orders.detail.attention.toLines') }] },
+    shortage: {
+      hint: t('orders.detail.attention.shortage'),
+      links: [
+        ...new Map(
+          shortLines.map((line) => [
+            line.productId,
+            {
+              href: `/products/${line.productId}`,
+              label: (
+                <>
+                  {t('orders.detail.attention.toProduct')} <Identifier wrap>{line.productSku}</Identifier>
+                </>
+              ),
+            },
+          ]),
+        ).values(),
+        { href: '#reservations', label: t('orders.detail.attention.toReservations') },
+      ],
+    },
+    cancelled_while_processing: { hint: t('orders.detail.attention.cancelled_while_processing'), links: [] },
+    channel_fact_conflict: {
+      hint: t('orders.detail.attention.channel_fact_conflict'),
+      links: [{ href: '#channel-changes', label: t('orders.detail.attention.toChannelChanges') }],
+    },
+    status_push_failed: {
+      hint: t('orders.detail.attention.status_push_failed'),
+      links: [{ href: `/connections/${order.connectionId}`, label: t('orders.detail.attention.toConnection', { connection: order.connectionName }) }],
+    },
+  }
+
+  // The names this page already holds for what its history points at.
+  const eventIdentifiers = {
+    product: new Map(order.lines.flatMap((line) => (line.productId && line.productSku ? [[line.productId, line.productSku] as const] : []))),
+    connection: new Map([[order.connectionId, order.connectionName]]),
+    warehouse: new Map([
+      ...activeWarehouses.map((warehouse) => [warehouse.id, warehouse.name] as const),
+      ...order.lines.flatMap((line) => (line.reservationWarehouse ? [[line.reservationWarehouse.id, line.reservationWarehouse.name] as const] : [])),
+    ]),
+  }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <Link href="/orders" className={linkClass}>
-          ← {t('orders.title')}
-        </Link>
-        <div className="mt-2 flex flex-wrap items-center gap-3">
-          <h1 className="text-2xl font-semibold tracking-tight">
-            {t('orders.detail.title')} <span className="font-mono">{order.externalId}</span>
-          </h1>
-          <OrderStatusBadge status={order.status} />
-          <span className="text-sm text-muted">{t('orders.detail.phaseLine', { phase: orderPhaseLabel(t, order.phase) })}</span>
-          {awaitingPayment ? <AwaitingPaymentBadge /> : null}
-          {order.attentionReasons.length > 0 ? <AttentionBadge /> : null}
-        </div>
-        <p className="mt-1 text-sm text-muted">
-          {t('orders.detail.summary', {
-            channel: order.connectionName,
-            date: format.dateTime(order.placedAt),
-            payment: paymentLabel(t, order.payment),
-            total: format.money(order.total),
-          })}
-        </p>
-      </div>
+    <Page>
+      <PageHeader
+        back={{ href: '/orders', label: t('orders.title') }}
+        title={
+          <>
+            {t('orders.detail.title')} <span className={orderNumberClass}>{order.externalId}</span>
+          </>
+        }
+        badges={
+          <>
+            <OrderStatusBadge status={order.status} />
+            {awaitingPayment ? <AwaitingPaymentBadge /> : null}
+            {needsAttention ? <AttentionBadge /> : null}
+          </>
+        }
+        meta={
+          <>
+            {t('orders.detail.phaseLine', { phase: orderPhaseLabel(t, order.phase) })} ·{' '}
+            {t('orders.detail.summary', {
+              channel: order.connectionName,
+              date: format.dateTime(order.placedAt),
+              payment: paymentLabel(t, order.payment),
+              total: format.money(order.total),
+            })}
+          </>
+        }
+        actions={primaryStatus ? statusForm(primaryStatus, 'primary') : undefined}
+      />
 
-      {order.attentionReasons.length > 0 ? (
-        <section role="region" aria-label={t('orders.needsAttention')} className="rounded-lg border border-red-300 bg-red-50 px-5 py-4">
-          <h2 className="font-semibold text-red-900">{t('orders.needsAttention')}</h2>
-          <ul className="mt-2 list-disc pl-5 text-sm text-red-900">
-            {order.attentionReasons.map((reason) => (
-              <li key={reason}>{attentionReasonLabel(t, reason)}</li>
-            ))}
-          </ul>
-          {order.attentionReasons.includes('unmatched_line') ? (
-            <p className="mt-2 text-sm text-red-900">{t('orders.detail.attentionHint')}</p>
-          ) : null}
-          {manualReasons.length > 0 ? (
-            <ActionForm action={resolveAttentionAction} className="mt-3">
-              <input type="hidden" name="orderId" value={order.id} />
-              <ActionButton variant="secondary" pendingLabel={t('common.saving')}>
-                {t('orders.detail.markReviewed')}
-              </ActionButton>
-            </ActionForm>
-          ) : null}
-        </section>
-      ) : null}
+      <PageColumns
+        aside={
+          <>
+            <Section
+              title={t('orders.detail.statusTitle')}
+              description={t('orders.detail.statusDescription')}
+              actions={<OrderStatusBadge status={order.status} />}
+            >
+              <SectionContent className="grid gap-3">
+                {awaitingPayment ? (
+                  <Notice tone="warning">
+                    {order.phase === 'shipped' ? t('orders.detail.awaitingPaymentShippedHint') : t('orders.detail.awaitingPaymentHint')}
+                  </Notice>
+                ) : null}
+                {statusGroups.length === 0 ? (
+                  primaryStatus ? null : (
+                    <p className="text-sm text-muted-foreground">{t('orders.detail.finalStatus', { status: orderStatusName(t, order.status) })}</p>
+                  )
+                ) : (
+                  statusGroups.map((group) => {
+                    // A heading that only repeats its one button ("Cancelled" over "Change to: Cancelled") is left out.
+                    const named = group.statuses.length > 1 || group.statuses.some((status) => status.name !== null)
+                    return (
+                      // One form per row, so an error has the width of the card and not of its button.
+                      <div key={group.phase} className="grid gap-2">
+                        {named ? <h3 className="text-meta font-medium text-muted-foreground">{orderPhaseLabel(t, group.phase)}</h3> : null}
+                        {group.statuses.map((status) => statusForm(status, 'listed'))}
+                      </div>
+                    )
+                  })
+                )}
+              </SectionContent>
+            </Section>
 
-      <Section title={t('orders.detail.statusTitle')} description={t('orders.detail.statusDescription')}>
-        <div className="space-y-3 px-5 py-4">
-          {awaitingPayment ? (
-            <p className="text-sm text-amber-900">
-              {order.phase === 'shipped' ? t('orders.detail.awaitingPaymentShippedHint') : t('orders.detail.awaitingPaymentHint')}
-            </p>
-          ) : null}
-          {statusGroups.length === 0 ? (
-            <p className="text-sm text-muted">{t('orders.detail.finalStatus', { status: orderStatusName(t, order.status) })}</p>
-          ) : (
-            <div className="space-y-4">
-              {statusGroups.map((group) => (
-                <div key={group.phase}>
-                  <h3 className="text-sm font-medium text-muted">{orderPhaseLabel(t, group.phase)}</h3>
-                  <div className="mt-2 flex flex-wrap gap-3">
-                    {group.statuses.map((status) => {
-                      // Only a change of phase takes goods off stock or releases them; a move within the phase is a label.
-                      const phaseChange = status.phase !== order.phase
-                      return (
-                        <ActionForm
-                          // A new key after lines get linked drops the stale "link the lines first" error.
-                          key={`${status.id}:${unmatchedLines}`}
-                          action={changeOrderStatusAction}
-                          confirm={
-                            phaseChange && status.phase === 'shipped'
-                              ? t('orders.detail.confirmShipped')
-                              : phaseChange && status.phase === 'cancelled'
-                                ? t('orders.detail.confirmCancelled')
-                                : undefined
-                          }
-                        >
-                          <input type="hidden" name="orderId" value={order.id} />
-                          <input type="hidden" name="statusId" value={status.id} />
-                          <ActionButton variant={phaseChange && status.phase === 'cancelled' ? 'danger' : 'secondary'} pendingLabel={t('common.saving')}>
-                            {t('orders.detail.changeTo', { status: orderStatusName(t, status) })}
-                          </ActionButton>
-                        </ActionForm>
-                      )
-                    })}
+            <Section title={t('orders.detail.paymentTitle')} actions={awaitingPayment ? <AwaitingPaymentBadge /> : undefined}>
+              <SectionContent className="py-2">
+                <DescriptionList layout="inline">
+                  <DescriptionItem term={t('orders.detail.paymentMethod')}>{paymentLabel(t, order.payment)}</DescriptionItem>
+                  <DescriptionItem term={t('orders.columns.total')}>
+                    <span className="font-medium tabular-nums">{format.money(order.total)}</span>
+                  </DescriptionItem>
+                </DescriptionList>
+              </SectionContent>
+            </Section>
+
+            <Section title={t('orders.detail.buyerTitle')}>
+              <SectionContent>
+                {order.buyer === null ? (
+                  <div className="grid gap-2 text-sm">
+                    {order.buyerDataState === 'unreadable' ? (
+                      <Alert tone="critical" role="alert">
+                        <OctagonAlert aria-hidden="true" />
+                        <p>{t('orders.detail.buyerUnreadable')}</p>
+                      </Alert>
+                    ) : order.buyerDataErasedAt ? (
+                      <p>{t('orders.detail.buyerErased', { date: format.dateTime(order.buyerDataErasedAt) })}</p>
+                    ) : null}
+                    {order.shippingCountryCode ? (
+                      <p className="text-muted-foreground">{t('orders.detail.shippingCountry', { country: order.shippingCountryCode })}</p>
+                    ) : null}
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </Section>
+                ) : (
+                  <DescriptionList>
+                    <DescriptionItem term={t('orders.detail.contact')}>
+                      {order.buyer.name}
+                      {order.buyer.email ? (
+                        <>
+                          <br />
+                          {order.buyer.email}
+                        </>
+                      ) : null}
+                      {order.buyer.phone ? (
+                        <>
+                          <br />
+                          {t('orders.detail.phone', { phone: order.buyer.phone })}
+                        </>
+                      ) : null}
+                      {order.buyer.login ? (
+                        <>
+                          <br />
+                          {t('orders.detail.channelLogin', { login: order.buyer.login })}
+                        </>
+                      ) : null}
+                    </DescriptionItem>
+                    <DescriptionItem term={t('orders.detail.shippingAddress')}>
+                      <AddressBlock address={order.shippingAddress} />
+                    </DescriptionItem>
+                    <DescriptionItem term={t('orders.detail.billingAddress')}>
+                      <AddressBlock address={order.billingAddress} />
+                    </DescriptionItem>
+                  </DescriptionList>
+                )}
+              </SectionContent>
+            </Section>
+          </>
+        }
+        after={
+          <>
+            <Section id="channel-changes" title={t('orders.detail.factsTitle')}>
+              {order.facts.length === 0 ? (
+                <EmptyState>{t('orders.detail.factsEmpty')}</EmptyState>
+              ) : (
+                <Timeline>
+                  {order.facts.map((fact) => (
+                    <TimelineItem key={fact.externalId} title={factLabel(t, fact.type)} at={fact.occurredAt} atLabel={format.dateTime(fact.occurredAt)}>
+                      {fact.note}
+                    </TimelineItem>
+                  ))}
+                </Timeline>
+              )}
+            </Section>
 
-      <Section title={t('orders.detail.linesTitle')}>
-        <div className="overflow-x-auto">
-          <table className={tableClass}>
-            <thead>
-              <tr>
-                <th scope="col" className={thClass}>{t('orders.detail.lineColumns.sku')}</th>
-                <th scope="col" className={thClass}>{t('orders.detail.lineColumns.name')}</th>
-                <th scope="col" className={`${thClass} text-right`}>{t('orders.detail.lineColumns.quantity')}</th>
-                <th scope="col" className={`${thClass} text-right`}>{t('orders.detail.lineColumns.price')}</th>
-                <th scope="col" className={thClass}>{t('orders.detail.lineColumns.product')}</th>
-                <th scope="col" className={thClass}>{t('orders.detail.lineColumns.reservation')}</th>
-                <th scope="col" className={thClass}>{t('orders.detail.lineColumns.warehouse')}</th>
-              </tr>
-            </thead>
-            <tbody>
+            <Section title={t('orders.detail.historyTitle')}>
+              {order.events.length === 0 ? (
+                <EmptyState>{t('orders.detail.historyEmpty')}</EmptyState>
+              ) : (
+                <EventTimeline events={order.events} format={format} current={{ type: 'order', id: order.id }} identifiers={eventIdentifiers} />
+              )}
+            </Section>
+          </>
+        }
+      >
+        {needsAttention ? (
+          <Notice
+            tone="attention"
+            title={t('orders.needsAttention')}
+            actions={
+              manualReasons.length > 0 ? (
+                <ActionForm action={resolveAttentionAction} className="grid gap-2">
+                  <input type="hidden" name="orderId" value={order.id} />
+                  <ActionButton variant="secondary" pendingLabel={t('common.saving')} className="justify-self-start">
+                    {t('orders.detail.markReviewed')}
+                  </ActionButton>
+                </ActionForm>
+              ) : undefined
+            }
+          >
+            <ul className="grid gap-2.5">
+              {order.attentionReasons.map((reason) => (
+                <li key={reason}>
+                  <p className="font-medium">{attentionReasonLabel(t, reason)}</p>
+                  <p>{recovery[reason].hint}</p>
+                  {recovery[reason].links.length > 0 ? (
+                    <p className="mt-0.5">
+                      {recovery[reason].links.map((link, index) => (
+                        <Fragment key={link.href}>
+                          {index > 0 ? <span aria-hidden="true">{'\u00a0· '}</span> : null}
+                          {/* On a tinted surface a link takes the text's colour and an underline, not the link blue. */}
+                          <TextLink href={link.href} className="text-foreground underline">
+                            {link.label}
+                          </TextLink>
+                        </Fragment>
+                      ))}
+                    </p>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
+          </Notice>
+        ) : null}
+
+        <Section id="lines" title={t('orders.detail.linesTitle')}>
+          <DataTable align="top">
+            <DataTableHeader>
+              <DataTableHead hide="narrow">{t('orders.detail.lineColumns.sku')}</DataTableHead>
+              <DataTableHead>{t('orders.detail.lineColumns.name')}</DataTableHead>
+              <DataTableHead numeric>{t('orders.detail.lineColumns.quantity')}</DataTableHead>
+              <DataTableHead numeric hide="narrow">
+                {t('orders.detail.lineColumns.price')}
+              </DataTableHead>
+              <DataTableHead>{t('orders.detail.lineColumns.product')}</DataTableHead>
+            </DataTableHeader>
+            <DataTableBody>
               {order.lines.map((line) => (
-                <tr key={line.id} className={rowClass}>
-                  <td className={`${tdClass} font-mono`}>{line.sku ?? <span className="font-sans text-muted">{t('common.none')}</span>}</td>
-                  <td className={tdClass}>{line.name}</td>
-                  <td className={`${tdClass} text-right tabular-nums`}>{format.number(line.quantity)}</td>
-                  <td className={`${tdClass} text-right tabular-nums`}>{format.money(line.unitPrice)}</td>
-                  <td className={tdClass}>
+                <DataTableRow key={line.id}>
+                  <DataTableCell hide="narrow">{lineSku(line.sku)}</DataTableCell>
+                  <DataTableCell narrow="primary" className="@2xl/table:min-w-40">
+                    {line.name}
+                    <DataTableMeta>
+                      <DataTableMetaItem label={t('orders.detail.lineColumns.sku')} labelHidden={line.sku !== null}>
+                        {lineSku(line.sku)}
+                      </DataTableMetaItem>
+                      <DataTableMetaItem label={t('orders.detail.lineColumns.price')}>{format.money(line.unitPrice)}</DataTableMetaItem>
+                    </DataTableMeta>
+                  </DataTableCell>
+                  <DataTableCell numeric narrow="end" narrowLabel={t('orders.detail.lineColumns.quantity')}>
+                    {format.number(line.quantity)}
+                  </DataTableCell>
+                  <DataTableCell numeric hide="narrow">
+                    {format.money(line.unitPrice)}
+                  </DataTableCell>
+                  <DataTableCell narrowLabel={t('orders.detail.lineColumns.product')}>
                     {line.productId ? (
-                      <Link href={`/products/${line.productId}`} className={linkClass}>
+                      <TextLink href={`/products/${line.productId}`} mono>
                         {line.productSku}
-                      </Link>
+                      </TextLink>
                     ) : (
-                      <div className="space-y-2">
+                      <div className="grid gap-2">
                         <AttentionBadge label={t('orders.detail.unmatched')} />
                         <LinkLineForm lineId={line.id} suggestedSku={line.sku} />
                       </div>
                     )}
-                  </td>
-                  <td className={tdClass}>
-                    <span className="flex flex-wrap items-center gap-1.5">
-                      {line.reservationStatus ? reservationLabel(t, line.reservationStatus) : <span className="text-muted">{t('common.none')}</span>}
+                  </DataTableCell>
+                </DataTableRow>
+              ))}
+            </DataTableBody>
+          </DataTable>
+        </Section>
+
+        {/* Where each line's goods are held; a table of its own, so neither it nor the lines need to scroll sideways. */}
+        <Section id="reservations" title={t('orders.detail.reservationsTitle')}>
+          <DataTable align="top">
+            <DataTableHeader>
+              <DataTableHead hide="narrow">{t('orders.detail.lineColumns.sku')}</DataTableHead>
+              <DataTableHead>{t('orders.detail.lineColumns.name')}</DataTableHead>
+              <DataTableHead>{t('orders.detail.lineColumns.reservation')}</DataTableHead>
+              <DataTableHead>{t('orders.detail.lineColumns.warehouse')}</DataTableHead>
+            </DataTableHeader>
+            <DataTableBody>
+              {order.lines.map((line) => (
+                <DataTableRow key={line.id}>
+                  <DataTableCell hide="narrow">{lineSku(line.sku)}</DataTableCell>
+                  <DataTableCell narrow="primary" className="@2xl/table:min-w-40">
+                    {line.name}
+                    <DataTableMeta>
+                      <DataTableMetaItem label={t('orders.detail.lineColumns.sku')} labelHidden={line.sku !== null}>
+                        {lineSku(line.sku)}
+                      </DataTableMetaItem>
+                    </DataTableMeta>
+                  </DataTableCell>
+                  <DataTableCell narrowLabel={t('orders.detail.lineColumns.reservation')}>
+                    <span className="flex flex-wrap items-baseline gap-1.5">
+                      {line.reservationStatus ? reservationLabel(t, line.reservationStatus) : <NoValue />}
                       {line.shortage ? <AttentionBadge label={t('orders.detail.shortage')} /> : null}
                     </span>
-                  </td>
-                  <td className={tdClass}>
+                  </DataTableCell>
+                  <DataTableCell narrowLabel={t('orders.detail.lineColumns.warehouse')}>
                     {line.reservationWarehouse ? (
-                      <div className="space-y-2">
+                      // On one baseline with the text inside the control beside it, and through it with the rest of the row.
+                      <div className="flex flex-wrap items-baseline gap-x-4 gap-y-2">
                         <span>{line.reservationWarehouse.name}</span>
                         {orderOpen && line.reservationStatus === 'open' && activeWarehouses.length > 1 ? (
                           <MoveReservationForm
@@ -189,104 +418,15 @@ export default async function OrderPage({ params }: { params: Promise<{ orderId:
                         ) : null}
                       </div>
                     ) : (
-                      <span className="text-muted">{t('common.none')}</span>
+                      <NoValue />
                     )}
-                  </td>
-                </tr>
+                  </DataTableCell>
+                </DataTableRow>
               ))}
-            </tbody>
-          </table>
-        </div>
-      </Section>
-
-      <Section title={t('orders.detail.buyerTitle')}>
-        {order.buyer === null ? (
-          <div className="space-y-1 px-5 py-4 text-sm">
-            {order.buyerDataState === 'unreadable' ? (
-              <p role="alert" className="text-red-800">
-                {t('orders.detail.buyerUnreadable')}
-              </p>
-            ) : (
-              <p>{order.buyerDataErasedAt ? t('orders.detail.buyerErased', { date: format.dateTime(order.buyerDataErasedAt) }) : null}</p>
-            )}
-            {order.shippingCountryCode ? (
-              <p className="text-muted">{t('orders.detail.shippingCountry', { country: order.shippingCountryCode })}</p>
-            ) : null}
-          </div>
-        ) : (
-          <div className="grid gap-6 px-5 py-4 sm:grid-cols-3">
-            <div>
-              <h3 className="text-sm font-medium text-muted">{t('orders.detail.contact')}</h3>
-              <p className="mt-1 text-sm leading-6">
-                {order.buyer.name}
-                {order.buyer.email ? (
-                  <>
-                    <br />
-                    {order.buyer.email}
-                  </>
-                ) : null}
-                {order.buyer.phone ? (
-                  <>
-                    <br />
-                    {t('orders.detail.phone', { phone: order.buyer.phone })}
-                  </>
-                ) : null}
-                {order.buyer.login ? (
-                  <>
-                    <br />
-                    {t('orders.detail.channelLogin', { login: order.buyer.login })}
-                  </>
-                ) : null}
-              </p>
-            </div>
-            <AddressBlock title={t('orders.detail.shippingAddress')} address={order.shippingAddress} />
-            <AddressBlock title={t('orders.detail.billingAddress')} address={order.billingAddress} />
-          </div>
-        )}
-      </Section>
-
-      <Section title={t('orders.detail.factsTitle')}>
-        {order.facts.length === 0 ? (
-          <EmptyState>{t('orders.detail.factsEmpty')}</EmptyState>
-        ) : (
-          <ul className="divide-y divide-line">
-            {order.facts.map((fact) => (
-              <li key={fact.externalId} className="flex flex-wrap items-center justify-between gap-3 px-5 py-3 text-sm">
-                <span>
-                  {factLabel(t, fact.type)}
-                  {fact.note ? <span className="text-muted"> · {fact.note}</span> : null}
-                </span>
-                <time dateTime={fact.occurredAt.toISOString()} className="text-muted">
-                  {format.dateTime(fact.occurredAt)}
-                </time>
-              </li>
-            ))}
-          </ul>
-        )}
-      </Section>
-
-      <Section title={t('orders.detail.historyTitle')}>
-        {order.events.length === 0 ? (
-          <EmptyState>{t('orders.detail.historyEmpty')}</EmptyState>
-        ) : (
-          <ul className="divide-y divide-line">
-            {order.events.map((event) => {
-              const { title, detail } = describeEvent(event.type, event.payload, t, format)
-              return (
-                <li key={event.id} className="flex flex-wrap items-center justify-between gap-3 px-5 py-3 text-sm">
-                  <span>
-                    {title}
-                    {detail ? <span className="text-muted"> · {detail}</span> : null}
-                  </span>
-                  <time dateTime={event.createdAt.toISOString()} className="text-muted">
-                    {format.dateTime(event.createdAt)}
-                  </time>
-                </li>
-              )
-            })}
-          </ul>
-        )}
-      </Section>
-    </div>
+            </DataTableBody>
+          </DataTable>
+        </Section>
+      </PageColumns>
+    </Page>
   )
 }

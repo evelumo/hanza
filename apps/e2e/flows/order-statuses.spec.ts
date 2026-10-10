@@ -1,4 +1,4 @@
-import { addFakeConnection, expect, signUp, test, waitForSeedOrders } from '../src/fixtures'
+import { addFakeConnection, expect, navLink, orderPrimaryAction, signUp, test, waitForSeedOrders } from '../src/fixtures'
 
 test('an own Order status within a phase: added in Settings, chosen on an Order, filtered by, and never sent to the Channel', async ({
   page,
@@ -6,7 +6,7 @@ test('an own Order status within a phase: added in Settings, chosen on an Order,
   db,
 }) => {
   await signUp(page)
-  await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('link', { name: 'Settings' }).click()
+  await navLink(page, 'Settings').click()
   await expect(page.getByRole('heading', { level: 1, name: 'Order statuses' })).toBeVisible()
   // Each phase is its own section; its default status is named after it until someone renames it.
   const processing = page.getByRole('region', { name: 'Processing', exact: true })
@@ -24,7 +24,7 @@ test('an own Order status within a phase: added in Settings, chosen on an Order,
   // A change of phase reaches the Channel, as before.
   const before = (await fakeChannel.calls()).statusUpdates.length
   const status = page.getByRole('region', { name: 'Status', exact: true })
-  await status.getByRole('button', { name: 'Change to: Processing' }).click()
+  await orderPrimaryAction(page, 'Change to: Processing').click()
   await expect(status.getByRole('button', { name: 'Change to: Packed' })).toBeVisible()
   await expect
     .poll(async () => (await fakeChannel.calls()).statusUpdates.slice(before))
@@ -44,14 +44,15 @@ test('an own Order status within a phase: added in Settings, chosen on an Order,
   expect((await fakeChannel.calls()).statusUpdates.slice(before)).toEqual([{ orderExternalId: 'fake-order-1', phase: 'processing' }])
 
   // The list filters by status (grouped by phase) and by phase.
-  await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('link', { name: 'Orders' }).click()
+  await navLink(page, 'Orders').click()
+  await expect(page.getByRole('heading', { level: 1, name: 'Orders' })).toBeVisible()
   await page.getByRole('combobox', { name: 'Status' }).selectOption({ label: 'Packed' })
   await page.getByRole('button', { name: 'Filter' }).click()
   await expect(page.getByRole('link', { name: 'fake-order-1', exact: true })).toBeVisible()
   await expect(page.getByRole('link', { name: 'fake-order-2', exact: true })).toBeHidden()
   // Links from before Order statuses carried a phase in `status`; they still filter by it.
   await page.goto('/orders?status=processing')
-  await expect(page.getByRole('combobox', { name: 'Phase' })).toHaveValue('processing')
+  await expect(page.getByRole('navigation', { name: 'Phase' }).getByRole('link', { name: 'Processing' })).toHaveAttribute('aria-current', 'page')
   await expect(page.getByRole('link', { name: 'fake-order-1', exact: true })).toBeVisible()
   await expect(page.getByRole('link', { name: 'fake-order-3', exact: true })).toBeHidden()
 })

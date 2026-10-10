@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
-import Link from 'next/link'
-import { linkClass } from '@/components/section'
+import { PageHeader } from '@/components/page-header'
+import { Page } from '@/components/page-layout'
+import { Section, SectionContent } from '@/components/section'
 import { getT } from '@/i18n/server'
 import { requireTenant } from '@/lib/session'
 import { NewProductForm } from './new-product-form'
@@ -15,16 +16,13 @@ export default async function NewProductPage() {
   await requireTenant()
   const t = await getT()
   return (
-    <div className="max-w-md space-y-6">
-      <div>
-        <Link href="/products" className={linkClass}>
-          ← {t('products.title')}
-        </Link>
-        <h1 className="mt-2 text-2xl font-semibold tracking-tight">{t('products.new.title')}</h1>
-      </div>
-      <div className="rounded-lg border border-line bg-white p-5">
-        <NewProductForm />
-      </div>
-    </div>
+    <Page>
+      <PageHeader back={{ href: '/products', label: t('products.title') }} title={t('products.new.title')} />
+      <Section title={t('products.new.sectionTitle')} className="max-w-[35rem]">
+        <SectionContent>
+          <NewProductForm />
+        </SectionContent>
+      </Section>
+    </Page>
   )
 }

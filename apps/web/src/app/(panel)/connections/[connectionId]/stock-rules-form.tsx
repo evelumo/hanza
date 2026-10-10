@@ -16,11 +16,16 @@ export function StockRulesForm({
 }) {
   const t = useT()
   return (
-    <ActionForm action={updateStockRulesAction} success={t('connections.stockRules.saved')} className="space-y-4">
+    <ActionForm
+      action={updateStockRulesAction}
+      success={t('connections.stockRules.saved')}
+      className="grid gap-4"
+      actions={<ActionButton variant="secondary">{t('connections.stockRules.save')}</ActionButton>}
+    >
       {(state) => (
         <>
           <input type="hidden" name="connectionId" value={connectionId} />
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid max-w-2xl gap-4 sm:grid-cols-2">
             <Field
               name="safetyBuffer"
               label={t('connections.stockRules.safetyBuffer')}
@@ -47,7 +52,6 @@ export function StockRulesForm({
               error={state.fieldErrors?.channelLimit}
             />
           </div>
-          <ActionButton>{t('connections.stockRules.save')}</ActionButton>
         </>
       )}
     </ActionForm>

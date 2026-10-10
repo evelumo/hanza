@@ -1,8 +1,24 @@
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import Link from 'next/link'
+import type { ReactNode } from 'react'
 import { useT } from '@/i18n/use-t'
 import { clampPage, nextPage, pageCount, pageHref, previousPage } from '@/lib/pagination'
+import { cn } from '@/lib/utils'
+import { buttonClass } from './button-class'
 
-const linkClass = 'rounded-md border border-line bg-white px-3 py-1.5 font-medium hover:bg-canvas focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40'
+// A link when there is a page to go to; otherwise the same shape, inert, so the pair does not jump around.
+function PageLink({ href, children }: { href: string | null; children: ReactNode }) {
+  const className = buttonClass('secondary', 'sm')
+  return href ? (
+    <Link href={href} className={className}>
+      {children}
+    </Link>
+  ) : (
+    <span aria-disabled="true" className={cn(className, 'cursor-default')}>
+      {children}
+    </span>
+  )
+}
 
 /** Previous / next links that keep the other query parameters (filters, search). */
 export function Pagination({
@@ -21,22 +37,20 @@ export function Pagination({
   const previous = previousPage(page, total)
   const next = nextPage(page, total)
   return (
-    <nav aria-label={t('pagination.label')} className="flex items-center justify-between gap-3 text-sm">
-      <span className="text-muted">
-        {t('pagination.summary', { total, page: clampPage(page, total), pages })}
-      </span>
-      <span className="flex gap-2">
-        {previous ? (
-          <Link href={pageHref(basePath, params, previous)} className={linkClass}>
+    <nav aria-label={t('pagination.label')} className="flex flex-wrap items-center justify-between gap-3">
+      <p className="text-meta text-muted-foreground tabular-nums">{t('pagination.summary', { total, page: clampPage(page, total), pages })}</p>
+      {pages > 1 ? (
+        <div className="flex gap-2">
+          <PageLink href={previous ? pageHref(basePath, params, previous) : null}>
+            <ChevronLeft aria-hidden="true" />
             {t('pagination.previous')}
-          </Link>
-        ) : null}
-        {next ? (
-          <Link href={pageHref(basePath, params, next)} className={linkClass}>
+          </PageLink>
+          <PageLink href={next ? pageHref(basePath, params, next) : null}>
             {t('pagination.next')}
-          </Link>
-        ) : null}
-      </span>
+            <ChevronRight aria-hidden="true" />
+          </PageLink>
+        </div>
+      ) : null}
     </nav>
   )
 }

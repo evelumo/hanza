@@ -1,8 +1,10 @@
 # Demo walkthrough
 
-Follow the [quick start](quick-start.md) first. This walkthrough uses **Test channel**, an in-memory simulated Channel. It does not call a real marketplace or require an external seller account. UI labels below use English; the header switcher also offers Polish.
+Follow the [quick start](quick-start.md) first. This walkthrough uses **Test channel**, an in-memory simulated Channel. It does not call a real marketplace or require an external seller account. UI labels below use English; the user menu at the foot of the sidebar also offers Polish.
 
 ## 1. Connect a simulated Channel
+
+Before you start, you can check that the queue and the worker are running: open **Settings → System** and choose **Send test job**. Its result appears on that page a moment later.
 
 Open **Connections → Add connection → Test channel**. Give it a name, such as `Demo channel`, and enter an API key such as `demo-local-1`. This is a stand-in, not a real credential. Use a different key for each demo Channel account: an organization cannot connect the same Channel account twice.
 
@@ -12,7 +14,7 @@ The seed contains **five Offers and four Orders**. One Order includes an Unmatch
 
 ## 2. Create Products from Offers
 
-Open **Products → Offers without a product**. Select the seeded Offers with SKUs and choose **Create products from selected**. Offers can also be linked to existing Products; imports link by SKU where possible.
+Open **Offers** in the sidebar (the list is titled **Offers without a product**; the sidebar shows how many there are). Select the seeded Offers with SKUs and choose **Create products from selected**. Offers can also be linked to existing Products; imports link by SKU where possible.
 
 The Ceramic mug has SKU `FAKE-SKU-1` and a price of `39.99 PLN`. The Sticker set has no SKU, so create its Product separately with **Products → Add product**, then link the Offer using that SKU. The Linen tote bag has no reported price; Hanza does not know that Offer's currency and will not push a price to it.
 
@@ -26,15 +28,15 @@ Refresh the Product/Connection pages to inspect the background results. The simu
 
 ## 4. Fulfil an Order
 
-Open **Orders** and find the Order for two Ceramic mugs. Check that the line is matched and there is no Shortage. Move it to **Processing**, then **Shipped**, confirming the change when prompted.
+Open **Orders** and find the Order for two Ceramic mugs. Check that the line is matched and there is no Shortage. The button at the top right of the Order moves it on to its next phase: choose **Change to: Processing**, then **Change to: Shipped**, confirming the change when prompted. The other changes of status, cancelling included, are in the **Status** section.
 
 Shipping consumes the reserved goods. In this example, Stock becomes **8**, Reserved becomes **0**, and Available stays **8**. The worker sends the phase change to the Channel. These are domain operations; a courier label or physical shipment is not created.
 
-Look at the other Orders to see **Needs attention** and **Unmatched lines**. Link the unknown line to a Product when appropriate. A cancelled Order needs no fulfilment and releases its Reservations.
+Look at the other Orders to see **Needs attention** and **Unmatched lines**: the notice at the top of such an Order says what each reason asks of you and links to where it is settled. Link the unknown line to a Product when appropriate. A cancelled Order needs no fulfilment and releases its Reservations.
 
 ## 5. Try organization-specific statuses
 
-In **Settings**, create an Order status such as `Packed` in the **Processing** phase. Move an Order between statuses within that phase: only its label changes. Stock and outbound Channel behaviour follow the fixed Order phase, not the label. See [ADR 0018](adr/0018-order-statuses-are-labels-within-fixed-phases.md).
+In **Settings → Order statuses**, create an Order status such as `Packed` in the **Processing** phase. Move an Order between statuses within that phase: only its label changes. Stock and outbound Channel behaviour follow the fixed Order phase, not the label. See [ADR 0018](adr/0018-order-statuses-are-labels-within-fixed-phases.md).
 
 ## Optional OAuth demo
 

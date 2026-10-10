@@ -6,7 +6,15 @@
     "saving": "Saving…",
     "saved": "Saved.",
     "none": "none",
-    "units": "{count, plural, one {# unit} other {# units}}"
+    "noValue": "No value",
+    "units": "{count, plural, one {# unit} other {# units}}",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "loading": "Loading…",
+    "backTo": "Back to {page}",
+    "search": "Search",
+    "filters": "Filters",
+    "clearFilters": "Clear filters"
   },
   "language": {
     "label": "Language"
@@ -18,9 +26,71 @@
     "orders": "Orders",
     "connections": "Connections",
     "settings": "Settings",
-    "families": "Families",
+    "families": "Product families",
     "privacy": "Privacy",
-    "warehouses": "Warehouses"
+    "warehouses": "Warehouses",
+    "offers": "Offers"
+  },
+  "shell": {
+    "skipToContent": "Skip to content",
+    "sidebar": {
+      "toggle": "Toggle sidebar",
+      "mobileTitle": "Menu",
+      "mobileDescription": "Main navigation and your account."
+    },
+    "groups": {
+      "sales": "Sales",
+      "catalogue": "Catalogue",
+      "stock": "Stock",
+      "channels": "Channels",
+      "organization": "Organization"
+    },
+    "breadcrumb": {
+      "label": "Breadcrumb",
+      "new": "New",
+      "signIn": "Sign-in",
+      "orderStatuses": "Order statuses",
+      "system": "System"
+    },
+    "count": {
+      "orders": "Orders, {count, plural, one {# needs attention} other {# need attention}}",
+      "offers": "Offers, {count, plural, one {# has no product} other {# have no product}}"
+    },
+    "search": {
+      "label": "Search"
+    },
+    "command": {
+      "title": "Command palette",
+      "description": "Type a product's name or SKU, the name of a page or an action, then press Enter.",
+      "placeholder": "Find a product, a page or an action…",
+      "empty": "Nothing matches. Try another word.",
+      "results": "Results",
+      "goTo": "Go to",
+      "actions": "Actions",
+      "search": "Search",
+      "preferences": "Preferences",
+      "products": "Products",
+      "searching": "Searching products…",
+      "noProducts": "No product has “{query}” in its name or SKU.",
+      "searchFailed": "The products could not be searched. Try again.",
+      "subPage": "{section}: {page}",
+      "hintMove": "to move",
+      "hintOpen": "to open",
+      "hintClose": "to close",
+      "addProduct": "Add product",
+      "addConnection": "Add connection",
+      "addFamily": "Add product family",
+      "addWarehouse": "Add warehouse",
+      "searchProducts": "Search products for “{query}”",
+      "theme": "Theme: {theme}",
+      "language": "Language: {language}"
+    },
+    "theme": {
+      "label": "Theme",
+      "light": "Light",
+      "dark": "Dark",
+      "system": "System"
+    }
   },
   "pagination": {
     "label": "Pagination",
@@ -65,12 +135,57 @@
   },
   "dashboard": {
     "title": "Dashboard",
-    "intro": "You will find products, orders and connections in the menu above.",
+    "intro": "What is waiting for you, and the state of your orders and connections.",
     "eventsTitle": "Recent events",
-    "eventsDescription": "The test job goes through the queue and the worker, and its result shows up here.",
-    "eventsEmpty": "No events yet. Send a test job to check that the worker is running.",
-    "sendPing": "Send test job",
-    "sendingPing": "Sending…"
+    "eventsDescription": "The latest changes to your orders, products, offers and connections.",
+    "eventsEmpty": "No events yet. They appear here as orders arrive and stock changes.",
+    "setup": {
+      "title": "Getting started",
+      "description": "Everything needed for your stock to reach a channel. This list goes away once every step is done.",
+      "progress": "{done, number} of {total, number} done",
+      "done": "Done",
+      "steps": {
+        "connect": {
+          "title": "Connect a channel",
+          "description": "Add a connection to a channel you sell through. Its offers and orders are pulled in."
+        },
+        "products": {
+          "title": "Create products for your offers",
+          "description": "Create a product from each offer, or link the offer to a product you already have."
+        },
+        "stock": {
+          "title": "Set stock",
+          "description": "Enter how many units of each product you have. The channels are then told what is available."
+        }
+      }
+    },
+    "attention": {
+      "title": "Needs attention",
+      "none": "Nothing needs your attention right now.",
+      "orders": "{count, plural, one {# order needs attention} other {# orders need attention}}",
+      "reason": "{reason}: {count, number}",
+      "connectionFailing": "Connection {name} is failing",
+      "connectionFailingHint": "Open the connection to see what failed.",
+      "streamError": "{stream}: {error}",
+      "connectionSignIn": "Connection {name} needs to sign in again",
+      "connectionSignInHint": "It does not sync until someone signs in again.",
+      "unlinkedOffers": "{count, plural, one {# offer has no product} other {# offers have no product}}",
+      "unlinkedOffersHint": "Stock and prices are not sent to an offer until it is linked to a product."
+    },
+    "phases": {
+      "title": "Orders by phase",
+      "all": "All orders",
+      "awaitingPaymentHint": "Open orders waiting for the buyer to pay. Nothing to do yet."
+    },
+    "connections": {
+      "title": "Connections",
+      "all": "All connections",
+      "lastSync": "Last sync {date}",
+      "neverSynced": "Not synchronised yet",
+      "more": "{count, plural, one {# more connection} other {# more connections}}",
+      "emptyTitle": "No connections yet",
+      "empty": "Add a connection to a channel to pull in its offers and orders."
+    }
   },
   "products": {
     "title": "Products",
@@ -79,14 +194,16 @@
     "searchLabel": "Search by SKU or name",
     "searchPlaceholder": "Search by SKU or name",
     "search": "Search",
-    "clear": "Clear",
     "familyFilter": {
       "label": "Family",
       "all": "All products",
       "none": "Without a family"
     },
-    "emptySearch": "No product matches your search.",
-    "empty": "There are no products yet. Add the first one, or create them from offers pulled from a channel.",
+    "emptySearchTitle": "No products match this search",
+    "emptySearch": "Try another SKU, name or family, or clear the filters to see every product.",
+    "emptyTitle": "No products yet",
+    "empty": "Add a product by hand, or create products from the offers a connection pulled from its channel.",
+    "emptyFromOffers": "Create products from offers",
     "columns": {
       "sku": "SKU",
       "name": "Name",
@@ -96,11 +213,11 @@
       "offers": "Offers",
       "family": "Family"
     },
-    "shortageHint": "(shortage)",
+    "shortage": "Shortage",
     "detail": {
       "title": "Product",
-      "skuLine": "SKU: {sku}",
-      "shortage": "Shortage: more was sold than is in stock.",
+      "shortage": "More units are promised to orders than are in stock. Correct the stock if it is wrong, or open the orders under Open reservations and decide what happens to them.",
+      "shortageWarehouse": "A warehouse holds reservations for more units than it has. Move a reservation to another warehouse from its order, or correct the stock.",
       "dataTitle": "Product details",
       "dataDescription": "The SKU is fixed and cannot be changed.",
       "name": "Name",
@@ -115,13 +232,10 @@
       "offersDescription": "This product's offers in channels.",
       "offersEmpty": "This product has no linked offers yet. An offer is linked automatically by SKU, or manually in the list of offers without a product.",
       "offerColumns": {
-        "connection": "Connection",
         "offer": "Offer",
         "link": "Link",
         "lastPushed": "Last pushed",
-        "price": "Price",
-        "actions": "Actions",
-        "publication": "On the channel"
+        "price": "Price"
       },
       "linkedManually": "Manual",
       "linkedBySku": "By SKU",
@@ -135,7 +249,6 @@
       "reservationsDescription": "Goods promised to orders that have not been shipped yet.",
       "reservationsEmpty": "No open reservations.",
       "reservationOrder": "Order {id}",
-      "familyLine": "Family: {name}",
       "warehouseColumns": {
         "warehouse": "Warehouse",
         "stock": "Stock",
@@ -144,14 +257,19 @@
       },
       "manageWarehouses": "Manage warehouses",
       "reservationWarehouse": "in {warehouse}",
-      "stockIn": "Stock in {warehouse}"
+      "stockIn": "Stock in {warehouse}",
+      "pushRejected": "Rejected by a channel",
+      "historyTitle": "History",
+      "historyEmpty": "No events."
     },
     "new": {
       "title": "Add product",
+      "sectionTitle": "Product details",
       "sku": "SKU",
       "skuHint": "Unique within the company; it cannot be changed later.",
       "name": "Name",
       "initialStock": "Initial stock",
+      "initialStockHint": "Goes to the default warehouse. You can set the stock of each warehouse on the product's page.",
       "submit": "Add product",
       "submitting": "Adding…"
     }
@@ -160,7 +278,8 @@
     "title": "Product families",
     "intro": "A family groups the products that are sizes or colours of one another. Orders, stock and offers keep working on the individual products.",
     "add": "Add family",
-    "empty": "There are no product families yet. Create one to group products such as sizes or colours.",
+    "emptyTitle": "No product families yet",
+    "empty": "Use a family to group the products that are sizes or colours of one another.",
     "columns": {
       "name": "Name",
       "attributes": "Attributes",
@@ -169,6 +288,7 @@
     "productCount": "{count, plural, one {# product} other {# products}}",
     "new": {
       "title": "Add family",
+      "sectionTitle": "Family details",
       "name": "Name",
       "attributes": "Attributes",
       "attributesHint": "What tells the products apart, separated by commas, for example: Size, Colour. At most 5; they cannot be changed later.",
@@ -185,7 +305,12 @@
       "membersTitle": "Products in this family",
       "membersDescription": "Each product has one value per attribute. No two products can have the same values.",
       "membersEmpty": "No products in this family yet. Add the first one below.",
-      "availableLine": "Available: {count}",
+      "columns": {
+        "product": "Product",
+        "available": "Available",
+        "values": "Values",
+        "actions": "Actions"
+      },
       "saveValues": "Save",
       "saving": "Saving…",
       "remove": "Remove",
@@ -207,7 +332,7 @@
   },
   "offers": {
     "title": "Offers without a product",
-    "description": "Offers pulled from channels whose SKU does not match any product.",
+    "description": "Offers pulled from channels whose SKU does not match any product. Link each one to a product or create products from them: until then Hanza sends them neither stock nor a price.",
     "createTitle": "Create products from offers",
     "createDescription": "Select the offers that have a SKU in the table. A product gets the offer's SKU and name and a stock of 0. It gets no price: set one on the product, and only then is it sent to the channels.",
     "create": "Create products from selected",
@@ -220,7 +345,10 @@
       "sku_taken": "a product with this SKU already exists",
       "already_linked": "the offer is already linked"
     },
+    "selected": "{count, plural, =0 {No offers selected} one {# offer selected} other {# offers selected}}",
+    "emptyTitle": "Nothing to link",
     "empty": "Every offer has a product. New offers will appear after a connection syncs.",
+    "newTab": "opens in a new tab",
     "columns": {
       "connection": "Connection",
       "offer": "Offer",
@@ -245,7 +373,30 @@
     "effectivePrice": "Price from Hanza",
     "lastPushedPrice": "Last sent price",
     "notSent": "not sent yet",
-    "productLine": "Linked to {name} (SKU {sku}). Base price: {price}.",
+    "viewOnChannel": "View on the channel",
+    "priceTitle": "Price sent to the channel",
+    "priceSource": {
+      "override": "Offer price",
+      "base": "Product's base price"
+    },
+    "pushState": {
+      "sent": "Sent",
+      "waiting": "Waiting",
+      "rejected": "Rejected",
+      "notSent": "Not sent"
+    },
+    "recordedAt": "Recorded {date}.",
+    "overrideNotLinked": "Link the offer to a product to set its price.",
+    "productTitle": "Product",
+    "productName": "Name",
+    "basePrice": "Base price",
+    "linked": "Linked",
+    "linkedBy": {
+      "sku": "By SKU",
+      "manual": "Manually"
+    },
+    "detailsTitle": "Details",
+    "externalId": "ID on the channel",
     "overrideTitle": "Offer price",
     "overrideDescription": "A price for this offer only. It wins over the product's base price; remove it to go back to the base price.",
     "mismatchHint": "Set an offer price in {currency} to send one.",
@@ -284,14 +435,11 @@
     "filters": {
       "status": "Status",
       "all": "All",
-      "attentionOnly": "Only those needing attention",
-      "awaitingPaymentOnly": "Only awaiting payment",
       "apply": "Filter",
-      "clear": "Clear",
       "phase": "Phase"
     },
-    "emptyFiltered": "No order matches the filters.",
-    "empty": "There are no orders yet. They will appear after a connection syncs with a channel.",
+    "emptyFiltered": "Try another phase or status, or clear the filters to see every order.",
+    "empty": "Orders appear here after a connection syncs with a channel.",
     "columns": {
       "number": "Number",
       "channel": "Channel",
@@ -307,7 +455,18 @@
     "detail": {
       "title": "Order",
       "summary": "Channel: {channel} · {date} · {payment} · {total}",
-      "attentionHint": "Link the unmatched lines to products below and Needs attention clears on its own.",
+      "attention": {
+        "unmatched_line": "A line matches no product, so nothing is reserved for it. Link it to a product and this reason clears on its own.",
+        "shortage": "A warehouse is short of the units this order reserves. Correct the stock on the product's page if it is wrong, or move the reservation to a warehouse that covers the line.",
+        "cancelled_while_processing": "The channel cancelled this order while it was being prepared, and its reservations were released. Stop the fulfilment and put the goods back, then mark it as reviewed.",
+        "channel_fact_conflict": "The channel reported a change after the order was shipped or cancelled, and Hanza did not apply it. Check what it reported and settle it with the buyer, then mark it as reviewed.",
+        "status_push_failed": "The channel did not accept the last change of phase and may still show the old one. Check the connection, or change the order on the channel yourself, then mark it as reviewed.",
+        "toLines": "Go to Lines",
+        "toReservations": "Go to Reservations",
+        "toProduct": "Product",
+        "toChannelChanges": "See the changes reported by the channel",
+        "toConnection": "Open connection {connection}"
+      },
       "markReviewed": "Mark as reviewed",
       "statusTitle": "Status",
       "statusDescription": "Hanza leads the fulfilment. Moving the order to another phase is passed on to the channel if the channel supports it; statuses within one phase are your own labels and stay in Hanza.",
@@ -327,6 +486,7 @@
         "reservation": "Reservation",
         "warehouse": "Warehouse"
       },
+      "reservationsTitle": "Reservations",
       "unmatched": "Unmatched",
       "shortage": "Shortage",
       "buyerTitle": "Buyer",
@@ -344,7 +504,9 @@
       "factsEmpty": "The channel has not reported any changes.",
       "historyTitle": "History",
       "historyEmpty": "No events.",
-      "phaseLine": "Phase: {phase}"
+      "phaseLine": "Phase: {phase}",
+      "paymentTitle": "Payment",
+      "paymentMethod": "Method"
     },
     "linkLine": {
       "skuLabel": "SKU of the product to link the line to",
@@ -357,24 +519,30 @@
       "submit": "Move",
       "submitting": "Moving…",
       "hint": "Only to a warehouse that has enough available for the whole line."
-    }
+    },
+    "emptyTitle": "No orders yet",
+    "emptyAction": "View connections",
+    "emptyFilteredTitle": "No orders match these filters"
   },
   "connections": {
     "title": "Connections",
     "add": "Add connection",
     "empty": "There are no connections yet. Add a connection to a channel to pull offers and orders.",
+    "emptyTitle": "Connect your first channel",
+    "syncStatus": {
+      "succeeded": "Succeeded",
+      "running": "Running",
+      "notRun": "Not run yet",
+      "nothingToSend": "Nothing to send"
+    },
     "columns": {
       "name": "Name",
       "connector": "Connector",
       "health": "Connection health",
       "lastSync": "Last sync"
     },
-    "neverSynced": "not run yet",
-    "running": "running",
     "detail": {
       "title": "Connection",
-      "connectorLine": "Connector: {connector}",
-      "connectorLineChanged": "Connector: {connector} · health changed {date}",
       "syncTitle": "Synchronisation",
       "syncDescription": "Hanza synchronises the connection in the background. The request goes to the queue and the results appear here shortly: refresh the page.",
       "syncNow": "Synchronise now",
@@ -384,10 +552,10 @@
       "syncColumns": {
         "data": "Data",
         "started": "Started",
-        "finished": "Finished",
         "lastSuccess": "Last success",
         "result": "Result",
-        "error": "Error"
+        "status": "Status",
+        "lastRun": "Last run"
       },
       "eventsTitle": "Recent events",
       "eventsEmpty": "No events.",
@@ -409,12 +577,18 @@
       "signInAgain": "Sign in again",
       "signInAgainStarting": "Starting…",
       "authExpiredTitle": "Sign-in required",
-      "authExpired": "{connector} no longer accepts the sign-in of this connection, so it does not sync. Sign in again to resume."
+      "authExpired": "{connector} no longer accepts the sign-in of this connection, so it does not sync. Sign in again to resume.",
+      "detailsTitle": "Details",
+      "kind": "Type",
+      "healthChanged": "Health changed",
+      "added": "Added",
+      "connectionId": "Connection ID",
+      "signInTitle": "Sign-in",
+      "signInHint": "Signing in again replaces the credentials of this connection. It has to be the same {connector} account."
     },
     "new": {
       "title": "Add connection",
       "description": "Choose the connector Hanza will use to reach the channel.",
-      "backToChoice": "Choose a connector",
       "titleFor": "Add connection: {connector}",
       "name": "Name",
       "nameHint": "The connection will appear in the panel under this name.",
@@ -425,10 +599,12 @@
       "submit": "Add connection",
       "submitting": "Adding…",
       "notConfigured": "Not set up on this installation",
-      "notConfiguredHint": "Whoever runs this Hanza sets these variables and restarts it: {variables}",
+      "notConfiguredHint": "Whoever runs this Hanza sets these variables and restarts it:",
       "signInNote": "Next you get a code to confirm on {connector}. Hanza never sees your password there.",
       "continueToSignIn": "Continue to sign-in",
-      "startingSignIn": "Starting…"
+      "startingSignIn": "Starting…",
+      "formTitle": "Connection details",
+      "noConnectors": "This installation has no connectors."
     },
     "stockRules": {
       "title": "Stock sent to this channel",
@@ -455,7 +631,6 @@
       "titleAgain": "Sign in again to {connector}: {connection}",
       "connectionName": "New connection: {name}",
       "starting": "Preparing your code…",
-      "instructions": "Open the sign-in page of {connector}, enter this code and allow access for Hanza.",
       "codeLabel": "Your code",
       "open": "Open the {connector} sign-in page",
       "noLink": "Go to the sign-in page of {connector} and enter the code there.",
@@ -473,16 +648,20 @@
       "account_mismatch_unknown": "This connection is bound to another {connector} account, and {connector} did not say which account approved. Sign in with the account the connection was set up with, or add a new connection.",
       "account_in_use": "The {connector} account {account} already has a connection here. Use “Sign in again” on that connection instead.",
       "cancelled": "The sign-in was cancelled.",
-      "back": "Back to connections"
+      "steps": {
+        "open": "Open the sign-in page of {connector}.",
+        "enter": "Enter this code there, or check that the page already shows it.",
+        "allow": "Allow access for Hanza."
+      }
     }
   },
   "privacy": {
     "title": "Privacy",
-    "intro": "Buyer data on orders (names, contact details, addresses) is stored encrypted. Here you decide how long it is kept and handle a request to erase one person's data.",
+    "intro": "Buyer data on orders is stored encrypted: set how long it is kept, or erase one person's data on request.",
     "adminsOnly": "Only an owner or admin of the organization can change the retention period or erase a buyer's data.",
     "retention": {
       "title": "Buyer data retention",
-      "description": "Buyer data is erased this many days after an order was shipped or cancelled. Order lines, amounts and the shipping country are kept. Open orders are never affected.",
+      "description": "Name, contact details and addresses on shipped or cancelled orders are erased once this period has passed. Order lines, amounts and the shipping country are kept, and open orders are never affected.",
       "label": "Days after the order closed",
       "hint": "From 1 to 3650 days. Leave empty to keep buyer data until you erase it. Orders that were already closed before Hanza recorded closing times count from their last change.",
       "save": "Save",
@@ -503,7 +682,13 @@
       "noMatch": "No order of this organization has buyer data with this email address.",
       "previewClosed": "{count, plural, =0 {No shipped or cancelled order to erase.} one {# shipped or cancelled order will have its buyer data erased.} other {# shipped or cancelled orders will have their buyer data erased.}}",
       "openKept": "{count, plural, one {# order is still open and is kept: its address is needed to ship it. Ship or cancel it, then erase again.} other {# orders are still open and are kept: their address is needed to ship them. Ship or cancel them, then erase again.}}",
-      "confirm": "Erase the buyer data of these orders? This cannot be undone.",
+      "reviewTitle": "Review before you erase",
+      "erasedTerm": "Will be erased",
+      "erasedBody": "The buyer's name, email, phone, channel login and addresses on these orders.",
+      "keptTerm": "Will be kept",
+      "keptBody": "The orders themselves, with their lines, amounts, dates and shipping country.",
+      "irreversible": "This cannot be undone.",
+      "confirm": "Erase the buyer data of {count, plural, one {# closed order} other {# closed orders}}? Name, contact details and addresses are cleared; the orders, their lines, amounts, dates and shipping country are kept. This cannot be undone.",
       "submit": "Erase buyer data",
       "erasing": "Erasing…",
       "done": "{count, plural, =0 {Nothing was erased.} one {Buyer data erased on # order.} other {Buyer data erased on # orders.}}"
@@ -672,6 +857,22 @@
     "push": {
       "stock": "stock",
       "price": "price"
+    },
+    "subject": {
+      "order": "Order",
+      "product": "Product",
+      "offer": "Offer",
+      "connection": "Connection",
+      "warehouse": "Warehouse",
+      "product_family": "Product family"
+    },
+    "view": {
+      "order": "View order",
+      "product": "View product",
+      "offer": "View offer",
+      "connection": "View connection",
+      "warehouse": "View warehouse",
+      "product_family": "View product family"
     }
   },
   "errors": {
@@ -758,7 +959,7 @@
     "title": "Settings",
     "orderStatuses": {
       "title": "Order statuses",
-      "description": "Your own statuses for the order workflow. Each one belongs to a phase: Hanza keeps stock and channels in step by the phase, and the status is your finer label within it.",
+      "description": "Order statuses are your own labels within a phase: they never change Stock or what a Channel is told, which depend on the phase alone.",
       "adminsOnly": "Only an owner or admin of the organization can change the order statuses.",
       "phaseHint": {
         "new": "Orders arrive here from the channels. Stock is reserved.",
@@ -778,7 +979,6 @@
       "name": "Name",
       "nameFor": "Name of {status}",
       "namePlaceholder": "e.g. Waiting for packaging",
-      "nameHint": "Empty (default status only): the phase name, in each person’s language.",
       "color": "Colour",
       "colorFor": "Colour of {status}",
       "colorNone": "Phase colour",
@@ -798,10 +998,21 @@
       "confirmDeleteMoving": "Delete the status {status} and move its orders to the chosen status?",
       "orderCount": "{count, plural, one {# order} other {# orders}}",
       "usedByChannels": "{count, plural, one {Used by # channel} other {Used by # channels}}",
-      "defaultHint": "The status an order gets when it enters this phase, unless a channel says otherwise. It cannot be deactivated or deleted.",
+      "defaultsHint": "Each phase has a default status: the one an order gets when it enters the phase, unless a channel says otherwise. It cannot be deactivated or deleted, and while its name is empty it goes by the name of its phase, in each person’s language.",
       "deleteScheduled": "Deleting: its orders are being moved to the chosen status. The status disappears when that is done.",
       "deleteFor": "Delete {status}",
       "deletionInProgress": "Being deleted: its orders are moving to {status}."
+    },
+    "system": {
+      "title": "System",
+      "description": "Checks for whoever runs this installation of Hanza.",
+      "queueTitle": "Queue and worker",
+      "queueDescription": "The test job goes through the queue and the worker, and its result shows up here.",
+      "queueEmpty": "No test job has run yet. Send one to check that the worker is running.",
+      "queueDone": "Handled by the worker.",
+      "sendPing": "Send test job",
+      "sendingPing": "Sending…",
+      "pingFailed": "The test job could not be sent. Try again."
     }
   },
   "warehouses": {
@@ -837,6 +1048,7 @@
       "activate": "Activate",
       "deactivate": "Deactivate",
       "deactivateHint": "Only an empty warehouse can be deactivated: no stock, no open reservations, and no channel that chose it.",
+      "deleteTitle": "Delete warehouse",
       "delete": "Delete warehouse",
       "deleteConfirm": "Delete this warehouse? This cannot be undone.",
       "deleteHint": "A warehouse that has ever had a reservation can only be deactivated.",

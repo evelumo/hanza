@@ -1,63 +1,114 @@
-import type { OrderPhase } from '@hanza/core'
+import type { OfferPublication, OrderPhase } from '@hanza/core'
 import type { ConnectionHealth, OrderStatusColor } from '@hanza/db'
+import {
+  Circle,
+  CircleAlert,
+  CircleCheck,
+  CircleDashed,
+  CircleHelp,
+  CircleSlash,
+  Clock,
+  KeyRound,
+  OctagonAlert,
+  type LucideIcon,
+} from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
 import { useT } from '@/i18n/use-t'
 import { healthLabel, orderPhaseLabel, orderStatusName } from '@/lib/labels'
-
-const base = 'inline-flex items-center whitespace-nowrap rounded-full border px-2 py-0.5 text-xs font-medium'
-
-const phaseTone: Record<OrderPhase, string> = {
-  new: 'border-sky-300 bg-sky-50 text-sky-900',
-  processing: 'border-amber-300 bg-amber-50 text-amber-900',
-  shipped: 'border-green-300 bg-green-50 text-green-900',
-  cancelled: 'border-line bg-canvas text-muted',
-}
+import { publicationLabel } from '@/lib/offer-push-status'
+import type { Tone } from './tone'
 
 // Whole class names, so Tailwind sees every one of them.
-const colorTone: Record<OrderStatusColor, string> = {
-  gray: 'border-gray-300 bg-gray-50 text-gray-900',
-  blue: 'border-blue-300 bg-blue-50 text-blue-900',
-  teal: 'border-teal-300 bg-teal-50 text-teal-900',
-  green: 'border-green-300 bg-green-50 text-green-900',
-  amber: 'border-amber-300 bg-amber-50 text-amber-900',
-  orange: 'border-orange-300 bg-orange-50 text-orange-900',
-  red: 'border-red-300 bg-red-50 text-red-900',
-  violet: 'border-violet-300 bg-violet-50 text-violet-900',
+const colorClass: Record<OrderStatusColor, string> = {
+  gray: 'border-status-gray-border bg-status-gray-subtle text-status-gray',
+  blue: 'border-status-blue-border bg-status-blue-subtle text-status-blue',
+  teal: 'border-status-teal-border bg-status-teal-subtle text-status-teal',
+  green: 'border-status-green-border bg-status-green-subtle text-status-green',
+  amber: 'border-status-amber-border bg-status-amber-subtle text-status-amber',
+  orange: 'border-status-orange-border bg-status-orange-subtle text-status-orange',
+  red: 'border-status-red-border bg-status-red-subtle text-status-red',
+  violet: 'border-status-violet-border bg-status-violet-subtle text-status-violet',
 }
 
-const healthTone: Record<ConnectionHealth, string> = {
-  unknown: 'border-line bg-canvas text-muted',
-  ok: 'border-green-300 bg-green-50 text-green-900',
-  failing: 'border-red-300 bg-red-50 text-red-900',
-  auth_expired: 'border-amber-300 bg-amber-50 text-amber-900',
+/** The colour of a status that has none of its own. */
+const phaseColor: Record<OrderPhase, OrderStatusColor> = {
+  new: 'blue',
+  processing: 'amber',
+  shipped: 'green',
+  cancelled: 'gray',
 }
 
-// The meaning is always in the text; colour only reinforces it.
+// The colour is the organization's label; the shape says which phase the status belongs to, whatever its colour.
+const phaseIcon: Record<OrderPhase, LucideIcon> = {
+  new: Circle,
+  processing: CircleDashed,
+  shipped: CircleCheck,
+  cancelled: CircleSlash,
+}
+
+const healthTone: Record<ConnectionHealth, { tone: Tone; icon: LucideIcon }> = {
+  unknown: { tone: 'neutral', icon: CircleHelp },
+  ok: { tone: 'success', icon: CircleCheck },
+  failing: { tone: 'critical', icon: OctagonAlert },
+  auth_expired: { tone: 'warning', icon: KeyRound },
+}
+
+// Only an Offer that is for sale stands out; a draft, an ended one and one the Channel never described differ by shape.
+const publicationIcon: Record<OfferPublication['status'], LucideIcon> = {
+  active: CircleCheck,
+  inactive: CircleDashed,
+  ended: CircleSlash,
+}
+
 export function OrderStatusBadge({ status }: { status: { name: string | null; phase: OrderPhase; color: OrderStatusColor | null } }) {
   const t = useT()
-  const tone = status.color ? colorTone[status.color] : phaseTone[status.phase]
   return (
-    <span className={`${base} ${tone}`} title={orderPhaseLabel(t, status.phase)}>
+    <Badge icon={phaseIcon[status.phase]} className={colorClass[status.color ?? phaseColor[status.phase]]} title={orderPhaseLabel(t, status.phase)}>
       {orderStatusName(t, status)}
-    </span>
+    </Badge>
   )
 }
 
 export function HealthBadge({ health }: { health: ConnectionHealth }) {
   const t = useT()
-  return <span className={`${base} ${healthTone[health]}`}>{healthLabel(t, health)}</span>
+  const { tone, icon } = healthTone[health]
+  return (
+    <Badge tone={tone} icon={icon}>
+      {healthLabel(t, health)}
+    </Badge>
+  )
 }
 
-/** A neutral tag, such as "Default" or "Inactive" on a Warehouse. */
-export function TagBadge({ label }: { label: string }) {
-  return <span className={`${base} border-line bg-canvas text-muted`}>{label}</span>
+/** An Offer's publication on its Channel. */
+export function PublicationBadge({ publication }: { publication: OfferPublication | null }) {
+  const t = useT()
+  return (
+    <Badge tone={publication?.status === 'active' ? 'success' : 'neutral'} icon={publication ? publicationIcon[publication.status] : CircleHelp}>
+      {publicationLabel(t, publication)}
+    </Badge>
+  )
+}
+
+/** A tag such as "Default" or "Inactive" on a Warehouse: neutral unless a tone (with its icon) says more. */
+export function TagBadge({ label, tone = 'neutral' }: { label: string; tone?: Tone }) {
+  return <Badge tone={tone}>{label}</Badge>
 }
 
 export function AwaitingPaymentBadge() {
   const t = useT()
-  return <span className={`${base} border-amber-300 bg-amber-50 text-amber-900`}>{t('orders.awaitingPayment')}</span>
+  return (
+    <Badge tone="warning" icon={Clock}>
+      {t('orders.awaitingPayment')}
+    </Badge>
+  )
 }
 
+/** Something a person has to act on: an Order that needs attention, an unmatched line, a Shortage. */
 export function AttentionBadge({ label }: { label?: string }) {
   const t = useT()
-  return <span className={`${base} border-red-300 bg-red-50 text-red-900`}>{label ?? t('orders.needsAttention')}</span>
+  return (
+    <Badge tone="attention" icon={CircleAlert}>
+      {label ?? t('orders.needsAttention')}
+    </Badge>
+  )
 }

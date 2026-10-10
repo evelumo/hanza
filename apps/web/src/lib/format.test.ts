@@ -26,7 +26,13 @@ describe('formatNumber', () => {
   it('groups digits the way the locale does', () => {
     expect(formatNumber(1234567, 'en')).toBe('1,234,567')
     expect(spaces(formatNumber(1234567, 'pl'))).toBe('1 234 567')
-    expect(formatNumber(-3, 'en')).toBe('-3')
+  })
+
+  it('writes a negative number with a real minus sign', () => {
+    expect(formatNumber(-3, 'en')).toBe('\u22123')
+    expect(spaces(formatNumber(-1234, 'pl'))).toBe('\u22121234')
+    expect(formatNumber(0, 'en')).toBe('0')
+    expect(spaces(formatMoney({ amount: '-5', currency: 'PLN' }, 'pl'))).toBe('\u22125,00 zł')
   })
 })
 

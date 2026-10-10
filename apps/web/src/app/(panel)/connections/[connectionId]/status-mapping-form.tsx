@@ -21,11 +21,17 @@ export interface MappingRow {
 export function StatusMappingForm({ connectionId, rows, disabled }: { connectionId: string; rows: MappingRow[]; disabled: boolean }) {
   const t = useT()
   return (
-    <ActionForm action={setStatusMappingAction} success={t('common.saved')} className="space-y-4 px-5 py-4">
+    <ActionForm
+      action={setStatusMappingAction}
+      success={t('common.saved')}
+      className="grid gap-4"
+      actions={disabled ? undefined : <ActionButton variant="secondary">{t('connections.detail.statusMapping.save')}</ActionButton>}
+    >
       {(state) => (
         <>
           <input type="hidden" name="connectionId" value={connectionId} />
-          <div className="grid gap-4 sm:grid-cols-3">
+          {/* One under another: a status name is as long as the organization made it, and three columns would cut it. */}
+          <div className="grid max-w-md gap-4">
             {rows.map((row) => (
               <Select
                 key={row.phase}
@@ -44,7 +50,6 @@ export function StatusMappingForm({ connectionId, rows, disabled }: { connection
               </Select>
             ))}
           </div>
-          {disabled ? null : <ActionButton>{t('connections.detail.statusMapping.save')}</ActionButton>}
         </>
       )}
     </ActionForm>

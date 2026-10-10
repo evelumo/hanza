@@ -1,18 +1,36 @@
 import { listOrders, listOrderStatusOptions, ORDER_PHASES } from '@hanza/core'
+import { Eraser, OctagonAlert, SearchX, ShoppingCart } from 'lucide-react'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { buttonClass } from '@/components/button-class'
+import {
+  DataTable,
+  DataTableBody,
+  DataTableCell,
+  DataTableHead,
+  DataTableHeader,
+  DataTableLinkRow,
+  DataTableMeta,
+  DataTableMetaItem,
+} from '@/components/data-table'
+import { EmptyState } from '@/components/empty-state'
+import { FilterBar, FilterChip, FilterClear, FilterForm, FilterSelect, FilterTabs } from '@/components/filter-bar'
+import { PageHeader } from '@/components/page-header'
+import { Page } from '@/components/page-layout'
 import { Pagination } from '@/components/pagination'
-import { EmptyState, linkClass, rowClass, tableClass, tdClass, thClass } from '@/components/section'
+import { Panel } from '@/components/section'
 import { AttentionBadge, AwaitingPaymentBadge, OrderStatusBadge } from '@/components/status-badge'
+import { orderNumberClass, TextLink } from '@/components/text-link'
+import { Button } from '@/components/ui/button'
 import { getT } from '@/i18n/server'
 import { getContext } from '@/lib/context'
 import { getFormatters } from '@/lib/formatters'
 import { orderPhaseLabel, orderStatusName } from '@/lib/labels'
 import { showsAwaitingPayment } from '@/lib/payment'
-import { firstParam, outOfRangeRedirect, pageWindow, parsePage } from '@/lib/pagination'
+import { firstParam, outOfRangeRedirect, pageHref, pageWindow, parsePage } from '@/lib/pagination'
 import { requireTenant } from '@/lib/session'
+import { cn } from '@/lib/utils'
 import { orderListFiltersSchema } from './schemas'
 
 export const dynamic = 'force-dynamic'
@@ -47,112 +65,152 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
   const outOfRange = outOfRangeRedirect(page, total, '/orders', filterParams)
   if (outOfRange) redirect(outOfRange)
   const filtered = Boolean(filters.phase || filters.status || filters.attention || filters.payment)
-  const selectClass =
-    'mt-1 block rounded-md border border-line bg-white px-3 py-1.5 text-sm font-normal outline-none focus:border-accent focus:ring-2 focus:ring-accent/20'
+  // Every filter is a link to the same list with one parameter changed, back on page 1.
+  const withFilters = (change: Partial<typeof filterParams>) => pageHref('/orders', { ...filterParams, ...change }, 1)
+  // A status belongs to one phase, so choosing a phase drops the status and choosing a status drops the phase.
+  // The list is then within that status's phase, and its tab is the current one, not "All".
+  const currentPhase = filters.phase ?? statuses.find((status) => status.id === filters.status)?.phase
+  const phaseTab = (phase: (typeof ORDER_PHASES)[number] | undefined, label: string) => ({
+    href: withFilters({ phase, status: undefined }),
+    label,
+    active: phase === undefined ? !filters.phase && !filters.status : currentPhase === phase,
+  })
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-semibold tracking-tight">{t('orders.title')}</h1>
+    <Page>
+      <PageHeader title={t('orders.title')} />
 
-      <form method="get" className="flex flex-wrap items-end gap-4">
-        <label className="block text-sm font-medium">
-          {t('orders.filters.phase')}
-          <select name="phase" defaultValue={filters.phase ?? ''} className={selectClass}>
-            <option value="">{t('orders.filters.all')}</option>
-            {ORDER_PHASES.map((value) => (
-              <option key={value} value={value}>
-                {orderPhaseLabel(t, value)}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="block text-sm font-medium">
-          {t('orders.filters.status')}
-          <select name="status" defaultValue={filters.status ?? ''} className={selectClass}>
-            <option value="">{t('orders.filters.all')}</option>
-            {ORDER_PHASES.map((phase) => (
-              <optgroup key={phase} label={orderPhaseLabel(t, phase)}>
-                {statuses
-                  .filter((status) => status.phase === phase)
-                  .map((status) => (
-                    <option key={status.id} value={status.id}>
-                      {orderStatusName(t, status)}
-                    </option>
-                  ))}
-              </optgroup>
-            ))}
-          </select>
-        </label>
-        <label className="flex items-center gap-2 pb-2 text-sm font-medium">
-          <input type="checkbox" name="attention" value="1" defaultChecked={filters.attention === '1'} className="size-4 accent-accent" />
-          {t('orders.filters.attentionOnly')}
-        </label>
-        <label className="flex items-center gap-2 pb-2 text-sm font-medium">
-          <input type="checkbox" name="payment" value="awaiting" defaultChecked={filters.payment === 'awaiting'} className="size-4 accent-accent" />
-          {t('orders.filters.awaitingPaymentOnly')}
-        </label>
-        <button type="submit" className={buttonClass('secondary')}>
-          {t('orders.filters.apply')}
-        </button>
-        {filtered ? (
-          <Link href="/orders" className={buttonClass('secondary')}>
-            {t('orders.filters.clear')}
-          </Link>
+      <Panel>
+        {total > 0 || filtered ? (
+          <FilterBar>
+            <FilterTabs
+              label={t('orders.filters.phase')}
+              tabs={[phaseTab(undefined, t('orders.filters.all')), ...ORDER_PHASES.map((phase) => phaseTab(phase, orderPhaseLabel(t, phase)))]}
+            />
+            <div className="flex flex-wrap items-center gap-2">
+              <FilterChip href={withFilters({ attention: filters.attention ? undefined : '1' })} active={filters.attention === '1'}>
+                {t('orders.needsAttention')}
+              </FilterChip>
+              <FilterChip href={withFilters({ payment: filters.payment ? undefined : 'awaiting' })} active={filters.payment === 'awaiting'}>
+                {t('orders.awaitingPayment')}
+              </FilterChip>
+            </div>
+            <FilterForm action="/orders" params={{ attention: filters.attention, payment: filters.payment }}>
+              <FilterSelect name="status" label={t('orders.filters.status')} defaultValue={filters.status ?? ''}>
+                <option value="">{t('orders.filters.all')}</option>
+                {ORDER_PHASES.map((phase) => (
+                  <optgroup key={phase} label={orderPhaseLabel(t, phase)}>
+                    {statuses
+                      .filter((status) => status.phase === phase)
+                      .map((status) => (
+                        <option key={status.id} value={status.id}>
+                          {orderStatusName(t, status)}
+                        </option>
+                      ))}
+                  </optgroup>
+                ))}
+              </FilterSelect>
+              <Button type="submit" variant="outline" size="sm">
+                {t('orders.filters.apply')}
+              </Button>
+            </FilterForm>
+            {filtered ? <FilterClear href="/orders" /> : null}
+          </FilterBar>
         ) : null}
-      </form>
 
-      <div className="rounded-lg border border-line bg-white">
         {total === 0 ? (
-          <EmptyState>
-            {filtered ? t('orders.emptyFiltered') : t('orders.empty')}
-          </EmptyState>
+          filtered ? (
+            <EmptyState
+              icon={SearchX}
+              title={t('orders.emptyFilteredTitle')}
+              action={
+                <Link href="/orders" className={buttonClass('secondary')}>
+                  {t('common.clearFilters')}
+                </Link>
+              }
+            >
+              {t('orders.emptyFiltered')}
+            </EmptyState>
+          ) : (
+            <EmptyState
+              icon={ShoppingCart}
+              title={t('orders.emptyTitle')}
+              action={
+                <Link href="/connections" className={buttonClass('secondary')}>
+                  {t('orders.emptyAction')}
+                </Link>
+              }
+            >
+              {t('orders.empty')}
+            </EmptyState>
+          )
         ) : (
-          <div className="overflow-x-auto">
-            <table className={tableClass}>
-              <thead>
-                <tr>
-                  <th scope="col" className={thClass}>{t('orders.columns.number')}</th>
-                  <th scope="col" className={thClass}>{t('orders.columns.channel')}</th>
-                  <th scope="col" className={thClass}>{t('orders.columns.date')}</th>
-                  <th scope="col" className={thClass}>{t('orders.columns.buyer')}</th>
-                  <th scope="col" className={`${thClass} text-right`}>{t('orders.columns.total')}</th>
-                  <th scope="col" className={thClass}>{t('orders.columns.status')}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {items.map((order) => (
-                  <tr key={order.id} className={rowClass}>
-                    <td className={`${tdClass} font-mono`}>
-                      <Link href={`/orders/${order.id}`} className={linkClass}>
+          <DataTable>
+            <DataTableHeader>
+              <DataTableHead>{t('orders.columns.number')}</DataTableHead>
+              <DataTableHead hide="medium">{t('orders.columns.channel')}</DataTableHead>
+              <DataTableHead hide="medium">{t('orders.columns.date')}</DataTableHead>
+              <DataTableHead hide="medium">{t('orders.columns.buyer')}</DataTableHead>
+              <DataTableHead numeric>{t('orders.columns.total')}</DataTableHead>
+              <DataTableHead>{t('orders.columns.status')}</DataTableHead>
+            </DataTableHeader>
+            <DataTableBody>
+              {items.map((order) => {
+                const buyer =
+                  order.buyerName ??
+                  (order.buyerDataState === 'unreadable' ? (
+                    <span className="inline-flex items-center gap-1 text-critical">
+                      <OctagonAlert className="size-3.5 shrink-0" aria-hidden="true" />
+                      {t('orders.buyerUnreadable')}
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 text-muted-foreground">
+                      <Eraser className="size-3.5 shrink-0" aria-hidden="true" />
+                      {t('orders.buyerErased')}
+                    </span>
+                  ))
+                return (
+                  <DataTableLinkRow key={order.id} href={`/orders/${order.id}`}>
+                    <DataTableCell narrow="primary">
+                      <TextLink href={`/orders/${order.id}`} className={cn(orderNumberClass, 'whitespace-nowrap')}>
                         {order.externalId}
-                      </Link>
-                    </td>
-                    <td className={tdClass}>{order.connectionName}</td>
-                    <td className={tdClass}>{format.dateTime(order.placedAt)}</td>
-                    <td className={tdClass}>
-                      {order.buyerName ?? (
-                        <span className={order.buyerDataState === 'unreadable' ? 'text-red-800' : 'text-muted'}>
-                          {order.buyerDataState === 'unreadable' ? t('orders.buyerUnreadable') : t('orders.buyerErased')}
-                        </span>
-                      )}
-                    </td>
-                    <td className={`${tdClass} text-right tabular-nums`}>{format.money(order.total)}</td>
-                    <td className={tdClass}>
+                      </TextLink>
+                      <DataTableMeta below="medium">
+                        <DataTableMetaItem label={t('orders.columns.date')} labelHidden>
+                          <span className="whitespace-nowrap tabular-nums">{format.dateTime(order.placedAt)}</span>
+                        </DataTableMetaItem>
+                        <DataTableMetaItem label={t('orders.columns.channel')} labelHidden>
+                          {order.connectionName}
+                        </DataTableMetaItem>
+                        <DataTableMetaItem label={t('orders.columns.buyer')} labelHidden>
+                          {buyer}
+                        </DataTableMetaItem>
+                      </DataTableMeta>
+                    </DataTableCell>
+                    <DataTableCell hide="medium">{order.connectionName}</DataTableCell>
+                    <DataTableCell hide="medium" tabular>
+                      {format.dateTime(order.placedAt)}
+                    </DataTableCell>
+                    <DataTableCell hide="medium">{buyer}</DataTableCell>
+                    <DataTableCell numeric narrow="end">
+                      {format.money(order.total)}
+                    </DataTableCell>
+                    <DataTableCell>
                       <span className="flex flex-wrap gap-1.5">
                         <OrderStatusBadge status={order.status} />
                         {showsAwaitingPayment(order) ? <AwaitingPaymentBadge /> : null}
                         {order.attentionReasons.length > 0 ? <AttentionBadge /> : null}
                       </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                    </DataTableCell>
+                  </DataTableLinkRow>
+                )
+              })}
+            </DataTableBody>
+          </DataTable>
         )}
-      </div>
+      </Panel>
 
-      <Pagination page={page} total={total} basePath="/orders" params={filterParams} />
-    </div>
+      {total > 0 ? <Pagination page={page} total={total} basePath="/orders" params={filterParams} /> : null}
+    </Page>
   )
 }

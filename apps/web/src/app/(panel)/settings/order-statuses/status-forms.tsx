@@ -6,6 +6,7 @@ import { ActionForm } from '@/components/action-form'
 import { ActionButton, Field, Select } from '@/components/form'
 import { useT } from '@/i18n/use-t'
 import { createOrderStatusAction, deleteOrderStatusAction, updateOrderStatusAction } from './actions'
+import { DEFAULT_STATUS_HINT_ID } from './hint-id'
 
 // From the server page: importing them from `@hanza/core` would bundle the core into the browser, and labels are
 // server-only messages.
@@ -43,26 +44,30 @@ export function StatusEditForm({
 }) {
   const t = useT()
   return (
-    <ActionForm action={updateOrderStatusAction} className="flex flex-wrap items-end gap-3">
+    <ActionForm action={updateOrderStatusAction} className="grid gap-2">
       {(state) => (
-        <>
+        <div className="flex flex-wrap items-start gap-2">
           <input type="hidden" name="statusId" value={status.id} />
-          <div className="w-56">
+          <div className="max-w-64 min-w-0 grow basis-44">
             <Field
               name="name"
               label={t('settings.orderStatuses.name')}
+              labelHidden
+              compact
               aria-label={t('settings.orderStatuses.nameFor', { status: label })}
+              aria-describedby={status.isDefault ? DEFAULT_STATUS_HINT_ID : undefined}
               maxLength={options.nameMax}
               placeholder={phaseName}
-              hint={status.isDefault ? t('settings.orderStatuses.nameHint') : undefined}
               defaultValue={state.values?.name ?? status.name ?? ''}
               error={state.fieldErrors?.name}
             />
           </div>
-          <div className="w-44">
+          <div className="max-w-48 min-w-0 grow basis-36">
             <Select
               name="color"
               label={t('settings.orderStatuses.color')}
+              labelHidden
+              compact
               aria-label={t('settings.orderStatuses.colorFor', { status: label })}
               defaultValue={state.values?.color ?? status.color ?? ''}
               error={state.fieldErrors?.color}
@@ -70,8 +75,10 @@ export function StatusEditForm({
               <ColorOptions colors={options.colors} />
             </Select>
           </div>
-          <ActionButton variant="secondary">{t('settings.orderStatuses.save')}</ActionButton>
-        </>
+          <ActionButton variant="secondary" size="sm">
+            {t('settings.orderStatuses.save')}
+          </ActionButton>
+        </div>
       )}
     </ActionForm>
   )
@@ -80,14 +87,16 @@ export function StatusEditForm({
 export function AddStatusForm({ phase, options }: { phase: OrderPhase; options: StatusFormOptions }) {
   const t = useT()
   return (
-    <ActionForm action={createOrderStatusAction} className="flex flex-wrap items-end gap-3">
+    <ActionForm action={createOrderStatusAction} className="flex flex-wrap items-start gap-2">
       {(state) => (
         <>
           <input type="hidden" name="phase" value={phase} />
-          <div className="w-64">
+          <div className="max-w-72 min-w-0 grow basis-52">
             <Field
               name="name"
               label={t('settings.orderStatuses.name')}
+              labelHidden
+              compact
               required
               maxLength={options.nameMax}
               placeholder={t('settings.orderStatuses.namePlaceholder')}
@@ -96,12 +105,21 @@ export function AddStatusForm({ phase, options }: { phase: OrderPhase; options: 
               error={state.fieldErrors?.name}
             />
           </div>
-          <div className="w-44">
-            <Select name="color" label={t('settings.orderStatuses.color')} defaultValue={state.ok ? '' : (state.values?.color ?? '')} error={state.fieldErrors?.color}>
+          <div className="max-w-48 min-w-0 grow basis-36">
+            <Select
+              name="color"
+              label={t('settings.orderStatuses.color')}
+              labelHidden
+              compact
+              defaultValue={state.ok ? '' : (state.values?.color ?? '')}
+              error={state.fieldErrors?.color}
+            >
               <ColorOptions colors={options.colors} />
             </Select>
           </div>
-          <ActionButton pendingLabel={t('settings.orderStatuses.adding')}>{t('settings.orderStatuses.add')}</ActionButton>
+          <ActionButton variant="secondary" size="sm" pendingLabel={t('settings.orderStatuses.adding')}>
+            {t('settings.orderStatuses.add')}
+          </ActionButton>
         </>
       )}
     </ActionForm>
@@ -130,8 +148,14 @@ export function DeleteStatusForm({
     >
       <input type="hidden" name="statusId" value={statusId} />
       {inUse ? (
-        <div className="w-56">
-          <Select name="replacementId" label={t('settings.orderStatuses.replacementFor', { status: label })} required defaultValue={replacements[0]?.id}>
+        <div className="w-52 max-w-full">
+          <Select
+            name="replacementId"
+            label={t('settings.orderStatuses.replacementFor', { status: label })}
+            compact
+            required
+            defaultValue={replacements[0]?.id}
+          >
             {replacements.map((replacement) => (
               <option key={replacement.id} value={replacement.id}>
                 {replacement.label}
@@ -140,7 +164,12 @@ export function DeleteStatusForm({
           </Select>
         </div>
       ) : null}
-      <ActionButton variant="danger" pendingLabel={t('settings.orderStatuses.deleting')} aria-label={t('settings.orderStatuses.deleteFor', { status: label })}>
+      <ActionButton
+        variant="danger"
+        size="sm"
+        pendingLabel={t('settings.orderStatuses.deleting')}
+        aria-label={t('settings.orderStatuses.deleteFor', { status: label })}
+      >
         {t('settings.orderStatuses.delete')}
       </ActionButton>
     </ActionForm>

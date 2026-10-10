@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
-import { LanguageSwitcher } from '@/components/language-switcher'
+import { AuthShell } from '@/components/auth-shell'
+import { SignOutButton } from '@/components/sign-out-button'
 import { getT } from '@/i18n/server'
 import { getSession } from '@/lib/session'
 import { CreateOrganizationForm } from './create-organization-form'
@@ -15,12 +16,9 @@ export default async function OnboardingPage() {
   if (session.session.activeOrganizationId) redirect('/dashboard')
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-sm flex-col justify-center px-6 py-12">
-      <div className="mb-8 flex items-center justify-between">
-        <p className="text-2xl font-semibold tracking-tight text-accent">Hanza</p>
-        <LanguageSwitcher />
-      </div>
+    // The way out for someone who signed up with the wrong account: there is no panel to sign out from yet.
+    <AuthShell footer={<SignOutButton />}>
       <CreateOrganizationForm />
-    </main>
+    </AuthShell>
   )
 }

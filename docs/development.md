@@ -39,7 +39,7 @@ Before changing Turborepo configuration or commands, resolve the installed packa
 
 | Change | Start here |
 | --- | --- |
-| Panel page/action | `apps/web/src/app`, `requireTenant()`, `getContext()`, and the English/Polish message catalogues |
+| Panel page/action | `apps/web/src/app`, `requireTenant()`, `getContext()`, the kit in `apps/web/src/components` (the Orders pages are the reference) and the English/Polish message catalogues |
 | Domain logic | `packages/core/src`, its glossary and relevant ADRs |
 | Database model | `packages/db/prisma/schema/<module>.prisma`, Organization back-relation and a new migration |
 | Background job | `defineJob`, core registry and exports; payload includes `organizationId` |

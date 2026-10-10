@@ -46,9 +46,9 @@ test('a second organization sees none of the first one’s data and cannot act o
   const b = await signUp(other)
 
   await other.goto('/orders')
-  await expect(other.getByText('There are no orders yet.')).toBeVisible()
+  await expect(other.getByText('No orders yet', { exact: true })).toBeVisible()
   await other.goto('/products')
-  await expect(other.getByText('There are no products yet.')).toBeVisible()
+  await expect(other.getByText('No products yet', { exact: true })).toBeVisible()
   await other.goto('/products/offers')
   await expect(other.getByText('Every offer has a product.')).toBeVisible()
   await other.goto('/connections')
@@ -73,8 +73,9 @@ test('a second organization sees none of the first one’s data and cannot act o
   await other.getByRole('link', { name: 'fake-order-1', exact: true }).click()
   await expect(other.getByRole('heading', { level: 1 })).toContainText('fake-order-1')
   const ownOrderId = lastSegment(other)
+  // The form of the Order's primary action, in the page's header.
   const toProcessing = other
-    .getByRole('region', { name: 'Status', exact: true })
+    .getByRole('main')
     .locator('form')
     .filter({ has: other.getByRole('button', { name: 'Change to: Processing' }) })
   await toProcessing.locator('input[name="orderId"]').evaluate((input: HTMLInputElement, id) => (input.value = id), orderId)
