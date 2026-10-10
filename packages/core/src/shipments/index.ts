@@ -3,7 +3,6 @@ export { cancelShipment } from './cancel'
 export { getShipmentLabel, type ShipmentLabelFile } from './label'
 export { labelFileType, MAX_LABEL_BYTES, type ConfirmedDestination, type LabelFileType } from './sealed'
 export { listOrderShipments, listShippingConnections, type ShipmentRow, type ShippingConnection } from './queries'
-export { isFinalStatus, isHandedOver, type ShipmentStatus } from './statuses'
 export {
   nextShipmentCheck,
   confirmationTimedOut,
