@@ -194,8 +194,8 @@ export type ShipmentState = z.infer<typeof shipmentStateSchema>
 /**
  * The outcome of `shipments.create`. `created`: the Carrier has the request; the Shipment's state follows.
  * `rejected`: the Carrier refuses this request for good, with a short code such as `target_point.does_not_exist`; the
- * Shipment fails and is never asked for again, so it is never the answer to a refusal of the account (no contract,
- * no funds), which is a thrown `PermanentError`.
+ * Shipment fails and is never asked for again, so it is never the answer to a refusal of the whole account (no funds,
+ * no contract at all), which is a thrown `PermanentError`.
  */
 export const shipmentCreateResultSchema = z.discriminatedUnion('outcome', [
   shipmentStateSchema.extend({ outcome: z.literal('created') }),

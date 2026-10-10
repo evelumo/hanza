@@ -128,8 +128,10 @@ export interface Capabilities<TConfig, TCredentials, TApp = unknown> {
    *
    * Returns `rejected` with a short code when the Carrier refuses this request for good (an unknown pickup point, a
    * missing phone): the Shipment then fails and is never asked for again. So `rejected` is only for what is wrong
-   * with this one request. A refusal of the account (no contract for the service, no funds, unpaid invoices) is a
-   * thrown `PermanentError`: the Connection is marked failing and the Shipment waits for a person to fix the account.
+   * with this one request, which includes a service the account does not have: another service would work, and the
+   * person chooses it in a new Shipment. A refusal of the whole account (no funds, unpaid invoices, no contract with
+   * any carrier) is a thrown `PermanentError`: the Connection is marked failing and the Shipment waits for a person
+   * to fix the account.
    * Throw for every failure of the call (auth, rate limit, network, a 5xx), which the core retries under the rule
    * above. The receiver and the address are Buyer data: never log them, and never put them in an error message or a
    * code.
