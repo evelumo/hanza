@@ -28,7 +28,7 @@ import {
   fakeCourierConnector,
   fakeCourierServices,
 } from './index'
-import { seedOrders } from './seed'
+import { SEED_PHONE, seedOrders } from './seed'
 
 type Config = z.input<typeof fakeCourierConfigSchema>
 type CourierContext = CapabilityContext<z.output<typeof fakeCourierConfigSchema>, Record<string, never>>
@@ -381,6 +381,22 @@ describe('seed Delivery', () => {
     expect(delivery['fake-order-4']).toMatchObject({ pickupPoint: { id: 'FAKE02' } })
     expect(delivery['fake-order-2']).toEqual({ method: 'Courier, cash on delivery', pickupPoint: null })
     expect('delivery' in seedOrders.find((order) => order.externalId === 'fake-order-3')!).toBe(false)
+  })
+
+  it('gives the Orders that go to a pickup point a phone, which the locker service needs, and leaves the others without', async () => {
+    const phones = Object.fromEntries(seedOrders.map((order) => [order.externalId, [order.buyer.phone, order.shippingAddress.phone]]))
+    expect(phones).toEqual({
+      'fake-order-1': [SEED_PHONE, SEED_PHONE],
+      'fake-order-2': [null, null],
+      'fake-order-3': [null, null],
+      'fake-order-4': [SEED_PHONE, SEED_PHONE],
+    })
+    // What the core sends for them: the phone of the shipping address, else the Buyer's.
+    const fake = carrier()
+    const toLocker = (order: (typeof seedOrders)[number], reference: string) =>
+      fake.create(request({ reference, receiver: { ...request().receiver, phone: order.shippingAddress.phone ?? order.buyer.phone } }))
+    expect((await toLocker(seedOrders[0]!, 'shp_seed_1')).outcome).toBe('created')
+    expect(await toLocker(seedOrders[2]!, 'shp_seed_3')).toEqual({ outcome: 'rejected', code: FAKE_COURIER_PHONE_MISSING })
   })
 
   it('is what the fake Channel pulls', async () => {

@@ -28,7 +28,7 @@ Follow [the demo walkthrough](../../../docs/demo.md) for the manual Test channel
 - **Cancel.** `cancelled` while `pending` or `ready` (and for one already cancelled), `refused` with `too_late` once the Carrier has the parcel and with `shipment_unknown` for a Shipment the account does not have.
 - **Config.** `stuckAt` (`none`, `pending`, `ready`, `in_transit`) holds every Shipment at that status, to keep one `ready` for a Label or a cancel. `rejectPickupPoints` (comma-separated) makes `shipments.create` return `pickup_point_unknown` for those points; a pickup point request whose receiver has no phone is refused with `receiver_phone_missing`. `account` (default `default`): Connections with the same account share their Shipments, another account neither sees nor changes them.
 - **Tests.** `createFakeCourier()` (registered instance: `fakeCourier`) exposes `shipments` (what the Carrier keeps), the calls `creates`, `tracks`, `labels` and `cancels`, and `reset()`. A repeated `reference` returns the Shipment it made and creates nothing.
-- **Seed.** The fake Channel's Orders carry a Delivery: `fake-order-1` and `fake-order-4` to the pickup points `FAKE01` and `FAKE02`, `fake-order-2` by courier, `fake-order-3` none (a Channel that does not say).
+- **Seed.** The fake Channel's Orders carry a Delivery: `fake-order-1` and `fake-order-4` to the pickup points `FAKE01` and `FAKE02`, `fake-order-2` by courier, `fake-order-3` none (a Channel that does not say). The two that go to a pickup point have a phone (`SEED_PHONE`, a number nobody has), so the locker service takes them; `fake-order-3` has none, so a pickup point typed for it shows the refusal `receiver_phone_missing`.
 
 ## Test and extend
 

@@ -13,6 +13,12 @@ const shippingAddress: Address = {
   taxId: null,
 }
 
+/**
+ * The phone of the seed Buyers whose Order goes to a pickup point: a number no subscriber has. A locker Carrier
+ * texts the pickup code, so it takes no parcel without one (the fake Carrier's pickup point service included).
+ */
+export const SEED_PHONE = '+48 000 000 000'
+
 const pln = (amount: string) => ({ amount, currency: 'PLN' })
 
 export const seedOffers: Offer[] = [
@@ -31,14 +37,15 @@ function order(
   total: string,
   lines: OrderLine[],
   delivery?: Order['delivery'],
+  phone: string | null = null,
 ): Order {
   return {
     externalId,
     placedAt,
     payment,
     total: pln(total),
-    buyer: { ...buyer },
-    shippingAddress: { ...shippingAddress },
+    buyer: { ...buyer, phone },
+    shippingAddress: { ...shippingAddress, phone },
     billingAddress: null,
     ...(delivery ? { delivery: structuredClone(delivery) } : {}),
     lines,
@@ -47,10 +54,12 @@ function order(
 }
 
 // Delivery: two Orders to a pickup point, one by courier, and one (fake-order-3) from a Channel that does not say.
+// The two that go to a pickup point have a phone, as a Channel asks for one there; the others have none, so
+// fake-order-3 shows what a Carrier answers to a pickup point request without a phone.
 export const seedOrders: Order[] = [
   order('fake-order-1', '2026-10-01T09:00:00Z', 'prepaid', '79.98', [
     { externalId: 'l1', offerExternalId: 'fake-offer-1', sku: 'FAKE-SKU-1', name: 'Ceramic mug', quantity: 2, unitPrice: pln('39.99') },
-  ], { method: 'Parcel locker', pickupPoint: { id: 'FAKE01', name: 'Fake locker FAKE01, 5 Locker Street, Warsaw' } }),
+  ], { method: 'Parcel locker', pickupPoint: { id: 'FAKE01', name: 'Fake locker FAKE01, 5 Locker Street, Warsaw' } }, SEED_PHONE),
   order('fake-order-2', '2026-10-01T10:00:00Z', 'cash_on_delivery', '84.00', [
     { externalId: 'l1', offerExternalId: 'fake-offer-2', sku: 'FAKE-SKU-2', name: 'Cotton T-shirt M', quantity: 1, unitPrice: pln('59.00') },
     { externalId: 'l2', offerExternalId: 'fake-offer-3', sku: 'FAKE-SKU-3', name: 'Poster A3', quantity: 1, unitPrice: pln('25.00') },
@@ -60,7 +69,7 @@ export const seedOrders: Order[] = [
   ]),
   order('fake-order-4', '2026-10-01T12:00:00Z', 'prepaid', '16.50', [
     { externalId: 'l1', offerExternalId: 'fake-offer-4', sku: null, name: 'Sticker set', quantity: 3, unitPrice: pln('5.50') },
-  ], { method: 'Parcel locker', pickupPoint: { id: 'FAKE02', name: 'Fake locker FAKE02, 12 Market Square, Krakow' } }),
+  ], { method: 'Parcel locker', pickupPoint: { id: 'FAKE02', name: 'Fake locker FAKE02, 12 Market Square, Krakow' } }, SEED_PHONE),
 ]
 
 export const seedFacts: Array<{ orderExternalId: string; fact: ChannelFact }> = [
