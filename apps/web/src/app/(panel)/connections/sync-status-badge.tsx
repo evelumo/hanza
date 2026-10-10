@@ -1,5 +1,5 @@
 import type { SyncErrorKind } from '@hanza/db'
-import { CircleDashed, KeyRound, OctagonAlert, RefreshCw, TriangleAlert, type LucideIcon } from 'lucide-react'
+import { CircleDashed, Hourglass, KeyRound, OctagonAlert, RefreshCw, TriangleAlert, type LucideIcon } from 'lucide-react'
 import { toneTextClass, type Tone } from '@/components/tone'
 import { Badge } from '@/components/ui/badge'
 import { useT } from '@/i18n/use-t'
@@ -35,9 +35,13 @@ export interface StreamState {
   lastErrorKind: SyncErrorKind | null
 }
 
-/** How the last run of one kind of data ended, in words. An error outranks everything else, as in `syncStatus`. */
-export function SyncStatusBadge({ state }: { state: StreamState }) {
+/**
+ * How the last run of one kind of data ended, in words. An error outranks everything else, as in `syncStatus`, except
+ * `held`: a stock push waiting for the Order feed (#125) does not run, so its last error is no longer what it is doing.
+ */
+export function SyncStatusBadge({ state, held = false }: { state: StreamState; held?: boolean }) {
   const t = useT()
+  if (held) return <Badge icon={Hourglass}>{t('connections.syncStatus.held')}</Badge>
   if (state.lastErrorKind) {
     const { tone, icon } = errorLook[state.lastErrorKind]
     return (
