@@ -81,14 +81,22 @@ export function receiverAddress(address: Address): Mapped<NonNullable<ShipxRecei
 }
 
 /**
- * A PLN amount as the text of a JSON number with the same digits (`"12.50"` stays `12.50`). Null when it has a
- * fraction of a grosz, which ShipX could only round. String operations only: the amount never becomes a float.
+ * A PLN amount as the text of a JSON number with the same digits (`"12.50"` stays `12.50`). Null when it is not a
+ * plain decimal (`1.2.3`, `.5`, `1e3`: checked here, not left to the caller's schema) or has a fraction of a grosz,
+ * which ShipX could only round. String operations only: the amount never becomes a float.
  */
 export function plnAmount(amount: string): string | null {
-  const [whole = '', fraction = ''] = amount.split('.')
-  if (!/^\d+$/.test(whole) || !/^\d*$/.test(fraction) || /[1-9]/.test(fraction.slice(2))) return null
+  const match = /^(\d+)(?:\.(\d+))?$/.exec(amount)
+  if (!match) return null
+  const [, whole = '', fraction = ''] = match
+  if (/[1-9]/.test(fraction.slice(2))) return null
   const integer = whole.replace(/^0+(?=\d)/, '')
   return fraction === '' ? integer : `${integer}.${fraction.slice(0, 2)}`
+}
+
+/** True for an amount `plnAmount` wrote that is below 1 PLN, the least ShipX collects or insures [18153492]. */
+export function isBelowOneZloty(amount: string): boolean {
+  return amount.split('.')[0] === '0'
 }
 
 /** Grams as kilograms, exactly (`1250` is `"1.25"`), by moving the decimal point in the digits. */
@@ -120,7 +128,18 @@ function cashOnDeliveryOf(request: ShipmentRequest): Mapped<ShipxMoney | null> {
   if (cashOnDelivery === null) return { ok: true, value: null }
   if (cashOnDelivery.currency !== 'PLN') return refuse('cod_currency_unsupported')
   const amount = plnAmount(cashOnDelivery.amount)
-  return amount === null ? refuse('cod_amount_invalid') : { ok: true, value: { amount, currency: 'PLN' } }
+  if (amount === null) return refuse('cod_amount_invalid')
+  if (isBelowOneZloty(amount)) return refuse('cod_amount_too_small')
+  return { ok: true, value: { amount, currency: 'PLN' } }
+}
+
+/**
+ * Cash on delivery, insured for the same amount. The parameter table asks for insurance with cash on delivery for
+ * courier services only, but ShipX's own locker example sends it and three FAQ pages say "the package must be
+ * insured for a minimum of the COD value" without naming a service: so every service gets it.
+ */
+function insuredCashOnDelivery(cod: ShipxMoney | null): Pick<ShipxShipmentBody, 'insurance' | 'cod'> {
+  return cod === null ? {} : { insurance: cod, cod }
 }
 
 /**
@@ -130,6 +149,7 @@ function cashOnDeliveryOf(request: ShipmentRequest): Mapped<ShipxMoney | null> {
 export function toShipxShipment(request: ShipmentRequest, config: Pick<InpostConfig, 'lockerSendingMethod' | 'courierSendingMethod'>): Mapped<ShipxShipmentBody> {
   const { reference, destination, parcel } = request
   // ShipX takes 3 to 100 characters; one it would trim or cut could never be found again.
+  // TODO(#126): the SDK is to guarantee at most 64 letters, digits, `_` and `-`; only the lower bound is left then.
   if (reference.length < 3 || reference.length > 100 || reference !== reference.trim()) return refuse('reference_unsupported')
   if (request.service !== LOCKER_SERVICE && request.service !== COURIER_SERVICE) return refuse('service_unsupported')
 
@@ -146,7 +166,7 @@ export function toShipxShipment(request: ShipmentRequest, config: Pick<InpostCon
       value: {
         receiver: receiver.value,
         parcels: { template: parcel.preset },
-        ...(cod.value ? { cod: cod.value } : {}),
+        ...insuredCashOnDelivery(cod.value),
         custom_attributes: { sending_method: config.lockerSendingMethod, target_point: destination.pointId },
         service: request.service,
         reference,
@@ -170,8 +190,7 @@ export function toShipxShipment(request: ShipmentRequest, config: Pick<InpostCon
           is_non_standard: isNonStandard(parcel),
         },
       ],
-      // A courier parcel with cash on delivery must be insured for at least that amount.
-      ...(cod.value ? { insurance: cod.value, cod: cod.value } : {}),
+      ...insuredCashOnDelivery(cod.value),
       custom_attributes: { sending_method: config.courierSendingMethod },
       service: request.service,
       reference,
@@ -187,83 +206,49 @@ export function shipmentJson(body: ShipxShipmentBody): string {
   return JSON.stringify({ ...body, insurance: money(body.insurance), cod: money(body.cod) })
 }
 
-// Field names (possibly a dotted path) and error keys are snake_case words. Anything else in their place (a sentence,
-// a number that could be a phone or a post code) is not a key and never reaches a code.
-const FIELD = /^[A-Za-z0-9_.]{1,80}$/
-const KEY = /^[A-Za-z][A-Za-z0-9_]{0,59}$/
-const MAX_CODE_LENGTH = 100
 
-export function isKey(value: unknown): value is string {
-  return typeof value === 'string' && KEY.test(value)
+// A ShipX status name: lower-case words joined by `_`, digits allowed (`express_1000` style names exist for services).
+const STATUS_KEY = /^[a-z][a-z0-9_]{0,59}$/
+// An error key from inside a resource (a payment's error, an offer's unavailability reason). Letters and `_` only:
+// a key that carried digits could carry a phone number or a locker code, and these are stored with the Shipment.
+const ERROR_KEY = /^[a-z][a-z_]{1,59}$/
+
+export function isStatusKey(value: unknown): value is string {
+  return typeof value === 'string' && STATUS_KEY.test(value)
 }
+
+export function isErrorKey(value: unknown): value is string {
+  return typeof value === 'string' && ERROR_KEY.test(value)
+}
+
+/** Offer statuses in which the offer can never be bought. Any other (`available`, `selected`, one InPost adds) still can. */
+const DEAD_OFFER_STATUSES: readonly string[] = ['unavailable', 'expired']
 
 /**
- * The code of a `validation_failed` answer: the first field path in `details` and its first error key, such as
- * `target_point.does_not_exist` or `receiver.phone.invalid`. Built from field names and keys only, never the message.
+ * What stands between a shipment and its purchase, or null when nothing does (or the purchase is over).
+ *
+ * `final` only when no offer can still be bought: every offer for the shipment's service is `unavailable` or
+ * `expired`. A payment that failed is not final. ShipX keeps the offer `selected` after an unsuccessful payment
+ * [18153611], and the sandbox showed exactly that (no funds: `offer_selected`, a `failure` transaction with
+ * `debt_collection`, the offer still `selected`): a later payment would buy a label for a Shipment Hanza had
+ * given up on, and the seller's replacement would be a second parcel. So that Shipment waits, and `key` says why.
  */
-export function rejectionCode(details: unknown): string {
-  const segments: string[] = []
-  let node = details
-  for (let depth = 0; depth < 10; depth++) {
-    if (Array.isArray(node)) {
-      const key = node.find((item) => typeof item === 'string')
-      if (key !== undefined) {
-        if (isKey(key)) segments.push(key)
-        break
-      }
-      const index = node.findIndex((item) => typeof item === 'object' && item !== null)
-      if (index === -1) break
-      segments.push(String(index))
-      node = node[index]
-    } else if (typeof node === 'object' && node !== null) {
-      const entry = Object.entries(node)[0]
-      if (entry === undefined || !FIELD.test(entry[0])) break
-      segments.push(entry[0])
-      node = entry[1]
-    } else {
-      if (isKey(node)) segments.push(node)
-      break
-    }
-  }
-  const code = segments.join('.').slice(0, MAX_CODE_LENGTH)
-  return code === '' ? 'validation_failed' : code
-}
-
-// Refusals that are about the account, not about one request: every Shipment would get the same answer.
-const ACCOUNT_ERRORS: readonly string[] = ['debt_collection', 'trucker_id_is_not_set_for_organization']
-
-/** The account refusal an error key names, as this connector spells it; null for any other key. */
-export function accountRefusal(key: string): string | null {
-  return ACCOUNT_ERRORS.find((known) => known === key.toLowerCase()) ?? null
-}
-
-/**
- * The code a refused create is `rejected` with, from the error key of the answer; null when the answer is not a
- * refusal of this one request (an account that is blocked, a body that is no ShipX error), which the call fails for.
- */
-export function createRefusalCode(error: { error: string; details?: unknown }): string | null {
-  if (error.error === 'validation_failed') return rejectionCode(error.details)
-  if (!isKey(error.error) || accountRefusal(error.error) !== null) return null
-  return error.error
-}
-
-/**
- * Why InPost will never buy this shipment, or null. A failed purchase has no status of its own: the shipment stays
- * in a purchase status with every offer for its service unavailable, or with a failed payment transaction.
- */
-export function purchaseFailure(shipment: ShipxShipment): string | null {
+export function purchaseObstacle(shipment: ShipxShipment): { final: boolean; key: string } | null {
   if (!PURCHASE_STATUSES.includes(shipment.status)) return null
   const offers = shipment.offers ?? []
   const own = offers.filter((offer) => offer.service?.id === shipment.service)
-  // `failed` is final, so one unavailable offer is not enough while another could still be bought.
   const candidates = own.length > 0 ? own : offers
-  if (candidates.length > 0 && candidates.every((offer) => offer.status === 'unavailable')) {
-    const reason = candidates.flatMap((offer) => offer.unavailability_reasons ?? []).find((item) => isKey(item.key))
-    return reason?.key ?? 'offer_unavailable'
+  if (candidates.length > 0 && candidates.every((offer) => DEAD_OFFER_STATUSES.includes(offer.status))) {
+    const reason = candidates.flatMap((offer) => offer.unavailability_reasons ?? []).find((item) => isErrorKey(item.key))
+    const fallback = candidates.every((offer) => offer.status === 'expired') ? 'offer_expired' : 'offer_unavailable'
+    return { final: true, key: reason?.key ?? fallback }
   }
   const transactions = shipment.transactions ?? []
-  const settled = transactions.some((transaction) => transaction.status === 'success' || transaction.status === 'initiated')
-  return transactions.some((transaction) => transaction.status === 'failure') && !settled ? 'transaction_failure' : null
+  if (transactions.some((transaction) => transaction.status === 'success' || transaction.status === 'initiated')) return null
+  const failed = transactions.findLast((transaction) => transaction.status === 'failure')
+  if (failed === undefined) return null
+  const key = failed.details?.error
+  return { final: false, key: isErrorKey(key) ? key : 'transaction_failure' }
 }
 
 /** True for a status name the table has, whatever it translates to. */
@@ -271,21 +256,30 @@ export function isKnownStatus(status: string): boolean {
   return Object.hasOwn(INPOST_STATUSES, status)
 }
 
+function shipmentState(shipment: ShipxShipment, status: ShipmentState['status'], carrierStatus: string | null): ShipmentState {
+  const state = shipmentStateSchema.safeParse({ externalId: shipment.id, status, trackingNumber: shipment.tracking_number || null, carrierStatus })
+  // Paths only: the resource this came from holds the receiver's data.
+  if (!state.success) throw new PermanentError(`An InPost shipment does not fit the canonical model: ${state.error.issues.map((issue) => issue.path.join('.')).join(', ')}`, { cause: state.error })
+  return state.data
+}
+
 /**
  * A ShipX shipment as a Shipment state. Null when its status says nothing this connector can translate (a name
- * InPost added, or `other`): the caller leaves the Shipment as it is instead of guessing.
+ * InPost added, or one known not to say where the parcel is): the caller leaves the Shipment as it is instead of
+ * guessing.
  */
 export function toShipmentState(shipment: ShipxShipment): ShipmentState | null {
   const translated = isKnownStatus(shipment.status) ? INPOST_STATUSES[shipment.status] : null
   if (translated == null) return null
-  const failure = purchaseFailure(shipment)
-  const state = shipmentStateSchema.safeParse({
-    externalId: shipment.id,
-    status: failure === null ? translated : 'failed',
-    trackingNumber: shipment.tracking_number || null,
-    carrierStatus: failure ?? shipment.status,
-  })
-  // Paths only: the resource this came from holds the receiver's data.
-  if (!state.success) throw new PermanentError(`An InPost shipment does not fit the canonical model: ${state.error.issues.map((issue) => issue.path.join('.')).join(', ')}`, { cause: state.error })
-  return state.data
+  const obstacle = purchaseObstacle(shipment)
+  return shipmentState(shipment, obstacle?.final ? 'failed' : translated, obstacle?.key ?? shipment.status)
+}
+
+/**
+ * The least that is true of a shipment whose status cannot be translated: InPost has it (`pending`), and with a
+ * tracking number InPost has bought its label (`ready`). For `shipments.create`, which has to answer for a shipment
+ * that exists. Never a status that says the Carrier holds the parcel: that would ship the Order on a guess.
+ */
+export function lowerBoundState(shipment: ShipxShipment): ShipmentState {
+  return shipmentState(shipment, shipment.tracking_number ? 'ready' : 'pending', isStatusKey(shipment.status) ? shipment.status : null)
 }

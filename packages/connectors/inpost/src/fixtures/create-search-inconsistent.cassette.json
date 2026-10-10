@@ -4,7 +4,7 @@
     {
       "request": {
         "method": "GET",
-        "url": "https://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?created_at_gteq=1791622500&sort_by=created_at&sort_order=asc&page=1&per_page=100",
+        "url": "https://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?created_at_gteq=1791619200&sort_by=created_at&sort_order=asc&page=1&per_page=100",
         "headers": {
           "accept": "application/json"
         },
@@ -13,25 +13,26 @@
       "response": {
         "status": 200,
         "headers": {
-          "content-type": "application/json; charset=utf-8"
+          "content-type": "application/json; charset=utf-8",
+          "link": "<http://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?created_at_gteq=1791619200&owner_id=54321&per_page=100&sort_by=created_at&sort_order=asc>; rel=\"next\", <http://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?created_at_gteq=1791619200&owner_id=54321&per_page=100&sort_by=created_at&sort_order=asc>; rel=\"last\", <http://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?created_at_gteq=1791619200&owner_id=54321&per_page=100&sort_by=created_at&sort_order=asc>; rel=\"previous\", <http://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?created_at_gteq=1791619200&owner_id=54321&page=1&per_page=100&sort_by=created_at&sort_order=asc>; rel=\"first\""
         },
         "body": {
           "json": {
-            "href": "https://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?page=1&per_page=2",
-            "count": 3,
+            "href": "http://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?created_at_gteq=1791619200&owner_id=54321&page=1&per_page=100&sort_by=created_at&sort_order=asc",
+            "count": 5,
             "page": 1,
-            "per_page": 2,
+            "per_page": 100,
             "items": [
               {
                 "href": "https://sandbox-api-shipx-pl.easypack24.net/v1/shipments/1600000211",
                 "id": 1600000211,
                 "status": "confirmed",
-                "tracking_number": "620999548227330124560211",
+                "tracking_number": "620999548227330124500211",
                 "return_tracking_number": null,
                 "service": "inpost_locker_standard",
                 "reference": "scrubbed-1",
                 "is_return": false,
-                "application_id": 25,
+                "application_id": 4321,
                 "created_by_id": null,
                 "external_customer_id": null,
                 "sending_method": "any_point",
@@ -71,20 +72,20 @@
                   }
                 },
                 "receiver": {
-                  "id": 1600000311,
+                  "id": 1600300211,
                   "name": null,
                   "company_name": null,
                   "first_name": "scrubbed-12",
                   "last_name": "scrubbed-13",
-                  "email": "ewa.nowak@example.com",
+                  "email": "jan.kowalski@example.com",
                   "phone": "+00000000001",
                   "address": null
                 },
                 "selected_offer": {
-                  "id": 1600000711,
+                  "id": 1600700211,
                   "status": "bought",
-                  "expires_at": null,
-                  "rate": 16.99,
+                  "expires_at": "2026-10-10T11:05:02.807+02:00",
+                  "rate": null,
                   "currency": "PLN",
                   "additional_services": [],
                   "carrier": {
@@ -101,10 +102,10 @@
                 },
                 "offers": [
                   {
-                    "id": 1600000711,
+                    "id": 1600700211,
                     "status": "bought",
-                    "expires_at": null,
-                    "rate": 16.99,
+                    "expires_at": "2026-10-10T11:05:02.807+02:00",
+                    "rate": null,
                     "currency": "PLN",
                     "additional_services": [],
                     "carrier": {
@@ -122,19 +123,19 @@
                 ],
                 "transactions": [
                   {
-                    "id": 1600001111,
+                    "id": 1600900211,
                     "status": "success",
-                    "offer_id": 1600000711,
+                    "offer_id": 1600700211,
                     "details": {},
-                    "created_at": "2026-10-10T11:01:02.586+02:00",
-                    "updated_at": "2026-10-10T11:01:02.828+02:00"
+                    "created_at": "2026-10-10T11:00:03.108+02:00",
+                    "updated_at": "2026-10-10T11:00:03.552+02:00"
                   }
                 ],
                 "parcels": [
                   {
-                    "id": 1600000511,
+                    "id": 1600500211,
                     "identify_number": null,
-                    "tracking_number": "620999548227330124560211",
+                    "tracking_number": "620999548227330124500211",
                     "is_non_standard": false,
                     "template": "small",
                     "dimensions": {
@@ -149,19 +150,19 @@
                     }
                   }
                 ],
-                "created_at": "2026-10-10T11:01:02.375+02:00",
-                "updated_at": "2026-10-10T11:01:05.460+02:00"
+                "created_at": "2026-10-10T11:00:02.375+02:00",
+                "updated_at": "2026-10-10T11:00:03.552+02:00"
               },
               {
                 "href": "https://sandbox-api-shipx-pl.easypack24.net/v1/shipments/1600000212",
                 "id": 1600000212,
                 "status": "confirmed",
-                "tracking_number": "620999548227330124560212",
+                "tracking_number": "620999548227330124500212",
                 "return_tracking_number": null,
                 "service": "inpost_locker_standard",
                 "reference": "scrubbed-14",
                 "is_return": false,
-                "application_id": 25,
+                "application_id": 4321,
                 "created_by_id": null,
                 "external_customer_id": null,
                 "sending_method": "any_point",
@@ -201,20 +202,20 @@
                   }
                 },
                 "receiver": {
-                  "id": 1600000312,
+                  "id": 1600300212,
                   "name": null,
                   "company_name": null,
                   "first_name": "scrubbed-12",
                   "last_name": "scrubbed-13",
-                  "email": "ewa.nowak@example.com",
+                  "email": "jan.kowalski@example.com",
                   "phone": "+00000000001",
                   "address": null
                 },
                 "selected_offer": {
-                  "id": 1600000712,
+                  "id": 1600700212,
                   "status": "bought",
-                  "expires_at": null,
-                  "rate": 16.99,
+                  "expires_at": "2026-10-10T11:05:02.807+02:00",
+                  "rate": null,
                   "currency": "PLN",
                   "additional_services": [],
                   "carrier": {
@@ -231,10 +232,10 @@
                 },
                 "offers": [
                   {
-                    "id": 1600000712,
+                    "id": 1600700212,
                     "status": "bought",
-                    "expires_at": null,
-                    "rate": 16.99,
+                    "expires_at": "2026-10-10T11:05:02.807+02:00",
+                    "rate": null,
                     "currency": "PLN",
                     "additional_services": [],
                     "carrier": {
@@ -252,19 +253,19 @@
                 ],
                 "transactions": [
                   {
-                    "id": 1600001112,
+                    "id": 1600900212,
                     "status": "success",
-                    "offer_id": 1600000712,
+                    "offer_id": 1600700212,
                     "details": {},
-                    "created_at": "2026-10-10T11:02:02.586+02:00",
-                    "updated_at": "2026-10-10T11:02:02.828+02:00"
+                    "created_at": "2026-10-10T11:00:03.108+02:00",
+                    "updated_at": "2026-10-10T11:00:03.552+02:00"
                   }
                 ],
                 "parcels": [
                   {
-                    "id": 1600000512,
+                    "id": 1600500212,
                     "identify_number": null,
-                    "tracking_number": "620999548227330124560212",
+                    "tracking_number": "620999548227330124500212",
                     "is_non_standard": false,
                     "template": "small",
                     "dimensions": {
@@ -279,164 +280,8 @@
                     }
                   }
                 ],
-                "created_at": "2026-10-10T11:02:02.375+02:00",
-                "updated_at": "2026-10-10T11:02:05.460+02:00"
-              }
-            ]
-          }
-        }
-      }
-    },
-    {
-      "request": {
-        "method": "GET",
-        "url": "https://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?created_at_gteq=1791622500&sort_by=created_at&sort_order=asc&page=2&per_page=100",
-        "headers": {
-          "accept": "application/json"
-        },
-        "body": null
-      },
-      "response": {
-        "status": 200,
-        "headers": {
-          "content-type": "application/json; charset=utf-8"
-        },
-        "body": {
-          "json": {
-            "href": "https://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?page=2&per_page=2",
-            "count": 3,
-            "page": 2,
-            "per_page": 2,
-            "items": [
-              {
-                "href": "https://sandbox-api-shipx-pl.easypack24.net/v1/shipments/1600000213",
-                "id": 1600000213,
-                "status": "confirmed",
-                "tracking_number": "620999548227330124560213",
-                "return_tracking_number": null,
-                "service": "inpost_locker_standard",
-                "reference": "scrubbed-15",
-                "is_return": false,
-                "application_id": 25,
-                "created_by_id": null,
-                "external_customer_id": null,
-                "sending_method": "any_point",
-                "end_of_week_collection": false,
-                "comments": null,
-                "mpk": null,
-                "additional_services": [],
-                "custom_attributes": {
-                  "target_point": "KRA010",
-                  "sending_method": "any_point"
-                },
-                "cod": {
-                  "amount": null,
-                  "currency": null
-                },
-                "insurance": {
-                  "amount": null,
-                  "currency": null
-                },
-                "sender": {
-                  "id": 0,
-                  "name": null,
-                  "company_name": "scrubbed-2",
-                  "first_name": "scrubbed-3",
-                  "last_name": "scrubbed-4",
-                  "email": "scrubbed-5",
-                  "phone": "scrubbed-6",
-                  "address": {
-                    "id": 0,
-                    "street": "scrubbed-7",
-                    "building_number": "scrubbed-8",
-                    "line1": null,
-                    "line2": null,
-                    "city": "scrubbed-9",
-                    "post_code": "scrubbed-10",
-                    "country_code": "scrubbed-11"
-                  }
-                },
-                "receiver": {
-                  "id": 1600000313,
-                  "name": null,
-                  "company_name": null,
-                  "first_name": "scrubbed-16",
-                  "last_name": "scrubbed-17",
-                  "email": "jan.kowalski@example.com",
-                  "phone": "+00000000002",
-                  "address": null
-                },
-                "selected_offer": {
-                  "id": 1600000713,
-                  "status": "bought",
-                  "expires_at": null,
-                  "rate": 16.99,
-                  "currency": "PLN",
-                  "additional_services": [],
-                  "carrier": {
-                    "id": "inpost_locker",
-                    "name": "InPost Paczkomaty",
-                    "description": "InPost Paczkomaty - Przesyłki paczkomatowe"
-                  },
-                  "service": {
-                    "id": "inpost_locker_standard",
-                    "name": "Paczkomatowa standardowa",
-                    "description": "Przesyłka paczkomatowa standardowa"
-                  },
-                  "unavailability_reasons": null
-                },
-                "offers": [
-                  {
-                    "id": 1600000713,
-                    "status": "bought",
-                    "expires_at": null,
-                    "rate": 16.99,
-                    "currency": "PLN",
-                    "additional_services": [],
-                    "carrier": {
-                      "id": "inpost_locker",
-                      "name": "InPost Paczkomaty",
-                      "description": "InPost Paczkomaty - Przesyłki paczkomatowe"
-                    },
-                    "service": {
-                      "id": "inpost_locker_standard",
-                      "name": "Paczkomatowa standardowa",
-                      "description": "Przesyłka paczkomatowa standardowa"
-                    },
-                    "unavailability_reasons": null
-                  }
-                ],
-                "transactions": [
-                  {
-                    "id": 1600001113,
-                    "status": "success",
-                    "offer_id": 1600000713,
-                    "details": {},
-                    "created_at": "2026-10-10T11:03:02.586+02:00",
-                    "updated_at": "2026-10-10T11:03:02.828+02:00"
-                  }
-                ],
-                "parcels": [
-                  {
-                    "id": 1600000513,
-                    "identify_number": null,
-                    "tracking_number": "620999548227330124560213",
-                    "is_non_standard": false,
-                    "template": "small",
-                    "dimensions": {
-                      "length": 380,
-                      "width": 640,
-                      "height": 80,
-                      "unit": "mm"
-                    },
-                    "weight": {
-                      "amount": 25,
-                      "unit": "kg"
-                    }
-                  }
-                ],
-                "created_at": "2026-10-10T11:03:02.375+02:00",
-                "updated_at": "2026-10-10T11:03:05.460+02:00"
+                "created_at": "2026-10-10T11:00:02.375+02:00",
+                "updated_at": "2026-10-10T11:00:03.552+02:00"
               }
             ]
           }

@@ -24,6 +24,30 @@
           }
         }
       }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?created_at_gteq=1791619200&sort_by=created_at&sort_order=asc&page=1&per_page=100",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "json": {
+            "status": 401,
+            "error": "token_invalid",
+            "message": "Token is missing or invalid.",
+            "details": {}
+          }
+        }
+      }
     }
   ]
 }

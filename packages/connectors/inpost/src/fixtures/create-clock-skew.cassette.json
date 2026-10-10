@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "interactions": [
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?created_at_gteq=1791619200&sort_by=created_at&sort_order=asc&page=1&per_page=100",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8",
+          "link": "<http://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?created_at_gteq=1791619200&owner_id=54321&per_page=100&sort_by=created_at&sort_order=asc>; rel=\"next\", <http://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?created_at_gteq=1791619200&owner_id=54321&per_page=100&sort_by=created_at&sort_order=asc>; rel=\"last\", <http://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?created_at_gteq=1791619200&owner_id=54321&per_page=100&sort_by=created_at&sort_order=asc>; rel=\"previous\", <http://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?created_at_gteq=1791619200&owner_id=54321&page=1&per_page=100&sort_by=created_at&sort_order=asc>; rel=\"first\"",
+          "date": "Sat, 10 Oct 2026 08:00:30 GMT"
+        },
+        "body": {
+          "json": {
+            "href": "http://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?created_at_gteq=1791619200&owner_id=54321&page=1&per_page=100&sort_by=created_at&sort_order=asc",
+            "count": 0,
+            "page": 1,
+            "per_page": 100,
+            "items": []
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,7 +1,15 @@
 import { z } from 'zod'
 
-// The documentation shows ids as numbers in most examples and as strings in a few.
-const id = z.union([z.number().int(), z.string().min(1)]).transform(String)
+/** A ShipX shipment id as text: digits only. The one shape that may be put into a path or a query. */
+export const SHIPMENT_ID = /^\d{1,20}$/
+
+export function isShipmentId(value: string): boolean {
+  return SHIPMENT_ID.test(value)
+}
+
+// ShipX answers ids as JSON numbers; the documentation shows them as strings of digits in a few examples. Anything
+// else (`..`, a path, a word) is refused here, so an id InPost returned can never steer a later request elsewhere.
+const id = z.union([z.number().int().nonnegative(), z.string().regex(SHIPMENT_ID)]).transform(String)
 
 const offerSchema = z.object({
   status: z.string(),
@@ -9,7 +17,15 @@ const offerSchema = z.object({
   unavailability_reasons: z.array(z.object({ key: z.string() })).nullish(),
 })
 
-const transactionSchema = z.object({ status: z.string() })
+// `details` is the payment's own error (`{ status, error, message, details }`). Only its key is kept: the rest can
+// name the account owner (an `owner_email` was seen on the sandbox, 2026-10-10).
+const transactionSchema = z.object({
+  status: z.string(),
+  details: z
+    .object({ error: z.string().nullish().catch(null) })
+    .nullish()
+    .catch(null),
+})
 
 /**
  * The parts of a ShipX shipment resource this connector reads. Everything else (sender, receiver, parcels) is
@@ -28,10 +44,13 @@ export const shipxShipmentSchema = z.object({
 })
 export type ShipxShipment = z.output<typeof shipxShipmentSchema>
 
+/**
+ * A page of shipments. `page` and `per_page` are not read: ShipX echoes what was asked whatever it serves (with an
+ * `id` filter the first page came back whole under `per_page: 3`, sandbox 2026-10-10), so only `count` and the items
+ * themselves say how far a listing got.
+ */
 export const shipxShipmentListSchema = z.object({
   count: z.number().int().nonnegative(),
-  page: z.number().int().positive(),
-  per_page: z.number().int().positive(),
   items: z.array(shipxShipmentSchema),
 })
 export type ShipxShipmentList = z.output<typeof shipxShipmentListSchema>

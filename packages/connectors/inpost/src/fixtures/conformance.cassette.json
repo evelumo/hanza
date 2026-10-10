@@ -4,7 +4,7 @@
     {
       "request": {
         "method": "GET",
-        "url": "https://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?created_at_gteq=1791622500&sort_by=created_at&sort_order=asc&page=1&per_page=100",
+        "url": "https://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?created_at_gteq=1791619200&sort_by=created_at&sort_order=asc&page=1&per_page=100",
         "headers": {
           "accept": "application/json"
         },
@@ -13,11 +13,12 @@
       "response": {
         "status": 200,
         "headers": {
-          "content-type": "application/json; charset=utf-8"
+          "content-type": "application/json; charset=utf-8",
+          "link": "<http://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?created_at_gteq=1791619200&owner_id=54321&per_page=100&sort_by=created_at&sort_order=asc>; rel=\"next\", <http://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?created_at_gteq=1791619200&owner_id=54321&per_page=100&sort_by=created_at&sort_order=asc>; rel=\"last\", <http://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?created_at_gteq=1791619200&owner_id=54321&per_page=100&sort_by=created_at&sort_order=asc>; rel=\"previous\", <http://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?created_at_gteq=1791619200&owner_id=54321&page=1&per_page=100&sort_by=created_at&sort_order=asc>; rel=\"first\""
         },
         "body": {
           "json": {
-            "href": "https://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?page=1&per_page=100",
+            "href": "http://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?created_at_gteq=1791619200&owner_id=54321&page=1&per_page=100&sort_by=created_at&sort_order=asc",
             "count": 0,
             "page": 1,
             "per_page": 100,
@@ -57,7 +58,8 @@
       "response": {
         "status": 201,
         "headers": {
-          "content-type": "application/json; charset=utf-8"
+          "content-type": "application/json; charset=utf-8",
+          "location": "http://sandbox-api-shipx-pl.easypack24.net/v1/shipments/1600000101"
         },
         "body": {
           "json": {
@@ -69,7 +71,7 @@
             "service": "inpost_locker_standard",
             "reference": "scrubbed-3",
             "is_return": false,
-            "application_id": 25,
+            "application_id": 4321,
             "created_by_id": null,
             "external_customer_id": null,
             "sending_method": "any_point",
@@ -109,7 +111,7 @@
               }
             },
             "receiver": {
-              "id": 1600000201,
+              "id": 1600300101,
               "name": null,
               "company_name": null,
               "first_name": "scrubbed-1",
@@ -123,7 +125,7 @@
             "transactions": [],
             "parcels": [
               {
-                "id": 1600000401,
+                "id": 1600500101,
                 "identify_number": null,
                 "tracking_number": null,
                 "is_non_standard": false,
@@ -149,7 +151,7 @@
     {
       "request": {
         "method": "GET",
-        "url": "https://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?created_at_gteq=1791622500&sort_by=created_at&sort_order=asc&page=1&per_page=100",
+        "url": "https://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?created_at_gteq=1791619200&sort_by=created_at&sort_order=asc&page=1&per_page=100",
         "headers": {
           "accept": "application/json"
         },
@@ -158,11 +160,12 @@
       "response": {
         "status": 200,
         "headers": {
-          "content-type": "application/json; charset=utf-8"
+          "content-type": "application/json; charset=utf-8",
+          "link": "<http://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?created_at_gteq=1791619200&owner_id=54321&per_page=100&sort_by=created_at&sort_order=asc>; rel=\"next\", <http://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?created_at_gteq=1791619200&owner_id=54321&per_page=100&sort_by=created_at&sort_order=asc>; rel=\"last\", <http://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?created_at_gteq=1791619200&owner_id=54321&per_page=100&sort_by=created_at&sort_order=asc>; rel=\"previous\", <http://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?created_at_gteq=1791619200&owner_id=54321&page=1&per_page=100&sort_by=created_at&sort_order=asc>; rel=\"first\""
         },
         "body": {
           "json": {
-            "href": "https://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?page=1&per_page=100",
+            "href": "http://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?created_at_gteq=1791619200&owner_id=54321&page=1&per_page=100&sort_by=created_at&sort_order=asc",
             "count": 1,
             "page": 1,
             "per_page": 100,
@@ -170,13 +173,13 @@
               {
                 "href": "https://sandbox-api-shipx-pl.easypack24.net/v1/shipments/1600000101",
                 "id": 1600000101,
-                "status": "created",
+                "status": "offer_selected",
                 "tracking_number": null,
                 "return_tracking_number": null,
                 "service": "inpost_locker_standard",
                 "reference": "scrubbed-3",
                 "is_return": false,
-                "application_id": 25,
+                "application_id": 4321,
                 "created_by_id": null,
                 "external_customer_id": null,
                 "sending_method": "any_point",
@@ -216,7 +219,7 @@
                   }
                 },
                 "receiver": {
-                  "id": 1600000201,
+                  "id": 1600300101,
                   "name": null,
                   "company_name": null,
                   "first_name": "scrubbed-1",
@@ -225,12 +228,50 @@
                   "phone": "+00000000001",
                   "address": null
                 },
-                "selected_offer": null,
-                "offers": [],
+                "selected_offer": {
+                  "id": 1600700101,
+                  "status": "selected",
+                  "expires_at": "2026-10-10T11:05:02.807+02:00",
+                  "rate": null,
+                  "currency": "PLN",
+                  "additional_services": [],
+                  "carrier": {
+                    "id": "inpost_locker",
+                    "name": "InPost Paczkomaty",
+                    "description": "InPost Paczkomaty - Przesyłki paczkomatowe"
+                  },
+                  "service": {
+                    "id": "inpost_locker_standard",
+                    "name": "Paczkomatowa standardowa",
+                    "description": "Przesyłka paczkomatowa standardowa"
+                  },
+                  "unavailability_reasons": null
+                },
+                "offers": [
+                  {
+                    "id": 1600700101,
+                    "status": "selected",
+                    "expires_at": "2026-10-10T11:05:02.807+02:00",
+                    "rate": null,
+                    "currency": "PLN",
+                    "additional_services": [],
+                    "carrier": {
+                      "id": "inpost_locker",
+                      "name": "InPost Paczkomaty",
+                      "description": "InPost Paczkomaty - Przesyłki paczkomatowe"
+                    },
+                    "service": {
+                      "id": "inpost_locker_standard",
+                      "name": "Paczkomatowa standardowa",
+                      "description": "Przesyłka paczkomatowa standardowa"
+                    },
+                    "unavailability_reasons": null
+                  }
+                ],
                 "transactions": [],
                 "parcels": [
                   {
-                    "id": 1600000401,
+                    "id": 1600500101,
                     "identify_number": null,
                     "tracking_number": null,
                     "is_non_standard": false,
@@ -248,7 +289,7 @@
                   }
                 ],
                 "created_at": "2026-10-10T11:00:02.375+02:00",
-                "updated_at": "2026-10-10T11:00:02.375+02:00"
+                "updated_at": "2026-10-10T11:00:03.552+02:00"
               }
             ]
           }
@@ -267,11 +308,12 @@
       "response": {
         "status": 200,
         "headers": {
-          "content-type": "application/json; charset=utf-8"
+          "content-type": "application/json; charset=utf-8",
+          "link": "<http://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?id=1600000101&owner_id=54321&per_page=100&sort_by=id&sort_order=desc>; rel=\"next\", <http://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?id=1600000101&owner_id=54321&per_page=100&sort_by=id&sort_order=desc>; rel=\"last\", <http://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?id=1600000101&owner_id=54321&per_page=100&sort_by=id&sort_order=desc>; rel=\"previous\", <http://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?id=1600000101&owner_id=54321&page=1&per_page=100&sort_by=id&sort_order=desc>; rel=\"first\""
         },
         "body": {
           "json": {
-            "href": "https://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?page=1&per_page=100",
+            "href": "http://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?id=1600000101&page=1&per_page=100&sort_by=id&sort_order=desc",
             "count": 1,
             "page": 1,
             "per_page": 100,
@@ -279,13 +321,13 @@
               {
                 "href": "https://sandbox-api-shipx-pl.easypack24.net/v1/shipments/1600000101",
                 "id": 1600000101,
-                "status": "created",
+                "status": "offer_selected",
                 "tracking_number": null,
                 "return_tracking_number": null,
                 "service": "inpost_locker_standard",
                 "reference": "scrubbed-3",
                 "is_return": false,
-                "application_id": 25,
+                "application_id": 4321,
                 "created_by_id": null,
                 "external_customer_id": null,
                 "sending_method": "any_point",
@@ -325,7 +367,7 @@
                   }
                 },
                 "receiver": {
-                  "id": 1600000201,
+                  "id": 1600300101,
                   "name": null,
                   "company_name": null,
                   "first_name": "scrubbed-1",
@@ -334,12 +376,50 @@
                   "phone": "+00000000001",
                   "address": null
                 },
-                "selected_offer": null,
-                "offers": [],
+                "selected_offer": {
+                  "id": 1600700101,
+                  "status": "selected",
+                  "expires_at": "2026-10-10T11:05:02.807+02:00",
+                  "rate": null,
+                  "currency": "PLN",
+                  "additional_services": [],
+                  "carrier": {
+                    "id": "inpost_locker",
+                    "name": "InPost Paczkomaty",
+                    "description": "InPost Paczkomaty - Przesyłki paczkomatowe"
+                  },
+                  "service": {
+                    "id": "inpost_locker_standard",
+                    "name": "Paczkomatowa standardowa",
+                    "description": "Przesyłka paczkomatowa standardowa"
+                  },
+                  "unavailability_reasons": null
+                },
+                "offers": [
+                  {
+                    "id": 1600700101,
+                    "status": "selected",
+                    "expires_at": "2026-10-10T11:05:02.807+02:00",
+                    "rate": null,
+                    "currency": "PLN",
+                    "additional_services": [],
+                    "carrier": {
+                      "id": "inpost_locker",
+                      "name": "InPost Paczkomaty",
+                      "description": "InPost Paczkomaty - Przesyłki paczkomatowe"
+                    },
+                    "service": {
+                      "id": "inpost_locker_standard",
+                      "name": "Paczkomatowa standardowa",
+                      "description": "Przesyłka paczkomatowa standardowa"
+                    },
+                    "unavailability_reasons": null
+                  }
+                ],
                 "transactions": [],
                 "parcels": [
                   {
-                    "id": 1600000401,
+                    "id": 1600500101,
                     "identify_number": null,
                     "tracking_number": null,
                     "is_non_standard": false,
@@ -357,7 +437,7 @@
                   }
                 ],
                 "created_at": "2026-10-10T11:00:02.375+02:00",
-                "updated_at": "2026-10-10T11:00:02.375+02:00"
+                "updated_at": "2026-10-10T11:00:03.552+02:00"
               }
             ]
           }
@@ -382,8 +462,12 @@
           "json": {
             "status": 400,
             "error": "invalid_action",
-            "message": "Action is not allowed in the current shipment status.",
-            "details": {}
+            "message": "shipment_status_incorrect",
+            "details": {
+              "action": "get_label",
+              "shipment_status": "offer_selected",
+              "shipment_id": 1600000101
+            }
           }
         }
       }
@@ -400,11 +484,12 @@
       "response": {
         "status": 200,
         "headers": {
-          "content-type": "application/json; charset=utf-8"
+          "content-type": "application/json; charset=utf-8",
+          "link": "<http://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?id=1600000101&owner_id=54321&per_page=100&sort_by=id&sort_order=desc>; rel=\"next\", <http://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?id=1600000101&owner_id=54321&per_page=100&sort_by=id&sort_order=desc>; rel=\"last\", <http://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?id=1600000101&owner_id=54321&per_page=100&sort_by=id&sort_order=desc>; rel=\"previous\", <http://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?id=1600000101&owner_id=54321&page=1&per_page=100&sort_by=id&sort_order=desc>; rel=\"first\""
         },
         "body": {
           "json": {
-            "href": "https://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?page=1&per_page=100",
+            "href": "http://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?id=1600000101&page=1&per_page=100&sort_by=id&sort_order=desc",
             "count": 1,
             "page": 1,
             "per_page": 100,
@@ -413,12 +498,12 @@
                 "href": "https://sandbox-api-shipx-pl.easypack24.net/v1/shipments/1600000101",
                 "id": 1600000101,
                 "status": "confirmed",
-                "tracking_number": "620999548227330124560017",
+                "tracking_number": "620999548227330124500101",
                 "return_tracking_number": null,
                 "service": "inpost_locker_standard",
                 "reference": "scrubbed-3",
                 "is_return": false,
-                "application_id": 25,
+                "application_id": 4321,
                 "created_by_id": null,
                 "external_customer_id": null,
                 "sending_method": "any_point",
@@ -458,7 +543,7 @@
                   }
                 },
                 "receiver": {
-                  "id": 1600000201,
+                  "id": 1600300101,
                   "name": null,
                   "company_name": null,
                   "first_name": "scrubbed-1",
@@ -468,10 +553,10 @@
                   "address": null
                 },
                 "selected_offer": {
-                  "id": 1600000601,
+                  "id": 1600700101,
                   "status": "bought",
-                  "expires_at": null,
-                  "rate": 16.99,
+                  "expires_at": "2026-10-10T11:05:02.807+02:00",
+                  "rate": null,
                   "currency": "PLN",
                   "additional_services": [],
                   "carrier": {
@@ -488,10 +573,10 @@
                 },
                 "offers": [
                   {
-                    "id": 1600000601,
+                    "id": 1600700101,
                     "status": "bought",
-                    "expires_at": null,
-                    "rate": 16.99,
+                    "expires_at": "2026-10-10T11:05:02.807+02:00",
+                    "rate": null,
                     "currency": "PLN",
                     "additional_services": [],
                     "carrier": {
@@ -509,19 +594,19 @@
                 ],
                 "transactions": [
                   {
-                    "id": 1600001001,
+                    "id": 1600900101,
                     "status": "success",
-                    "offer_id": 1600000601,
+                    "offer_id": 1600700101,
                     "details": {},
-                    "created_at": "2026-10-10T11:00:02.586+02:00",
-                    "updated_at": "2026-10-10T11:00:02.828+02:00"
+                    "created_at": "2026-10-10T11:00:03.108+02:00",
+                    "updated_at": "2026-10-10T11:00:03.552+02:00"
                   }
                 ],
                 "parcels": [
                   {
-                    "id": 1600000401,
+                    "id": 1600500101,
                     "identify_number": null,
-                    "tracking_number": "620999548227330124560017",
+                    "tracking_number": "620999548227330124500101",
                     "is_non_standard": false,
                     "template": "small",
                     "dimensions": {
@@ -537,7 +622,7 @@
                   }
                 ],
                 "created_at": "2026-10-10T11:00:02.375+02:00",
-                "updated_at": "2026-10-10T11:00:05.460+02:00"
+                "updated_at": "2026-10-10T11:00:03.552+02:00"
               }
             ]
           }
@@ -566,7 +651,7 @@
     {
       "request": {
         "method": "GET",
-        "url": "https://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?created_at_gteq=1791622500&sort_by=created_at&sort_order=asc&page=1&per_page=100",
+        "url": "https://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?created_at_gteq=1791619200&sort_by=created_at&sort_order=asc&page=1&per_page=100",
         "headers": {
           "accept": "application/json"
         },
@@ -575,11 +660,12 @@
       "response": {
         "status": 200,
         "headers": {
-          "content-type": "application/json; charset=utf-8"
+          "content-type": "application/json; charset=utf-8",
+          "link": "<http://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?created_at_gteq=1791619200&owner_id=54321&per_page=100&sort_by=created_at&sort_order=asc>; rel=\"next\", <http://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?created_at_gteq=1791619200&owner_id=54321&per_page=100&sort_by=created_at&sort_order=asc>; rel=\"last\", <http://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?created_at_gteq=1791619200&owner_id=54321&per_page=100&sort_by=created_at&sort_order=asc>; rel=\"previous\", <http://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?created_at_gteq=1791619200&owner_id=54321&page=1&per_page=100&sort_by=created_at&sort_order=asc>; rel=\"first\""
         },
         "body": {
           "json": {
-            "href": "https://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?page=1&per_page=100",
+            "href": "http://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?created_at_gteq=1791619200&owner_id=54321&page=1&per_page=100&sort_by=created_at&sort_order=asc",
             "count": 1,
             "page": 1,
             "per_page": 100,
@@ -588,12 +674,12 @@
                 "href": "https://sandbox-api-shipx-pl.easypack24.net/v1/shipments/1600000101",
                 "id": 1600000101,
                 "status": "confirmed",
-                "tracking_number": "620999548227330124560017",
+                "tracking_number": "620999548227330124500101",
                 "return_tracking_number": null,
                 "service": "inpost_locker_standard",
                 "reference": "scrubbed-3",
                 "is_return": false,
-                "application_id": 25,
+                "application_id": 4321,
                 "created_by_id": null,
                 "external_customer_id": null,
                 "sending_method": "any_point",
@@ -633,7 +719,7 @@
                   }
                 },
                 "receiver": {
-                  "id": 1600000201,
+                  "id": 1600300101,
                   "name": null,
                   "company_name": null,
                   "first_name": "scrubbed-1",
@@ -643,10 +729,10 @@
                   "address": null
                 },
                 "selected_offer": {
-                  "id": 1600000601,
+                  "id": 1600700101,
                   "status": "bought",
-                  "expires_at": null,
-                  "rate": 16.99,
+                  "expires_at": "2026-10-10T11:05:02.807+02:00",
+                  "rate": null,
                   "currency": "PLN",
                   "additional_services": [],
                   "carrier": {
@@ -663,10 +749,10 @@
                 },
                 "offers": [
                   {
-                    "id": 1600000601,
+                    "id": 1600700101,
                     "status": "bought",
-                    "expires_at": null,
-                    "rate": 16.99,
+                    "expires_at": "2026-10-10T11:05:02.807+02:00",
+                    "rate": null,
                     "currency": "PLN",
                     "additional_services": [],
                     "carrier": {
@@ -684,19 +770,19 @@
                 ],
                 "transactions": [
                   {
-                    "id": 1600001001,
+                    "id": 1600900101,
                     "status": "success",
-                    "offer_id": 1600000601,
+                    "offer_id": 1600700101,
                     "details": {},
-                    "created_at": "2026-10-10T11:00:02.586+02:00",
-                    "updated_at": "2026-10-10T11:00:02.828+02:00"
+                    "created_at": "2026-10-10T11:00:03.108+02:00",
+                    "updated_at": "2026-10-10T11:00:03.552+02:00"
                   }
                 ],
                 "parcels": [
                   {
-                    "id": 1600000401,
+                    "id": 1600500101,
                     "identify_number": null,
-                    "tracking_number": "620999548227330124560017",
+                    "tracking_number": "620999548227330124500101",
                     "is_non_standard": false,
                     "template": "small",
                     "dimensions": {
@@ -712,7 +798,7 @@
                   }
                 ],
                 "created_at": "2026-10-10T11:00:02.375+02:00",
-                "updated_at": "2026-10-10T11:00:05.460+02:00"
+                "updated_at": "2026-10-10T11:00:03.552+02:00"
               }
             ]
           }
@@ -756,10 +842,14 @@
           "json": {
             "status": 400,
             "error": "validation_failed",
-            "message": "Data sent by POST or PUT request are not valid. Check details for more info",
+            "message": "There are some validation errors. Check details object for more info.",
             "details": {
-              "target_point": [
-                "does_not_exist"
+              "custom_attributes": [
+                {
+                  "target_point": [
+                    "does_not_exist"
+                  ]
+                }
               ]
             }
           }
@@ -784,8 +874,12 @@
           "json": {
             "status": 400,
             "error": "invalid_action",
-            "message": "Action is not allowed in the current shipment status.",
-            "details": {}
+            "message": "shipment_status_incorrect",
+            "details": {
+              "action": "cancel",
+              "shipment_status": "confirmed",
+              "shipment_id": 1600000101
+            }
           }
         }
       }
@@ -802,11 +896,12 @@
       "response": {
         "status": 200,
         "headers": {
-          "content-type": "application/json; charset=utf-8"
+          "content-type": "application/json; charset=utf-8",
+          "link": "<http://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?id=1600000101&owner_id=54321&per_page=100&sort_by=id&sort_order=desc>; rel=\"next\", <http://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?id=1600000101&owner_id=54321&per_page=100&sort_by=id&sort_order=desc>; rel=\"last\", <http://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?id=1600000101&owner_id=54321&per_page=100&sort_by=id&sort_order=desc>; rel=\"previous\", <http://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?id=1600000101&owner_id=54321&page=1&per_page=100&sort_by=id&sort_order=desc>; rel=\"first\""
         },
         "body": {
           "json": {
-            "href": "https://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?page=1&per_page=100",
+            "href": "http://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?id=1600000101&page=1&per_page=100&sort_by=id&sort_order=desc",
             "count": 1,
             "page": 1,
             "per_page": 100,
@@ -815,12 +910,12 @@
                 "href": "https://sandbox-api-shipx-pl.easypack24.net/v1/shipments/1600000101",
                 "id": 1600000101,
                 "status": "confirmed",
-                "tracking_number": "620999548227330124560017",
+                "tracking_number": "620999548227330124500101",
                 "return_tracking_number": null,
                 "service": "inpost_locker_standard",
                 "reference": "scrubbed-3",
                 "is_return": false,
-                "application_id": 25,
+                "application_id": 4321,
                 "created_by_id": null,
                 "external_customer_id": null,
                 "sending_method": "any_point",
@@ -860,7 +955,7 @@
                   }
                 },
                 "receiver": {
-                  "id": 1600000201,
+                  "id": 1600300101,
                   "name": null,
                   "company_name": null,
                   "first_name": "scrubbed-1",
@@ -870,10 +965,10 @@
                   "address": null
                 },
                 "selected_offer": {
-                  "id": 1600000601,
+                  "id": 1600700101,
                   "status": "bought",
-                  "expires_at": null,
-                  "rate": 16.99,
+                  "expires_at": "2026-10-10T11:05:02.807+02:00",
+                  "rate": null,
                   "currency": "PLN",
                   "additional_services": [],
                   "carrier": {
@@ -890,10 +985,10 @@
                 },
                 "offers": [
                   {
-                    "id": 1600000601,
+                    "id": 1600700101,
                     "status": "bought",
-                    "expires_at": null,
-                    "rate": 16.99,
+                    "expires_at": "2026-10-10T11:05:02.807+02:00",
+                    "rate": null,
                     "currency": "PLN",
                     "additional_services": [],
                     "carrier": {
@@ -911,19 +1006,19 @@
                 ],
                 "transactions": [
                   {
-                    "id": 1600001001,
+                    "id": 1600900101,
                     "status": "success",
-                    "offer_id": 1600000601,
+                    "offer_id": 1600700101,
                     "details": {},
-                    "created_at": "2026-10-10T11:00:02.586+02:00",
-                    "updated_at": "2026-10-10T11:00:02.828+02:00"
+                    "created_at": "2026-10-10T11:00:03.108+02:00",
+                    "updated_at": "2026-10-10T11:00:03.552+02:00"
                   }
                 ],
                 "parcels": [
                   {
-                    "id": 1600000401,
+                    "id": 1600500101,
                     "identify_number": null,
-                    "tracking_number": "620999548227330124560017",
+                    "tracking_number": "620999548227330124500101",
                     "is_non_standard": false,
                     "template": "small",
                     "dimensions": {
@@ -939,7 +1034,7 @@
                   }
                 ],
                 "created_at": "2026-10-10T11:00:02.375+02:00",
-                "updated_at": "2026-10-10T11:00:05.460+02:00"
+                "updated_at": "2026-10-10T11:00:03.552+02:00"
               }
             ]
           }
@@ -964,8 +1059,12 @@
           "json": {
             "status": 400,
             "error": "invalid_action",
-            "message": "Action is not allowed in the current shipment status.",
-            "details": {}
+            "message": "shipment_status_incorrect",
+            "details": {
+              "action": "cancel",
+              "shipment_status": "confirmed",
+              "shipment_id": 1600000101
+            }
           }
         }
       }
@@ -982,11 +1081,12 @@
       "response": {
         "status": 200,
         "headers": {
-          "content-type": "application/json; charset=utf-8"
+          "content-type": "application/json; charset=utf-8",
+          "link": "<http://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?id=1600000101&owner_id=54321&per_page=100&sort_by=id&sort_order=desc>; rel=\"next\", <http://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?id=1600000101&owner_id=54321&per_page=100&sort_by=id&sort_order=desc>; rel=\"last\", <http://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?id=1600000101&owner_id=54321&per_page=100&sort_by=id&sort_order=desc>; rel=\"previous\", <http://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?id=1600000101&owner_id=54321&page=1&per_page=100&sort_by=id&sort_order=desc>; rel=\"first\""
         },
         "body": {
           "json": {
-            "href": "https://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?page=1&per_page=100",
+            "href": "http://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?id=1600000101&page=1&per_page=100&sort_by=id&sort_order=desc",
             "count": 1,
             "page": 1,
             "per_page": 100,
@@ -995,12 +1095,12 @@
                 "href": "https://sandbox-api-shipx-pl.easypack24.net/v1/shipments/1600000101",
                 "id": 1600000101,
                 "status": "confirmed",
-                "tracking_number": "620999548227330124560017",
+                "tracking_number": "620999548227330124500101",
                 "return_tracking_number": null,
                 "service": "inpost_locker_standard",
                 "reference": "scrubbed-3",
                 "is_return": false,
-                "application_id": 25,
+                "application_id": 4321,
                 "created_by_id": null,
                 "external_customer_id": null,
                 "sending_method": "any_point",
@@ -1040,7 +1140,7 @@
                   }
                 },
                 "receiver": {
-                  "id": 1600000201,
+                  "id": 1600300101,
                   "name": null,
                   "company_name": null,
                   "first_name": "scrubbed-1",
@@ -1050,10 +1150,10 @@
                   "address": null
                 },
                 "selected_offer": {
-                  "id": 1600000601,
+                  "id": 1600700101,
                   "status": "bought",
-                  "expires_at": null,
-                  "rate": 16.99,
+                  "expires_at": "2026-10-10T11:05:02.807+02:00",
+                  "rate": null,
                   "currency": "PLN",
                   "additional_services": [],
                   "carrier": {
@@ -1070,10 +1170,10 @@
                 },
                 "offers": [
                   {
-                    "id": 1600000601,
+                    "id": 1600700101,
                     "status": "bought",
-                    "expires_at": null,
-                    "rate": 16.99,
+                    "expires_at": "2026-10-10T11:05:02.807+02:00",
+                    "rate": null,
                     "currency": "PLN",
                     "additional_services": [],
                     "carrier": {
@@ -1091,19 +1191,19 @@
                 ],
                 "transactions": [
                   {
-                    "id": 1600001001,
+                    "id": 1600900101,
                     "status": "success",
-                    "offer_id": 1600000601,
+                    "offer_id": 1600700101,
                     "details": {},
-                    "created_at": "2026-10-10T11:00:02.586+02:00",
-                    "updated_at": "2026-10-10T11:00:02.828+02:00"
+                    "created_at": "2026-10-10T11:00:03.108+02:00",
+                    "updated_at": "2026-10-10T11:00:03.552+02:00"
                   }
                 ],
                 "parcels": [
                   {
-                    "id": 1600000401,
+                    "id": 1600500101,
                     "identify_number": null,
-                    "tracking_number": "620999548227330124560017",
+                    "tracking_number": "620999548227330124500101",
                     "is_non_standard": false,
                     "template": "small",
                     "dimensions": {
@@ -1119,7 +1219,7 @@
                   }
                 ],
                 "created_at": "2026-10-10T11:00:02.375+02:00",
-                "updated_at": "2026-10-10T11:00:05.460+02:00"
+                "updated_at": "2026-10-10T11:00:03.552+02:00"
               }
             ]
           }

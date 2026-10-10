@@ -48,7 +48,7 @@
             },
             "custom_attributes": {
               "sending_method": "any_point",
-              "target_point": "XXX000X"
+              "target_point": "KRA010"
             },
             "service": "inpost_locker_standard",
             "reference": "scrubbed-3"
@@ -56,26 +56,11 @@
         }
       },
       "response": {
-        "status": 400,
+        "status": 307,
         "headers": {
-          "content-type": "application/json; charset=utf-8"
+          "location": "https://shipx.example.net/v1/organizations/12345/shipments"
         },
-        "body": {
-          "json": {
-            "status": 400,
-            "error": "validation_failed",
-            "message": "There are some validation errors. Check details object for more info.",
-            "details": {
-              "custom_attributes": [
-                {
-                  "target_point": [
-                    "does_not_exist"
-                  ]
-                }
-              ]
-            }
-          }
-        }
+        "body": null
       }
     }
   ]

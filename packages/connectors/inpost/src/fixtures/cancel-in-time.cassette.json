@@ -26,16 +26,130 @@
         "body": null
       },
       "response": {
-        "status": 404,
+        "status": 400,
         "headers": {
           "content-type": "application/json; charset=utf-8"
         },
         "body": {
           "json": {
-            "status": 404,
-            "error": "resource_not_found",
-            "message": "Resource you are looking for are not found",
-            "details": {}
+            "status": 400,
+            "error": "invalid_action",
+            "message": "shipment_status_incorrect",
+            "details": {
+              "action": "cancel",
+              "shipment_status": "canceled",
+              "shipment_id": 1600000601
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?id=1600000601&page=1&per_page=100",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8",
+          "link": "<http://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?id=1600000601&owner_id=54321&per_page=100&sort_by=id&sort_order=desc>; rel=\"next\", <http://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?id=1600000601&owner_id=54321&per_page=100&sort_by=id&sort_order=desc>; rel=\"last\", <http://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?id=1600000601&owner_id=54321&per_page=100&sort_by=id&sort_order=desc>; rel=\"previous\", <http://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?id=1600000601&owner_id=54321&page=1&per_page=100&sort_by=id&sort_order=desc>; rel=\"first\""
+        },
+        "body": {
+          "json": {
+            "href": "http://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?id=1600000601&page=1&per_page=100&sort_by=id&sort_order=desc",
+            "count": 1,
+            "page": 1,
+            "per_page": 100,
+            "items": [
+              {
+                "href": "https://sandbox-api-shipx-pl.easypack24.net/v1/shipments/1600000601",
+                "id": 1600000601,
+                "status": "canceled",
+                "tracking_number": null,
+                "return_tracking_number": null,
+                "service": "inpost_locker_standard",
+                "reference": "scrubbed-1",
+                "is_return": false,
+                "application_id": 4321,
+                "created_by_id": null,
+                "external_customer_id": null,
+                "sending_method": "any_point",
+                "end_of_week_collection": false,
+                "comments": null,
+                "mpk": null,
+                "additional_services": [],
+                "custom_attributes": {
+                  "target_point": "KRA010",
+                  "sending_method": "any_point"
+                },
+                "cod": {
+                  "amount": null,
+                  "currency": null
+                },
+                "insurance": {
+                  "amount": null,
+                  "currency": null
+                },
+                "sender": {
+                  "id": 0,
+                  "name": null,
+                  "company_name": "scrubbed-2",
+                  "first_name": "scrubbed-3",
+                  "last_name": "scrubbed-4",
+                  "email": "scrubbed-5",
+                  "phone": "scrubbed-6",
+                  "address": {
+                    "id": 0,
+                    "street": "scrubbed-7",
+                    "building_number": "scrubbed-8",
+                    "line1": null,
+                    "line2": null,
+                    "city": "scrubbed-9",
+                    "post_code": "scrubbed-10",
+                    "country_code": "scrubbed-11"
+                  }
+                },
+                "receiver": {
+                  "id": 1600300601,
+                  "name": null,
+                  "company_name": null,
+                  "first_name": "scrubbed-12",
+                  "last_name": "scrubbed-13",
+                  "email": "jan.kowalski@example.com",
+                  "phone": "+00000000001",
+                  "address": null
+                },
+                "selected_offer": null,
+                "offers": [],
+                "transactions": [],
+                "parcels": [
+                  {
+                    "id": 1600500601,
+                    "identify_number": null,
+                    "tracking_number": null,
+                    "is_non_standard": false,
+                    "template": "small",
+                    "dimensions": {
+                      "length": 380,
+                      "width": 640,
+                      "height": 80,
+                      "unit": "mm"
+                    },
+                    "weight": {
+                      "amount": 25,
+                      "unit": "kg"
+                    }
+                  }
+                ],
+                "created_at": "2026-10-10T11:00:02.375+02:00",
+                "updated_at": "2026-10-10T11:00:03.552+02:00"
+              }
+            ]
           }
         }
       }

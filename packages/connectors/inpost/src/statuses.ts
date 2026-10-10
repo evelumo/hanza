@@ -40,10 +40,11 @@ export const INPOST_STATUSES: Readonly<Record<string, ShipmentStatus | null>> = 
   ready_to_pickup_from_pok_registered: 'awaiting_pickup',
   ready_to_pickup_from_branch: 'awaiting_pickup',
   pickup_reminder_sent: 'awaiting_pickup',
-  pickup_reminder_sent_address: 'awaiting_pickup',
   avizo: 'awaiting_pickup',
   courier_avizo_in_customer_service_point: 'awaiting_pickup',
 
+  // Named like a pickup reminder, but its text is "courier did not find the Recipient at the indicated address".
+  pickup_reminder_sent_address: 'delivery_problem',
   undelivered: 'delivery_problem',
   undelivered_wrong_address: 'delivery_problem',
   undelivered_incomplete_address: 'delivery_problem',
@@ -57,19 +58,23 @@ export const INPOST_STATUSES: Readonly<Record<string, ShipmentStatus | null>> = 
   stack_parcel_pickup_time_expired: 'delivery_problem',
   stack_parcel_in_box_machine_pickup_time_expired: 'delivery_problem',
   claimed: 'delivery_problem',
-  missing: 'delivery_problem',
+  // "Does not fit into the locker." Who holds the parcel then is not documented.
   oversized: 'delivery_problem',
+  // "Will soon be on its way back to the Sender": not back yet, and `returned` is final.
+  taken_by_courier_from_customer_service_point: 'delivery_problem',
 
   delivered: 'delivered',
   return_pickup_confirmation_to_sender: 'delivered',
 
   returned_to_sender: 'returned',
-  taken_by_courier_from_customer_service_point: 'returned',
 
   canceled: 'cancelled',
 
   // "The parcel is in an unrecognized status": InPost itself does not know.
   other: null,
+  // No title, no description ("translation missing") and no origin status in the live list: nothing says InPost
+  // ever held the parcel, and a status that says so ships the Order.
+  missing: null,
 }
 
 /** The statuses in which InPost is still preparing and buying the offer, so a purchase can still fail. */

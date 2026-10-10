@@ -1,9 +1,10 @@
-import { PermanentError, TransientError, type ShipmentCreateResult, type ShipmentRequest } from '@hanza/connector-sdk'
+import { PermanentError, type ShipmentCreateResult, type ShipmentRequest } from '@hanza/connector-sdk'
 import { shipxShipmentSchema, type ShipxShipment } from '../api'
 import { failure, logUntranslated, organizationShipmentsPath, parse, readError, send } from '../client'
 import type { InpostContext } from '../config'
 import { findEarlierShipment } from '../earlier-shipment'
-import { accountRefusal, createRefusalCode, shipmentJson, toShipmentState, toShipxShipment } from '../mapping'
+import { isErrorKey, lowerBoundState, shipmentJson, toShipmentState, toShipxShipment } from '../mapping'
+import { createRefusal } from '../refusals'
 
 // Statuses that are about the call or the account, whatever the body says: never a refusal of this one request.
 const CALL_FAILURES: readonly number[] = [401, 403, 404, 408, 429]
@@ -11,9 +12,10 @@ const CALL_FAILURES: readonly number[] = [401, 403, 404, 408, 429]
 function created(ctx: InpostContext, shipment: ShipxShipment): ShipmentCreateResult {
   const state = toShipmentState(shipment)
   if (state !== null) return { outcome: 'created', ...state }
+  // The shipment exists, so the answer is `created`, and a call that threw here would throw on every repeat until
+  // the core failed a Shipment InPost may have bought. Its state is the least that is true; tracking refines it.
   logUntranslated(ctx, shipment)
-  // The shipment exists, so nothing may be posted, and its state cannot be told without guessing: ask again later.
-  throw new TransientError('InPost has this Shipment in a status the connector cannot translate')
+  return { outcome: 'created', ...lowerBoundState(shipment) }
 }
 
 /**
@@ -35,10 +37,18 @@ export async function createShipment(ctx: InpostContext, request: ShipmentReques
   if (response.ok) return created(ctx, await parse(response, shipxShipmentSchema, 'shipment'))
   if (response.status >= 400 && response.status < 500 && !CALL_FAILURES.includes(response.status)) {
     const error = await readError(response)
-    const code = error === null ? null : createRefusalCode(error)
-    if (code !== null) return { outcome: 'rejected', code }
-    const account = error === null ? null : accountRefusal(error.error)
-    if (account !== null) throw new PermanentError(`InPost refuses new shipments for this account (${account}); the InPost manager says what it is waiting for`)
+    const refusal = error === null ? null : createRefusal(error)
+    if (refusal?.kind === 'rejected') return { outcome: 'rejected', code: refusal.code }
+    if (refusal?.kind === 'account') {
+      throw new PermanentError(`InPost refuses new shipments for this account (${refusal.key}); the InPost manager says what it is waiting for`)
+    }
+    if (refusal?.kind === 'unknown') {
+      // Not `rejected`: that is final for the Shipment, and a key nobody has seen may as well be about the account,
+      // which would then fail Shipments one by one. This way the Shipment waits and the Connection shows the trouble.
+      // The key goes to the log only, and only if it reads as one: an error message is stored.
+      ctx.log('InPost refused a new shipment with an error key this connector does not know', { status: response.status, key: isErrorKey(error?.error) ? error.error : 'unreadable' })
+      throw new PermanentError(`InPost refused a new shipment with an error this connector does not know (HTTP ${response.status}); no shipment was made, and the worker's log names the error key`)
+    }
   }
   throw await failure(response, 'organization')
 }

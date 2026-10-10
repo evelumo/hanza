@@ -42,8 +42,8 @@
         "body": {
           "json": {
             "status": 403,
-            "error": "access_forbidden",
-            "message": "Access to the specified resource is denied.",
+            "error": "forbidden",
+            "message": "Access forbidden for this token.",
             "details": {}
           }
         }
@@ -67,7 +67,7 @@
           "json": {
             "status": 404,
             "error": "resource_not_found",
-            "message": "Resource you are looking for are not found",
+            "message": "Resource not found.",
             "details": {}
           }
         }

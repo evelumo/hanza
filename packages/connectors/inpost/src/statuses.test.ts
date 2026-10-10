@@ -5,8 +5,9 @@ import { z } from 'zod'
 import { CANCELLED_STATUS, INPOST_STATUSES, PURCHASE_STATUSES } from './statuses'
 
 // `GET /v1/statuses?lang=en_GB` as production answered on 2026-10-10 (the sandbox lists the same names).
-const liveSchema = z.object({ items: z.array(z.object({ name: z.string().min(1) })) })
-const live = liveSchema.parse(JSON.parse(await readFile(new URL('./fixtures/statuses.json', import.meta.url), 'utf8'))).items.map((item) => item.name)
+const liveSchema = z.object({ items: z.array(z.object({ name: z.string().min(1), title: z.string(), description: z.string() })) })
+const liveText = await readFile(new URL('./fixtures/statuses.json', import.meta.url), 'utf8')
+const live = liveSchema.parse(JSON.parse(liveText)).items.map((item) => item.name)
 
 const namesOf = (status: ShipmentStatus | null) =>
   Object.entries(INPOST_STATUSES)
@@ -31,8 +32,8 @@ describe('the InPost status table', () => {
     expect(namesOf('failed')).toEqual([])
   })
 
-  it('leaves untranslated only the status InPost itself calls unrecognized', () => {
-    expect(namesOf(null)).toEqual(['other'])
+  it('leaves untranslated the status InPost itself calls unrecognized, and the one it does not describe at all', () => {
+    expect(namesOf(null)).toEqual(['missing', 'other'])
   })
 
   it('groups the names as the connector documents them', () => {
@@ -64,7 +65,6 @@ describe('the InPost status table', () => {
       'avizo',
       'courier_avizo_in_customer_service_point',
       'pickup_reminder_sent',
-      'pickup_reminder_sent_address',
       'ready_to_pickup',
       'ready_to_pickup_from_branch',
       'ready_to_pickup_from_pok',
@@ -72,12 +72,13 @@ describe('the InPost status table', () => {
     ])
     expect(namesOf('delivery_problem')).toEqual([
       'claimed',
-      'missing',
       'oversized',
+      'pickup_reminder_sent_address',
       'pickup_time_expired',
       'rejected_by_receiver',
       'stack_parcel_in_box_machine_pickup_time_expired',
       'stack_parcel_pickup_time_expired',
+      'taken_by_courier_from_customer_service_point',
       'undelivered',
       'undelivered_cod_cash_receiver',
       'undelivered_incomplete_address',
@@ -88,8 +89,18 @@ describe('the InPost status table', () => {
       'undelivered_wrong_address',
     ])
     expect(namesOf('delivered')).toEqual(['delivered', 'return_pickup_confirmation_to_sender'])
-    expect(namesOf('returned')).toEqual(['returned_to_sender', 'taken_by_courier_from_customer_service_point'])
+    // Final, so only the status that says the parcel set off back; "will soon be on its way back" is not that.
+    expect(namesOf('returned')).toEqual(['returned_to_sender'])
     expect(namesOf('cancelled')).toEqual(['canceled'])
+  })
+
+  it('says the Carrier has the parcel only for a status whose text says so', () => {
+    const texts = new Map(liveSchema.parse(JSON.parse(liveText)).items.map((entry) => [entry.name, entry]))
+    // No title, no description: "translation missing". Nothing says InPost ever held this parcel.
+    expect(texts.get('missing')?.title).toMatch(/translation missing/)
+    expect(INPOST_STATUSES.missing).toBeNull()
+    expect(texts.get('taken_by_courier_from_customer_service_point')?.description).toMatch(/will soon be on its way back/)
+    expect(texts.get('pickup_reminder_sent_address')?.description).toMatch(/did not find the Recipient/)
   })
 
   it('keeps the statuses the capabilities name in the table', () => {

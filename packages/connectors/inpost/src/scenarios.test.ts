@@ -1,9 +1,10 @@
 import { AuthExpiredError, PermanentError, RateLimitedError, TransientError, type ShipmentRequest } from '@hanza/connector-sdk'
 import { isRecording, openCassette } from '@hanza/connector-sdk/testing'
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { ZodError } from 'zod'
+import { MAX_LABEL_BYTES } from './capabilities/shipments-label'
 import { inpostConfigSchema, type InpostConfig } from './config'
-import { MAX_SEARCH_PAGES } from './earlier-shipment'
+import { findEarlierShipment, MAX_SEARCH_PAGES } from './earlier-shipment'
 import { inpostConnector } from './index'
 import { inpostMatch, inpostScrub } from './testing'
 
@@ -16,10 +17,12 @@ const cancel = capabilities['shipments.cancel']!
 
 interface Sent {
   method: string
+  host: string
   /** Path and query, without the time the search starts at. */
   target: string
   body: string | null
   authorization: string | null
+  redirect: RequestRedirect | undefined
 }
 
 /** A capability context around `fetch` that remembers what was sent and what was logged. */
@@ -30,7 +33,14 @@ function context(fetch: typeof globalThis.fetch, config: Partial<InpostConfig> =
     const request = new Request(input, init)
     const url = new URL(request.url)
     url.searchParams.delete('created_at_gteq')
-    sent.push({ method: request.method, target: `${url.pathname}${url.search}`, body: typeof init?.body === 'string' ? init.body : null, authorization: request.headers.get('authorization') })
+    sent.push({
+      method: request.method,
+      host: url.host,
+      target: `${url.pathname}${url.search}`,
+      body: typeof init?.body === 'string' ? init.body : null,
+      authorization: request.headers.get('authorization'),
+      redirect: init?.redirect,
+    })
     return fetch(input, init)
   }
   const ctx = {
@@ -40,18 +50,21 @@ function context(fetch: typeof globalThis.fetch, config: Partial<InpostConfig> =
     fetch: watching,
     log: (message: string, fields?: Record<string, unknown>) => void logs.push({ message, fields }),
   }
-  return { ctx, sent, logs, methods: () => sent.map((request) => request.method) }
+  return { ctx, sent, logs, methods: () => sent.map((request) => request.method), requests: () => sent.map((request) => `${request.method} ${request.target}`) }
 }
 
-/** A scenario cassette, written by hand from the documentation (see AGENTS.md). */
+/**
+ * A scenario cassette: written by hand, in the shapes the sandbox answered on 2026-10-10 where it answered at all
+ * (see AGENTS.md, "Fixtures").
+ */
 async function scenario(name: string, config: Partial<InpostConfig> = {}) {
   const cassette = await openCassette(new URL(`./fixtures/${name}.cassette.json`, import.meta.url), { scrub: inpostScrub, match: inpostMatch, secrets: [TOKEN] })
   return { cassette, ...context(cassette.fetch, config) }
 }
 
-const SEARCH = '/v1/organizations/12345/shipments?sort_by=created_at&sort_order=asc&per_page=100'
-const searchPage = (page: number) => SEARCH.replace('&per_page', `&page=${page}&per_page`)
-const byId = (ids: string[], page = 1) => `/v1/organizations/12345/shipments?id=${encodeURIComponent(ids.join(','))}&page=${page}&per_page=100`
+const CREATE = '/v1/organizations/12345/shipments'
+const searchPage = (page: number) => `${CREATE}?sort_by=created_at&sort_order=asc&page=${page}&per_page=100`
+const byId = (ids: string[], page = 1) => `${CREATE}?id=${encodeURIComponent(ids.join(','))}&page=${page}&per_page=100`
 
 /**
  * The cassettes hold placeholders where a recording had references (`scrubbed-N`, numbered by the recorder), and
@@ -69,50 +82,77 @@ const lockerRequest = (reference: string, overrides: Partial<ShipmentRequest> = 
 })
 
 const json = (status: number, body: unknown, headers: Record<string, string> = {}) => Response.json(body, { status, headers })
-const emptyList = () => json(200, { count: 0, page: 1, per_page: 100, items: [] })
+const item = (id: number | string, overrides: Record<string, unknown> = {}) => ({ id, status: 'delivered', tracking_number: null, reference: `other-${id}`, ...overrides })
+const list = (items: unknown[], count = items.length, headers: Record<string, string> = {}) => json(200, { count, page: 1, per_page: 100, items }, headers)
+const emptyList = () => list([])
+const pageOf = (input: RequestInfo | URL) => Number(new URL(new Request(input).url).searchParams.get('page'))
+const isPost = (init: RequestInit | undefined) => init?.method === 'POST'
+/** Answers the search with an empty list and the create with `answer`. */
+const posting = (answer: () => Response) => context(async (_input, init) => (isPost(init) ? answer() : emptyList()))
+const caught = (promise: Promise<unknown>) => promise.then(() => null).catch((error: unknown) => error as Error)
 
 // The scenarios are not recordings: with HANZA_RECORD_FIXTURES=1 they would overwrite their cassettes from the sandbox.
 describe('InPost scenarios', { skip: isRecording() }, () => {
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
   describe('shipments.create', () => {
     it('returns the shipment of a create whose answer was lost, and posts nothing the second time', async () => {
-      const { ctx, cassette, sent, methods } = await scenario('create-lost-answer')
+      const { ctx, cassette, requests } = await scenario('create-lost-answer')
       const request = lockerRequest('scrubbed-3', { parcel: { preset: 'medium' } })
 
       // The first call: InPost answers, and the job dies before the answer is stored.
       const lost = await create(ctx, request)
       expect(lost).toEqual({ outcome: 'created', externalId: '1600000201', status: 'pending', trackingNumber: null, carrierStatus: 'created' })
-      expect(methods()).toEqual(['GET', 'POST'])
 
       // The repeat, minutes later: the label is bought by now.
       const repeated = await create(ctx, structuredClone(request))
-      expect(repeated).toEqual({ outcome: 'created', externalId: '1600000201', status: 'ready', trackingNumber: '620999548227330124560025', carrierStatus: 'confirmed' })
+      expect(repeated).toEqual({ outcome: 'created', externalId: '1600000201', status: 'ready', trackingNumber: '620999548227330124500201', carrierStatus: 'confirmed' })
 
-      expect(methods()).toEqual(['GET', 'POST', 'GET'])
-      expect(sent.map((request) => request.target)).toEqual([searchPage(1), '/v1/organizations/12345/shipments', searchPage(1)])
+      expect(requests()).toEqual([`GET ${searchPage(1)}`, `POST ${CREATE}`, `GET ${searchPage(1)}`])
       expect(cassette.misses).toEqual([])
       expect(cassette.unused()).toEqual([])
     })
 
-    it('searches since five minutes before the request was first made, oldest first', async () => {
-      const { ctx, sent } = context(async (input, init) => {
-        if (init?.method === 'POST') return json(201, { id: 9, status: 'created', tracking_number: null, reference: 'shp_search' })
-        return new URL(new Request(input).url).searchParams.has('created_at_gteq') ? emptyList() : json(400, {})
-      })
+    it('finds the shipment once the listing has caught up with the create, and posts once in all', async () => {
+      const { ctx, cassette, methods } = await scenario('create-list-lag')
+      const request = lockerRequest('scrubbed-3')
+
+      const first = await create(ctx, request)
+      expect(first).toMatchObject({ outcome: 'created', externalId: '1600000206' })
+
+      // What the sandbox showed: for up to 5.4 s after the POST the listing does not have the shipment. A create
+      // repeated now would post a second parcel, which is why the core waits 5 minutes before it repeats one.
+      await expect(findEarlierShipment(ctx, request)).resolves.toBeNull()
+
+      const repeated = await create(ctx, structuredClone(request))
+      expect(repeated).toEqual({ outcome: 'created', externalId: '1600000206', status: 'pending', trackingNumber: null, carrierStatus: 'offer_selected' })
+      expect(methods()).toEqual(['GET', 'POST', 'GET', 'GET'])
+      expect(cassette.misses).toEqual([])
+      expect(cassette.unused()).toEqual([])
+    })
+
+    it('searches since an hour before the request was first made, oldest first, a hundred to a page', async () => {
       const searched: string[] = []
-      const watched = { ...ctx, fetch: ((input, init) => (searched.push(new Request(input, init).url), ctx.fetch(input, init))) as typeof fetch }
-      await create(watched, lockerRequest('shp_search', { requestedAt: '2026-10-10T11:00:00+02:00' }))
+      const { ctx, methods } = context(async (input, init) => {
+        if (isPost(init)) return json(201, item(9, { status: 'created', reference: 'shp_search' }))
+        searched.push(new Request(input).url)
+        return emptyList()
+      })
+      await create(ctx, lockerRequest('shp_search', { requestedAt: '2026-10-10T11:00:00+02:00' }))
 
       const search = new URL(searched[0]!)
       expect(search.origin).toBe('https://sandbox-api-shipx-pl.easypack24.net')
       expect(Object.fromEntries(search.searchParams)).toEqual({
-        // 2026-10-10T08:55:00Z as a Unix time: the request was first made at 09:00 UTC.
-        created_at_gteq: String(Date.UTC(2026, 9, 10, 8, 55, 0) / 1000),
+        // 2026-10-10T08:00:00Z as a Unix time: the request was first made at 09:00 UTC.
+        created_at_gteq: String(Date.UTC(2026, 9, 10, 8, 0, 0) / 1000),
         sort_by: 'created_at',
         sort_order: 'asc',
         page: '1',
         per_page: '100',
       })
-      expect(sent.map((request) => request.method)).toEqual(['GET', 'POST'])
+      expect(methods()).toEqual(['GET', 'POST'])
     })
 
     it('makes no request for a Shipment it can tell InPost will refuse', async () => {
@@ -122,33 +162,122 @@ describe('InPost scenarios', { skip: isRecording() }, () => {
       expect(methods()).toEqual([])
     })
 
-    it('reads every page of the search before it would post', async () => {
-      const { ctx, cassette, sent } = await scenario('create-search-two-pages')
-      const result = await create(ctx, lockerRequest('scrubbed-15'))
-      expect(result).toMatchObject({ outcome: 'created', externalId: '1600000213', status: 'ready' })
-      expect(sent.map((request) => `${request.method} ${request.target}`)).toEqual([`GET ${searchPage(1)}`, `GET ${searchPage(2)}`])
-      expect(cassette.misses).toEqual([])
-      expect(cassette.unused()).toEqual([])
-    })
+    describe('the search before the POST', () => {
+      const full = (page: number) => Array.from({ length: 100 }, (_, index) => item(page * 1000 + index))
 
-    it('stops at a page limit and posts nothing when the list never ends (a filter InPost ignored)', async () => {
-      const page = (number: number) =>
-        json(200, {
-          count: 1_000_000,
-          page: number,
-          per_page: 100,
-          items: Array.from({ length: 100 }, (_, index) => ({ id: number * 1000 + index, status: 'delivered', tracking_number: null, reference: `other-${number}-${index}` })),
+      it('reads every page, and finds the earlier shipment on the last one', async () => {
+        const { ctx, requests } = context(async (input) => (pageOf(input) === 1 ? list(full(1), 101) : list([item(77, { status: 'confirmed', tracking_number: '620999548227330124500077', reference: 'shp_page_two' })], 101)))
+        await expect(create(ctx, lockerRequest('shp_page_two'))).resolves.toMatchObject({ outcome: 'created', externalId: '77', status: 'ready' })
+        expect(requests()).toEqual([`GET ${searchPage(1)}`, `GET ${searchPage(2)}`])
+      })
+
+      it('posts only after it has seen as many shipments as InPost counts', async () => {
+        const { ctx, requests } = context(async (input, init) => {
+          if (isPost(init)) return json(201, item(9, { status: 'created', reference: 'shp_after_two_pages' }))
+          return pageOf(input) === 1 ? list(full(1), 101) : list([item(5)], 101)
         })
-      const { ctx, methods } = context(async (input) => page(Number(new URL(new Request(input).url).searchParams.get('page'))))
-      const error = await create(ctx, lockerRequest('shp_endless')).catch((caught: unknown) => caught)
-      expect(error).toBeInstanceOf(PermanentError)
-      expect(methods()).toEqual(Array.from({ length: MAX_SEARCH_PAGES }, () => 'GET'))
+        await expect(create(ctx, lockerRequest('shp_after_two_pages'))).resolves.toMatchObject({ outcome: 'created', externalId: '9' })
+        expect(requests()).toEqual([`GET ${searchPage(1)}`, `GET ${searchPage(2)}`, `POST ${CREATE}`])
+      })
+
+      it('posts nothing when InPost counts more shipments than it lists', async () => {
+        const { ctx, cassette, methods } = await scenario('create-search-inconsistent')
+        await expect(create(ctx, lockerRequest('shp_wanted'))).rejects.toBeInstanceOf(TransientError)
+        expect(methods()).toEqual(['GET'])
+        expect(cassette.misses).toEqual([])
+      })
+
+      it.each([
+        ['a short page under a higher count', () => list(Array.from({ length: 25 }, (_, index) => item(index + 1)), 60)],
+        ['an empty page under a count', () => list([], 60)],
+        // The echoed page size is whatever was asked, so it cannot excuse a short page either.
+        ['a short page that claims to be full', () => json(200, { count: 60, page: 1, per_page: 25, items: Array.from({ length: 25 }, (_, index) => item(index + 1)) })],
+      ])('asks again later, and posts nothing, on %s', async (_what, answer) => {
+        const { ctx, methods } = context(async () => answer())
+        await expect(create(ctx, lockerRequest('shp_inconsistent'))).rejects.toBeInstanceOf(TransientError)
+        expect(methods()).toEqual(['GET'])
+      })
+
+      it('posts nothing when a page repeats the one before', async () => {
+        const { ctx, methods } = context(async () => list(full(1), 250))
+        await expect(create(ctx, lockerRequest('shp_repeating'))).rejects.toBeInstanceOf(TransientError)
+        expect(methods()).toEqual(['GET', 'GET'])
+      })
+
+      it('posts nothing when the count drops between two pages: a shipment may have slipped between them', async () => {
+        // One of the first hundred was cancelled after page 1 was read; InPost lists cancelled shipments nowhere.
+        const { ctx, methods } = context(async (input) => (pageOf(input) === 1 ? list(full(1), 150) : list(full(2).slice(0, 49), 149)))
+        await expect(create(ctx, lockerRequest('shp_slipped'))).rejects.toBeInstanceOf(TransientError)
+        expect(methods()).toEqual(['GET', 'GET'])
+      })
+
+      it('stops at a page limit and posts nothing when the list never ends (a filter InPost ignored)', async () => {
+        const { ctx, methods } = context(async (input) => list(full(pageOf(input)), 1_000_000))
+        await expect(create(ctx, lockerRequest('shp_endless'))).rejects.toBeInstanceOf(PermanentError)
+        expect(methods()).toEqual(Array.from({ length: MAX_SEARCH_PAGES }, () => 'GET'))
+      })
+
+      it('posts nothing when the search fails', async () => {
+        const { ctx, methods } = context(async () => json(500, {}))
+        await expect(create(ctx, lockerRequest('shp_search_down'))).rejects.toBeInstanceOf(TransientError)
+        expect(methods()).toEqual(['GET'])
+      })
+
+      it('refuses a shipment id that is not digits, wherever InPost puts it', async () => {
+        const listed = context(async () => list([item('../label', { reference: 'shp_bad_id' })]))
+        const error = await caught(create(listed.ctx, lockerRequest('shp_bad_id')))
+        expect(error).toBeInstanceOf(PermanentError)
+        expect(error?.message).toContain('items.0.id')
+        expect(listed.methods()).toEqual(['GET'])
+
+        const posted = posting(() => json(201, item('..', { status: 'created', reference: 'shp_bad_id' })))
+        await expect(create(posted.ctx, lockerRequest('shp_bad_id'))).rejects.toBeInstanceOf(PermanentError)
+      })
     })
 
-    it('posts nothing when the search fails', async () => {
-      const { ctx, methods } = context(async () => json(500, {}))
-      await expect(create(ctx, lockerRequest('shp_search_down'))).rejects.toBeInstanceOf(TransientError)
-      expect(methods()).toEqual(['GET'])
+    describe('the two clocks', () => {
+      const at = (iso: string) => vi.useFakeTimers({ toFake: ['Date'], now: new Date(iso) })
+
+      it('posts nothing when this server and InPost disagree about the time', async () => {
+        // The cassette's answer is dated 08:00:30 GMT; requestedAt was stamped by a clock an hour ahead of that.
+        at('2026-10-10T09:00:31Z')
+        const { ctx, cassette, methods } = await scenario('create-clock-skew')
+        const error = await caught(create(ctx, lockerRequest('shp_clock')))
+        expect(error).toBeInstanceOf(PermanentError)
+        expect(error?.message).toMatch(/clock of this Hanza server is 60 minutes away/)
+        expect(methods()).toEqual(['GET'])
+        expect(cassette.misses).toEqual([])
+      })
+
+      it.each([
+        ['six minutes ahead of InPost', '2026-10-10T09:06:01Z', false],
+        ['six minutes behind InPost', '2026-10-10T08:53:59Z', false],
+        ['four minutes ahead of InPost', '2026-10-10T09:04:00Z', true],
+        ['four minutes behind InPost', '2026-10-10T08:56:00Z', true],
+      ])('with this server %s, posting is %s', async (_what, now, posts) => {
+        at(now)
+        const { ctx, methods } = context(async (_input, init) =>
+          isPost(init) ? json(201, item(9, { status: 'created', reference: 'shp_clock' })) : list([], 0, { date: 'Sat, 10 Oct 2026 09:00:00 GMT' }),
+        )
+        const result = await caught(create(ctx, lockerRequest('shp_clock')))
+        if (posts) expect(result).toBeNull()
+        else expect(result).toBeInstanceOf(PermanentError)
+        expect(methods()).toEqual(posts ? ['GET', 'POST'] : ['GET'])
+      })
+
+      it('still returns an earlier shipment it found, whatever the clocks say', async () => {
+        at('2026-10-10T12:00:00Z')
+        const { ctx, methods } = context(async () => list([item(31, { status: 'confirmed', tracking_number: '620999548227330124500031', reference: 'shp_clock' })], 1, { date: 'Sat, 10 Oct 2026 09:00:00 GMT' }))
+        await expect(create(ctx, lockerRequest('shp_clock'))).resolves.toMatchObject({ outcome: 'created', externalId: '31', status: 'ready' })
+        expect(methods()).toEqual(['GET'])
+      })
+
+      it('relies on the margin alone when the answer carries no date (a replayed cassette keeps none)', async () => {
+        at('2031-01-01T00:00:00Z')
+        const { ctx, methods } = posting(() => json(201, item(9, { status: 'created', reference: 'shp_clock' })))
+        await expect(create(ctx, lockerRequest('shp_clock'))).resolves.toMatchObject({ outcome: 'created' })
+        expect(methods()).toEqual(['GET', 'POST'])
+      })
     })
 
     it('rejects an unknown pickup point with the field and key InPost names', async () => {
@@ -182,56 +311,159 @@ describe('InPost scenarios', { skip: isRecording() }, () => {
       expect(posted.authorization).toBe(`Bearer ${TOKEN}`)
     })
 
-    it.each(['no_carriers', 'carrier_unavailable'])('rejects a request InPost refuses with %s', async (key) => {
-      const { ctx } = context(async (_input, init) => (init?.method === 'POST' ? json(400, { status: 400, error: key, message: 'No carrier offers this service.', details: {} }) : emptyList()))
-      await expect(create(ctx, lockerRequest('shp_refused'))).resolves.toEqual({ outcome: 'rejected', code: key })
-    })
-
-    it('fails the call, and rejects nothing, when InPost blocks the account', async () => {
-      const { ctx } = context(async (_input, init) => (init?.method === 'POST' ? json(400, { status: 400, error: 'debt_collection', message: 'Unpaid invoices.', details: {} }) : emptyList()))
-      const error = await create(ctx, lockerRequest('shp_blocked')).catch((caught: unknown) => caught)
-      expect(error).toBeInstanceOf(PermanentError)
-      // InPost's key, which is this connector's own constant; never its message.
-      expect((error as Error).message).toContain('debt_collection')
-      expect((error as Error).message).not.toMatch(/invoice/i)
+    // Hand-written: the sandbox account has no bank account, so InPost never got as far as judging the insurance.
+    it('insures a locker Shipment with cash on delivery for the same amount', async () => {
+      const { ctx, cassette, sent } = await scenario('create-locker-cod')
+      const result = await create(ctx, lockerRequest('scrubbed-3', { cashOnDelivery: { amount: '49.50', currency: 'PLN' } }))
+      expect(result).toEqual({ outcome: 'created', externalId: '1600000226', status: 'pending', trackingNumber: null, carrierStatus: 'created' })
+      expect(sent.find((request) => request.method === 'POST')!.body).toContain('"insurance":{"amount":49.50,"currency":"PLN"},"cod":{"amount":49.50,"currency":"PLN"}')
+      expect(cassette.misses).toEqual([])
     })
 
     it.each([
-      [401, AuthExpiredError],
-      [403, PermanentError],
-      [404, PermanentError],
-      [429, RateLimitedError],
-      [503, TransientError],
-    ])('throws for a %i on the create itself, whatever its body says', async (status, expected) => {
-      const { ctx } = context(async (_input, init) => (init?.method === 'POST' ? json(status, { status, error: 'validation_failed', details: { target_point: ['does_not_exist'] } }) : emptyList()))
-      await expect(create(ctx, lockerRequest('shp_failing'))).rejects.toBeInstanceOf(expected)
+      ['carrier_unavailable', { status: 400, error: 'carrier_unavailable', message: 'No carrier offers this service.', details: {} }, 'carrier_unavailable'],
+      // Word for word what the sandbox answers `inpost_courier_standard` on an account without a courier contract.
+      ['missing_trucker_id', { status: 400, error: 'missing_trucker_id', message: 'trucker_ID_is_not_set_for_organization', details: null }, 'missing_trucker_id'],
+      ['the key as the FAQ spells it', { status: 400, error: 'trucker_ID_is_not_set_for_organization', details: {} }, 'missing_trucker_id'],
+    ])('rejects a request for a service the account has no contract for (%s)', async (_what, body, code) => {
+      const { ctx } = posting(() => json(400, body))
+      await expect(create(ctx, lockerRequest('shp_refused'))).resolves.toEqual({ outcome: 'rejected', code })
     })
 
-    it('asks again later, and posts nothing, when the earlier shipment is in a status it cannot translate', async () => {
-      const { ctx, methods, logs } = context(async () =>
-        json(200, { count: 1, page: 1, per_page: 100, items: [{ id: 77, status: 'sorted_by_drone', tracking_number: null, reference: 'shp_untranslated' }] }),
-      )
-      await expect(create(ctx, lockerRequest('shp_untranslated'))).rejects.toBeInstanceOf(TransientError)
-      expect(methods()).toEqual(['GET'])
-      expect(logs).toEqual([{ message: 'InPost reports a shipment status this connector does not know', fields: { externalId: '77', status: 'sorted_by_drone' } }])
+    it.each([
+      ['debt_collection', 400],
+      ['debt_collection', 422],
+      ['no_carriers', 400],
+    ])('fails the call, and rejects nothing, when InPost refuses the account with %s (%i)', async (key, status) => {
+      const { ctx } = posting(() => json(status, { status, error: key, message: 'Unpaid invoices.', details: {} }))
+      const error = await caught(create(ctx, lockerRequest('shp_blocked')))
+      expect(error).toBeInstanceOf(PermanentError)
+      // InPost's key, which is this connector's own constant; never its message.
+      expect(error?.message).toContain(key)
+      expect(error?.message).not.toMatch(/invoice/i)
+    })
+
+    it.each([
+      ['a key nobody has seen', 'quota_exceeded', 'quota_exceeded'],
+      ['a word that could be a name', 'Kowalski', 'unreadable'],
+      ['a sentence', 'Insurance should be equal or higher than COD', 'unreadable'],
+    ])('fails the call for %s instead of failing the Shipment for good, and stores none of it', async (_what, key, logged) => {
+      const { ctx, logs } = posting(() => json(400, { status: 400, error: key, message: 'Jan Kowalski, ul. Przykladowa 12/4', details: {} }))
+      const error = await caught(create(ctx, lockerRequest('shp_unknown_key')))
+      expect(error).toBeInstanceOf(PermanentError)
+      expect(error?.message).not.toContain(key)
+      expect(error?.message).not.toMatch(/Kowalski|Przykladowa/)
+      expect(logs).toEqual([{ message: 'InPost refused a new shipment with an error key this connector does not know', fields: { status: 400, key: logged } }])
+    })
+
+    it('fails the call for a 4xx whose body is not a ShipX error', async () => {
+      const { ctx } = posting(() => new Response('<html>Bad Request</html>', { status: 400, headers: { 'content-type': 'text/html' } }))
+      await expect(create(ctx, lockerRequest('shp_html'))).rejects.toBeInstanceOf(PermanentError)
+    })
+
+    describe.each([
+      ['the search', (init: RequestInit | undefined) => !isPost(init), ['GET']],
+      ['the POST', isPost, ['GET', 'POST']],
+    ])('a failure of %s', (_where, fails, expected) => {
+      it.each([
+        [401, AuthExpiredError],
+        [403, PermanentError],
+        [404, PermanentError],
+        [408, TransientError],
+        [429, RateLimitedError],
+        [500, TransientError],
+        [503, TransientError],
+      ])('throws for a %i, whatever its body says, and never rejects the Shipment', async (status, expectedError) => {
+        const refusal = { status, error: 'validation_failed', details: { custom_attributes: [{ target_point: ['does_not_exist'] }] } }
+        const { ctx, methods } = context(async (_input, init) => (fails(init) ? json(status, refusal) : emptyList()))
+        await expect(create(ctx, lockerRequest('shp_failing'))).rejects.toBeInstanceOf(expectedError)
+        expect(methods()).toEqual(expected)
+      })
+
+      it('does not ask for sign-in on a bare 403', async () => {
+        const { ctx } = context(async (_input, init) => (fails(init) ? new Response(null, { status: 403, statusText: 'Forbidden' }) : emptyList()))
+        const error = await caught(create(ctx, lockerRequest('shp_forbidden')))
+        expect(error).toBeInstanceOf(PermanentError)
+        expect(error).not.toBeInstanceOf(AuthExpiredError)
+      })
+    })
+
+    describe('a repeat that finds the earlier shipment in a status it cannot translate', () => {
+      it('answers with the least that is true, and posts nothing', async () => {
+        const { ctx, cassette, methods, logs } = await scenario('create-untranslatable-status')
+        const result = await create(ctx, lockerRequest('scrubbed-1'))
+        // InPost has bought the label (there is a tracking number); where the parcel is, nobody guesses.
+        expect(result).toEqual({ outcome: 'created', externalId: '1600000231', status: 'ready', trackingNumber: '620999548227330124500231', carrierStatus: 'sorted_by_drone' })
+        expect(methods()).toEqual(['GET'])
+        expect(logs).toEqual([{ message: 'InPost reports a shipment status this connector does not know', fields: { externalId: '1600000231', status: 'sorted_by_drone' } }])
+        expect(cassette.misses).toEqual([])
+      })
+
+      it.each([
+        ['other', null, 'pending', 'other'],
+        ['other', '620999548227330124500078', 'ready', 'other'],
+        ['missing', '620999548227330124500078', 'ready', 'missing'],
+        ['Sorted by a drone', null, 'pending', null],
+      ])('reports %s (tracking number %s) as %s', async (status, trackingNumber, expected, carrierStatus) => {
+        const { ctx, methods } = context(async () => list([item(78, { status, tracking_number: trackingNumber, reference: 'shp_untranslated' })]))
+        await expect(create(ctx, lockerRequest('shp_untranslated'))).resolves.toEqual({ outcome: 'created', externalId: '78', status: expected, trackingNumber, carrierStatus })
+        expect(methods()).toEqual(['GET'])
+      })
+    })
+
+    describe('a redirect', () => {
+      it('is not followed: the receiver is posted once, to InPost', async () => {
+        const { ctx, cassette, sent, requests } = await scenario('create-redirect')
+        const error = await caught(create(ctx, lockerRequest('scrubbed-3')))
+        expect(error).toBeInstanceOf(PermanentError)
+        expect(error?.message).toMatch(/redirect/)
+        expect(error?.message).not.toContain('example.net')
+        expect(requests()).toEqual([`GET ${searchPage(1)}`, `POST ${CREATE}`])
+        expect(new Set(sent.map((request) => request.host))).toEqual(new Set(['sandbox-api-shipx-pl.easypack24.net']))
+        expect(cassette.misses).toEqual([])
+      })
+
+      it('tells every request not to follow one', async () => {
+        const { ctx, sent } = posting(() => json(201, item(9, { status: 'created', reference: 'shp_redirect' })))
+        await create(ctx, lockerRequest('shp_redirect'))
+        await track(ctx, ['9'])
+        await label(ctx, { externalId: '9' }).catch(() => {})
+        await cancel(ctx, { externalId: '9' }).catch(() => {})
+        // The search and the POST, a track, a label, and a cancel with the look at the shipment that follows it.
+        expect(sent.map((request) => request.method)).toEqual(['GET', 'POST', 'GET', 'GET', 'DELETE', 'GET'])
+        expect(new Set(sent.map((request) => request.redirect))).toEqual(new Set(['error']))
+      })
+
+      it('fails as permanent when the transport refuses one, as Node does', async () => {
+        const { ctx } = context(async () => {
+          throw new TypeError('fetch failed', { cause: new Error('unexpected redirect') })
+        })
+        await expect(create(ctx, lockerRequest('shp_redirect'))).rejects.toBeInstanceOf(PermanentError)
+      })
     })
   })
 
   describe('shipments.track', () => {
-    it('reports a purchase InPost will never finish as failed, with the reason', async () => {
-      const { ctx, cassette, sent } = await scenario('track-failed-purchase')
-      const states = await track(ctx, ['1600000301', '1600000302'])
-      expect(states).toEqual([
-        { externalId: '1600000301', status: 'failed', trackingNumber: null, carrierStatus: 'parcels_size_invalid' },
-        { externalId: '1600000302', status: 'failed', trackingNumber: null, carrierStatus: 'transaction_failure' },
+    it('keeps a Shipment waiting while its offer can still be bought, and fails it only when none can', async () => {
+      const { ctx, cassette, requests } = await scenario('track-failed-purchase')
+      const ids = ['1600000301', '1600000302', '1600000303', '1600000304']
+      const states = await track(ctx, ids)
+      expect(states.sort((a, b) => a.externalId.localeCompare(b.externalId))).toEqual([
+        // As the sandbox answered without funds: the offer stays `selected`, so a later payment could still buy it.
+        { externalId: '1600000301', status: 'pending', trackingNumber: null, carrierStatus: 'debt_collection' },
+        { externalId: '1600000302', status: 'pending', trackingNumber: null, carrierStatus: 'company_data_missing' },
+        { externalId: '1600000303', status: 'failed', trackingNumber: null, carrierStatus: 'parcels_size_invalid' },
+        { externalId: '1600000304', status: 'failed', trackingNumber: null, carrierStatus: 'offer_expired' },
       ])
-      expect(sent.map((request) => request.target)).toEqual([byId(['1600000301', '1600000302'])])
+      // The payment's details name the account's owner; nothing of them leaves the connector.
+      expect(JSON.stringify(states)).not.toContain('example.com')
+      expect(requests()).toEqual([`GET ${byId(ids)}`])
       expect(cassette.misses).toEqual([])
     })
 
     it('translates one shipment of every status group in one call, over the pages InPost returns', async () => {
-      const { ctx, cassette, sent, logs } = await scenario('track-status-groups')
-      const ids = Array.from({ length: 9 }, (_, index) => String(1600000401 + index))
+      const { ctx, cassette, requests, logs } = await scenario('track-status-groups')
+      const ids = Array.from({ length: 10 }, (_, index) => String(1600000401 + index))
       const states = await track(ctx, ids)
 
       expect(states.map((state) => [state.externalId, state.status, state.carrierStatus])).toEqual([
@@ -245,13 +477,12 @@ describe('InPost scenarios', { skip: isRecording() }, () => {
         ['1600000408', 'cancelled', 'canceled'],
       ])
       expect(states[0]!.trackingNumber).toBeNull()
-      expect(states[1]!.trackingNumber).toBe('620999548227330124560402')
+      expect(states[1]!.trackingNumber).toBe('620999548227330124500402')
 
       // 1600000409 is in a status InPost added: left out, so it stays as it is, and the name is recorded.
       expect(logs).toEqual([{ message: 'InPost reports a shipment status this connector does not know', fields: { externalId: '1600000409', status: 'sorted_by_drone' } }])
-      // 1600000499 came back although nobody asked for it.
-      expect(states.map((state) => state.externalId)).not.toContain('1600000499')
-      expect(sent.map((request) => request.target)).toEqual([byId(ids, 1), byId(ids, 2)])
+      // 1600000499 came back although nobody asked for it; 1600000410 was asked for and is not InPost's.
+      expect(requests()).toEqual([`GET ${byId(ids, 1)}`, `GET ${byId(ids, 2)}`])
       expect(cassette.misses).toEqual([])
       expect(cassette.unused()).toEqual([])
     })
@@ -267,75 +498,201 @@ describe('InPost scenarios', { skip: isRecording() }, () => {
       await expect(track(ctx, ['1600000777'])).resolves.toEqual([])
     })
 
-    it('stops when the id filter does not narrow the list', async () => {
-      const { ctx, methods } = context(async (input) =>
-        json(200, { count: 1_000_000, page: Number(new URL(new Request(input).url).searchParams.get('page')), per_page: 1, items: [{ id: 5, status: 'delivered', tracking_number: null, reference: null }] }),
-      )
+    it('tracks a hundred Shipments when InPost pages below what was asked', async () => {
+      const ids = Array.from({ length: 100 }, (_, index) => String(5000 + index))
+      const { ctx, methods } = context(async (input) => {
+        const page = pageOf(input)
+        const items = ids.slice((page - 1) * 5, page * 5).map((id) => item(Number(id)))
+        return json(200, { count: 100, page, per_page: 5, items })
+      })
+      const states = await track(ctx, ids)
+      expect(states.map((state) => state.externalId)).toEqual(ids)
+      expect(methods()).toHaveLength(20)
+    })
+
+    it('reads on only while a page brings something new', async () => {
+      // What the sandbox did with an `id` filter: the whole list on the first page, part of it again on the next.
+      const { ctx, methods } = context(async () => list([item(1), item(2), item(3)], 3))
+      await expect(track(ctx, ['1', '2', '3', '4'])).resolves.toHaveLength(3)
+      expect(methods()).toEqual(['GET'])
+
+      const repeating = context(async () => list([item(1), item(2)], 4))
+      await expect(track(repeating.ctx, ['1', '2', '3', '4'])).resolves.toHaveLength(2)
+      expect(repeating.methods()).toEqual(['GET', 'GET'])
+    })
+
+    it('fails when InPost counts more shipments than ids were asked: its id filter was ignored', async () => {
+      const { ctx, methods } = context(async (input) => json(200, { count: 1_000_000, page: pageOf(input), per_page: 100, items: [item(5)] }))
       await expect(track(ctx, ['1600000777'])).rejects.toBeInstanceOf(PermanentError)
-      expect(methods().length).toBeLessThanOrEqual(10)
+      expect(methods()).toEqual(['GET'])
+    })
+
+    it('never sends an id that is not digits', async () => {
+      const { ctx, requests, logs } = context(async () => list([item(16000001)]))
+      await expect(track(ctx, ['..', '16000001', 'abc', '1,2'])).resolves.toMatchObject([{ externalId: '16000001' }])
+      expect(requests()).toEqual([`GET ${byId(['16000001'])}`])
+      expect(logs).toEqual([{ message: 'Shipments whose id is not an InPost shipment id were left out of tracking', fields: { count: 3 } }])
+
+      const none = context(async () => json(500, {}))
+      await expect(track(none.ctx, ['../x'])).resolves.toEqual([])
+      expect(none.methods()).toEqual([])
     })
   })
 
   describe('shipments.label', () => {
-    it('fails as transient while InPost has not bought the label, and asks for the configured size', async () => {
-      const { ctx, cassette, sent } = await scenario('label-too-early', { labelType: 'normal' })
+    const pdfBytes = new TextEncoder().encode('%PDF-1.4 label')
+
+    it('fails as transient while InPost has not bought the label', async () => {
+      const { ctx, cassette, requests } = await scenario('label-too-early')
       await expect(label(ctx, { externalId: '1600000501' })).rejects.toBeInstanceOf(TransientError)
-      expect(sent.map((request) => request.target)).toEqual(['/v1/shipments/1600000501/label?format=pdf&type=normal'])
+      expect(requests()).toEqual(['GET /v1/shipments/1600000501/label?format=pdf&type=A6'])
       expect(cassette.misses).toEqual([])
     })
 
-    it('returns the file with the content type InPost names, or PDF when it names none', async () => {
-      const bytes = new TextEncoder().encode('%PDF-1.4 label')
-      const named = context(async () => new Response(bytes, { headers: { 'content-type': 'Application/PDF; charset=binary' } }))
-      await expect(label(named.ctx, { externalId: '1' })).resolves.toEqual({ contentType: 'application/pdf', data: bytes })
-      const unnamed = context(async () => new Response(new Blob([bytes])))
-      await expect(label(unnamed.ctx, { externalId: '1' })).resolves.toEqual({ contentType: 'application/pdf', data: bytes })
+    it('names no type for a normal label: without one InPost returns normal, and A6 for a courier shipment', async () => {
+      const { ctx, requests } = context(async () => new Response(pdfBytes), { labelType: 'normal' })
+      await label(ctx, { externalId: '1600000501' })
+      expect(requests()).toEqual(['GET /v1/shipments/1600000501/label?format=pdf'])
+    })
+
+    it('returns a PDF as a PDF, whatever the header calls it', async () => {
+      for (const contentType of ['Application/PDF; charset=binary', 'application/octet-stream', 'text/html']) {
+        const { ctx } = context(async () => new Response(pdfBytes, { headers: { 'content-type': contentType } }))
+        await expect(label(ctx, { externalId: '1' })).resolves.toEqual({ contentType: 'application/pdf', data: pdfBytes })
+      }
+      const unnamed = context(async () => new Response(new Blob([pdfBytes])))
+      await expect(label(unnamed.ctx, { externalId: '1' })).resolves.toEqual({ contentType: 'application/pdf', data: pdfBytes })
+    })
+
+    it('does not take an error page answered with 200 for the Label, and asks again', async () => {
+      const { ctx, cassette } = await scenario('label-not-pdf')
+      await expect(label(ctx, { externalId: '1600000502' })).rejects.toBeInstanceOf(TransientError)
+      const second = await label(ctx, { externalId: '1600000502' })
+      expect(second.contentType).toBe('application/pdf')
+      expect(new TextDecoder().decode(second.data.slice(0, 5))).toBe('%PDF-')
+      expect(cassette.misses).toEqual([])
+      expect(cassette.unused()).toEqual([])
     })
 
     it('never returns an error body or an empty file as a Label', async () => {
       const empty = context(async () => new Response(null, { status: 200, headers: { 'content-type': 'application/pdf' } }))
       await expect(label(empty.ctx, { externalId: '1' })).rejects.toBeInstanceOf(TransientError)
       const wrong = context(async () => json(200, { status: 200, error: 'label_generation_failed' }))
-      await expect(label(wrong.ctx, { externalId: '1' })).rejects.toBeInstanceOf(PermanentError)
+      await expect(label(wrong.ctx, { externalId: '1' })).rejects.toBeInstanceOf(TransientError)
+      const named = context(async () => new Response('<html>503</html>', { headers: { 'content-type': 'application/pdf' } }))
+      await expect(label(named.ctx, { externalId: '1' })).rejects.toBeInstanceOf(TransientError)
       const gone = context(async () => json(404, { status: 404, error: 'resource_not_found', details: {} }))
       await expect(label(gone.ctx, { externalId: '1' })).rejects.toBeInstanceOf(PermanentError)
+    })
+
+    it('does not read a file that says it is larger than a Label may be', async () => {
+      let pulled = 0
+      const body = new ReadableStream<Uint8Array>({
+        pull(controller) {
+          pulled++
+          controller.enqueue(pdfBytes)
+        },
+      })
+      const { ctx } = context(async () => new Response(body, { headers: { 'content-type': 'application/pdf', 'content-length': String(MAX_LABEL_BYTES + 1) } }))
+      await expect(label(ctx, { externalId: '1' })).rejects.toBeInstanceOf(PermanentError)
+      expect(pulled).toBeLessThanOrEqual(1)
+    })
+
+    it('stops reading a file that turns out larger than it said', async () => {
+      const chunk = new Uint8Array(1024 * 1024).fill(0x20)
+      chunk.set(pdfBytes)
+      let pulled = 0
+      let cancelled = false
+      const body = new ReadableStream<Uint8Array>(
+        {
+          pull(controller) {
+            pulled++
+            controller.enqueue(chunk)
+          },
+          cancel() {
+            cancelled = true
+          },
+        },
+        { highWaterMark: 0 },
+      )
+      const { ctx } = context(async () => new Response(body, { headers: { 'content-type': 'application/pdf' } }))
+      await expect(label(ctx, { externalId: '1' })).rejects.toBeInstanceOf(PermanentError)
+      expect(cancelled).toBe(true)
+      // 5 MB fit; the sixth megabyte is one too many, and nothing is read after it.
+      expect(pulled).toBeLessThanOrEqual(7)
+    })
+
+    it.each(['..', '../organizations/1', '12 34', 'abc', ''])('makes no request for the id "%s", which is not digits', async (externalId) => {
+      const { ctx, methods } = context(async () => new Response(pdfBytes))
+      const error = await caught(label(ctx, { externalId }))
+      expect(error).toBeInstanceOf(PermanentError)
+      expect(methods()).toEqual([])
     })
   })
 
   describe('shipments.cancel', () => {
     it('cancels before the purchase, and again when the first answer was lost', async () => {
-      const { ctx, cassette, methods } = await scenario('cancel-in-time')
+      const { ctx, cassette, requests } = await scenario('cancel-in-time')
       await expect(cancel(ctx, { externalId: '1600000601' })).resolves.toEqual({ outcome: 'cancelled' })
-      // The repeat: InPost no longer has the shipment (404).
+      // The repeat: InPost keeps the shipment as `canceled` and refuses the action; its status says it is cancelled.
       await expect(cancel(ctx, { externalId: '1600000601' })).resolves.toEqual({ outcome: 'cancelled' })
-      expect(methods()).toEqual(['DELETE', 'DELETE'])
+      expect(requests()).toEqual(['DELETE /v1/shipments/1600000601', 'DELETE /v1/shipments/1600000601', `GET ${byId(['1600000601'])}`])
       expect(cassette.misses).toEqual([])
       expect(cassette.unused()).toEqual([])
     })
 
-    it('is refused as too late once the label is bought', async () => {
-      const { ctx, cassette, sent } = await scenario('cancel-too-late')
+    it('is refused as too late once InPost has gone on to the purchase', async () => {
+      const { ctx, cassette, requests } = await scenario('cancel-too-late')
       await expect(cancel(ctx, { externalId: '1600000602' })).resolves.toEqual({ outcome: 'refused', code: 'too_late' })
-      expect(sent.map((request) => `${request.method} ${request.target}`)).toEqual(['DELETE /v1/shipments/1600000602', `GET ${byId(['1600000602'])}`])
+      expect(requests()).toEqual(['DELETE /v1/shipments/1600000602', `GET ${byId(['1600000602'])}`])
       expect(cassette.misses).toEqual([])
     })
 
-    it('is cancelled, not refused, when InPost still lists the shipment as cancelled', async () => {
-      const { ctx, cassette } = await scenario('cancel-already-cancelled')
-      await expect(cancel(ctx, { externalId: '1600000603' })).resolves.toEqual({ outcome: 'cancelled' })
+    it('is refused, not cancelled, when InPost does not know the shipment', async () => {
+      const { ctx, cassette, methods } = await scenario('cancel-not-found')
+      await expect(cancel(ctx, { externalId: '1600000604' })).resolves.toEqual({ outcome: 'refused', code: 'not_found' })
+      expect(methods()).toEqual(['DELETE'])
       expect(cassette.misses).toEqual([])
+
+      // Not ShipX's own 404 either: an error page of the edge proves a cancel even less.
+      const page = context(async () => new Response('<html>Not Found</html>', { status: 404, headers: { 'content-type': 'text/html' } }))
+      await expect(cancel(page.ctx, { externalId: '1600000604' })).resolves.toEqual({ outcome: 'refused', code: 'not_found' })
     })
 
-    it('throws for a failure of the call', async () => {
-      const { ctx } = context(async () => json(500, {}))
-      await expect(cancel(ctx, { externalId: '1' })).rejects.toBeInstanceOf(TransientError)
+    it('is refused when the action is invalid and InPost does not list the shipment', async () => {
+      const { ctx } = context(async (_input, init) => (init?.method === 'DELETE' ? json(400, { status: 400, error: 'invalid_action', details: {} }) : emptyList()))
+      await expect(cancel(ctx, { externalId: '1600000605' })).resolves.toEqual({ outcome: 'refused', code: 'not_found' })
+    })
+
+    it('trusts only a 204: any other success is checked against the status of the shipment', async () => {
+      const answering = (status: string) =>
+        context(async (_input, init) => (init?.method === 'DELETE' ? new Response('<html>OK</html>', { status: 200 }) : list([item(1600000606, { status })])))
+      await expect(cancel(answering('canceled').ctx, { externalId: '1600000606' })).resolves.toEqual({ outcome: 'cancelled' })
+      await expect(cancel(answering('offer_selected').ctx, { externalId: '1600000606' })).rejects.toBeInstanceOf(TransientError)
+    })
+
+    it.each([
+      [401, AuthExpiredError],
+      [403, PermanentError],
+      [429, RateLimitedError],
+      [500, TransientError],
+    ])('throws for a %i, whatever its body says', async (status, expected) => {
+      const { ctx, methods } = context(async () => json(status, { status, error: 'invalid_action', details: {} }))
+      await expect(cancel(ctx, { externalId: '1' })).rejects.toBeInstanceOf(expected)
+      expect(methods()).toEqual(['DELETE'])
+    })
+
+    it.each(['..', '../organizations/1', 'abc', ''])('makes no request for the id "%s": InPost cannot know it', async (externalId) => {
+      const { ctx, methods } = context(async () => new Response(null, { status: 204 }))
+      await expect(cancel(ctx, { externalId })).resolves.toEqual({ outcome: 'refused', code: 'not_found' })
+      expect(methods()).toEqual([])
     })
   })
 
   describe('failures of the call', () => {
     const failing = async (externalId: string) => {
       const { ctx } = await scenario('errors')
-      return track(ctx, [externalId]).catch((caught: unknown) => caught)
+      return track(ctx, [externalId]).catch((error: unknown) => error)
     }
 
     it('asks for sign-in on a 401', async () => {
@@ -348,7 +705,7 @@ describe('InPost scenarios', { skip: isRecording() }, () => {
       expect(error.message).toContain('Organization ID')
       // Neither the token nor anything of the answer.
       expect(error.message).not.toContain(TOKEN)
-      expect(error.message).not.toMatch(/access_forbidden|denied/)
+      expect(error.message).not.toContain('Access forbidden for this token')
     })
 
     it('fails as permanent on a 404 for the organization, with the same pointer', async () => {
@@ -384,14 +741,14 @@ describe('InPost scenarios', { skip: isRecording() }, () => {
       const { ctx } = context(async () => {
         throw new TypeError('fetch failed')
       })
-      const error = await track(ctx, ['1']).catch((caught: unknown) => caught)
+      const error = await track(ctx, ['1']).catch((thrown: unknown) => thrown)
       expect(error).toBeInstanceOf(TransientError)
       expect((error as Error).cause).toBeInstanceOf(TypeError)
     })
 
     it('fails as permanent, naming only paths, on an answer of another shape', async () => {
       const { ctx } = context(async () => json(200, { count: 1, page: 1, per_page: 100, items: [{ id: 5, status: 7, reference: 'Jan Kowalski' }] }))
-      const error = (await track(ctx, ['5']).catch((caught: unknown) => caught)) as Error
+      const error = (await track(ctx, ['5']).catch((thrown: unknown) => thrown)) as Error
       expect(error).toBeInstanceOf(PermanentError)
       expect(error.cause).toBeInstanceOf(ZodError)
       expect(error.message).toContain('items.0.status')

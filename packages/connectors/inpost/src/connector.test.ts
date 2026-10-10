@@ -49,6 +49,8 @@ describe('InPost connector', () => {
           rejected: { request: { ...request, reference: run.rejectedReference, destination: { type: 'pickup_point', pointId: 'XXX000X' } } },
           // InPost buys the label a few seconds after the create; a replay never waits.
           labelWaitMs: 3_000,
+          // TODO(#126): `repeatWaitMs: 10_000` once the kit has it. The listing shows a shipment up to 5.4 s after
+          // its POST (AGENTS.md), so the kit's repeated create, sent at once, posts a second parcel when recording.
         },
         recording: () => ({ credentials: { apiToken: sandbox!.apiToken } }),
       })

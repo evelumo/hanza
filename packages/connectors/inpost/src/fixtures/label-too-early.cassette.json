@@ -4,7 +4,7 @@
     {
       "request": {
         "method": "GET",
-        "url": "https://sandbox-api-shipx-pl.easypack24.net/v1/shipments/1600000501/label?format=pdf&type=normal",
+        "url": "https://sandbox-api-shipx-pl.easypack24.net/v1/shipments/1600000501/label?format=pdf&type=A6",
         "headers": {
           "accept": "application/pdf, application/json"
         },
@@ -19,8 +19,12 @@
           "json": {
             "status": 400,
             "error": "invalid_action",
-            "message": "Action is not allowed in the current shipment status.",
-            "details": {}
+            "message": "shipment_status_incorrect",
+            "details": {
+              "action": "get_label",
+              "shipment_status": "offer_selected",
+              "shipment_id": 1600000501
+            }
           }
         }
       }

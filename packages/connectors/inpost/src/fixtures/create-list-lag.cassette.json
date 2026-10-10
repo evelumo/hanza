@@ -44,7 +44,7 @@
               "phone": "+00000000001"
             },
             "parcels": {
-              "template": "medium"
+              "template": "small"
             },
             "custom_attributes": {
               "sending_method": "any_point",
@@ -59,12 +59,12 @@
         "status": 201,
         "headers": {
           "content-type": "application/json; charset=utf-8",
-          "location": "http://sandbox-api-shipx-pl.easypack24.net/v1/shipments/1600000201"
+          "location": "http://sandbox-api-shipx-pl.easypack24.net/v1/shipments/1600000206"
         },
         "body": {
           "json": {
-            "href": "https://sandbox-api-shipx-pl.easypack24.net/v1/shipments/1600000201",
-            "id": 1600000201,
+            "href": "https://sandbox-api-shipx-pl.easypack24.net/v1/shipments/1600000206",
+            "id": 1600000206,
             "status": "created",
             "tracking_number": null,
             "return_tracking_number": null,
@@ -111,7 +111,7 @@
               }
             },
             "receiver": {
-              "id": 1600300201,
+              "id": 1600300206,
               "name": null,
               "company_name": null,
               "first_name": "scrubbed-1",
@@ -125,15 +125,15 @@
             "transactions": [],
             "parcels": [
               {
-                "id": 1600500201,
+                "id": 1600500206,
                 "identify_number": null,
                 "tracking_number": null,
                 "is_non_standard": false,
-                "template": "medium",
+                "template": "small",
                 "dimensions": {
                   "length": 380,
                   "width": 640,
-                  "height": 190,
+                  "height": 80,
                   "unit": "mm"
                 },
                 "weight": {
@@ -166,15 +166,41 @@
         "body": {
           "json": {
             "href": "http://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?created_at_gteq=1791619200&owner_id=54321&page=1&per_page=100&sort_by=created_at&sort_order=asc",
+            "count": 0,
+            "page": 1,
+            "per_page": 100,
+            "items": []
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?created_at_gteq=1791619200&sort_by=created_at&sort_order=asc&page=1&per_page=100",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8",
+          "link": "<http://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?created_at_gteq=1791619200&owner_id=54321&per_page=100&sort_by=created_at&sort_order=asc>; rel=\"next\", <http://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?created_at_gteq=1791619200&owner_id=54321&per_page=100&sort_by=created_at&sort_order=asc>; rel=\"last\", <http://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?created_at_gteq=1791619200&owner_id=54321&per_page=100&sort_by=created_at&sort_order=asc>; rel=\"previous\", <http://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?created_at_gteq=1791619200&owner_id=54321&page=1&per_page=100&sort_by=created_at&sort_order=asc>; rel=\"first\""
+        },
+        "body": {
+          "json": {
+            "href": "http://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?created_at_gteq=1791619200&owner_id=54321&page=1&per_page=100&sort_by=created_at&sort_order=asc",
             "count": 1,
             "page": 1,
             "per_page": 100,
             "items": [
               {
-                "href": "https://sandbox-api-shipx-pl.easypack24.net/v1/shipments/1600000201",
-                "id": 1600000201,
-                "status": "confirmed",
-                "tracking_number": "620999548227330124500201",
+                "href": "https://sandbox-api-shipx-pl.easypack24.net/v1/shipments/1600000206",
+                "id": 1600000206,
+                "status": "offer_selected",
+                "tracking_number": null,
                 "return_tracking_number": null,
                 "service": "inpost_locker_standard",
                 "reference": "scrubbed-3",
@@ -219,7 +245,7 @@
                   }
                 },
                 "receiver": {
-                  "id": 1600300201,
+                  "id": 1600300206,
                   "name": null,
                   "company_name": null,
                   "first_name": "scrubbed-1",
@@ -229,8 +255,8 @@
                   "address": null
                 },
                 "selected_offer": {
-                  "id": 1600700201,
-                  "status": "bought",
+                  "id": 1600700206,
+                  "status": "selected",
                   "expires_at": "2026-10-10T11:05:02.807+02:00",
                   "rate": null,
                   "currency": "PLN",
@@ -249,8 +275,8 @@
                 },
                 "offers": [
                   {
-                    "id": 1600700201,
-                    "status": "bought",
+                    "id": 1600700206,
+                    "status": "selected",
                     "expires_at": "2026-10-10T11:05:02.807+02:00",
                     "rate": null,
                     "currency": "PLN",
@@ -268,27 +294,18 @@
                     "unavailability_reasons": null
                   }
                 ],
-                "transactions": [
-                  {
-                    "id": 1600900201,
-                    "status": "success",
-                    "offer_id": 1600700201,
-                    "details": {},
-                    "created_at": "2026-10-10T11:00:03.108+02:00",
-                    "updated_at": "2026-10-10T11:00:03.552+02:00"
-                  }
-                ],
+                "transactions": [],
                 "parcels": [
                   {
-                    "id": 1600500201,
+                    "id": 1600500206,
                     "identify_number": null,
-                    "tracking_number": "620999548227330124500201",
+                    "tracking_number": null,
                     "is_non_standard": false,
-                    "template": "medium",
+                    "template": "small",
                     "dimensions": {
                       "length": 380,
                       "width": 640,
-                      "height": 190,
+                      "height": 80,
                       "unit": "mm"
                     },
                     "weight": {

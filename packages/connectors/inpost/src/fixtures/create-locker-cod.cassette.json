@@ -38,47 +38,28 @@
         "body": {
           "json": {
             "receiver": {
-              "company_name": "scrubbed-1",
-              "first_name": "scrubbed-2",
-              "last_name": "scrubbed-3",
-              "email": "maria.wisniewska@example.com",
-              "phone": "+00000000001",
-              "address": {
-                "line1": "scrubbed-4",
-                "city": "scrubbed-5",
-                "post_code": "scrubbed-6",
-                "country_code": "PL"
-              }
+              "first_name": "scrubbed-1",
+              "last_name": "scrubbed-2",
+              "email": "jan.kowalski@example.com",
+              "phone": "+00000000001"
             },
-            "parcels": [
-              {
-                "id": "1",
-                "dimensions": {
-                  "length": "400",
-                  "width": "300",
-                  "height": "150",
-                  "unit": "mm"
-                },
-                "weight": {
-                  "amount": "2.5",
-                  "unit": "kg"
-                },
-                "is_non_standard": false
-              }
-            ],
+            "parcels": {
+              "template": "small"
+            },
+            "custom_attributes": {
+              "sending_method": "any_point",
+              "target_point": "KRA010"
+            },
+            "service": "inpost_locker_standard",
+            "reference": "scrubbed-3",
             "insurance": {
-              "amount": 129.9,
+              "amount": 49.5,
               "currency": "PLN"
             },
             "cod": {
-              "amount": 129.9,
+              "amount": 49.5,
               "currency": "PLN"
-            },
-            "custom_attributes": {
-              "sending_method": "dispatch_order"
-            },
-            "service": "inpost_courier_standard",
-            "reference": "scrubbed-7"
+            }
           }
         }
       },
@@ -86,93 +67,85 @@
         "status": 201,
         "headers": {
           "content-type": "application/json; charset=utf-8",
-          "location": "http://sandbox-api-shipx-pl.easypack24.net/v1/shipments/1600000221"
+          "location": "http://sandbox-api-shipx-pl.easypack24.net/v1/shipments/1600000226"
         },
         "body": {
           "json": {
-            "href": "https://sandbox-api-shipx-pl.easypack24.net/v1/shipments/1600000221",
-            "id": 1600000221,
+            "href": "https://sandbox-api-shipx-pl.easypack24.net/v1/shipments/1600000226",
+            "id": 1600000226,
             "status": "created",
             "tracking_number": null,
             "return_tracking_number": null,
-            "service": "inpost_courier_standard",
-            "reference": "scrubbed-7",
+            "service": "inpost_locker_standard",
+            "reference": "scrubbed-3",
             "is_return": false,
             "application_id": 4321,
             "created_by_id": null,
             "external_customer_id": null,
-            "sending_method": "dispatch_order",
+            "sending_method": "any_point",
             "end_of_week_collection": false,
             "comments": null,
             "mpk": null,
             "additional_services": [],
             "custom_attributes": {
-              "sending_method": "dispatch_order"
+              "target_point": "KRA010",
+              "sending_method": "any_point"
             },
             "cod": {
-              "amount": 129.9,
+              "amount": 49.5,
               "currency": "PLN"
             },
             "insurance": {
-              "amount": 129.9,
+              "amount": 49.5,
               "currency": "PLN"
             },
             "sender": {
               "id": 0,
               "name": null,
-              "company_name": "scrubbed-8",
-              "first_name": "scrubbed-9",
-              "last_name": "scrubbed-10",
-              "email": "scrubbed-11",
-              "phone": "scrubbed-12",
+              "company_name": "scrubbed-4",
+              "first_name": "scrubbed-5",
+              "last_name": "scrubbed-6",
+              "email": "scrubbed-7",
+              "phone": "scrubbed-8",
               "address": {
                 "id": 0,
-                "street": "scrubbed-13",
-                "building_number": "scrubbed-14",
+                "street": "scrubbed-9",
+                "building_number": "scrubbed-10",
                 "line1": null,
                 "line2": null,
-                "city": "scrubbed-15",
-                "post_code": "scrubbed-16",
-                "country_code": "scrubbed-17"
+                "city": "scrubbed-11",
+                "post_code": "scrubbed-12",
+                "country_code": "scrubbed-13"
               }
             },
             "receiver": {
-              "id": 1600300221,
+              "id": 1600300226,
               "name": null,
-              "company_name": "scrubbed-1",
-              "first_name": "scrubbed-2",
-              "last_name": "scrubbed-3",
-              "email": "maria.wisniewska@example.com",
+              "company_name": null,
+              "first_name": "scrubbed-1",
+              "last_name": "scrubbed-2",
+              "email": "jan.kowalski@example.com",
               "phone": "+00000000001",
-              "address": {
-                "id": 1600300228,
-                "street": null,
-                "building_number": null,
-                "line2": null,
-                "line1": "scrubbed-4",
-                "city": "scrubbed-5",
-                "post_code": "scrubbed-6",
-                "country_code": "PL"
-              }
+              "address": null
             },
             "selected_offer": null,
             "offers": [],
             "transactions": [],
             "parcels": [
               {
-                "id": 1600500221,
-                "identify_number": "1",
+                "id": 1600500226,
+                "identify_number": null,
                 "tracking_number": null,
                 "is_non_standard": false,
-                "template": null,
+                "template": "small",
                 "dimensions": {
-                  "length": 400,
-                  "width": 300,
-                  "height": 150,
+                  "length": 380,
+                  "width": 640,
+                  "height": 80,
                   "unit": "mm"
                 },
                 "weight": {
-                  "amount": 2.5,
+                  "amount": 25,
                   "unit": "kg"
                 }
               }
