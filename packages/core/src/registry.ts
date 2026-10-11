@@ -6,6 +6,8 @@ import { orderStatusesDeleteJob } from './jobs/order-statuses-delete'
 import { pricePushJob } from './jobs/price-push'
 import { privacySweepJob } from './jobs/privacy-sweep'
 import { privacyTickJob } from './jobs/privacy-tick'
+import { shipmentsCreateJob } from './jobs/shipments-create'
+import { shipmentsTrackJob } from './jobs/shipments-track'
 import { signInPollJob, signInStartJob } from './jobs/sign-in'
 import { stockPushJob } from './jobs/stock-push'
 import { syncTickJob } from './jobs/sync-tick'
@@ -32,6 +34,8 @@ export function buildJobs(workflowDefinitions: readonly AnyWorkflowDefinition[] 
     privacySweepJob,
     signInStartJob,
     signInPollJob,
+    shipmentsCreateJob,
+    shipmentsTrackJob,
     ...createWorkflowJobs(workflowDefinitions),
   ] as JobDefinition[]
 }

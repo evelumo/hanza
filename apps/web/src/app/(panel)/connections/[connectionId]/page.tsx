@@ -66,6 +66,9 @@ export default async function ConnectionPage({ params }: { params: Promise<{ con
   const connector = ctx.connectors.get(connection.connectorId)
   const connectorName = connector?.name ?? connection.connectorId
   const canSignIn = connector !== undefined && deviceFlowOf(connector) !== undefined
+  // A Carrier has nothing to synchronise on request: its Shipments are asked for as people create them and followed
+  // by the worker. Its page keeps the state of those runs and leaves out everything that is about Offers and Orders.
+  const channel = connector === undefined || isChannel(connector)
   const authExpired = connection.health === 'auth_expired'
   // Stock waits until the Channel's open Orders are imported (#125); the Orders row shows how that pull is doing.
   const stockPushHeld = isStockPushHeldBy(connector, connection.syncStates.find((state) => state.stream === 'orders_pull'))
@@ -119,13 +122,15 @@ export default async function ConnectionPage({ params }: { params: Promise<{ con
             </>
           }
           actions={
-            <SyncNowButton
-              connectionId={connection.id}
-              // While the Connection waits for a sign-in, signing in is the one thing to do; a sync would only fail again.
-              variant={canSignIn && authExpired ? 'secondary' : 'primary'}
-              label={t('connections.detail.syncNow')}
-              pendingLabel={t('connections.detail.syncing')}
-            />
+            channel ? (
+              <SyncNowButton
+                connectionId={connection.id}
+                // While the Connection waits for a sign-in, signing in is the one thing to do; a sync would only fail again.
+                variant={canSignIn && authExpired ? 'secondary' : 'primary'}
+                label={t('connections.detail.syncNow')}
+                pendingLabel={t('connections.detail.syncing')}
+              />
+            ) : undefined
           }
         />
 
@@ -180,10 +185,13 @@ export default async function ConnectionPage({ params }: { params: Promise<{ con
             </Notice>
           ) : null}
 
-          <Section title={t('connections.detail.syncTitle')} description={t('connections.detail.syncDescription')}>
+          <Section
+            title={t('connections.detail.syncTitle')}
+            description={channel ? t('connections.detail.syncDescription') : t('connections.detail.carrierSyncDescription')}
+          >
             <SyncRequestResult success={t('connections.detail.syncRequested')} />
             {connection.syncStates.length === 0 ? (
-              <EmptyState>{t('connections.detail.syncEmpty')}</EmptyState>
+              <EmptyState>{channel ? t('connections.detail.syncEmpty') : t('connections.detail.carrierSyncEmpty')}</EmptyState>
             ) : (
               <DataTable align="top">
                 {/* Four columns, of which only the result wraps: the table fits the page's main column without scrolling. */}
@@ -279,7 +287,7 @@ export default async function ConnectionPage({ params }: { params: Promise<{ con
             </Section>
           ) : null}
 
-          {connector && isChannel(connector) ? (
+          {connector && channel ? (
             <>
               <Section title={t('connections.stockRules.title')} description={t('connections.stockRules.description')}>
                 <SectionContent>

@@ -6,6 +6,7 @@ import { isOrderUpdate, type ConnectorError, type Order, type OrderUpdate } from
 import type { ScrubConfig } from '@hanza/connector-sdk/testing'
 import { createFakeChannel, type FakeChannel } from '../channel'
 import type { FakeContext } from '../connector'
+import { SEED_PHONE } from '../seed'
 import { API_STATUSES, statusRequestSchema, stockRequestSchema, type ApiOrder } from './api'
 import { FAKE_HTTP_BASE_URL } from './connector'
 
@@ -76,7 +77,8 @@ function toApiOrder(item: Order | OrderUpdate): ApiOrder {
     buyer: {
       ...splitName(order.buyer.name),
       email: order.buyer.email,
-      phone: order.buyer.phone ?? '+48 600 100 200',
+      // One phone for every Order of the seed's one Buyer, also where the seed has none.
+      phone: order.buyer.phone ?? SEED_PHONE,
       login: order.buyer.login,
       pesel: '44051401359',
     },

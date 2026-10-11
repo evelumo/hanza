@@ -147,7 +147,8 @@ describe.skipIf(!databaseUrl)('sign-in through the device flow (real Postgres, i
     })
     const events = await ctx.db.eventLog.findMany({
       where: { organizationId: org, subjectType: 'connection', subjectId: connectionId },
-      orderBy: { createdAt: 'asc' },
+      // Both Events come from one transaction and can share a createdAt, so ties are broken by type.
+      orderBy: [{ createdAt: 'asc' }, { type: 'asc' }],
     })
     expect(events.map((event) => [event.type, event.payload])).toEqual([
       ['connection.created', { connectorId: 'fake-oauth', actor: user }],
@@ -229,7 +230,8 @@ describe.skipIf(!databaseUrl)('sign-in through the device flow (real Postgres, i
     expect(renewed.credentials).not.toBe(stored.credentials)
     const health = await ctx.db.eventLog.findMany({
       where: { organizationId: org, subjectId: connectionId, type: { in: ['connection.health_changed', 'connection.signed_in'] } },
-      orderBy: { createdAt: 'asc' },
+      // The last two come from one transaction and can share a createdAt, so ties are broken by type.
+      orderBy: [{ createdAt: 'asc' }, { type: 'asc' }],
     })
     expect(health.map((event) => event.type).slice(-2)).toEqual(['connection.health_changed', 'connection.signed_in'])
     expect(health.at(-2)?.payload).toMatchObject({ from: 'auth_expired', to: 'unknown' })

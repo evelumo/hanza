@@ -3,13 +3,18 @@ import type { SyncStream } from '@hanza/db'
 import { describe, expect, it } from 'vitest'
 import { z } from 'zod'
 import { createConnection } from '../connections/connections'
+import type { Context } from '../context'
 import { changeOrderStatus } from '../orders/change-status'
 import { importOrder } from '../orders/import'
 import { STATUS_PUSH_RETRY_MS } from '../orders/status-push'
+import { requestShipment } from '../shipments/request'
+import { SHIPMENT_RETRY_MS } from '../shipments/schedule'
 import { SYNC_INTERVALS_MS } from '../sync/schedule'
 import { createTestOrganization } from '../testing/context'
 import { databaseUrl, useTestContext } from '../testing/db-test'
-import { buildOrder, user } from '../testing/fixtures'
+import { createTestCarrier } from '../testing/carrier'
+import { buildOrder, jobRun, lockerShipment, secondsUntilDue, user } from '../testing/fixtures'
+import { shipmentsCreateJob } from './shipments-create'
 import { syncTickJob } from './sync-tick'
 
 const channel = defineConnector({
@@ -52,8 +57,18 @@ const courier = defineConnector({
   capabilities: {},
 })
 
+const carrier = createTestCarrier({ id: 'tick-carrier' })
+
+// A Channel with shipping of its own: the tick goes by capabilities, not by kind.
+const shippingChannel = defineConnector({
+  ...channel,
+  id: 'tick-shipping-channel',
+  shipping: carrier.connector.shipping,
+  capabilities: { ...channel.capabilities, ...carrier.connector.capabilities },
+})
+
 describe.skipIf(!databaseUrl)('sync.tick', () => {
-  const context = useTestContext({ connectors: [channel, statusChannel, pricedChannel, courier] })
+  const context = useTestContext({ connectors: [channel, statusChannel, pricedChannel, courier, carrier.connector, shippingChannel] })
 
   async function connection(organizationId: string, connectorId: string) {
     const { connectionId } = await createConnection(context(), organizationId, { connectorId, name: connectorId, config: {}, credentials: {} }, user)
@@ -122,6 +137,114 @@ describe.skipIf(!databaseUrl)('sync.tick', () => {
 
     const enqueued = await tick([expired, failing, notChannel, unknown])
     expect(new Set(enqueued.map((job) => (job.payload as { connectionId: string }).connectionId))).toEqual(new Set([failing]))
+  })
+
+  describe('sweep of Shipments', () => {
+    /** A requested Shipment through `connectorId` whose immediate job was lost with the queue. */
+    async function lostRequest(connectorId = 'tick-carrier') {
+      const ctx = context()
+      const org = await createTestOrganization(ctx.db)
+      const channelId = await connection(org, 'tick-channel')
+      const carrierId = await connection(org, connectorId)
+      const { orderId } = await importOrder(ctx, org, channelId, buildOrder())
+      const queueDown: Context = {
+        ...ctx,
+        queue: {
+          ...ctx.queue,
+          enqueue: async () => {
+            throw new Error('Redis unavailable')
+          },
+        },
+      }
+      // Each for an Order of its own: an Order takes no second Shipment of the same kind while the first still waits.
+      const request = async (forOrder?: string) => {
+        const target = forOrder ?? (await importOrder(ctx, org, channelId, buildOrder())).orderId
+        return (await requestShipment(queueDown, org, target, lockerShipment(carrierId), user)).shipmentId
+      }
+      const shipmentId = await request(orderId)
+      return { ctx, org, channelId, carrierId, orderId, shipmentId, request }
+    }
+
+    async function shipmentJobs(connectionIds: string[], shipmentIds: string[]) {
+      const ctx = context()
+      const before = ctx.queue.enqueued.length
+      await syncTickJob.handler(ctx, {}, jobRun)
+      return ctx.queue.enqueued.slice(before).filter((job) => {
+        const payload = job.payload as { connectionId?: string; shipmentId?: string }
+        return job.name.startsWith('shipments.') && (connectionIds.includes(payload.connectionId ?? '') || shipmentIds.includes(payload.shipmentId ?? ''))
+      })
+    }
+
+    const dueIn = (shipmentId: string) => secondsUntilDue(context(), shipmentId)
+
+    it('recovers a create whose enqueue was lost, once per retry interval, and the job it enqueues asks the Carrier', async () => {
+      const { ctx, org, carrierId, shipmentId } = await lostRequest()
+      expect(ctx.queue.enqueued.filter((job) => (job.payload as { shipmentId?: string }).shipmentId === shipmentId)).toEqual([])
+
+      expect(await shipmentJobs([carrierId], [shipmentId])).toEqual([
+        { name: 'shipments.create', payload: { organizationId: org, shipmentId }, options: { coalesceKey: `shipments.create:${shipmentId}` } },
+      ])
+      expect(await dueIn(shipmentId)).toBeGreaterThan(SHIPMENT_RETRY_MS / 1000 - 60)
+      expect(await shipmentJobs([carrierId], [shipmentId])).toEqual([])
+
+      await shipmentsCreateJob.handler(ctx, { organizationId: org, shipmentId }, jobRun)
+      expect(await ctx.db.shipment.findFirstOrThrow({ where: { id: shipmentId } })).toMatchObject({ status: 'pending' })
+      expect(carrier.byReference(shipmentId)).toBeDefined()
+    })
+
+    it('enqueues one shipments.track per Connection while a Shipment at the Carrier is due, and none otherwise', async () => {
+      const { ctx, org, carrierId, shipmentId, request } = await lostRequest()
+      const second = await request()
+      for (const id of [shipmentId, second]) await shipmentsCreateJob.handler(ctx, { organizationId: org, shipmentId: id }, jobRun)
+      const track = { name: 'shipments.track', payload: { organizationId: org, connectionId: carrierId }, options: { coalesceKey: `shipments.track:${carrierId}` } }
+
+      // Just created: due at the next tick, not this one.
+      expect(await shipmentJobs([carrierId], [shipmentId, second])).toEqual([])
+      await ctx.db.$executeRaw`UPDATE "shipment" SET "nextCheckAt" = now() - interval '1 second' WHERE "id" IN (${shipmentId}, ${second})`
+      ctx.queue.waiting.length = 0
+      expect(await shipmentJobs([carrierId], [shipmentId, second])).toEqual([track])
+      // The job claims its Shipments, not the tick: they stay due until it runs.
+      expect(await dueIn(shipmentId)).toBeLessThan(0)
+
+      await ctx.db.shipment.updateMany({ where: { id: { in: [shipmentId, second] } }, data: { status: 'delivered', nextCheckAt: null } })
+      ctx.queue.waiting.length = 0
+      expect(await shipmentJobs([carrierId], [shipmentId, second])).toEqual([])
+    })
+
+    it('skips a Connection waiting for sign-in, and probes a failing one with a single create per tick', async () => {
+      const waiting = await lostRequest()
+      await waiting.ctx.db.connection.update({ where: { id: waiting.carrierId }, data: { health: 'auth_expired' } })
+      expect(await shipmentJobs([waiting.carrierId], [waiting.shipmentId])).toEqual([])
+      expect(await dueIn(waiting.shipmentId)).toBeLessThanOrEqual(0)
+
+      const failing = await lostRequest()
+      const others = [await failing.request(), await failing.request()]
+      await failing.ctx.db.connection.update({ where: { id: failing.carrierId }, data: { health: 'failing' } })
+      const all = [failing.shipmentId, ...others]
+      expect(await shipmentJobs([failing.carrierId], all)).toHaveLength(1)
+      expect(await shipmentJobs([failing.carrierId], all)).toHaveLength(1)
+      await failing.ctx.db.connection.update({ where: { id: failing.carrierId }, data: { health: 'ok' } })
+      expect(await shipmentJobs([failing.carrierId], all)).toHaveLength(1)
+      expect(await shipmentJobs([failing.carrierId], all)).toEqual([])
+    })
+
+    it('goes by capabilities, not kind: a Channel with shipments.track gets its streams and its Shipments swept', async () => {
+      const { org, carrierId, shipmentId } = await lostRequest('tick-shipping-channel')
+      const jobs = await tick([carrierId])
+      expect(jobs.map((job) => job.name)).toEqual(['offers.pull', 'orders.pull', 'stock.push'])
+      // The create is keyed by the Shipment, so `tick` (which filters by Connection) does not show it.
+      const ctx = context()
+      expect(ctx.queue.enqueued.filter((job) => (job.payload as { shipmentId?: string }).shipmentId === shipmentId)).toEqual([
+        { name: 'shipments.create', payload: { organizationId: org, shipmentId }, options: { coalesceKey: `shipments.create:${shipmentId}` } },
+      ])
+    })
+
+    it('leaves a courier without shipments.track alone', async () => {
+      const ctx = context()
+      const org = await createTestOrganization(ctx.db)
+      const id = await connection(org, 'tick-courier')
+      expect(await tick([id])).toEqual([])
+    })
   })
 
   describe('sweep of pending Order status pushes', () => {

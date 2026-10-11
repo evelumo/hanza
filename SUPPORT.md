@@ -4,7 +4,7 @@ Hanza is in early development. Community support happens in [GitHub Issues](http
 
 ## Before opening an issue
 
-Read the [quick start](docs/quick-start.md) and [troubleshooting](docs/quick-start.md#troubleshooting), then search existing issues. More real connectors, shipping, invoicing, a public REST API and product-facing AI are planned; see the [roadmap](docs/roadmap.md).
+Read the [quick start](docs/quick-start.md) and [troubleshooting](docs/quick-start.md#troubleshooting), then search existing issues. The real connectors are Allegro (a marketplace), WooCommerce (a shop) and InPost (a courier), none of them proven on a live account yet; invoicing, a public REST API and product-facing AI are planned; see the [roadmap](docs/roadmap.md).
 
 ## Report a bug
 

@@ -29,12 +29,12 @@ An alternative to Base.com / BaseLinker that the seller runs on their own infras
 
 ## Capabilities and Constraints
 
-- Screens today: dashboard, Products (list, detail, new, Offers, Offer detail), Product families, Orders (feed, detail), Warehouses, Connections (list, new, detail, sign-in), Privacy, Settings (Order statuses), sign-in, sign-up, onboarding.
+- Screens today: dashboard, Products (list, detail, new, Offers, Offer detail), Product families, Orders (feed, detail with Shipments), Warehouses, Connections (list, new, detail, sign-in), Privacy, Settings (Order statuses), sign-in, sign-up, onboarding.
 - Domain vocabulary is fixed by the glossaries in `CONTEXT-MAP.md` / `CONTEXT.md` (Order phase vs Order status, Offer, Channel, Connection, Reservation, Shortage, Buyer data).
 - An Order has one of four fixed phases; an organization's Order statuses are coloured labels within a phase.
 - Money is a decimal string plus ISO currency. Buyer data is sealed and may be erased.
 - Roles and per-role permissions are not implemented: every member sees the whole panel.
-- Two real connectors, Allegro (a marketplace) and WooCommerce (a shop); the other channels are simulated Test channels. An in-panel AI assistant is planned, not built.
+- Three real connectors: Allegro (a marketplace) and WooCommerce (a shop) as Channels, and InPost as a Carrier for Shipments; the other Channels are simulated Test channels, and a simulated Carrier is there too. An in-panel AI assistant is planned, not built.
 
 ## Brand Commitments
 

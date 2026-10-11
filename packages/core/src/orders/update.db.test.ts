@@ -105,6 +105,51 @@ describe.skipIf(!databaseUrl)('applyOrderUpdate', () => {
     expect(await events(orderId)).not.toContain('order.addresses_updated')
   })
 
+  it('replaces the Delivery of an Order in phase new, sealed, with an Event that says only that it changed', async () => {
+    const { ctx, org, connectionId, events, imported } = await setup()
+    const { order, orderId } = await imported({ delivery: { method: 'Courier', pickupPoint: null } })
+    const locker = { method: 'Paczkomat InPost', pickupPoint: { id: 'KRA010', name: 'Kraków, Długa 5' } }
+
+    expect(await applyOrderUpdate(ctx, org, connectionId, update(order.externalId, { delivery: locker }))).toMatchObject({ addresses: 'replaced' })
+
+    expect(await getOrder(ctx, org, orderId)).toMatchObject({ delivery: locker, shippingAddress: order.shippingAddress, buyer: order.buyer })
+    expect(await events(orderId)).toEqual(['order.imported', 'order.delivery_updated'])
+    const changed = await ctx.db.eventLog.findFirstOrThrow({ where: { subjectId: orderId, type: 'order.delivery_updated' } })
+    expect(changed.payload).toEqual({ pickupPoint: true })
+    const row = await ctx.db.order.findFirstOrThrow({ where: { id: orderId } })
+    const everything = JSON.stringify([row, await ctx.db.eventLog.findMany({ where: { organizationId: org } })])
+    for (const personal of ['KRA010', 'Paczkomat', 'Długa 5']) expect(everything).not.toContain(personal)
+
+    // The same Delivery again writes nothing; another method for the same point says the point stayed.
+    expect(await applyOrderUpdate(ctx, org, connectionId, update(order.externalId, { delivery: locker }))).toMatchObject({ addresses: 'unchanged' })
+    const renamed = { ...locker, method: 'InPost locker' }
+    expect(await applyOrderUpdate(ctx, org, connectionId, update(order.externalId, { delivery: renamed }))).toMatchObject({ addresses: 'replaced' })
+    const last = await ctx.db.eventLog.findMany({ where: { subjectId: orderId, type: 'order.delivery_updated' }, orderBy: { id: 'asc' } })
+    expect(last.map((event) => event.payload)).toEqual([{ pickupPoint: true }, { pickupPoint: false }])
+  })
+
+  it('an address update keeps the stored Delivery, and a Delivery update the addresses', async () => {
+    const { ctx, org, connectionId, events, imported } = await setup()
+    const locker = { method: 'Paczkomat InPost', pickupPoint: { id: 'KRA010', name: null } }
+    const { order, orderId } = await imported({ delivery: locker })
+
+    expect(await applyOrderUpdate(ctx, org, connectionId, update(order.externalId, { shippingAddress: delivery }))).toMatchObject({ addresses: 'replaced' })
+    expect(await getOrder(ctx, org, orderId)).toMatchObject({ delivery: locker, shippingAddress: delivery })
+    expect(await events(orderId)).toEqual(['order.imported', 'order.addresses_updated'])
+  })
+
+  it('keeps the Delivery of an Order past phase new', async () => {
+    const { ctx, org, connectionId, events, imported } = await setup()
+    const locker = { method: 'Paczkomat InPost', pickupPoint: { id: 'KRA010', name: null } }
+    const { order, orderId } = await imported({ delivery: locker })
+    await changeOrderStatus(ctx, org, orderId, 'processing', user)
+    const other = { method: 'Paczkomat InPost', pickupPoint: { id: 'WAW999', name: null } }
+
+    expect(await applyOrderUpdate(ctx, org, connectionId, update(order.externalId, { delivery: other }))).toMatchObject({ addresses: 'not_new' })
+    expect(await getOrder(ctx, org, orderId)).toMatchObject({ delivery: locker })
+    expect(await events(orderId)).not.toContain('order.delivery_updated')
+  })
+
   it('a cancelled fact releases the Reservation, as for a full Order', async () => {
     const { ctx, org, connectionId, available, imported } = await setup()
     const { order, orderId } = await imported({ awaitingPayment: true })

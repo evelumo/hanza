@@ -471,7 +471,7 @@
                   "zipCode": "scrubbed-6",
                   "city": "scrubbed-7",
                   "countryCode": "PL",
-                  "phone": null
+                  "phone": "+00000000001"
                 },
                 "lines": [
                   {
@@ -665,7 +665,7 @@
                   "zipCode": "scrubbed-6",
                   "city": "scrubbed-7",
                   "countryCode": "PL",
-                  "phone": null
+                  "phone": "+00000000001"
                 },
                 "lines": [
                   {
@@ -867,7 +867,7 @@
                   "zipCode": "scrubbed-6",
                   "city": "scrubbed-7",
                   "countryCode": "PL",
-                  "phone": null
+                  "phone": "+00000000001"
                 },
                 "lines": [
                   {
@@ -1061,7 +1061,7 @@
                   "zipCode": "scrubbed-6",
                   "city": "scrubbed-7",
                   "countryCode": "PL",
-                  "phone": null
+                  "phone": "+00000000001"
                 },
                 "lines": [
                   {
