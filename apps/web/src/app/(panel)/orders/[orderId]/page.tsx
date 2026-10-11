@@ -127,6 +127,7 @@ export default async function OrderPage({ params }: { params: Promise<{ orderId:
       hint: t('orders.detail.attention.status_push_failed'),
       links: [{ href: `/connections/${order.connectionId}`, label: t('orders.detail.attention.toConnection', { connection: order.connectionName }) }],
     },
+    shipment_conflict: { hint: t('orders.detail.attention.shipment_conflict'), links: [] },
   }
 
   // The names this page already holds for what its history points at.

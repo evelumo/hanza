@@ -1,12 +1,17 @@
-import { addressSchema, buyerSchema } from '@hanza/connector-sdk'
+import { addressSchema, buyerSchema, deliverySchema } from '@hanza/connector-sdk'
 import { z } from 'zod'
 import type { SecretBox } from '../secrets'
 
-/** Everything personal an Order holds about its Buyer; sealed as one value (ADR 0016). */
+/**
+ * Everything personal an Order holds about its Buyer; sealed as one value (ADR 0016). The Delivery is part of it: a
+ * pickup point is usually a few streets from the Buyer's home. Optional, because the Channel may not say, and because
+ * values sealed before it existed must still open.
+ */
 export const buyerDataSchema = z.object({
   buyer: buyerSchema,
   shippingAddress: addressSchema,
   billingAddress: addressSchema.nullable(),
+  delivery: deliverySchema.optional(),
 })
 
 export type BuyerData = z.infer<typeof buyerDataSchema>

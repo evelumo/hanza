@@ -27,6 +27,8 @@ describe('reasonsAfterCancel', () => {
     ])
     expect(reasonsAfterCancel(['unmatched_line', 'status_push_failed'])).toEqual(['status_push_failed'])
     expect(reasonsAfterCancel(['unmatched_line'])).toEqual([])
+    // The Carrier has the parcel whether or not the Order is cancelled.
+    expect(reasonsAfterCancel(['unmatched_line', 'shipment_conflict'])).toEqual(['shipment_conflict'])
     expect(reasonsAfterCancel([])).toEqual([])
   })
 })

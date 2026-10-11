@@ -37,6 +37,7 @@ enum AttentionReason {
   cancelled_while_processing
   channel_fact_conflict
   status_push_failed
+  shipment_conflict
 
   @@map("attention_reason")
 }
@@ -65,7 +66,7 @@ model Order {
   awaitingPayment       Boolean           @default(false)
   currency              String            @db.Char(3)
   totalAmount           Decimal           @db.Decimal(19, 4)
-  /// The Buyer snapshot `{ buyer, shippingAddress, billingAddress }`, sealed with HANZA_ENCRYPTION_KEY (ADR 0016). Null once erased.
+  /// The Buyer snapshot `{ buyer, shippingAddress, billingAddress, delivery }`, sealed with HANZA_ENCRYPTION_KEY (ADR 0016). Null once erased.
   buyerData             String?
   /// Keyed HMAC of the Buyer's normalised email, for exact-match erasure requests only.
   buyerEmailIndex       String?
@@ -98,6 +99,7 @@ model Order {
   status       OrderStatus        @relation(fields: [organizationId, phase, statusId], references: [organizationId, phase, id], onDelete: NoAction, onUpdate: NoAction)
   lines        OrderLine[]
   facts        OrderChannelFact[]
+  shipments    Shipment[]
 
   @@unique([connectionId, externalId])
   @@index([organizationId, placedAt(sort: Desc)])

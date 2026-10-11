@@ -38,6 +38,8 @@ export { orderStatusesDeleteJob } from './jobs/order-statuses-delete'
 export { privacyTickJob, PRIVACY_TICK_EVERY_MS } from './jobs/privacy-tick'
 export { privacySweepJob } from './jobs/privacy-sweep'
 export { signInStartJob, signInPollJob } from './jobs/sign-in'
+export { shipmentsCreateJob } from './jobs/shipments-create'
+export { shipmentsTrackJob } from './jobs/shipments-track'
 export {
   syncTickRef,
   offersPullRef,
@@ -50,6 +52,8 @@ export {
   privacySweepRef,
   signInStartRef,
   signInPollRef,
+  shipmentsCreateRef,
+  shipmentsTrackRef,
   coalesceKeys,
 } from './jobs/refs'
 export { systemActor, type Actor } from './actor'
@@ -68,3 +72,4 @@ export * from './warehouses/index'
 export * from './sync/index'
 export * from './workflows/index'
 export * from './privacy/index'
+export * from './shipments/index'
