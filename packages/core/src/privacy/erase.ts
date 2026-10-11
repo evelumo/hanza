@@ -8,7 +8,7 @@ export type ErasureCause = { cause: 'retention'; retentionDays: number } | { cau
  * Erases the Buyer data of the given Orders that still have it and still match `where`, and records
  * one Event each. Keeps lines, amounts, status, dates and the shipping country. Their Shipments lose
  * what they hold of the Buyer: the Label, which prints a name and an address, and the destination a
- * person confirmed (ADR 0023); status and tracking number stay. Idempotent: an Order erased already
+ * person confirmed (ADR 0024); status and tracking number stay. Idempotent: an Order erased already
  * is skipped. Returns the ids it erased.
  */
 export async function eraseBuyerDataOfOrders(

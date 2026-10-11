@@ -54,7 +54,7 @@ function codAmount(cashOnDelivery: Money | null): Money | null {
 
 /**
  * A person asks for a Shipment of an Order through one of the organization's Connections that can ship. The row is the
- * request (ADR 0023): it is inserted as `requested` and due at once, and the `shipments.create` job asks the Carrier,
+ * request (ADR 0024): it is inserted as `requested` and due at once, and the `shipments.create` job asks the Carrier,
  * right away if the enqueue works, otherwise when `sync.tick` finds the row (ADR 0010).
  *
  * Refused when the Order is not in phase new or processing (`shipment_order_closed`) or awaits payment

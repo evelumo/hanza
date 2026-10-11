@@ -17,7 +17,7 @@ enum ShipmentStatus {
 }
 
 /// One parcel of one Order. The row is also the request for it: a job asks the Carrier while it is `requested`
-/// (ADR 0023).
+/// (ADR 0024).
 model Shipment {
   id                String         @id @default(uuid(7))
   organizationId    String
@@ -32,7 +32,7 @@ model Shipment {
   codAmount         Decimal?       @db.Decimal(19, 4)
   codCurrency       String?        @db.Char(3)
   /// The destination type and the pickup point id as a person confirmed them, sealed with HANZA_ENCRYPTION_KEY and
-  /// bound to the organization and this Shipment (ADR 0016, ADR 0023). Null once the Order's Buyer data is erased.
+  /// bound to the organization and this Shipment (ADR 0016, ADR 0024). Null once the Order's Buyer data is erased.
   destination       String?
   /// The Carrier's id of the Shipment; null until its answer to the request is stored.
   externalId        String?
@@ -49,7 +49,7 @@ model Shipment {
   labelFailureCode  String?
   /// Non-null while a job owes this Shipment something: when `sync.tick` may next have it asked for or checked.
   nextCheckAt       DateTime?
-  /// When it was first seen with the Carrier (in transit or later); the Order is shipped then (ADR 0024).
+  /// When it was first seen with the Carrier (in transit or later); the Order is shipped then (ADR 0025).
   handedOverAt      DateTime?
   /// Set while a person's request to cancel it has not been put to the Carrier.
   cancelRequestedAt DateTime?

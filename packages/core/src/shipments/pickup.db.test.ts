@@ -18,7 +18,7 @@ import { countLockWaits, uniqueApplicationName } from '../testing/lock-waits'
 import { TX_OPTIONS } from '../transaction'
 import { requestShipment } from './request'
 
-// A Carrier taking a parcel ships the Order (ADR 0024). It consumes Reservations, so every test here checks Stock.
+// A Carrier taking a parcel ships the Order (ADR 0025). It consumes Reservations, so every test here checks Stock.
 
 const carrier = createTestCarrier({ id: 'pickup-carrier' })
 const applicationName = uniqueApplicationName('hanza-pickup')
