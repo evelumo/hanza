@@ -789,6 +789,7 @@
       "skipped": "niewysłane",
       "updatesIgnored": "zmiany zamówień spoza Hanzy",
       "feedRestarts": "pobieranie zamówień od nowa",
+      "more": "ciąg dalszy w kolejnym przebiegu",
       "rejected": "odrzucone"
     }
   },

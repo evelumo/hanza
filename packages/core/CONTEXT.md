@@ -33,7 +33,7 @@ The seller's account on the Channel that a Connection signed in as. One per Conn
 _Avoid_: Seller id, profile, user
 
 **Push rejection**:
-The Channel refusing the stock or price Hanza sent for one Offer (with its short error code), while the rest of the push went through. Recorded on the Offer and shown with a Retry; the Offer is not sent again until Retry or a change that alters what it would be told, and the Connection stays healthy. Hanza records one itself, without calling the Channel, for an ended Offer it must not reopen.
+The Channel refusing the stock or price Hanza sent for one Offer (with its short error code), while the rest of the push went through. Recorded on the Offer and shown with a Retry; the Offer is not sent again until Retry, a change that alters what it would be told or, for stock, an Order of that Offer moving on its Channel (ADR 0023), and the Connection stays healthy. Hanza records one itself, without calling the Channel, for an ended Offer it must not reopen.
 _Avoid_: Push error, failed sync, sync failure
 
 **Request budget**:

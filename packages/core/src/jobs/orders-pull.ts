@@ -1,9 +1,10 @@
 import { isCursorExpiredError, isOrderUpdate, type OrderFeedItem, type PullResult } from '@hanza/connector-sdk'
-import { finishSyncRun, restartOrderFeed, saveSyncCursor } from '../connections/sync-state'
+import { finishSyncRun, mayPushStock, ORDER_FEED_MORE, restartOrderFeed, saveSyncCursor } from '../connections/sync-state'
 import { defineJob } from '../jobs'
 import { importOrder } from '../orders/import'
 import { rematchUnmatchedLines } from '../orders/rematch'
 import { applyOrderUpdate } from '../orders/update'
+import { requestStockPushAfterCommit } from '../stock/push'
 import { withSyncRun } from '../sync/begin-run'
 import { parseOrdersPage } from '../sync/pull-result'
 import { runConnectorCall } from '../sync/run-connector'
@@ -16,6 +17,8 @@ const MAX_PAGES = 20
  * each page is imported, so a crash in between re-pulls that page; `importOrder` and `applyOrderUpdate`
  * are idempotent. An expired cursor restarts the feed from null once per run (`restartOrderFeed`);
  * expiring again, or for cursor null, fails the run as permanent like any `PermanentError`.
+ *
+ * The run that first reads the feed to its end requests the Connection's stock push, which waits for it (ADR 0023).
  */
 export const ordersPullJob = defineJob({
   ...ordersPullRef,
@@ -65,8 +68,17 @@ export const ordersPullJob = defineJob({
       }
 
       // Written only when they happened, so the usual summary stays as it was.
-      const extra = { ...(updatesIgnored > 0 ? { updatesIgnored } : {}), ...(feedRestarts > 0 ? { feedRestarts } : {}) }
+      const extra = {
+        ...(updatesIgnored > 0 ? { updatesIgnored } : {}),
+        ...(feedRestarts > 0 ? { feedRestarts } : {}),
+        ...(hasMore ? { [ORDER_FEED_MORE]: 1 } : {}),
+      }
+      // Read before this run is recorded: whether the Channel is still waiting for its first number.
+      const stockWaited = !hasMore && !(await mayPushStock(ctx, organizationId, connectionId))
       await finishSyncRun(ctx, organizationId, connectionId, 'orders_pull', { ...counts, ...extra })
+      // The feed is read to its end, so the Offers that waited may be sent. A lost enqueue, or a retry of this run
+      // (which no longer sees the Channel waiting), leaves them to the stock push the tick starts every 10 minutes.
+      if (stockWaited) await requestStockPushAfterCommit(ctx, organizationId, [connectionId])
       // Catches lines that missed every other rematch trigger, e.g. an Order imported while its
       // Product was being created. Cheap when nothing can match.
       await rematchUnmatchedLines(ctx, organizationId)

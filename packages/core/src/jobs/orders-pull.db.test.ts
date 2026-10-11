@@ -84,7 +84,8 @@ describe.skipIf(!databaseUrl)('orders.pull', () => {
     await runPull()
     expect(calls).toBe(20)
     const sync = await ctx.db.syncState.findFirstOrThrow({ where: { connectionId, stream: 'orders_pull' } })
-    expect(sync).toMatchObject({ cursor: '20', lastResult: { pulled: 20, imported: 20, factsApplied: 0, pages: 20 } })
+    // `more`: the feed was not read to its end, which the stock push waits for (ADR 0023).
+    expect(sync).toMatchObject({ cursor: '20', lastResult: { pulled: 20, imported: 20, factsApplied: 0, pages: 20, more: 1 } })
     expect(waitingFor()).toEqual([
       {
         name: 'orders.pull',
@@ -100,7 +101,14 @@ describe.skipIf(!databaseUrl)('orders.pull', () => {
       return { items: [], nextCursor: '20', hasMore: false }
     }
     await runPull()
-    expect(waitingFor()).toEqual([])
+    // No continuation. The feed is read to its end for the first time, so the Channel may now be told Stock.
+    expect(waitingFor()).toEqual([{ name: 'stock.push', payload: { organizationId, connectionId }, options: { coalesceKey: `stock.push:${connectionId}` } }])
+    expect((await ctx.db.syncState.findFirstOrThrow({ where: { connectionId, stream: 'orders_pull' } })).lastResult).toEqual({
+      pulled: 0,
+      imported: 0,
+      factsApplied: 0,
+      pages: 1,
+    })
   })
 
   it('an expired cursor resets the feed to null with an Event, and the same run carries on from the open Orders', async () => {

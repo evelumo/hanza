@@ -51,6 +51,8 @@ export const offersPullJob = defineJob({
       // Every run, not only when this one linked an Offer: a retry of a run that linked on an
       // earlier page sees linked 0. Cheap when nothing can match (the candidate query is empty).
       await rematchUnmatchedLines(ctx, organizationId)
+      // Requested also for a Connection whose Order feed was not read yet: the push job itself waits for that
+      // (ADR 0023), and deciding it here as well would race the Orders pull that ends the wait.
       if (counts.linked > 0 || republished > 0) await requestStockPush(ctx, organizationId, [connectionId])
       if (counts.linked > 0 || repriced > 0) await requestPricePush(ctx, organizationId, [connectionId])
       if (trigger === 'manual') {

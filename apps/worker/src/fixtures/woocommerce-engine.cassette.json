@@ -14,7 +14,7 @@
         "status": 200,
         "headers": {
           "content-type": "application/json; charset=UTF-8",
-          "date": "Sat, 10 Oct 2026 21:56:23 GMT",
+          "date": "Sat, 10 Oct 2026 22:36:21 GMT",
           "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\""
         },
         "body": {
@@ -54,7 +54,7 @@
         "status": 200,
         "headers": {
           "content-type": "application/json; charset=UTF-8",
-          "date": "Sat, 10 Oct 2026 21:56:24 GMT",
+          "date": "Sat, 10 Oct 2026 22:36:21 GMT",
           "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\"",
           "x-wp-total": "12",
           "x-wp-totalpages": "1"
@@ -186,7 +186,7 @@
         "status": 200,
         "headers": {
           "content-type": "application/json; charset=UTF-8",
-          "date": "Sat, 10 Oct 2026 21:56:24 GMT",
+          "date": "Sat, 10 Oct 2026 22:36:21 GMT",
           "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\"",
           "x-wp-total": "4",
           "x-wp-totalpages": "1"
@@ -270,7 +270,7 @@
         "status": 200,
         "headers": {
           "content-type": "application/json; charset=UTF-8",
-          "date": "Sat, 10 Oct 2026 21:56:24 GMT",
+          "date": "Sat, 10 Oct 2026 22:36:21 GMT",
           "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\"",
           "x-wp-total": "2",
           "x-wp-totalpages": "1"
@@ -326,904 +326,6 @@
     {
       "request": {
         "method": "GET",
-        "url": "https://shop.example.test/wp-json/wc/v3/products?include=10%2C11%2C12%2C15%2C16&per_page=100&_fields=id%2Ctype",
-        "headers": {
-          "accept": "application/json"
-        },
-        "body": null
-      },
-      "response": {
-        "status": 200,
-        "headers": {
-          "content-type": "application/json; charset=UTF-8",
-          "date": "Sat, 10 Oct 2026 21:56:25 GMT",
-          "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\"",
-          "x-wp-total": "5",
-          "x-wp-totalpages": "1"
-        },
-        "body": {
-          "json": [
-            {
-              "id": 16,
-              "type": "simple"
-            },
-            {
-              "id": 15,
-              "type": "simple"
-            },
-            {
-              "id": 12,
-              "type": "simple"
-            },
-            {
-              "id": 11,
-              "type": "simple"
-            },
-            {
-              "id": 10,
-              "type": "simple"
-            }
-          ]
-        }
-      }
-    },
-    {
-      "request": {
-        "method": "POST",
-        "url": "https://shop.example.test/wp-json/wc/v3/products/batch",
-        "headers": {
-          "accept": "application/json",
-          "content-type": "application/json"
-        },
-        "body": {
-          "json": {
-            "update": [
-              {
-                "id": 10,
-                "manage_stock": true,
-                "stock_quantity": 20
-              },
-              {
-                "id": 11,
-                "manage_stock": true,
-                "stock_quantity": 30
-              },
-              {
-                "id": 12,
-                "manage_stock": true,
-                "stock_quantity": 4
-              },
-              {
-                "id": 15,
-                "manage_stock": true,
-                "stock_quantity": 3
-              },
-              {
-                "id": 16,
-                "manage_stock": true,
-                "stock_quantity": 5
-              }
-            ]
-          }
-        }
-      },
-      "response": {
-        "status": 200,
-        "headers": {
-          "content-type": "application/json; charset=UTF-8",
-          "date": "Sat, 10 Oct 2026 21:56:25 GMT",
-          "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\""
-        },
-        "body": {
-          "json": {
-            "update": [
-              {
-                "id": 10,
-                "name": "Kubek ceramiczny żółty",
-                "slug": "kubek-ceramiczny-zolty",
-                "permalink": "https://shop.example.test/product/kubek-ceramiczny-zolty/",
-                "date_created": "2026-10-10T23:55:45",
-                "date_created_gmt": "2026-10-10T21:55:45",
-                "date_modified": "2026-10-10T23:56:25",
-                "date_modified_gmt": "2026-10-10T21:56:25",
-                "type": "simple",
-                "status": "publish",
-                "featured": false,
-                "catalog_visibility": "visible",
-                "description": "",
-                "short_description": "",
-                "sku": "WOO-MUG-1",
-                "price": "49.99",
-                "regular_price": "49.99",
-                "sale_price": "",
-                "date_on_sale_from": null,
-                "date_on_sale_from_gmt": null,
-                "date_on_sale_to": null,
-                "date_on_sale_to_gmt": null,
-                "on_sale": false,
-                "purchasable": true,
-                "total_sales": 11,
-                "virtual": false,
-                "downloadable": false,
-                "downloads": [],
-                "download_limit": -1,
-                "download_expiry": -1,
-                "external_url": "",
-                "button_text": "",
-                "tax_status": "taxable",
-                "tax_class": "",
-                "manage_stock": true,
-                "stock_quantity": 20,
-                "backorders": "no",
-                "backorders_allowed": false,
-                "backordered": false,
-                "low_stock_amount": null,
-                "sold_individually": false,
-                "weight": "",
-                "dimensions": {
-                  "length": "",
-                  "width": "",
-                  "height": ""
-                },
-                "shipping_required": true,
-                "shipping_taxable": true,
-                "shipping_class": "",
-                "shipping_class_id": 0,
-                "reviews_allowed": true,
-                "average_rating": "0",
-                "rating_count": 0,
-                "upsell_ids": [],
-                "cross_sell_ids": [],
-                "parent_id": 0,
-                "purchase_note": "",
-                "categories": [
-                  {
-                    "id": 15,
-                    "name": "Uncategorized",
-                    "slug": "uncategorized"
-                  }
-                ],
-                "brands": [],
-                "tags": [],
-                "images": [],
-                "attributes": [],
-                "default_attributes": [],
-                "variations": [],
-                "grouped_products": [],
-                "menu_order": 0,
-                "price_html": "<span class=\"woocommerce-Price-amount amount\"><bdi><span class=\"woocommerce-Price-currencySymbol\" translate=\"no\" dir=\"auto\">&#122;&#322;</span>49.99</bdi></span>",
-                "related_ids": [
-                  15,
-                  27,
-                  11,
-                  24,
-                  13
-                ],
-                "meta_data": [],
-                "stock_status": "instock",
-                "has_options": false,
-                "post_password": "",
-                "global_unique_id": "",
-                "permalink_template": "https://shop.example.test/product/%pagename%/",
-                "generated_slug": "kubek-ceramiczny-zolty",
-                "_links": {
-                  "self": [
-                    {
-                      "href": "https://shop.example.test/wp-json/wc/v3/products/10",
-                      "targetHints": {
-                        "allow": [
-                          "GET",
-                          "POST",
-                          "PUT",
-                          "PATCH",
-                          "DELETE"
-                        ]
-                      }
-                    }
-                  ],
-                  "collection": [
-                    {
-                      "href": "https://shop.example.test/wp-json/wc/v3/products"
-                    }
-                  ]
-                }
-              },
-              {
-                "id": 11,
-                "name": "Notes w kratkę A5",
-                "slug": "notes-w-kratke-a5",
-                "permalink": "https://shop.example.test/product/notes-w-kratke-a5/",
-                "date_created": "2026-10-10T23:55:45",
-                "date_created_gmt": "2026-10-10T21:55:45",
-                "date_modified": "2026-10-10T23:56:25",
-                "date_modified_gmt": "2026-10-10T21:56:25",
-                "type": "simple",
-                "status": "publish",
-                "featured": false,
-                "catalog_visibility": "visible",
-                "description": "",
-                "short_description": "",
-                "sku": "WOO-NOTE-1",
-                "price": "19.90",
-                "regular_price": "19.90",
-                "sale_price": "",
-                "date_on_sale_from": null,
-                "date_on_sale_from_gmt": null,
-                "date_on_sale_to": null,
-                "date_on_sale_to_gmt": null,
-                "on_sale": false,
-                "purchasable": true,
-                "total_sales": 14,
-                "virtual": false,
-                "downloadable": false,
-                "downloads": [],
-                "download_limit": -1,
-                "download_expiry": -1,
-                "external_url": "",
-                "button_text": "",
-                "tax_status": "taxable",
-                "tax_class": "",
-                "manage_stock": true,
-                "stock_quantity": 30,
-                "backorders": "no",
-                "backorders_allowed": false,
-                "backordered": false,
-                "low_stock_amount": null,
-                "sold_individually": false,
-                "weight": "",
-                "dimensions": {
-                  "length": "",
-                  "width": "",
-                  "height": ""
-                },
-                "shipping_required": true,
-                "shipping_taxable": true,
-                "shipping_class": "",
-                "shipping_class_id": 0,
-                "reviews_allowed": true,
-                "average_rating": "0",
-                "rating_count": 0,
-                "upsell_ids": [],
-                "cross_sell_ids": [],
-                "parent_id": 0,
-                "purchase_note": "",
-                "categories": [
-                  {
-                    "id": 15,
-                    "name": "Uncategorized",
-                    "slug": "uncategorized"
-                  }
-                ],
-                "brands": [],
-                "tags": [],
-                "images": [],
-                "attributes": [],
-                "default_attributes": [],
-                "variations": [],
-                "grouped_products": [],
-                "menu_order": 0,
-                "price_html": "<span class=\"woocommerce-Price-amount amount\"><bdi><span class=\"woocommerce-Price-currencySymbol\" translate=\"no\" dir=\"auto\">&#122;&#322;</span>19.90</bdi></span>",
-                "related_ids": [
-                  15,
-                  13,
-                  28,
-                  19,
-                  16
-                ],
-                "meta_data": [],
-                "stock_status": "instock",
-                "has_options": false,
-                "post_password": "",
-                "global_unique_id": "",
-                "permalink_template": "https://shop.example.test/product/%pagename%/",
-                "generated_slug": "notes-w-kratke-a5",
-                "_links": {
-                  "self": [
-                    {
-                      "href": "https://shop.example.test/wp-json/wc/v3/products/11",
-                      "targetHints": {
-                        "allow": [
-                          "GET",
-                          "POST",
-                          "PUT",
-                          "PATCH",
-                          "DELETE"
-                        ]
-                      }
-                    }
-                  ],
-                  "collection": [
-                    {
-                      "href": "https://shop.example.test/wp-json/wc/v3/products"
-                    }
-                  ]
-                }
-              },
-              {
-                "id": 12,
-                "name": "Plakat bez SKU",
-                "slug": "plakat-bez-sku",
-                "permalink": "https://shop.example.test/product/plakat-bez-sku/",
-                "date_created": "2026-10-10T23:55:45",
-                "date_created_gmt": "2026-10-10T21:55:45",
-                "date_modified": "2026-10-10T23:56:25",
-                "date_modified_gmt": "2026-10-10T21:56:25",
-                "type": "simple",
-                "status": "publish",
-                "featured": false,
-                "catalog_visibility": "visible",
-                "description": "",
-                "short_description": "",
-                "sku": "",
-                "price": "35.00",
-                "regular_price": "35.00",
-                "sale_price": "",
-                "date_on_sale_from": null,
-                "date_on_sale_from_gmt": null,
-                "date_on_sale_to": null,
-                "date_on_sale_to_gmt": null,
-                "on_sale": false,
-                "purchasable": true,
-                "total_sales": 1,
-                "virtual": false,
-                "downloadable": false,
-                "downloads": [],
-                "download_limit": -1,
-                "download_expiry": -1,
-                "external_url": "",
-                "button_text": "",
-                "tax_status": "taxable",
-                "tax_class": "",
-                "manage_stock": true,
-                "stock_quantity": 4,
-                "backorders": "no",
-                "backorders_allowed": false,
-                "backordered": false,
-                "low_stock_amount": null,
-                "sold_individually": false,
-                "weight": "",
-                "dimensions": {
-                  "length": "",
-                  "width": "",
-                  "height": ""
-                },
-                "shipping_required": true,
-                "shipping_taxable": true,
-                "shipping_class": "",
-                "shipping_class_id": 0,
-                "reviews_allowed": true,
-                "average_rating": "0",
-                "rating_count": 0,
-                "upsell_ids": [],
-                "cross_sell_ids": [],
-                "parent_id": 0,
-                "purchase_note": "",
-                "categories": [
-                  {
-                    "id": 15,
-                    "name": "Uncategorized",
-                    "slug": "uncategorized"
-                  }
-                ],
-                "brands": [],
-                "tags": [],
-                "images": [],
-                "attributes": [],
-                "default_attributes": [],
-                "variations": [],
-                "grouped_products": [],
-                "menu_order": 0,
-                "price_html": "<span class=\"woocommerce-Price-amount amount\"><bdi><span class=\"woocommerce-Price-currencySymbol\" translate=\"no\" dir=\"auto\">&#122;&#322;</span>35.00</bdi></span>",
-                "related_ids": [
-                  16,
-                  11,
-                  15,
-                  13,
-                  19
-                ],
-                "meta_data": [],
-                "stock_status": "instock",
-                "has_options": false,
-                "post_password": "",
-                "global_unique_id": "",
-                "permalink_template": "https://shop.example.test/product/%pagename%/",
-                "generated_slug": "plakat-bez-sku",
-                "_links": {
-                  "self": [
-                    {
-                      "href": "https://shop.example.test/wp-json/wc/v3/products/12",
-                      "targetHints": {
-                        "allow": [
-                          "GET",
-                          "POST",
-                          "PUT",
-                          "PATCH",
-                          "DELETE"
-                        ]
-                      }
-                    }
-                  ],
-                  "collection": [
-                    {
-                      "href": "https://shop.example.test/wp-json/wc/v3/products"
-                    }
-                  ]
-                }
-              },
-              {
-                "id": 15,
-                "name": "Produkt bez ceny",
-                "slug": "produkt-bez-ceny",
-                "permalink": "https://shop.example.test/product/produkt-bez-ceny/",
-                "date_created": "2026-10-10T23:55:46",
-                "date_created_gmt": "2026-10-10T21:55:46",
-                "date_modified": "2026-10-10T23:56:25",
-                "date_modified_gmt": "2026-10-10T21:56:25",
-                "type": "simple",
-                "status": "publish",
-                "featured": false,
-                "catalog_visibility": "visible",
-                "description": "",
-                "short_description": "",
-                "sku": "WOO-NOPRICE-1",
-                "price": "",
-                "regular_price": "",
-                "sale_price": "",
-                "date_on_sale_from": null,
-                "date_on_sale_from_gmt": null,
-                "date_on_sale_to": null,
-                "date_on_sale_to_gmt": null,
-                "on_sale": false,
-                "purchasable": false,
-                "total_sales": 0,
-                "virtual": false,
-                "downloadable": false,
-                "downloads": [],
-                "download_limit": -1,
-                "download_expiry": -1,
-                "external_url": "",
-                "button_text": "",
-                "tax_status": "taxable",
-                "tax_class": "",
-                "manage_stock": true,
-                "stock_quantity": 3,
-                "backorders": "no",
-                "backorders_allowed": false,
-                "backordered": false,
-                "low_stock_amount": null,
-                "sold_individually": false,
-                "weight": "",
-                "dimensions": {
-                  "length": "",
-                  "width": "",
-                  "height": ""
-                },
-                "shipping_required": true,
-                "shipping_taxable": true,
-                "shipping_class": "",
-                "shipping_class_id": 0,
-                "reviews_allowed": true,
-                "average_rating": "0",
-                "rating_count": 0,
-                "upsell_ids": [],
-                "cross_sell_ids": [],
-                "parent_id": 0,
-                "purchase_note": "",
-                "categories": [
-                  {
-                    "id": 15,
-                    "name": "Uncategorized",
-                    "slug": "uncategorized"
-                  }
-                ],
-                "brands": [],
-                "tags": [],
-                "images": [],
-                "attributes": [],
-                "default_attributes": [],
-                "variations": [],
-                "grouped_products": [],
-                "menu_order": 0,
-                "price_html": "",
-                "related_ids": [
-                  28,
-                  19,
-                  13,
-                  11,
-                  27
-                ],
-                "meta_data": [],
-                "stock_status": "instock",
-                "has_options": false,
-                "post_password": "",
-                "global_unique_id": "",
-                "permalink_template": "https://shop.example.test/product/%pagename%/",
-                "generated_slug": "produkt-bez-ceny",
-                "_links": {
-                  "self": [
-                    {
-                      "href": "https://shop.example.test/wp-json/wc/v3/products/15",
-                      "targetHints": {
-                        "allow": [
-                          "GET",
-                          "POST",
-                          "PUT",
-                          "PATCH",
-                          "DELETE"
-                        ]
-                      }
-                    }
-                  ],
-                  "collection": [
-                    {
-                      "href": "https://shop.example.test/wp-json/wc/v3/products"
-                    }
-                  ]
-                }
-              },
-              {
-                "id": 16,
-                "name": "Plecak miejski",
-                "slug": "plecak-miejski",
-                "permalink": "https://shop.example.test/product/plecak-miejski/",
-                "date_created": "2026-10-10T23:55:46",
-                "date_created_gmt": "2026-10-10T21:55:46",
-                "date_modified": "2026-10-10T23:56:25",
-                "date_modified_gmt": "2026-10-10T21:56:25",
-                "type": "simple",
-                "status": "publish",
-                "featured": false,
-                "catalog_visibility": "visible",
-                "description": "",
-                "short_description": "",
-                "sku": "WOO-BAG-1",
-                "price": "99.00",
-                "regular_price": "129.00",
-                "sale_price": "99.00",
-                "date_on_sale_from": null,
-                "date_on_sale_from_gmt": null,
-                "date_on_sale_to": null,
-                "date_on_sale_to_gmt": null,
-                "on_sale": true,
-                "purchasable": true,
-                "total_sales": 0,
-                "virtual": false,
-                "downloadable": false,
-                "downloads": [],
-                "download_limit": -1,
-                "download_expiry": -1,
-                "external_url": "",
-                "button_text": "",
-                "tax_status": "taxable",
-                "tax_class": "",
-                "manage_stock": true,
-                "stock_quantity": 5,
-                "backorders": "no",
-                "backorders_allowed": false,
-                "backordered": false,
-                "low_stock_amount": null,
-                "sold_individually": false,
-                "weight": "",
-                "dimensions": {
-                  "length": "",
-                  "width": "",
-                  "height": ""
-                },
-                "shipping_required": true,
-                "shipping_taxable": true,
-                "shipping_class": "",
-                "shipping_class_id": 0,
-                "reviews_allowed": true,
-                "average_rating": "0",
-                "rating_count": 0,
-                "upsell_ids": [],
-                "cross_sell_ids": [],
-                "parent_id": 0,
-                "purchase_note": "",
-                "categories": [
-                  {
-                    "id": 15,
-                    "name": "Uncategorized",
-                    "slug": "uncategorized"
-                  }
-                ],
-                "brands": [],
-                "tags": [],
-                "images": [],
-                "attributes": [],
-                "default_attributes": [],
-                "variations": [],
-                "grouped_products": [],
-                "menu_order": 0,
-                "price_html": "<del aria-hidden=\"true\"><span class=\"woocommerce-Price-amount amount\"><bdi><span class=\"woocommerce-Price-currencySymbol\" translate=\"no\" dir=\"auto\">&#122;&#322;</span>129.00</bdi></span></del> <span class=\"screen-reader-text\">Original price was: &#122;&#322;129.00.</span><ins aria-hidden=\"true\"><span class=\"woocommerce-Price-amount amount\"><bdi><span class=\"woocommerce-Price-currencySymbol\" translate=\"no\" dir=\"auto\">&#122;&#322;</span>99.00</bdi></span></ins><span class=\"screen-reader-text\">Current price is: &#122;&#322;99.00.</span>",
-                "related_ids": [
-                  10,
-                  28,
-                  15,
-                  12,
-                  17
-                ],
-                "meta_data": [],
-                "stock_status": "instock",
-                "has_options": false,
-                "post_password": "",
-                "global_unique_id": "",
-                "permalink_template": "https://shop.example.test/product/%pagename%/",
-                "generated_slug": "plecak-miejski",
-                "_links": {
-                  "self": [
-                    {
-                      "href": "https://shop.example.test/wp-json/wc/v3/products/16",
-                      "targetHints": {
-                        "allow": [
-                          "GET",
-                          "POST",
-                          "PUT",
-                          "PATCH",
-                          "DELETE"
-                        ]
-                      }
-                    }
-                  ],
-                  "collection": [
-                    {
-                      "href": "https://shop.example.test/wp-json/wc/v3/products"
-                    }
-                  ]
-                }
-              }
-            ]
-          }
-        }
-      }
-    },
-    {
-      "request": {
-        "method": "POST",
-        "url": "https://shop.example.test/wp-json/wc/v3/products/19/variations/batch",
-        "headers": {
-          "accept": "application/json",
-          "content-type": "application/json"
-        },
-        "body": {
-          "json": {
-            "update": [
-              {
-                "id": 20,
-                "manage_stock": true,
-                "stock_quantity": 10
-              }
-            ]
-          }
-        }
-      },
-      "response": {
-        "status": 200,
-        "headers": {
-          "content-type": "application/json; charset=UTF-8",
-          "date": "Sat, 10 Oct 2026 21:56:25 GMT",
-          "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\""
-        },
-        "body": {
-          "json": {
-            "update": [
-              {
-                "id": 20,
-                "type": "variation",
-                "date_created": "2026-10-10T23:55:46",
-                "date_created_gmt": "2026-10-10T21:55:46",
-                "date_modified": "2026-10-10T23:56:25",
-                "date_modified_gmt": "2026-10-10T21:56:25",
-                "description": "",
-                "permalink": "https://shop.example.test/product/koszulka-testowa/?attribute_rozmiar=S",
-                "sku": "WOO-TSHIRT-S",
-                "global_unique_id": "",
-                "price": "79.00",
-                "regular_price": "79.00",
-                "sale_price": "",
-                "date_on_sale_from": null,
-                "date_on_sale_from_gmt": null,
-                "date_on_sale_to": null,
-                "date_on_sale_to_gmt": null,
-                "on_sale": false,
-                "status": "publish",
-                "purchasable": true,
-                "virtual": false,
-                "downloadable": false,
-                "downloads": [],
-                "download_limit": -1,
-                "download_expiry": -1,
-                "tax_status": "taxable",
-                "tax_class": "parent",
-                "manage_stock": true,
-                "stock_quantity": 10,
-                "stock_status": "instock",
-                "backorders": "no",
-                "backorders_allowed": false,
-                "backordered": false,
-                "low_stock_amount": null,
-                "weight": "",
-                "dimensions": {
-                  "length": "",
-                  "width": "",
-                  "height": ""
-                },
-                "shipping_class": "",
-                "shipping_class_id": 0,
-                "image": null,
-                "gallery_image_ids": [],
-                "attributes": [
-                  {
-                    "id": 0,
-                    "name": "Rozmiar",
-                    "slug": "rozmiar",
-                    "option": "S"
-                  }
-                ],
-                "menu_order": 0,
-                "meta_data": [],
-                "name": "S",
-                "parent_id": 19,
-                "_links": {
-                  "self": [
-                    {
-                      "href": "https://shop.example.test/wp-json/wc/v3/products/19/variations/20",
-                      "targetHints": {
-                        "allow": [
-                          "GET",
-                          "POST",
-                          "PUT",
-                          "PATCH",
-                          "DELETE"
-                        ]
-                      }
-                    }
-                  ],
-                  "collection": [
-                    {
-                      "href": "https://shop.example.test/wp-json/wc/v3/products/19/variations"
-                    }
-                  ],
-                  "up": [
-                    {
-                      "href": "https://shop.example.test/wp-json/wc/v3/products/19"
-                    }
-                  ]
-                }
-              }
-            ]
-          }
-        }
-      }
-    },
-    {
-      "request": {
-        "method": "POST",
-        "url": "https://shop.example.test/wp-json/wc/v3/products/24/variations/batch",
-        "headers": {
-          "accept": "application/json",
-          "content-type": "application/json"
-        },
-        "body": {
-          "json": {
-            "update": [
-              {
-                "id": 25,
-                "manage_stock": true,
-                "stock_quantity": 9
-              }
-            ]
-          }
-        }
-      },
-      "response": {
-        "status": 200,
-        "headers": {
-          "content-type": "application/json; charset=UTF-8",
-          "date": "Sat, 10 Oct 2026 21:56:25 GMT",
-          "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\""
-        },
-        "body": {
-          "json": {
-            "update": [
-              {
-                "id": 25,
-                "type": "variation",
-                "date_created": "2026-10-10T23:55:47",
-                "date_created_gmt": "2026-10-10T21:55:47",
-                "date_modified": "2026-10-10T23:56:25",
-                "date_modified_gmt": "2026-10-10T21:56:25",
-                "description": "",
-                "permalink": "https://shop.example.test/product/bluza-testowa/?attribute_kolor=Czarny&attribute_rozmiar=M",
-                "sku": "WOO-HOODIE-BLK-M",
-                "global_unique_id": "",
-                "price": "159.00",
-                "regular_price": "159.00",
-                "sale_price": "",
-                "date_on_sale_from": null,
-                "date_on_sale_from_gmt": null,
-                "date_on_sale_to": null,
-                "date_on_sale_to_gmt": null,
-                "on_sale": false,
-                "status": "publish",
-                "purchasable": true,
-                "virtual": false,
-                "downloadable": false,
-                "downloads": [],
-                "download_limit": -1,
-                "download_expiry": -1,
-                "tax_status": "taxable",
-                "tax_class": "parent",
-                "manage_stock": true,
-                "stock_quantity": 9,
-                "stock_status": "instock",
-                "backorders": "no",
-                "backorders_allowed": false,
-                "backordered": false,
-                "low_stock_amount": null,
-                "weight": "",
-                "dimensions": {
-                  "length": "",
-                  "width": "",
-                  "height": ""
-                },
-                "shipping_class": "",
-                "shipping_class_id": 0,
-                "image": null,
-                "gallery_image_ids": [],
-                "attributes": [
-                  {
-                    "id": 0,
-                    "name": "Kolor",
-                    "slug": "kolor",
-                    "option": "Czarny"
-                  },
-                  {
-                    "id": 0,
-                    "name": "Rozmiar",
-                    "slug": "rozmiar",
-                    "option": "M"
-                  }
-                ],
-                "menu_order": 0,
-                "meta_data": [],
-                "name": "Czarny, M",
-                "parent_id": 24,
-                "_links": {
-                  "self": [
-                    {
-                      "href": "https://shop.example.test/wp-json/wc/v3/products/24/variations/25",
-                      "targetHints": {
-                        "allow": [
-                          "GET",
-                          "POST",
-                          "PUT",
-                          "PATCH",
-                          "DELETE"
-                        ]
-                      }
-                    }
-                  ],
-                  "collection": [
-                    {
-                      "href": "https://shop.example.test/wp-json/wc/v3/products/24/variations"
-                    }
-                  ],
-                  "up": [
-                    {
-                      "href": "https://shop.example.test/wp-json/wc/v3/products/24"
-                    }
-                  ]
-                }
-              }
-            ]
-          }
-        }
-      }
-    },
-    {
-      "request": {
-        "method": "GET",
         "url": "https://shop.example.test/wp-json/wc/v3/orders?status=any&orderby=id&order=desc&per_page=1&_fields=id",
         "headers": {
           "accept": "application/json"
@@ -1234,7 +336,7 @@
         "status": 200,
         "headers": {
           "content-type": "application/json; charset=UTF-8",
-          "date": "Sat, 10 Oct 2026 21:56:25 GMT",
+          "date": "Sat, 10 Oct 2026 22:36:21 GMT",
           "link": "<https://shop.example.test/wp-json/wc/v3/orders?orderby=id&order=desc&per_page=1&_fields=id&status%5B0%5D=any&dp=2&context=view&page=2>; rel=\"next\"",
           "x-wp-total": "26",
           "x-wp-totalpages": "26"
@@ -1261,7 +363,7 @@
         "status": 200,
         "headers": {
           "content-type": "application/json; charset=UTF-8",
-          "date": "Sat, 10 Oct 2026 21:56:25 GMT",
+          "date": "Sat, 10 Oct 2026 22:36:21 GMT",
           "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\"",
           "x-wp-total": "0",
           "x-wp-totalpages": "0"
@@ -1284,7 +386,7 @@
         "status": 200,
         "headers": {
           "content-type": "application/json; charset=UTF-8",
-          "date": "Sat, 10 Oct 2026 21:56:25 GMT",
+          "date": "Sat, 10 Oct 2026 22:36:21 GMT",
           "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\"",
           "x-wp-total": "20",
           "x-wp-totalpages": "1"
@@ -1361,7 +463,7 @@
                 }
               ],
               "date_created_gmt": "2026-09-20T06:00:00",
-              "date_modified_gmt": "2026-10-10T21:55:55",
+              "date_modified_gmt": "2026-10-10T22:35:41",
               "date_completed_gmt": null,
               "date_paid_gmt": "2026-09-20T06:02:00"
             },
@@ -1435,7 +537,7 @@
                 }
               ],
               "date_created_gmt": "2026-09-21T06:00:00",
-              "date_modified_gmt": "2026-10-10T21:55:47",
+              "date_modified_gmt": "2026-10-10T22:35:35",
               "date_completed_gmt": null,
               "date_paid_gmt": "2026-09-21T06:02:00"
             },
@@ -1509,7 +611,7 @@
                 }
               ],
               "date_created_gmt": "2026-09-21T06:10:00",
-              "date_modified_gmt": "2026-10-10T21:55:48",
+              "date_modified_gmt": "2026-10-10T22:35:35",
               "date_completed_gmt": null,
               "date_paid_gmt": null
             },
@@ -1619,7 +721,7 @@
                 }
               ],
               "date_created_gmt": "2026-09-21T06:20:00",
-              "date_modified_gmt": "2026-10-10T21:55:48",
+              "date_modified_gmt": "2026-10-10T22:35:35",
               "date_completed_gmt": null,
               "date_paid_gmt": null
             },
@@ -1685,7 +787,7 @@
                 }
               ],
               "date_created_gmt": "2026-09-21T06:30:00",
-              "date_modified_gmt": "2026-10-10T21:55:48",
+              "date_modified_gmt": "2026-10-10T22:35:35",
               "date_completed_gmt": null,
               "date_paid_gmt": null
             },
@@ -1881,7 +983,7 @@
                 }
               ],
               "date_created_gmt": "2026-09-21T07:20:00",
-              "date_modified_gmt": "2026-10-10T21:55:50",
+              "date_modified_gmt": "2026-10-10T22:35:37",
               "date_completed_gmt": null,
               "date_paid_gmt": "2026-09-21T07:22:00"
             },
@@ -1947,7 +1049,7 @@
                 }
               ],
               "date_created_gmt": "2026-09-21T07:30:00",
-              "date_modified_gmt": "2026-10-10T21:55:51",
+              "date_modified_gmt": "2026-10-10T22:35:37",
               "date_completed_gmt": null,
               "date_paid_gmt": "2026-09-21T07:32:00"
             },
@@ -2029,7 +1131,7 @@
                 }
               ],
               "date_created_gmt": "2026-09-21T07:40:00",
-              "date_modified_gmt": "2026-10-10T21:55:51",
+              "date_modified_gmt": "2026-10-10T22:35:37",
               "date_completed_gmt": null,
               "date_paid_gmt": "2026-09-21T07:42:00"
             },
@@ -2095,7 +1197,7 @@
                 }
               ],
               "date_created_gmt": "2026-09-21T07:50:00",
-              "date_modified_gmt": "2026-10-10T21:55:51",
+              "date_modified_gmt": "2026-10-10T22:35:37",
               "date_completed_gmt": null,
               "date_paid_gmt": null
             },
@@ -2205,7 +1307,7 @@
                 }
               ],
               "date_created_gmt": "2026-09-21T08:00:00",
-              "date_modified_gmt": "2026-10-10T21:55:51",
+              "date_modified_gmt": "2026-10-10T22:35:38",
               "date_completed_gmt": null,
               "date_paid_gmt": "2026-09-21T08:02:00"
             },
@@ -2242,7 +1344,7 @@
               "payment_method": "bacs",
               "line_items": [],
               "date_created_gmt": "2026-09-21T08:10:00",
-              "date_modified_gmt": "2026-10-10T21:55:52",
+              "date_modified_gmt": "2026-10-10T22:35:38",
               "date_completed_gmt": null,
               "date_paid_gmt": null
             },
@@ -2316,7 +1418,7 @@
                 }
               ],
               "date_created_gmt": "2026-09-21T08:20:00",
-              "date_modified_gmt": "2026-10-10T21:55:52",
+              "date_modified_gmt": "2026-10-10T22:35:38",
               "date_completed_gmt": null,
               "date_paid_gmt": null
             },
@@ -2390,7 +1492,7 @@
                 }
               ],
               "date_created_gmt": "2026-09-21T09:00:00",
-              "date_modified_gmt": "2026-10-10T21:55:53",
+              "date_modified_gmt": "2026-10-10T22:35:39",
               "date_completed_gmt": null,
               "date_paid_gmt": "2026-09-21T09:02:00"
             },
@@ -2464,7 +1566,7 @@
                 }
               ],
               "date_created_gmt": "2026-09-21T09:10:00",
-              "date_modified_gmt": "2026-10-10T21:55:53",
+              "date_modified_gmt": "2026-10-10T22:35:39",
               "date_completed_gmt": null,
               "date_paid_gmt": "2026-09-21T09:12:00"
             },
@@ -2538,7 +1640,7 @@
                 }
               ],
               "date_created_gmt": "2026-09-21T09:20:00",
-              "date_modified_gmt": "2026-10-10T21:55:53",
+              "date_modified_gmt": "2026-10-10T22:35:39",
               "date_completed_gmt": null,
               "date_paid_gmt": null
             },
@@ -2612,7 +1714,7 @@
                 }
               ],
               "date_created_gmt": "2026-09-21T09:30:00",
-              "date_modified_gmt": "2026-10-10T21:55:54",
+              "date_modified_gmt": "2026-10-10T22:35:40",
               "date_completed_gmt": null,
               "date_paid_gmt": null
             },
@@ -2678,7 +1780,7 @@
                 }
               ],
               "date_created_gmt": "2026-09-21T09:30:00",
-              "date_modified_gmt": "2026-10-10T21:55:54",
+              "date_modified_gmt": "2026-10-10T22:35:40",
               "date_completed_gmt": null,
               "date_paid_gmt": null
             },
@@ -2766,7 +1868,7 @@
                 }
               ],
               "date_created_gmt": "2026-09-21T09:40:00",
-              "date_modified_gmt": "2026-10-10T21:55:54",
+              "date_modified_gmt": "2026-10-10T22:35:40",
               "date_completed_gmt": null,
               "date_paid_gmt": "2026-09-21T09:42:00"
             },
@@ -2840,7 +1942,7 @@
                 }
               ],
               "date_created_gmt": "2026-09-21T09:50:00",
-              "date_modified_gmt": "2026-10-10T21:55:54",
+              "date_modified_gmt": "2026-10-10T22:35:40",
               "date_completed_gmt": null,
               "date_paid_gmt": null
             },
@@ -2906,7 +2008,7 @@
                 }
               ],
               "date_created_gmt": "2026-09-21T10:00:00",
-              "date_modified_gmt": "2026-10-10T21:55:55",
+              "date_modified_gmt": "2026-10-10T22:35:40",
               "date_completed_gmt": null,
               "date_paid_gmt": null
             }
@@ -2927,7 +2029,7 @@
         "status": 200,
         "headers": {
           "content-type": "application/json; charset=UTF-8",
-          "date": "Sat, 10 Oct 2026 21:56:25 GMT",
+          "date": "Sat, 10 Oct 2026 22:36:22 GMT",
           "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\"",
           "x-wp-total": "2",
           "x-wp-totalpages": "1"
@@ -2949,7 +2051,7 @@
     {
       "request": {
         "method": "GET",
-        "url": "https://shop.example.test/wp-json/wc/v3/orders?status=any&orderby=modified&per_page=100&modified_after=2026-10-10T21%3A56%3A04Z&order=asc&_fields=id%2Cstatus%2Ccurrency%2Cdate_created_gmt%2Cdate_modified_gmt%2Cdate_paid_gmt%2Cdate_completed_gmt%2Ctotal%2Cpayment_method%2Cbilling%2Cshipping%2Cline_items",
+        "url": "https://shop.example.test/wp-json/wc/v3/orders?status=any&orderby=modified&per_page=100&modified_after=2026-10-10T22%3A36%3A00Z&order=asc&_fields=id%2Cstatus%2Ccurrency%2Cdate_created_gmt%2Cdate_modified_gmt%2Cdate_paid_gmt%2Cdate_completed_gmt%2Ctotal%2Cpayment_method%2Cbilling%2Cshipping%2Cline_items",
         "headers": {
           "accept": "application/json"
         },
@@ -2959,7 +2061,7 @@
         "status": 200,
         "headers": {
           "content-type": "application/json; charset=UTF-8",
-          "date": "Sat, 10 Oct 2026 21:56:25 GMT",
+          "date": "Sat, 10 Oct 2026 22:36:22 GMT",
           "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\"",
           "x-wp-total": "0",
           "x-wp-totalpages": "0"
@@ -2972,7 +2074,7 @@
     {
       "request": {
         "method": "GET",
-        "url": "https://shop.example.test/wp-json/wc/v3/orders?status=trash&orderby=modified&per_page=100&modified_after=2026-10-10T21%3A56%3A04Z&order=asc&_fields=id%2Cstatus%2Ccurrency%2Cdate_created_gmt%2Cdate_modified_gmt%2Cdate_paid_gmt%2Cdate_completed_gmt%2Ctotal%2Cpayment_method%2Cbilling%2Cshipping%2Cline_items",
+        "url": "https://shop.example.test/wp-json/wc/v3/orders?status=trash&orderby=modified&per_page=100&modified_after=2026-10-10T22%3A36%3A00Z&order=asc&_fields=id%2Cstatus%2Ccurrency%2Cdate_created_gmt%2Cdate_modified_gmt%2Cdate_paid_gmt%2Cdate_completed_gmt%2Ctotal%2Cpayment_method%2Cbilling%2Cshipping%2Cline_items",
         "headers": {
           "accept": "application/json"
         },
@@ -2982,7 +2084,7 @@
         "status": 200,
         "headers": {
           "content-type": "application/json; charset=UTF-8",
-          "date": "Sat, 10 Oct 2026 21:56:25 GMT",
+          "date": "Sat, 10 Oct 2026 22:36:22 GMT",
           "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\"",
           "x-wp-total": "0",
           "x-wp-totalpages": "0"
@@ -2995,7 +2097,7 @@
     {
       "request": {
         "method": "GET",
-        "url": "https://shop.example.test/wp-json/wc/v3/products?include=10%2C11%2C12%2C16&per_page=100&_fields=id%2Ctype",
+        "url": "https://shop.example.test/wp-json/wc/v3/products?include=10%2C11%2C12%2C15%2C16&per_page=100&_fields=id%2Ctype",
         "headers": {
           "accept": "application/json"
         },
@@ -3005,15 +2107,19 @@
         "status": 200,
         "headers": {
           "content-type": "application/json; charset=UTF-8",
-          "date": "Sat, 10 Oct 2026 21:56:26 GMT",
+          "date": "Sat, 10 Oct 2026 22:36:22 GMT",
           "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\"",
-          "x-wp-total": "4",
+          "x-wp-total": "5",
           "x-wp-totalpages": "1"
         },
         "body": {
           "json": [
             {
               "id": 16,
+              "type": "simple"
+            },
+            {
+              "id": 15,
               "type": "simple"
             },
             {
@@ -3059,6 +2165,11 @@
                 "stock_quantity": 3
               },
               {
+                "id": 15,
+                "manage_stock": true,
+                "stock_quantity": 3
+              },
+              {
                 "id": 16,
                 "manage_stock": true,
                 "stock_quantity": 3
@@ -3071,7 +2182,7 @@
         "status": 200,
         "headers": {
           "content-type": "application/json; charset=UTF-8",
-          "date": "Sat, 10 Oct 2026 21:56:26 GMT",
+          "date": "Sat, 10 Oct 2026 22:36:22 GMT",
           "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\""
         },
         "body": {
@@ -3082,10 +2193,10 @@
                 "name": "Kubek ceramiczny żółty",
                 "slug": "kubek-ceramiczny-zolty",
                 "permalink": "https://shop.example.test/product/kubek-ceramiczny-zolty/",
-                "date_created": "2026-10-10T23:55:45",
-                "date_created_gmt": "2026-10-10T21:55:45",
-                "date_modified": "2026-10-10T23:56:26",
-                "date_modified_gmt": "2026-10-10T21:56:26",
+                "date_created": "2026-10-11T00:35:33",
+                "date_created_gmt": "2026-10-10T22:35:33",
+                "date_modified": "2026-10-11T00:36:22",
+                "date_modified_gmt": "2026-10-10T22:36:22",
                 "type": "simple",
                 "status": "publish",
                 "featured": false,
@@ -3153,11 +2264,11 @@
                 "menu_order": 0,
                 "price_html": "<span class=\"woocommerce-Price-amount amount\"><bdi><span class=\"woocommerce-Price-currencySymbol\" translate=\"no\" dir=\"auto\">&#122;&#322;</span>49.99</bdi></span>",
                 "related_ids": [
-                  17,
-                  13,
                   12,
-                  16,
-                  27
+                  13,
+                  27,
+                  19,
+                  24
                 ],
                 "meta_data": [],
                 "stock_status": "instock",
@@ -3193,10 +2304,10 @@
                 "name": "Notes w kratkę A5",
                 "slug": "notes-w-kratke-a5",
                 "permalink": "https://shop.example.test/product/notes-w-kratke-a5/",
-                "date_created": "2026-10-10T23:55:45",
-                "date_created_gmt": "2026-10-10T21:55:45",
-                "date_modified": "2026-10-10T23:56:26",
-                "date_modified_gmt": "2026-10-10T21:56:26",
+                "date_created": "2026-10-11T00:35:33",
+                "date_created_gmt": "2026-10-10T22:35:33",
+                "date_modified": "2026-10-11T00:36:22",
+                "date_modified_gmt": "2026-10-10T22:36:22",
                 "type": "simple",
                 "status": "publish",
                 "featured": false,
@@ -3264,11 +2375,11 @@
                 "menu_order": 0,
                 "price_html": "<span class=\"woocommerce-Price-amount amount\"><bdi><span class=\"woocommerce-Price-currencySymbol\" translate=\"no\" dir=\"auto\">&#122;&#322;</span>19.90</bdi></span>",
                 "related_ids": [
-                  10,
+                  13,
                   12,
-                  28,
-                  27,
-                  24
+                  10,
+                  24,
+                  28
                 ],
                 "meta_data": [],
                 "stock_status": "instock",
@@ -3304,10 +2415,10 @@
                 "name": "Plakat bez SKU",
                 "slug": "plakat-bez-sku",
                 "permalink": "https://shop.example.test/product/plakat-bez-sku/",
-                "date_created": "2026-10-10T23:55:45",
-                "date_created_gmt": "2026-10-10T21:55:45",
-                "date_modified": "2026-10-10T23:56:26",
-                "date_modified_gmt": "2026-10-10T21:56:26",
+                "date_created": "2026-10-11T00:35:33",
+                "date_created_gmt": "2026-10-10T22:35:33",
+                "date_modified": "2026-10-11T00:36:22",
+                "date_modified_gmt": "2026-10-10T22:36:22",
                 "type": "simple",
                 "status": "publish",
                 "featured": false,
@@ -3376,10 +2487,10 @@
                 "price_html": "<span class=\"woocommerce-Price-amount amount\"><bdi><span class=\"woocommerce-Price-currencySymbol\" translate=\"no\" dir=\"auto\">&#122;&#322;</span>35.00</bdi></span>",
                 "related_ids": [
                   28,
-                  16,
-                  19,
+                  15,
                   13,
-                  11
+                  16,
+                  24
                 ],
                 "meta_data": [],
                 "stock_status": "instock",
@@ -3411,14 +2522,125 @@
                 }
               },
               {
+                "id": 15,
+                "name": "Produkt bez ceny",
+                "slug": "produkt-bez-ceny",
+                "permalink": "https://shop.example.test/product/produkt-bez-ceny/",
+                "date_created": "2026-10-11T00:35:34",
+                "date_created_gmt": "2026-10-10T22:35:34",
+                "date_modified": "2026-10-11T00:36:22",
+                "date_modified_gmt": "2026-10-10T22:36:22",
+                "type": "simple",
+                "status": "publish",
+                "featured": false,
+                "catalog_visibility": "visible",
+                "description": "",
+                "short_description": "",
+                "sku": "WOO-NOPRICE-1",
+                "price": "",
+                "regular_price": "",
+                "sale_price": "",
+                "date_on_sale_from": null,
+                "date_on_sale_from_gmt": null,
+                "date_on_sale_to": null,
+                "date_on_sale_to_gmt": null,
+                "on_sale": false,
+                "purchasable": false,
+                "total_sales": 0,
+                "virtual": false,
+                "downloadable": false,
+                "downloads": [],
+                "download_limit": -1,
+                "download_expiry": -1,
+                "external_url": "",
+                "button_text": "",
+                "tax_status": "taxable",
+                "tax_class": "",
+                "manage_stock": true,
+                "stock_quantity": 3,
+                "backorders": "no",
+                "backorders_allowed": false,
+                "backordered": false,
+                "low_stock_amount": null,
+                "sold_individually": false,
+                "weight": "",
+                "dimensions": {
+                  "length": "",
+                  "width": "",
+                  "height": ""
+                },
+                "shipping_required": true,
+                "shipping_taxable": true,
+                "shipping_class": "",
+                "shipping_class_id": 0,
+                "reviews_allowed": true,
+                "average_rating": "0",
+                "rating_count": 0,
+                "upsell_ids": [],
+                "cross_sell_ids": [],
+                "parent_id": 0,
+                "purchase_note": "",
+                "categories": [
+                  {
+                    "id": 15,
+                    "name": "Uncategorized",
+                    "slug": "uncategorized"
+                  }
+                ],
+                "brands": [],
+                "tags": [],
+                "images": [],
+                "attributes": [],
+                "default_attributes": [],
+                "variations": [],
+                "grouped_products": [],
+                "menu_order": 0,
+                "price_html": "",
+                "related_ids": [
+                  28,
+                  24,
+                  13,
+                  10,
+                  11
+                ],
+                "meta_data": [],
+                "stock_status": "instock",
+                "has_options": false,
+                "post_password": "",
+                "global_unique_id": "",
+                "permalink_template": "https://shop.example.test/product/%pagename%/",
+                "generated_slug": "produkt-bez-ceny",
+                "_links": {
+                  "self": [
+                    {
+                      "href": "https://shop.example.test/wp-json/wc/v3/products/15",
+                      "targetHints": {
+                        "allow": [
+                          "GET",
+                          "POST",
+                          "PUT",
+                          "PATCH",
+                          "DELETE"
+                        ]
+                      }
+                    }
+                  ],
+                  "collection": [
+                    {
+                      "href": "https://shop.example.test/wp-json/wc/v3/products"
+                    }
+                  ]
+                }
+              },
+              {
                 "id": 16,
                 "name": "Plecak miejski",
                 "slug": "plecak-miejski",
                 "permalink": "https://shop.example.test/product/plecak-miejski/",
-                "date_created": "2026-10-10T23:55:46",
-                "date_created_gmt": "2026-10-10T21:55:46",
-                "date_modified": "2026-10-10T23:56:26",
-                "date_modified_gmt": "2026-10-10T21:56:26",
+                "date_created": "2026-10-11T00:35:34",
+                "date_created_gmt": "2026-10-10T22:35:34",
+                "date_modified": "2026-10-11T00:36:22",
+                "date_modified_gmt": "2026-10-10T22:36:22",
                 "type": "simple",
                 "status": "publish",
                 "featured": false,
@@ -3486,11 +2708,11 @@
                 "menu_order": 0,
                 "price_html": "<del aria-hidden=\"true\"><span class=\"woocommerce-Price-amount amount\"><bdi><span class=\"woocommerce-Price-currencySymbol\" translate=\"no\" dir=\"auto\">&#122;&#322;</span>129.00</bdi></span></del> <span class=\"screen-reader-text\">Original price was: &#122;&#322;129.00.</span><ins aria-hidden=\"true\"><span class=\"woocommerce-Price-amount amount\"><bdi><span class=\"woocommerce-Price-currencySymbol\" translate=\"no\" dir=\"auto\">&#122;&#322;</span>99.00</bdi></span></ins><span class=\"screen-reader-text\">Current price is: &#122;&#322;99.00.</span>",
                 "related_ids": [
-                  11,
-                  17,
-                  19,
                   13,
-                  28
+                  10,
+                  28,
+                  24,
+                  15
                 ],
                 "meta_data": [],
                 "stock_status": "instock",
@@ -3550,7 +2772,7 @@
         "status": 200,
         "headers": {
           "content-type": "application/json; charset=UTF-8",
-          "date": "Sat, 10 Oct 2026 21:56:26 GMT",
+          "date": "Sat, 10 Oct 2026 22:36:22 GMT",
           "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\""
         },
         "body": {
@@ -3559,10 +2781,10 @@
               {
                 "id": 20,
                 "type": "variation",
-                "date_created": "2026-10-10T23:55:46",
-                "date_created_gmt": "2026-10-10T21:55:46",
-                "date_modified": "2026-10-10T23:56:26",
-                "date_modified_gmt": "2026-10-10T21:56:26",
+                "date_created": "2026-10-11T00:35:34",
+                "date_created_gmt": "2026-10-10T22:35:34",
+                "date_modified": "2026-10-11T00:36:22",
+                "date_modified_gmt": "2026-10-10T22:36:22",
                 "description": "",
                 "permalink": "https://shop.example.test/product/koszulka-testowa/?attribute_rozmiar=S",
                 "sku": "WOO-TSHIRT-S",
@@ -3669,7 +2891,7 @@
         "status": 200,
         "headers": {
           "content-type": "application/json; charset=UTF-8",
-          "date": "Sat, 10 Oct 2026 21:56:26 GMT",
+          "date": "Sat, 10 Oct 2026 22:36:22 GMT",
           "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\""
         },
         "body": {
@@ -3678,10 +2900,10 @@
               {
                 "id": 25,
                 "type": "variation",
-                "date_created": "2026-10-10T23:55:47",
-                "date_created_gmt": "2026-10-10T21:55:47",
-                "date_modified": "2026-10-10T23:56:26",
-                "date_modified_gmt": "2026-10-10T21:56:26",
+                "date_created": "2026-10-11T00:35:34",
+                "date_created_gmt": "2026-10-10T22:35:34",
+                "date_modified": "2026-10-11T00:36:22",
+                "date_modified_gmt": "2026-10-10T22:36:22",
                 "description": "",
                 "permalink": "https://shop.example.test/product/bluza-testowa/?attribute_kolor=Czarny&attribute_rozmiar=M",
                 "sku": "WOO-HOODIE-BLK-M",
@@ -3773,7 +2995,7 @@
     {
       "request": {
         "method": "GET",
-        "url": "https://shop.example.test/wp-json/wc/v3/orders?status=any&orderby=modified&per_page=100&modified_after=2026-10-10T21%3A56%3A04Z&order=asc&_fields=id%2Cstatus%2Ccurrency%2Cdate_created_gmt%2Cdate_modified_gmt%2Cdate_paid_gmt%2Cdate_completed_gmt%2Ctotal%2Cpayment_method%2Cbilling%2Cshipping%2Cline_items",
+        "url": "https://shop.example.test/wp-json/wc/v3/orders?status=any&orderby=modified&per_page=100&modified_after=2026-10-10T22%3A36%3A00Z&order=asc&_fields=id%2Cstatus%2Ccurrency%2Cdate_created_gmt%2Cdate_modified_gmt%2Cdate_paid_gmt%2Cdate_completed_gmt%2Ctotal%2Cpayment_method%2Cbilling%2Cshipping%2Cline_items",
         "headers": {
           "accept": "application/json"
         },
@@ -3783,7 +3005,7 @@
         "status": 200,
         "headers": {
           "content-type": "application/json; charset=UTF-8",
-          "date": "Sat, 10 Oct 2026 21:56:26 GMT",
+          "date": "Sat, 10 Oct 2026 22:36:23 GMT",
           "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\"",
           "x-wp-total": "0",
           "x-wp-totalpages": "0"
@@ -3796,7 +3018,7 @@
     {
       "request": {
         "method": "GET",
-        "url": "https://shop.example.test/wp-json/wc/v3/orders?status=trash&orderby=modified&per_page=100&modified_after=2026-10-10T21%3A56%3A04Z&order=asc&_fields=id%2Cstatus%2Ccurrency%2Cdate_created_gmt%2Cdate_modified_gmt%2Cdate_paid_gmt%2Cdate_completed_gmt%2Ctotal%2Cpayment_method%2Cbilling%2Cshipping%2Cline_items",
+        "url": "https://shop.example.test/wp-json/wc/v3/orders?status=trash&orderby=modified&per_page=100&modified_after=2026-10-10T22%3A36%3A00Z&order=asc&_fields=id%2Cstatus%2Ccurrency%2Cdate_created_gmt%2Cdate_modified_gmt%2Cdate_paid_gmt%2Cdate_completed_gmt%2Ctotal%2Cpayment_method%2Cbilling%2Cshipping%2Cline_items",
         "headers": {
           "accept": "application/json"
         },
@@ -3806,7 +3028,7 @@
         "status": 200,
         "headers": {
           "content-type": "application/json; charset=UTF-8",
-          "date": "Sat, 10 Oct 2026 21:56:26 GMT",
+          "date": "Sat, 10 Oct 2026 22:36:23 GMT",
           "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\"",
           "x-wp-total": "0",
           "x-wp-totalpages": "0"
@@ -3829,7 +3051,7 @@
         "status": 200,
         "headers": {
           "content-type": "application/json; charset=UTF-8",
-          "date": "Sat, 10 Oct 2026 21:56:26 GMT",
+          "date": "Sat, 10 Oct 2026 22:36:23 GMT",
           "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\""
         },
         "body": {
@@ -3869,7 +3091,7 @@
         "status": 200,
         "headers": {
           "content-type": "application/json; charset=UTF-8",
-          "date": "Sat, 10 Oct 2026 21:56:26 GMT",
+          "date": "Sat, 10 Oct 2026 22:36:23 GMT",
           "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\"",
           "x-wp-total": "12",
           "x-wp-totalpages": "1"
@@ -4001,7 +3223,7 @@
         "status": 200,
         "headers": {
           "content-type": "application/json; charset=UTF-8",
-          "date": "Sat, 10 Oct 2026 21:56:26 GMT",
+          "date": "Sat, 10 Oct 2026 22:36:23 GMT",
           "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\"",
           "x-wp-total": "4",
           "x-wp-totalpages": "1"
@@ -4085,7 +3307,7 @@
         "status": 200,
         "headers": {
           "content-type": "application/json; charset=UTF-8",
-          "date": "Sat, 10 Oct 2026 21:56:26 GMT",
+          "date": "Sat, 10 Oct 2026 22:36:23 GMT",
           "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\"",
           "x-wp-total": "2",
           "x-wp-totalpages": "1"
@@ -4141,7 +3363,7 @@
     {
       "request": {
         "method": "GET",
-        "url": "https://shop.example.test/wp-json/wc/v3/orders?status=any&orderby=modified&per_page=100&modified_after=2026-10-10T21%3A56%3A04Z&order=asc&_fields=id%2Cstatus%2Ccurrency%2Cdate_created_gmt%2Cdate_modified_gmt%2Cdate_paid_gmt%2Cdate_completed_gmt%2Ctotal%2Cpayment_method%2Cbilling%2Cshipping%2Cline_items",
+        "url": "https://shop.example.test/wp-json/wc/v3/orders?status=any&orderby=modified&per_page=100&modified_after=2026-10-10T22%3A36%3A00Z&order=asc&_fields=id%2Cstatus%2Ccurrency%2Cdate_created_gmt%2Cdate_modified_gmt%2Cdate_paid_gmt%2Cdate_completed_gmt%2Ctotal%2Cpayment_method%2Cbilling%2Cshipping%2Cline_items",
         "headers": {
           "accept": "application/json"
         },
@@ -4151,7 +3373,7 @@
         "status": 200,
         "headers": {
           "content-type": "application/json; charset=UTF-8",
-          "date": "Sat, 10 Oct 2026 21:56:26 GMT",
+          "date": "Sat, 10 Oct 2026 22:36:23 GMT",
           "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\"",
           "x-wp-total": "0",
           "x-wp-totalpages": "0"
@@ -4164,7 +3386,7 @@
     {
       "request": {
         "method": "GET",
-        "url": "https://shop.example.test/wp-json/wc/v3/orders?status=trash&orderby=modified&per_page=100&modified_after=2026-10-10T21%3A56%3A04Z&order=asc&_fields=id%2Cstatus%2Ccurrency%2Cdate_created_gmt%2Cdate_modified_gmt%2Cdate_paid_gmt%2Cdate_completed_gmt%2Ctotal%2Cpayment_method%2Cbilling%2Cshipping%2Cline_items",
+        "url": "https://shop.example.test/wp-json/wc/v3/orders?status=trash&orderby=modified&per_page=100&modified_after=2026-10-10T22%3A36%3A00Z&order=asc&_fields=id%2Cstatus%2Ccurrency%2Cdate_created_gmt%2Cdate_modified_gmt%2Cdate_paid_gmt%2Cdate_completed_gmt%2Ctotal%2Cpayment_method%2Cbilling%2Cshipping%2Cline_items",
         "headers": {
           "accept": "application/json"
         },
@@ -4174,7 +3396,7 @@
         "status": 200,
         "headers": {
           "content-type": "application/json; charset=UTF-8",
-          "date": "Sat, 10 Oct 2026 21:56:26 GMT",
+          "date": "Sat, 10 Oct 2026 22:36:23 GMT",
           "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\"",
           "x-wp-total": "0",
           "x-wp-totalpages": "0"
@@ -4187,7 +3409,7 @@
     {
       "request": {
         "method": "GET",
-        "url": "https://shop.example.test/wp-json/wc/v3/orders?status=any&orderby=modified&per_page=100&modified_after=2026-10-10T21%3A56%3A04Z&order=asc&_fields=id%2Cstatus%2Ccurrency%2Cdate_created_gmt%2Cdate_modified_gmt%2Cdate_paid_gmt%2Cdate_completed_gmt%2Ctotal%2Cpayment_method%2Cbilling%2Cshipping%2Cline_items",
+        "url": "https://shop.example.test/wp-json/wc/v3/orders?status=any&orderby=modified&per_page=100&modified_after=2026-10-10T22%3A36%3A00Z&order=asc&_fields=id%2Cstatus%2Ccurrency%2Cdate_created_gmt%2Cdate_modified_gmt%2Cdate_paid_gmt%2Cdate_completed_gmt%2Ctotal%2Cpayment_method%2Cbilling%2Cshipping%2Cline_items",
         "headers": {
           "accept": "application/json"
         },
@@ -4197,7 +3419,7 @@
         "status": 200,
         "headers": {
           "content-type": "application/json; charset=UTF-8",
-          "date": "Sat, 10 Oct 2026 21:56:51 GMT",
+          "date": "Sat, 10 Oct 2026 22:36:48 GMT",
           "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\"",
           "x-wp-total": "3",
           "x-wp-totalpages": "1"
@@ -4274,9 +3496,75 @@
                 }
               ],
               "date_created_gmt": "2026-09-21T06:30:00",
-              "date_modified_gmt": "2026-10-10T21:56:26",
+              "date_modified_gmt": "2026-10-10T22:36:23",
               "date_completed_gmt": null,
-              "date_paid_gmt": "2026-10-10T21:56:26"
+              "date_paid_gmt": "2026-10-10T22:36:23"
+            },
+            {
+              "id": 51,
+              "status": "cancelled",
+              "currency": "PLN",
+              "total": "114.97",
+              "billing": {
+                "first_name": "scrubbed-14",
+                "last_name": "scrubbed-15",
+                "company": null,
+                "address_1": "scrubbed-16",
+                "address_2": "scrubbed-17",
+                "city": "scrubbed-18",
+                "state": null,
+                "postcode": "scrubbed-19",
+                "country": "PL",
+                "email": "person-3@example.com",
+                "phone": "+00000000003"
+              },
+              "shipping": {
+                "first_name": "scrubbed-14",
+                "last_name": "scrubbed-15",
+                "company": null,
+                "address_1": "scrubbed-16",
+                "address_2": "scrubbed-17",
+                "city": "scrubbed-18",
+                "state": null,
+                "postcode": "scrubbed-19",
+                "country": "PL",
+                "phone": "+00000000003"
+              },
+              "payment_method": "bacs",
+              "line_items": [
+                {
+                  "id": 60,
+                  "name": "Kubek ceramiczny żółty",
+                  "product_id": 10,
+                  "variation_id": 0,
+                  "quantity": 2,
+                  "tax_class": "",
+                  "subtotal": "81.28",
+                  "subtotal_tax": "18.70",
+                  "total": "81.28",
+                  "total_tax": "18.70",
+                  "taxes": [
+                    {
+                      "id": 1,
+                      "total": "18.70",
+                      "subtotal": "18.70"
+                    }
+                  ],
+                  "meta_data": [],
+                  "sku": "WOO-MUG-1",
+                  "global_unique_id": "",
+                  "price": 40.6422765,
+                  "image": {
+                    "id": "",
+                    "src": ""
+                  },
+                  "parent_name": null
+                }
+              ],
+              "date_created_gmt": "2026-09-21T09:20:00",
+              "date_modified_gmt": "2026-10-10T22:36:23",
+              "date_completed_gmt": null,
+              "date_paid_gmt": null
             },
             {
               "id": 30,
@@ -4348,75 +3636,9 @@
                 }
               ],
               "date_created_gmt": "2026-09-21T06:00:00",
-              "date_modified_gmt": "2026-10-10T21:56:27",
-              "date_completed_gmt": "2026-10-10T21:56:27",
+              "date_modified_gmt": "2026-10-10T22:36:24",
+              "date_completed_gmt": "2026-10-10T22:36:24",
               "date_paid_gmt": "2026-09-21T06:02:00"
-            },
-            {
-              "id": 51,
-              "status": "cancelled",
-              "currency": "PLN",
-              "total": "114.97",
-              "billing": {
-                "first_name": "scrubbed-14",
-                "last_name": "scrubbed-15",
-                "company": null,
-                "address_1": "scrubbed-16",
-                "address_2": "scrubbed-17",
-                "city": "scrubbed-18",
-                "state": null,
-                "postcode": "scrubbed-19",
-                "country": "PL",
-                "email": "person-3@example.com",
-                "phone": "+00000000003"
-              },
-              "shipping": {
-                "first_name": "scrubbed-14",
-                "last_name": "scrubbed-15",
-                "company": null,
-                "address_1": "scrubbed-16",
-                "address_2": "scrubbed-17",
-                "city": "scrubbed-18",
-                "state": null,
-                "postcode": "scrubbed-19",
-                "country": "PL",
-                "phone": "+00000000003"
-              },
-              "payment_method": "bacs",
-              "line_items": [
-                {
-                  "id": 60,
-                  "name": "Kubek ceramiczny żółty",
-                  "product_id": 10,
-                  "variation_id": 0,
-                  "quantity": 2,
-                  "tax_class": "",
-                  "subtotal": "81.28",
-                  "subtotal_tax": "18.70",
-                  "total": "81.28",
-                  "total_tax": "18.70",
-                  "taxes": [
-                    {
-                      "id": 1,
-                      "total": "18.70",
-                      "subtotal": "18.70"
-                    }
-                  ],
-                  "meta_data": [],
-                  "sku": "WOO-MUG-1",
-                  "global_unique_id": "",
-                  "price": 40.6422765,
-                  "image": {
-                    "id": "",
-                    "src": ""
-                  },
-                  "parent_name": null
-                }
-              ],
-              "date_created_gmt": "2026-09-21T09:20:00",
-              "date_modified_gmt": "2026-10-10T21:56:27",
-              "date_completed_gmt": null,
-              "date_paid_gmt": null
             }
           ]
         }
@@ -4425,7 +3647,7 @@
     {
       "request": {
         "method": "GET",
-        "url": "https://shop.example.test/wp-json/wc/v3/orders?status=trash&orderby=modified&per_page=100&modified_after=2026-10-10T21%3A56%3A04Z&order=asc&_fields=id%2Cstatus%2Ccurrency%2Cdate_created_gmt%2Cdate_modified_gmt%2Cdate_paid_gmt%2Cdate_completed_gmt%2Ctotal%2Cpayment_method%2Cbilling%2Cshipping%2Cline_items",
+        "url": "https://shop.example.test/wp-json/wc/v3/orders?status=trash&orderby=modified&per_page=100&modified_after=2026-10-10T22%3A36%3A00Z&order=asc&_fields=id%2Cstatus%2Ccurrency%2Cdate_created_gmt%2Cdate_modified_gmt%2Cdate_paid_gmt%2Cdate_completed_gmt%2Ctotal%2Cpayment_method%2Cbilling%2Cshipping%2Cline_items",
         "headers": {
           "accept": "application/json"
         },
@@ -4435,7 +3657,7 @@
         "status": 200,
         "headers": {
           "content-type": "application/json; charset=UTF-8",
-          "date": "Sat, 10 Oct 2026 21:56:51 GMT",
+          "date": "Sat, 10 Oct 2026 22:36:48 GMT",
           "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\"",
           "x-wp-total": "1",
           "x-wp-totalpages": "1"
@@ -4512,7 +3734,7 @@
                 }
               ],
               "date_created_gmt": "2026-09-21T09:50:00",
-              "date_modified_gmt": "2026-10-10T21:56:27",
+              "date_modified_gmt": "2026-10-10T22:36:24",
               "date_completed_gmt": null,
               "date_paid_gmt": null
             }
@@ -4523,7 +3745,7 @@
     {
       "request": {
         "method": "GET",
-        "url": "https://shop.example.test/wp-json/wc/v3/products?include=10%2C11&per_page=100&_fields=id%2Ctype",
+        "url": "https://shop.example.test/wp-json/wc/v3/products?include=10%2C11%2C16&per_page=100&_fields=id%2Ctype",
         "headers": {
           "accept": "application/json"
         },
@@ -4533,13 +3755,17 @@
         "status": 200,
         "headers": {
           "content-type": "application/json; charset=UTF-8",
-          "date": "Sat, 10 Oct 2026 21:56:51 GMT",
+          "date": "Sat, 10 Oct 2026 22:36:48 GMT",
           "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\"",
-          "x-wp-total": "2",
+          "x-wp-total": "3",
           "x-wp-totalpages": "1"
         },
         "body": {
           "json": [
+            {
+              "id": 16,
+              "type": "simple"
+            },
             {
               "id": 11,
               "type": "simple"
@@ -4572,6 +3798,11 @@
                 "id": 11,
                 "manage_stock": true,
                 "stock_quantity": 25
+              },
+              {
+                "id": 16,
+                "manage_stock": true,
+                "stock_quantity": 3
               }
             ]
           }
@@ -4581,7 +3812,7 @@
         "status": 200,
         "headers": {
           "content-type": "application/json; charset=UTF-8",
-          "date": "Sat, 10 Oct 2026 21:56:51 GMT",
+          "date": "Sat, 10 Oct 2026 22:36:48 GMT",
           "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\""
         },
         "body": {
@@ -4592,10 +3823,10 @@
                 "name": "Kubek ceramiczny żółty",
                 "slug": "kubek-ceramiczny-zolty",
                 "permalink": "https://shop.example.test/product/kubek-ceramiczny-zolty/",
-                "date_created": "2026-10-10T23:55:45",
-                "date_created_gmt": "2026-10-10T21:55:45",
-                "date_modified": "2026-10-10T23:56:51",
-                "date_modified_gmt": "2026-10-10T21:56:51",
+                "date_created": "2026-10-11T00:35:33",
+                "date_created_gmt": "2026-10-10T22:35:33",
+                "date_modified": "2026-10-11T00:36:48",
+                "date_modified_gmt": "2026-10-10T22:36:48",
                 "type": "simple",
                 "status": "publish",
                 "featured": false,
@@ -4663,11 +3894,11 @@
                 "menu_order": 0,
                 "price_html": "<span class=\"woocommerce-Price-amount amount\"><bdi><span class=\"woocommerce-Price-currencySymbol\" translate=\"no\" dir=\"auto\">&#122;&#322;</span>49.99</bdi></span>",
                 "related_ids": [
-                  24,
-                  28,
-                  19,
                   27,
-                  13
+                  19,
+                  11,
+                  28,
+                  17
                 ],
                 "meta_data": [],
                 "stock_status": "instock",
@@ -4703,10 +3934,10 @@
                 "name": "Notes w kratkę A5",
                 "slug": "notes-w-kratke-a5",
                 "permalink": "https://shop.example.test/product/notes-w-kratke-a5/",
-                "date_created": "2026-10-10T23:55:45",
-                "date_created_gmt": "2026-10-10T21:55:45",
-                "date_modified": "2026-10-10T23:56:51",
-                "date_modified_gmt": "2026-10-10T21:56:51",
+                "date_created": "2026-10-11T00:35:33",
+                "date_created_gmt": "2026-10-10T22:35:33",
+                "date_modified": "2026-10-11T00:36:48",
+                "date_modified_gmt": "2026-10-10T22:36:48",
                 "type": "simple",
                 "status": "publish",
                 "featured": false,
@@ -4774,11 +4005,11 @@
                 "menu_order": 0,
                 "price_html": "<span class=\"woocommerce-Price-amount amount\"><bdi><span class=\"woocommerce-Price-currencySymbol\" translate=\"no\" dir=\"auto\">&#122;&#322;</span>19.90</bdi></span>",
                 "related_ids": [
+                  15,
+                  27,
                   24,
-                  13,
-                  28,
-                  12,
-                  10
+                  10,
+                  13
                 ],
                 "meta_data": [],
                 "stock_status": "instock",
@@ -4808,6 +4039,117 @@
                     }
                   ]
                 }
+              },
+              {
+                "id": 16,
+                "name": "Plecak miejski",
+                "slug": "plecak-miejski",
+                "permalink": "https://shop.example.test/product/plecak-miejski/",
+                "date_created": "2026-10-11T00:35:34",
+                "date_created_gmt": "2026-10-10T22:35:34",
+                "date_modified": "2026-10-11T00:36:48",
+                "date_modified_gmt": "2026-10-10T22:36:48",
+                "type": "simple",
+                "status": "publish",
+                "featured": false,
+                "catalog_visibility": "visible",
+                "description": "",
+                "short_description": "",
+                "sku": "WOO-BAG-1",
+                "price": "99.00",
+                "regular_price": "129.00",
+                "sale_price": "99.00",
+                "date_on_sale_from": null,
+                "date_on_sale_from_gmt": null,
+                "date_on_sale_to": null,
+                "date_on_sale_to_gmt": null,
+                "on_sale": true,
+                "purchasable": true,
+                "total_sales": 1,
+                "virtual": false,
+                "downloadable": false,
+                "downloads": [],
+                "download_limit": -1,
+                "download_expiry": -1,
+                "external_url": "",
+                "button_text": "",
+                "tax_status": "taxable",
+                "tax_class": "",
+                "manage_stock": true,
+                "stock_quantity": 3,
+                "backorders": "no",
+                "backorders_allowed": false,
+                "backordered": false,
+                "low_stock_amount": null,
+                "sold_individually": false,
+                "weight": "",
+                "dimensions": {
+                  "length": "",
+                  "width": "",
+                  "height": ""
+                },
+                "shipping_required": true,
+                "shipping_taxable": true,
+                "shipping_class": "",
+                "shipping_class_id": 0,
+                "reviews_allowed": true,
+                "average_rating": "0",
+                "rating_count": 0,
+                "upsell_ids": [],
+                "cross_sell_ids": [],
+                "parent_id": 0,
+                "purchase_note": "",
+                "categories": [
+                  {
+                    "id": 15,
+                    "name": "Uncategorized",
+                    "slug": "uncategorized"
+                  }
+                ],
+                "brands": [],
+                "tags": [],
+                "images": [],
+                "attributes": [],
+                "default_attributes": [],
+                "variations": [],
+                "grouped_products": [],
+                "menu_order": 0,
+                "price_html": "<del aria-hidden=\"true\"><span class=\"woocommerce-Price-amount amount\"><bdi><span class=\"woocommerce-Price-currencySymbol\" translate=\"no\" dir=\"auto\">&#122;&#322;</span>129.00</bdi></span></del> <span class=\"screen-reader-text\">Original price was: &#122;&#322;129.00.</span><ins aria-hidden=\"true\"><span class=\"woocommerce-Price-amount amount\"><bdi><span class=\"woocommerce-Price-currencySymbol\" translate=\"no\" dir=\"auto\">&#122;&#322;</span>99.00</bdi></span></ins><span class=\"screen-reader-text\">Current price is: &#122;&#322;99.00.</span>",
+                "related_ids": [
+                  15,
+                  10,
+                  11,
+                  17,
+                  24
+                ],
+                "meta_data": [],
+                "stock_status": "instock",
+                "has_options": false,
+                "post_password": "",
+                "global_unique_id": "",
+                "permalink_template": "https://shop.example.test/product/%pagename%/",
+                "generated_slug": "plecak-miejski",
+                "_links": {
+                  "self": [
+                    {
+                      "href": "https://shop.example.test/wp-json/wc/v3/products/16",
+                      "targetHints": {
+                        "allow": [
+                          "GET",
+                          "POST",
+                          "PUT",
+                          "PATCH",
+                          "DELETE"
+                        ]
+                      }
+                    }
+                  ],
+                  "collection": [
+                    {
+                      "href": "https://shop.example.test/wp-json/wc/v3/products"
+                    }
+                  ]
+                }
               }
             ]
           }
@@ -4817,7 +4159,7 @@
     {
       "request": {
         "method": "GET",
-        "url": "https://shop.example.test/wp-json/wc/v3/orders?status=any&orderby=modified&per_page=100&modified_after=2026-10-10T21%3A56%3A26Z&offset=1&order=asc&_fields=id%2Cstatus%2Ccurrency%2Cdate_created_gmt%2Cdate_modified_gmt%2Cdate_paid_gmt%2Cdate_completed_gmt%2Ctotal%2Cpayment_method%2Cbilling%2Cshipping%2Cline_items",
+        "url": "https://shop.example.test/wp-json/wc/v3/orders?status=any&orderby=modified&per_page=100&modified_after=2026-10-10T22%3A36%3A23Z&order=asc&_fields=id%2Cstatus%2Ccurrency%2Cdate_created_gmt%2Cdate_modified_gmt%2Cdate_paid_gmt%2Cdate_completed_gmt%2Ctotal%2Cpayment_method%2Cbilling%2Cshipping%2Cline_items",
         "headers": {
           "accept": "application/json"
         },
@@ -4827,171 +4169,7 @@
         "status": 200,
         "headers": {
           "content-type": "application/json; charset=UTF-8",
-          "date": "Sat, 10 Oct 2026 21:57:15 GMT",
-          "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\"",
-          "x-wp-total": "3",
-          "x-wp-totalpages": "1"
-        },
-        "body": {
-          "json": [
-            {
-              "id": 33,
-              "status": "processing",
-              "currency": "PLN",
-              "total": "113.99",
-              "billing": {
-                "first_name": "scrubbed-20",
-                "last_name": "scrubbed-21",
-                "company": "scrubbed-22",
-                "address_1": "scrubbed-23",
-                "address_2": null,
-                "city": "scrubbed-24",
-                "state": null,
-                "postcode": "scrubbed-25",
-                "country": "PL",
-                "email": "person-4@example.com",
-                "phone": "+00000000004"
-              },
-              "shipping": {
-                "first_name": "scrubbed-20",
-                "last_name": "scrubbed-21",
-                "company": "scrubbed-22",
-                "address_1": "scrubbed-23",
-                "address_2": null,
-                "city": "scrubbed-24",
-                "state": null,
-                "postcode": "scrubbed-25",
-                "country": "PL",
-                "phone": "+00000000004"
-              },
-              "payment_method": "przelewy24",
-              "line_items": [
-                {
-                  "id": 11,
-                  "name": "Plecak miejski",
-                  "product_id": 16,
-                  "variation_id": 0,
-                  "quantity": 1,
-                  "tax_class": "",
-                  "subtotal": "80.49",
-                  "subtotal_tax": "18.51",
-                  "total": "80.49",
-                  "total_tax": "18.51",
-                  "taxes": [
-                    {
-                      "id": 1,
-                      "total": "18.51",
-                      "subtotal": "18.51"
-                    }
-                  ],
-                  "meta_data": [
-                    {
-                      "id": 0,
-                      "key": "scrubbed-6",
-                      "value": "scrubbed-7",
-                      "display_key": "scrubbed-6",
-                      "display_value": "scrubbed-7"
-                    }
-                  ],
-                  "sku": "WOO-BAG-1",
-                  "global_unique_id": "",
-                  "price": 80.487805,
-                  "image": {
-                    "id": "",
-                    "src": ""
-                  },
-                  "parent_name": null
-                }
-              ],
-              "date_created_gmt": "2026-09-21T06:30:00",
-              "date_modified_gmt": "2026-10-10T21:56:51",
-              "date_completed_gmt": null,
-              "date_paid_gmt": "2026-10-10T21:56:26"
-            },
-            {
-              "id": 51,
-              "status": "cancelled",
-              "currency": "PLN",
-              "total": "114.97",
-              "billing": {
-                "first_name": "scrubbed-14",
-                "last_name": "scrubbed-15",
-                "company": null,
-                "address_1": "scrubbed-16",
-                "address_2": "scrubbed-17",
-                "city": "scrubbed-18",
-                "state": null,
-                "postcode": "scrubbed-19",
-                "country": "PL",
-                "email": "person-3@example.com",
-                "phone": "+00000000003"
-              },
-              "shipping": {
-                "first_name": "scrubbed-14",
-                "last_name": "scrubbed-15",
-                "company": null,
-                "address_1": "scrubbed-16",
-                "address_2": "scrubbed-17",
-                "city": "scrubbed-18",
-                "state": null,
-                "postcode": "scrubbed-19",
-                "country": "PL",
-                "phone": "+00000000003"
-              },
-              "payment_method": "bacs",
-              "line_items": [
-                {
-                  "id": 60,
-                  "name": "Kubek ceramiczny żółty",
-                  "product_id": 10,
-                  "variation_id": 0,
-                  "quantity": 2,
-                  "tax_class": "",
-                  "subtotal": "81.28",
-                  "subtotal_tax": "18.70",
-                  "total": "81.28",
-                  "total_tax": "18.70",
-                  "taxes": [
-                    {
-                      "id": 1,
-                      "total": "18.70",
-                      "subtotal": "18.70"
-                    }
-                  ],
-                  "meta_data": [],
-                  "sku": "WOO-MUG-1",
-                  "global_unique_id": "",
-                  "price": 40.6422765,
-                  "image": {
-                    "id": "",
-                    "src": ""
-                  },
-                  "parent_name": null
-                }
-              ],
-              "date_created_gmt": "2026-09-21T09:20:00",
-              "date_modified_gmt": "2026-10-10T21:56:51",
-              "date_completed_gmt": null,
-              "date_paid_gmt": null
-            }
-          ]
-        }
-      }
-    },
-    {
-      "request": {
-        "method": "GET",
-        "url": "https://shop.example.test/wp-json/wc/v3/orders?status=any&orderby=modified&per_page=100&modified_after=2026-10-10T21%3A56%3A26Z&order=asc&_fields=id%2Cstatus%2Ccurrency%2Cdate_created_gmt%2Cdate_modified_gmt%2Cdate_paid_gmt%2Cdate_completed_gmt%2Ctotal%2Cpayment_method%2Cbilling%2Cshipping%2Cline_items",
-        "headers": {
-          "accept": "application/json"
-        },
-        "body": null
-      },
-      "response": {
-        "status": 200,
-        "headers": {
-          "content-type": "application/json; charset=UTF-8",
-          "date": "Sat, 10 Oct 2026 21:57:15 GMT",
+          "date": "Sat, 10 Oct 2026 22:37:12 GMT",
           "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\"",
           "x-wp-total": "3",
           "x-wp-totalpages": "1"
@@ -5068,8 +4246,8 @@
                 }
               ],
               "date_created_gmt": "2026-09-21T06:00:00",
-              "date_modified_gmt": "2026-10-10T21:56:51",
-              "date_completed_gmt": "2026-10-10T21:56:27",
+              "date_modified_gmt": "2026-10-10T22:36:48",
+              "date_completed_gmt": "2026-10-10T22:36:24",
               "date_paid_gmt": "2026-09-21T06:02:00"
             },
             {
@@ -5142,9 +4320,9 @@
                 }
               ],
               "date_created_gmt": "2026-09-21T06:30:00",
-              "date_modified_gmt": "2026-10-10T21:56:51",
+              "date_modified_gmt": "2026-10-10T22:36:48",
               "date_completed_gmt": null,
-              "date_paid_gmt": "2026-10-10T21:56:26"
+              "date_paid_gmt": "2026-10-10T22:36:23"
             },
             {
               "id": 51,
@@ -5208,7 +4386,7 @@
                 }
               ],
               "date_created_gmt": "2026-09-21T09:20:00",
-              "date_modified_gmt": "2026-10-10T21:56:51",
+              "date_modified_gmt": "2026-10-10T22:36:48",
               "date_completed_gmt": null,
               "date_paid_gmt": null
             }
@@ -5219,7 +4397,7 @@
     {
       "request": {
         "method": "GET",
-        "url": "https://shop.example.test/wp-json/wc/v3/orders?status=trash&orderby=modified&per_page=100&modified_after=2026-10-10T21%3A56%3A26Z&order=asc&_fields=id%2Cstatus%2Ccurrency%2Cdate_created_gmt%2Cdate_modified_gmt%2Cdate_paid_gmt%2Cdate_completed_gmt%2Ctotal%2Cpayment_method%2Cbilling%2Cshipping%2Cline_items",
+        "url": "https://shop.example.test/wp-json/wc/v3/orders?status=trash&orderby=modified&per_page=100&modified_after=2026-10-10T22%3A36%3A23Z&order=asc&_fields=id%2Cstatus%2Ccurrency%2Cdate_created_gmt%2Cdate_modified_gmt%2Cdate_paid_gmt%2Cdate_completed_gmt%2Ctotal%2Cpayment_method%2Cbilling%2Cshipping%2Cline_items",
         "headers": {
           "accept": "application/json"
         },
@@ -5229,7 +4407,7 @@
         "status": 200,
         "headers": {
           "content-type": "application/json; charset=UTF-8",
-          "date": "Sat, 10 Oct 2026 21:57:16 GMT",
+          "date": "Sat, 10 Oct 2026 22:37:12 GMT",
           "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\"",
           "x-wp-total": "1",
           "x-wp-totalpages": "1"
@@ -5306,7 +4484,7 @@
                 }
               ],
               "date_created_gmt": "2026-09-21T09:50:00",
-              "date_modified_gmt": "2026-10-10T21:56:27",
+              "date_modified_gmt": "2026-10-10T22:36:24",
               "date_completed_gmt": null,
               "date_paid_gmt": null
             }
@@ -5327,7 +4505,7 @@
         "status": 200,
         "headers": {
           "content-type": "application/json; charset=UTF-8",
-          "date": "Sat, 10 Oct 2026 21:57:16 GMT",
+          "date": "Sat, 10 Oct 2026 22:37:12 GMT",
           "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\"",
           "x-wp-total": "1",
           "x-wp-totalpages": "1"
@@ -5366,7 +4544,7 @@
         "status": 200,
         "headers": {
           "content-type": "application/json; charset=UTF-8",
-          "date": "Sat, 10 Oct 2026 21:57:16 GMT",
+          "date": "Sat, 10 Oct 2026 22:37:12 GMT",
           "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\""
         },
         "body": {
@@ -5377,10 +4555,10 @@
                 "name": "Kubek ceramiczny żółty",
                 "slug": "kubek-ceramiczny-zolty",
                 "permalink": "https://shop.example.test/product/kubek-ceramiczny-zolty/",
-                "date_created": "2026-10-10T23:55:45",
-                "date_created_gmt": "2026-10-10T21:55:45",
-                "date_modified": "2026-10-10T23:57:16",
-                "date_modified_gmt": "2026-10-10T21:57:16",
+                "date_created": "2026-10-11T00:35:33",
+                "date_created_gmt": "2026-10-10T22:35:33",
+                "date_modified": "2026-10-11T00:37:12",
+                "date_modified_gmt": "2026-10-10T22:37:12",
                 "type": "simple",
                 "status": "publish",
                 "featured": false,
@@ -5448,11 +4626,11 @@
                 "menu_order": 0,
                 "price_html": "<span class=\"woocommerce-Price-amount amount\"><bdi><span class=\"woocommerce-Price-currencySymbol\" translate=\"no\" dir=\"auto\">&#122;&#322;</span>49.99</bdi></span>",
                 "related_ids": [
+                  12,
                   28,
                   24,
-                  16,
-                  19,
-                  12
+                  27,
+                  16
                 ],
                 "meta_data": [],
                 "stock_status": "instock",
@@ -5501,7 +4679,7 @@
         "status": 200,
         "headers": {
           "content-type": "application/json; charset=UTF-8",
-          "date": "Sat, 10 Oct 2026 21:57:16 GMT",
+          "date": "Sat, 10 Oct 2026 22:37:13 GMT",
           "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\""
         },
         "body": {
@@ -5557,7 +4735,7 @@
         "status": 200,
         "headers": {
           "content-type": "application/json; charset=UTF-8",
-          "date": "Sat, 10 Oct 2026 21:57:16 GMT",
+          "date": "Sat, 10 Oct 2026 22:37:13 GMT",
           "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\""
         },
         "body": {
@@ -5598,7 +4776,7 @@
     {
       "request": {
         "method": "GET",
-        "url": "https://shop.example.test/wp-json/wc/v3/orders?status=any&orderby=modified&per_page=100&modified_after=2026-10-10T21%3A56%3A50Z&offset=2&order=asc&_fields=id%2Cstatus%2Ccurrency%2Cdate_created_gmt%2Cdate_modified_gmt%2Cdate_paid_gmt%2Cdate_completed_gmt%2Ctotal%2Cpayment_method%2Cbilling%2Cshipping%2Cline_items",
+        "url": "https://shop.example.test/wp-json/wc/v3/products?include=11&per_page=100&_fields=id%2Ctype",
         "headers": {
           "accept": "application/json"
         },
@@ -5608,7 +4786,181 @@
         "status": 200,
         "headers": {
           "content-type": "application/json; charset=UTF-8",
-          "date": "Sat, 10 Oct 2026 21:57:40 GMT",
+          "date": "Sat, 10 Oct 2026 22:37:13 GMT",
+          "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\"",
+          "x-wp-total": "1",
+          "x-wp-totalpages": "1"
+        },
+        "body": {
+          "json": [
+            {
+              "id": 11,
+              "type": "simple"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "url": "https://shop.example.test/wp-json/wc/v3/products/batch",
+        "headers": {
+          "accept": "application/json",
+          "content-type": "application/json"
+        },
+        "body": {
+          "json": {
+            "update": [
+              {
+                "id": 11,
+                "manage_stock": true,
+                "stock_quantity": 25
+              }
+            ]
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=UTF-8",
+          "date": "Sat, 10 Oct 2026 22:37:13 GMT",
+          "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\""
+        },
+        "body": {
+          "json": {
+            "update": [
+              {
+                "id": 11,
+                "name": "Notes w kratkę A5",
+                "slug": "notes-w-kratke-a5",
+                "permalink": "https://shop.example.test/product/notes-w-kratke-a5/",
+                "date_created": "2026-10-11T00:35:33",
+                "date_created_gmt": "2026-10-10T22:35:33",
+                "date_modified": "2026-10-11T00:37:13",
+                "date_modified_gmt": "2026-10-10T22:37:13",
+                "type": "simple",
+                "status": "publish",
+                "featured": false,
+                "catalog_visibility": "visible",
+                "description": "",
+                "short_description": "",
+                "sku": "WOO-NOTE-1",
+                "price": "19.90",
+                "regular_price": "19.90",
+                "sale_price": "",
+                "date_on_sale_from": null,
+                "date_on_sale_from_gmt": null,
+                "date_on_sale_to": null,
+                "date_on_sale_to_gmt": null,
+                "on_sale": false,
+                "purchasable": true,
+                "total_sales": 9,
+                "virtual": false,
+                "downloadable": false,
+                "downloads": [],
+                "download_limit": -1,
+                "download_expiry": -1,
+                "external_url": "",
+                "button_text": "",
+                "tax_status": "taxable",
+                "tax_class": "",
+                "manage_stock": true,
+                "stock_quantity": 25,
+                "backorders": "no",
+                "backorders_allowed": false,
+                "backordered": false,
+                "low_stock_amount": null,
+                "sold_individually": false,
+                "weight": "",
+                "dimensions": {
+                  "length": "",
+                  "width": "",
+                  "height": ""
+                },
+                "shipping_required": true,
+                "shipping_taxable": true,
+                "shipping_class": "",
+                "shipping_class_id": 0,
+                "reviews_allowed": true,
+                "average_rating": "0",
+                "rating_count": 0,
+                "upsell_ids": [],
+                "cross_sell_ids": [],
+                "parent_id": 0,
+                "purchase_note": "",
+                "categories": [
+                  {
+                    "id": 15,
+                    "name": "Uncategorized",
+                    "slug": "uncategorized"
+                  }
+                ],
+                "brands": [],
+                "tags": [],
+                "images": [],
+                "attributes": [],
+                "default_attributes": [],
+                "variations": [],
+                "grouped_products": [],
+                "menu_order": 0,
+                "price_html": "<span class=\"woocommerce-Price-amount amount\"><bdi><span class=\"woocommerce-Price-currencySymbol\" translate=\"no\" dir=\"auto\">&#122;&#322;</span>19.90</bdi></span>",
+                "related_ids": [
+                  13,
+                  28,
+                  27,
+                  24,
+                  17
+                ],
+                "meta_data": [],
+                "stock_status": "instock",
+                "has_options": false,
+                "post_password": "",
+                "global_unique_id": "",
+                "permalink_template": "https://shop.example.test/product/%pagename%/",
+                "generated_slug": "notes-w-kratke-a5",
+                "_links": {
+                  "self": [
+                    {
+                      "href": "https://shop.example.test/wp-json/wc/v3/products/11",
+                      "targetHints": {
+                        "allow": [
+                          "GET",
+                          "POST",
+                          "PUT",
+                          "PATCH",
+                          "DELETE"
+                        ]
+                      }
+                    }
+                  ],
+                  "collection": [
+                    {
+                      "href": "https://shop.example.test/wp-json/wc/v3/products"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://shop.example.test/wp-json/wc/v3/orders?status=any&orderby=modified&per_page=100&modified_after=2026-10-10T22%3A36%3A47Z&offset=2&order=asc&_fields=id%2Cstatus%2Ccurrency%2Cdate_created_gmt%2Cdate_modified_gmt%2Cdate_paid_gmt%2Cdate_completed_gmt%2Ctotal%2Cpayment_method%2Cbilling%2Cshipping%2Cline_items",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=UTF-8",
+          "date": "Sat, 10 Oct 2026 22:37:37 GMT",
           "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\"",
           "x-wp-total": "4",
           "x-wp-totalpages": "1"
@@ -5677,7 +5029,7 @@
                 }
               ],
               "date_created_gmt": "2026-09-21T09:20:00",
-              "date_modified_gmt": "2026-10-10T21:56:51",
+              "date_modified_gmt": "2026-10-10T22:36:48",
               "date_completed_gmt": null,
               "date_paid_gmt": null
             },
@@ -5751,7 +5103,7 @@
                 }
               ],
               "date_created_gmt": "2026-09-21T09:00:00",
-              "date_modified_gmt": "2026-10-10T21:57:16",
+              "date_modified_gmt": "2026-10-10T22:37:13",
               "date_completed_gmt": null,
               "date_paid_gmt": "2026-09-21T09:02:00"
             }
@@ -5762,7 +5114,7 @@
     {
       "request": {
         "method": "GET",
-        "url": "https://shop.example.test/wp-json/wc/v3/orders?status=trash&orderby=modified&per_page=100&modified_after=2026-10-10T21%3A56%3A50Z&order=asc&_fields=id%2Cstatus%2Ccurrency%2Cdate_created_gmt%2Cdate_modified_gmt%2Cdate_paid_gmt%2Cdate_completed_gmt%2Ctotal%2Cpayment_method%2Cbilling%2Cshipping%2Cline_items",
+        "url": "https://shop.example.test/wp-json/wc/v3/orders?status=trash&orderby=modified&per_page=100&modified_after=2026-10-10T22%3A36%3A47Z&order=asc&_fields=id%2Cstatus%2Ccurrency%2Cdate_created_gmt%2Cdate_modified_gmt%2Cdate_paid_gmt%2Cdate_completed_gmt%2Ctotal%2Cpayment_method%2Cbilling%2Cshipping%2Cline_items",
         "headers": {
           "accept": "application/json"
         },
@@ -5772,7 +5124,7 @@
         "status": 200,
         "headers": {
           "content-type": "application/json; charset=UTF-8",
-          "date": "Sat, 10 Oct 2026 21:57:40 GMT",
+          "date": "Sat, 10 Oct 2026 22:37:37 GMT",
           "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\"",
           "x-wp-total": "0",
           "x-wp-totalpages": "0"
@@ -5795,7 +5147,7 @@
         "status": 200,
         "headers": {
           "content-type": "application/json; charset=UTF-8",
-          "date": "Sat, 10 Oct 2026 21:57:41 GMT",
+          "date": "Sat, 10 Oct 2026 22:37:37 GMT",
           "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\"",
           "x-wp-total": "1",
           "x-wp-totalpages": "1"
@@ -5834,7 +5186,7 @@
         "status": 200,
         "headers": {
           "content-type": "application/json; charset=UTF-8",
-          "date": "Sat, 10 Oct 2026 21:57:41 GMT",
+          "date": "Sat, 10 Oct 2026 22:37:37 GMT",
           "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\""
         },
         "body": {
@@ -5845,10 +5197,10 @@
                 "name": "Notes w kratkę A5",
                 "slug": "notes-w-kratke-a5",
                 "permalink": "https://shop.example.test/product/notes-w-kratke-a5/",
-                "date_created": "2026-10-10T23:55:45",
-                "date_created_gmt": "2026-10-10T21:55:45",
-                "date_modified": "2026-10-10T23:57:41",
-                "date_modified_gmt": "2026-10-10T21:57:41",
+                "date_created": "2026-10-11T00:35:33",
+                "date_created_gmt": "2026-10-10T22:35:33",
+                "date_modified": "2026-10-11T00:37:37",
+                "date_modified_gmt": "2026-10-10T22:37:37",
                 "type": "simple",
                 "status": "publish",
                 "featured": false,
@@ -5916,11 +5268,11 @@
                 "menu_order": 0,
                 "price_html": "<span class=\"woocommerce-Price-amount amount\"><bdi><span class=\"woocommerce-Price-currencySymbol\" translate=\"no\" dir=\"auto\">&#122;&#322;</span>19.90</bdi></span>",
                 "related_ids": [
-                  19,
                   28,
+                  24,
                   16,
-                  27,
-                  13
+                  13,
+                  12
                 ],
                 "meta_data": [],
                 "stock_status": "instock",
@@ -5969,7 +5321,7 @@
         "status": 200,
         "headers": {
           "content-type": "application/json; charset=UTF-8",
-          "date": "Sat, 10 Oct 2026 21:57:41 GMT",
+          "date": "Sat, 10 Oct 2026 22:37:37 GMT",
           "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\""
         },
         "body": {
@@ -6025,7 +5377,7 @@
         "status": 200,
         "headers": {
           "content-type": "application/json; charset=UTF-8",
-          "date": "Sat, 10 Oct 2026 21:57:41 GMT",
+          "date": "Sat, 10 Oct 2026 22:37:37 GMT",
           "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\""
         },
         "body": {
@@ -6066,6 +5418,180 @@
     {
       "request": {
         "method": "GET",
+        "url": "https://shop.example.test/wp-json/wc/v3/products?include=11&per_page=100&_fields=id%2Ctype",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=UTF-8",
+          "date": "Sat, 10 Oct 2026 22:37:37 GMT",
+          "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\"",
+          "x-wp-total": "1",
+          "x-wp-totalpages": "1"
+        },
+        "body": {
+          "json": [
+            {
+              "id": 11,
+              "type": "simple"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "url": "https://shop.example.test/wp-json/wc/v3/products/batch",
+        "headers": {
+          "accept": "application/json",
+          "content-type": "application/json"
+        },
+        "body": {
+          "json": {
+            "update": [
+              {
+                "id": 11,
+                "manage_stock": true,
+                "stock_quantity": 25
+              }
+            ]
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=UTF-8",
+          "date": "Sat, 10 Oct 2026 22:37:37 GMT",
+          "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\""
+        },
+        "body": {
+          "json": {
+            "update": [
+              {
+                "id": 11,
+                "name": "Notes w kratkę A5",
+                "slug": "notes-w-kratke-a5",
+                "permalink": "https://shop.example.test/product/notes-w-kratke-a5/",
+                "date_created": "2026-10-11T00:35:33",
+                "date_created_gmt": "2026-10-10T22:35:33",
+                "date_modified": "2026-10-11T00:37:37",
+                "date_modified_gmt": "2026-10-10T22:37:37",
+                "type": "simple",
+                "status": "publish",
+                "featured": false,
+                "catalog_visibility": "visible",
+                "description": "",
+                "short_description": "",
+                "sku": "WOO-NOTE-1",
+                "price": "19.90",
+                "regular_price": "19.90",
+                "sale_price": "",
+                "date_on_sale_from": null,
+                "date_on_sale_from_gmt": null,
+                "date_on_sale_to": null,
+                "date_on_sale_to_gmt": null,
+                "on_sale": false,
+                "purchasable": true,
+                "total_sales": 9,
+                "virtual": false,
+                "downloadable": false,
+                "downloads": [],
+                "download_limit": -1,
+                "download_expiry": -1,
+                "external_url": "",
+                "button_text": "",
+                "tax_status": "taxable",
+                "tax_class": "",
+                "manage_stock": true,
+                "stock_quantity": 25,
+                "backorders": "no",
+                "backorders_allowed": false,
+                "backordered": false,
+                "low_stock_amount": null,
+                "sold_individually": false,
+                "weight": "",
+                "dimensions": {
+                  "length": "",
+                  "width": "",
+                  "height": ""
+                },
+                "shipping_required": true,
+                "shipping_taxable": true,
+                "shipping_class": "",
+                "shipping_class_id": 0,
+                "reviews_allowed": true,
+                "average_rating": "0",
+                "rating_count": 0,
+                "upsell_ids": [],
+                "cross_sell_ids": [],
+                "parent_id": 0,
+                "purchase_note": "",
+                "categories": [
+                  {
+                    "id": 15,
+                    "name": "Uncategorized",
+                    "slug": "uncategorized"
+                  }
+                ],
+                "brands": [],
+                "tags": [],
+                "images": [],
+                "attributes": [],
+                "default_attributes": [],
+                "variations": [],
+                "grouped_products": [],
+                "menu_order": 0,
+                "price_html": "<span class=\"woocommerce-Price-amount amount\"><bdi><span class=\"woocommerce-Price-currencySymbol\" translate=\"no\" dir=\"auto\">&#122;&#322;</span>19.90</bdi></span>",
+                "related_ids": [
+                  28,
+                  12,
+                  19,
+                  24,
+                  13
+                ],
+                "meta_data": [],
+                "stock_status": "instock",
+                "has_options": false,
+                "post_password": "",
+                "global_unique_id": "",
+                "permalink_template": "https://shop.example.test/product/%pagename%/",
+                "generated_slug": "notes-w-kratke-a5",
+                "_links": {
+                  "self": [
+                    {
+                      "href": "https://shop.example.test/wp-json/wc/v3/products/11",
+                      "targetHints": {
+                        "allow": [
+                          "GET",
+                          "POST",
+                          "PUT",
+                          "PATCH",
+                          "DELETE"
+                        ]
+                      }
+                    }
+                  ],
+                  "collection": [
+                    {
+                      "href": "https://shop.example.test/wp-json/wc/v3/products"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
         "url": "https://shop.example.test/wp-json/wc/v3/products?include=10&per_page=100&_fields=id%2Ctype",
         "headers": {
           "accept": "application/json"
@@ -6076,7 +5602,7 @@
         "status": 200,
         "headers": {
           "content-type": "application/json; charset=UTF-8",
-          "date": "Sat, 10 Oct 2026 21:57:41 GMT",
+          "date": "Sat, 10 Oct 2026 22:37:37 GMT",
           "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\"",
           "x-wp-total": "1",
           "x-wp-totalpages": "1"
@@ -6115,7 +5641,7 @@
         "status": 200,
         "headers": {
           "content-type": "application/json; charset=UTF-8",
-          "date": "Sat, 10 Oct 2026 21:57:41 GMT",
+          "date": "Sat, 10 Oct 2026 22:37:38 GMT",
           "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\""
         },
         "body": {
@@ -6126,10 +5652,10 @@
                 "name": "Kubek ceramiczny żółty",
                 "slug": "kubek-ceramiczny-zolty",
                 "permalink": "https://shop.example.test/product/kubek-ceramiczny-zolty/",
-                "date_created": "2026-10-10T23:55:45",
-                "date_created_gmt": "2026-10-10T21:55:45",
-                "date_modified": "2026-10-10T23:57:41",
-                "date_modified_gmt": "2026-10-10T21:57:41",
+                "date_created": "2026-10-11T00:35:33",
+                "date_created_gmt": "2026-10-10T22:35:33",
+                "date_modified": "2026-10-11T00:37:38",
+                "date_modified_gmt": "2026-10-10T22:37:38",
                 "type": "simple",
                 "status": "publish",
                 "featured": false,
@@ -6197,11 +5723,11 @@
                 "menu_order": 0,
                 "price_html": "<span class=\"woocommerce-Price-amount amount\"><bdi><span class=\"woocommerce-Price-currencySymbol\" translate=\"no\" dir=\"auto\">&#122;&#322;</span>49.99</bdi></span>",
                 "related_ids": [
-                  24,
-                  17,
                   11,
+                  24,
+                  27,
                   12,
-                  28
+                  17
                 ],
                 "meta_data": [],
                 "stock_status": "instock",
@@ -6250,7 +5776,7 @@
         "status": 200,
         "headers": {
           "content-type": "application/json; charset=UTF-8",
-          "date": "Sat, 10 Oct 2026 21:57:41 GMT",
+          "date": "Sat, 10 Oct 2026 22:37:38 GMT",
           "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\""
         },
         "body": {
@@ -6306,7 +5832,7 @@
         "status": 200,
         "headers": {
           "content-type": "application/json; charset=UTF-8",
-          "date": "Sat, 10 Oct 2026 21:57:41 GMT",
+          "date": "Sat, 10 Oct 2026 22:37:38 GMT",
           "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\""
         },
         "body": {
@@ -6347,7 +5873,7 @@
     {
       "request": {
         "method": "GET",
-        "url": "https://shop.example.test/wp-json/wc/v3/orders?status=any&orderby=modified&per_page=100&modified_after=2026-10-10T21%3A57%3A15Z&order=asc&_fields=id%2Cstatus%2Ccurrency%2Cdate_created_gmt%2Cdate_modified_gmt%2Cdate_paid_gmt%2Cdate_completed_gmt%2Ctotal%2Cpayment_method%2Cbilling%2Cshipping%2Cline_items",
+        "url": "https://shop.example.test/wp-json/wc/v3/products?include=10&per_page=100&_fields=id%2Ctype",
         "headers": {
           "accept": "application/json"
         },
@@ -6357,7 +5883,181 @@
         "status": 200,
         "headers": {
           "content-type": "application/json; charset=UTF-8",
-          "date": "Sat, 10 Oct 2026 21:58:05 GMT",
+          "date": "Sat, 10 Oct 2026 22:37:38 GMT",
+          "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\"",
+          "x-wp-total": "1",
+          "x-wp-totalpages": "1"
+        },
+        "body": {
+          "json": [
+            {
+              "id": 10,
+              "type": "simple"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "url": "https://shop.example.test/wp-json/wc/v3/products/batch",
+        "headers": {
+          "accept": "application/json",
+          "content-type": "application/json"
+        },
+        "body": {
+          "json": {
+            "update": [
+              {
+                "id": 10,
+                "manage_stock": true,
+                "stock_quantity": 45
+              }
+            ]
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=UTF-8",
+          "date": "Sat, 10 Oct 2026 22:37:38 GMT",
+          "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\""
+        },
+        "body": {
+          "json": {
+            "update": [
+              {
+                "id": 10,
+                "name": "Kubek ceramiczny żółty",
+                "slug": "kubek-ceramiczny-zolty",
+                "permalink": "https://shop.example.test/product/kubek-ceramiczny-zolty/",
+                "date_created": "2026-10-11T00:35:33",
+                "date_created_gmt": "2026-10-10T22:35:33",
+                "date_modified": "2026-10-11T00:37:38",
+                "date_modified_gmt": "2026-10-10T22:37:38",
+                "type": "simple",
+                "status": "publish",
+                "featured": false,
+                "catalog_visibility": "visible",
+                "description": "",
+                "short_description": "",
+                "sku": "WOO-MUG-1",
+                "price": "49.99",
+                "regular_price": "49.99",
+                "sale_price": "",
+                "date_on_sale_from": null,
+                "date_on_sale_from_gmt": null,
+                "date_on_sale_to": null,
+                "date_on_sale_to_gmt": null,
+                "on_sale": false,
+                "purchasable": true,
+                "total_sales": 8,
+                "virtual": false,
+                "downloadable": false,
+                "downloads": [],
+                "download_limit": -1,
+                "download_expiry": -1,
+                "external_url": "",
+                "button_text": "",
+                "tax_status": "taxable",
+                "tax_class": "",
+                "manage_stock": true,
+                "stock_quantity": 45,
+                "backorders": "no",
+                "backorders_allowed": false,
+                "backordered": false,
+                "low_stock_amount": null,
+                "sold_individually": false,
+                "weight": "",
+                "dimensions": {
+                  "length": "",
+                  "width": "",
+                  "height": ""
+                },
+                "shipping_required": true,
+                "shipping_taxable": true,
+                "shipping_class": "",
+                "shipping_class_id": 0,
+                "reviews_allowed": true,
+                "average_rating": "0",
+                "rating_count": 0,
+                "upsell_ids": [],
+                "cross_sell_ids": [],
+                "parent_id": 0,
+                "purchase_note": "",
+                "categories": [
+                  {
+                    "id": 15,
+                    "name": "Uncategorized",
+                    "slug": "uncategorized"
+                  }
+                ],
+                "brands": [],
+                "tags": [],
+                "images": [],
+                "attributes": [],
+                "default_attributes": [],
+                "variations": [],
+                "grouped_products": [],
+                "menu_order": 0,
+                "price_html": "<span class=\"woocommerce-Price-amount amount\"><bdi><span class=\"woocommerce-Price-currencySymbol\" translate=\"no\" dir=\"auto\">&#122;&#322;</span>49.99</bdi></span>",
+                "related_ids": [
+                  11,
+                  27,
+                  12,
+                  24,
+                  13
+                ],
+                "meta_data": [],
+                "stock_status": "instock",
+                "has_options": false,
+                "post_password": "",
+                "global_unique_id": "",
+                "permalink_template": "https://shop.example.test/product/%pagename%/",
+                "generated_slug": "kubek-ceramiczny-zolty",
+                "_links": {
+                  "self": [
+                    {
+                      "href": "https://shop.example.test/wp-json/wc/v3/products/10",
+                      "targetHints": {
+                        "allow": [
+                          "GET",
+                          "POST",
+                          "PUT",
+                          "PATCH",
+                          "DELETE"
+                        ]
+                      }
+                    }
+                  ],
+                  "collection": [
+                    {
+                      "href": "https://shop.example.test/wp-json/wc/v3/products"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://shop.example.test/wp-json/wc/v3/orders?status=any&orderby=modified&per_page=100&modified_after=2026-10-10T22%3A37%3A12Z&order=asc&_fields=id%2Cstatus%2Ccurrency%2Cdate_created_gmt%2Cdate_modified_gmt%2Cdate_paid_gmt%2Cdate_completed_gmt%2Ctotal%2Cpayment_method%2Cbilling%2Cshipping%2Cline_items",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=UTF-8",
+          "date": "Sat, 10 Oct 2026 22:38:02 GMT",
           "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\"",
           "x-wp-total": "2",
           "x-wp-totalpages": "1"
@@ -6434,8 +6134,8 @@
                 }
               ],
               "date_created_gmt": "2026-09-21T09:00:00",
-              "date_modified_gmt": "2026-10-10T21:57:41",
-              "date_completed_gmt": "2026-10-10T21:57:41",
+              "date_modified_gmt": "2026-10-10T22:37:37",
+              "date_completed_gmt": "2026-10-10T22:37:37",
               "date_paid_gmt": "2026-09-21T09:02:00"
             },
             {
@@ -6500,7 +6200,7 @@
                 }
               ],
               "date_created_gmt": "2026-09-20T06:00:00",
-              "date_modified_gmt": "2026-10-10T21:57:41",
+              "date_modified_gmt": "2026-10-10T22:37:38",
               "date_completed_gmt": null,
               "date_paid_gmt": "2026-09-20T06:02:00"
             }
@@ -6511,7 +6211,7 @@
     {
       "request": {
         "method": "GET",
-        "url": "https://shop.example.test/wp-json/wc/v3/orders?status=trash&orderby=modified&per_page=100&modified_after=2026-10-10T21%3A57%3A15Z&order=asc&_fields=id%2Cstatus%2Ccurrency%2Cdate_created_gmt%2Cdate_modified_gmt%2Cdate_paid_gmt%2Cdate_completed_gmt%2Ctotal%2Cpayment_method%2Cbilling%2Cshipping%2Cline_items",
+        "url": "https://shop.example.test/wp-json/wc/v3/orders?status=trash&orderby=modified&per_page=100&modified_after=2026-10-10T22%3A37%3A12Z&order=asc&_fields=id%2Cstatus%2Ccurrency%2Cdate_created_gmt%2Cdate_modified_gmt%2Cdate_paid_gmt%2Cdate_completed_gmt%2Ctotal%2Cpayment_method%2Cbilling%2Cshipping%2Cline_items",
         "headers": {
           "accept": "application/json"
         },
@@ -6521,13 +6221,307 @@
         "status": 200,
         "headers": {
           "content-type": "application/json; charset=UTF-8",
-          "date": "Sat, 10 Oct 2026 21:58:05 GMT",
+          "date": "Sat, 10 Oct 2026 22:38:02 GMT",
           "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\"",
           "x-wp-total": "0",
           "x-wp-totalpages": "0"
         },
         "body": {
           "json": []
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://shop.example.test/wp-json/wc/v3/products?include=10%2C11&per_page=100&_fields=id%2Ctype",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=UTF-8",
+          "date": "Sat, 10 Oct 2026 22:38:02 GMT",
+          "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\"",
+          "x-wp-total": "2",
+          "x-wp-totalpages": "1"
+        },
+        "body": {
+          "json": [
+            {
+              "id": 11,
+              "type": "simple"
+            },
+            {
+              "id": 10,
+              "type": "simple"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "url": "https://shop.example.test/wp-json/wc/v3/products/batch",
+        "headers": {
+          "accept": "application/json",
+          "content-type": "application/json"
+        },
+        "body": {
+          "json": {
+            "update": [
+              {
+                "id": 10,
+                "manage_stock": true,
+                "stock_quantity": 45
+              },
+              {
+                "id": 11,
+                "manage_stock": true,
+                "stock_quantity": 25
+              }
+            ]
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=UTF-8",
+          "date": "Sat, 10 Oct 2026 22:38:02 GMT",
+          "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\""
+        },
+        "body": {
+          "json": {
+            "update": [
+              {
+                "id": 10,
+                "name": "Kubek ceramiczny żółty",
+                "slug": "kubek-ceramiczny-zolty",
+                "permalink": "https://shop.example.test/product/kubek-ceramiczny-zolty/",
+                "date_created": "2026-10-11T00:35:33",
+                "date_created_gmt": "2026-10-10T22:35:33",
+                "date_modified": "2026-10-11T00:38:02",
+                "date_modified_gmt": "2026-10-10T22:38:02",
+                "type": "simple",
+                "status": "publish",
+                "featured": false,
+                "catalog_visibility": "visible",
+                "description": "",
+                "short_description": "",
+                "sku": "WOO-MUG-1",
+                "price": "49.99",
+                "regular_price": "49.99",
+                "sale_price": "",
+                "date_on_sale_from": null,
+                "date_on_sale_from_gmt": null,
+                "date_on_sale_to": null,
+                "date_on_sale_to_gmt": null,
+                "on_sale": false,
+                "purchasable": true,
+                "total_sales": 8,
+                "virtual": false,
+                "downloadable": false,
+                "downloads": [],
+                "download_limit": -1,
+                "download_expiry": -1,
+                "external_url": "",
+                "button_text": "",
+                "tax_status": "taxable",
+                "tax_class": "",
+                "manage_stock": true,
+                "stock_quantity": 45,
+                "backorders": "no",
+                "backorders_allowed": false,
+                "backordered": false,
+                "low_stock_amount": null,
+                "sold_individually": false,
+                "weight": "",
+                "dimensions": {
+                  "length": "",
+                  "width": "",
+                  "height": ""
+                },
+                "shipping_required": true,
+                "shipping_taxable": true,
+                "shipping_class": "",
+                "shipping_class_id": 0,
+                "reviews_allowed": true,
+                "average_rating": "0",
+                "rating_count": 0,
+                "upsell_ids": [],
+                "cross_sell_ids": [],
+                "parent_id": 0,
+                "purchase_note": "",
+                "categories": [
+                  {
+                    "id": 15,
+                    "name": "Uncategorized",
+                    "slug": "uncategorized"
+                  }
+                ],
+                "brands": [],
+                "tags": [],
+                "images": [],
+                "attributes": [],
+                "default_attributes": [],
+                "variations": [],
+                "grouped_products": [],
+                "menu_order": 0,
+                "price_html": "<span class=\"woocommerce-Price-amount amount\"><bdi><span class=\"woocommerce-Price-currencySymbol\" translate=\"no\" dir=\"auto\">&#122;&#322;</span>49.99</bdi></span>",
+                "related_ids": [
+                  13,
+                  17,
+                  27,
+                  11,
+                  24
+                ],
+                "meta_data": [],
+                "stock_status": "instock",
+                "has_options": false,
+                "post_password": "",
+                "global_unique_id": "",
+                "permalink_template": "https://shop.example.test/product/%pagename%/",
+                "generated_slug": "kubek-ceramiczny-zolty",
+                "_links": {
+                  "self": [
+                    {
+                      "href": "https://shop.example.test/wp-json/wc/v3/products/10",
+                      "targetHints": {
+                        "allow": [
+                          "GET",
+                          "POST",
+                          "PUT",
+                          "PATCH",
+                          "DELETE"
+                        ]
+                      }
+                    }
+                  ],
+                  "collection": [
+                    {
+                      "href": "https://shop.example.test/wp-json/wc/v3/products"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": 11,
+                "name": "Notes w kratkę A5",
+                "slug": "notes-w-kratke-a5",
+                "permalink": "https://shop.example.test/product/notes-w-kratke-a5/",
+                "date_created": "2026-10-11T00:35:33",
+                "date_created_gmt": "2026-10-10T22:35:33",
+                "date_modified": "2026-10-11T00:38:02",
+                "date_modified_gmt": "2026-10-10T22:38:02",
+                "type": "simple",
+                "status": "publish",
+                "featured": false,
+                "catalog_visibility": "visible",
+                "description": "",
+                "short_description": "",
+                "sku": "WOO-NOTE-1",
+                "price": "19.90",
+                "regular_price": "19.90",
+                "sale_price": "",
+                "date_on_sale_from": null,
+                "date_on_sale_from_gmt": null,
+                "date_on_sale_to": null,
+                "date_on_sale_to_gmt": null,
+                "on_sale": false,
+                "purchasable": true,
+                "total_sales": 9,
+                "virtual": false,
+                "downloadable": false,
+                "downloads": [],
+                "download_limit": -1,
+                "download_expiry": -1,
+                "external_url": "",
+                "button_text": "",
+                "tax_status": "taxable",
+                "tax_class": "",
+                "manage_stock": true,
+                "stock_quantity": 25,
+                "backorders": "no",
+                "backorders_allowed": false,
+                "backordered": false,
+                "low_stock_amount": null,
+                "sold_individually": false,
+                "weight": "",
+                "dimensions": {
+                  "length": "",
+                  "width": "",
+                  "height": ""
+                },
+                "shipping_required": true,
+                "shipping_taxable": true,
+                "shipping_class": "",
+                "shipping_class_id": 0,
+                "reviews_allowed": true,
+                "average_rating": "0",
+                "rating_count": 0,
+                "upsell_ids": [],
+                "cross_sell_ids": [],
+                "parent_id": 0,
+                "purchase_note": "",
+                "categories": [
+                  {
+                    "id": 15,
+                    "name": "Uncategorized",
+                    "slug": "uncategorized"
+                  }
+                ],
+                "brands": [],
+                "tags": [],
+                "images": [],
+                "attributes": [],
+                "default_attributes": [],
+                "variations": [],
+                "grouped_products": [],
+                "menu_order": 0,
+                "price_html": "<span class=\"woocommerce-Price-amount amount\"><bdi><span class=\"woocommerce-Price-currencySymbol\" translate=\"no\" dir=\"auto\">&#122;&#322;</span>19.90</bdi></span>",
+                "related_ids": [
+                  17,
+                  12,
+                  16,
+                  13,
+                  24
+                ],
+                "meta_data": [],
+                "stock_status": "instock",
+                "has_options": false,
+                "post_password": "",
+                "global_unique_id": "",
+                "permalink_template": "https://shop.example.test/product/%pagename%/",
+                "generated_slug": "notes-w-kratke-a5",
+                "_links": {
+                  "self": [
+                    {
+                      "href": "https://shop.example.test/wp-json/wc/v3/products/11",
+                      "targetHints": {
+                        "allow": [
+                          "GET",
+                          "POST",
+                          "PUT",
+                          "PATCH",
+                          "DELETE"
+                        ]
+                      }
+                    }
+                  ],
+                  "collection": [
+                    {
+                      "href": "https://shop.example.test/wp-json/wc/v3/products"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
         }
       }
     }
