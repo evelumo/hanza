@@ -5,7 +5,7 @@ import { openConnection } from '../connections/connections'
 import { DomainError } from '../errors'
 import { createTestOrganization } from '../testing/context'
 import { databaseUrl, useTestContext } from '../testing/db-test'
-import { user } from '../testing/fixtures'
+import { orderFeedCaughtUp, user } from '../testing/fixtures'
 import { addConnection, requestSync } from './requests'
 
 const shop = defineConnector({
@@ -103,7 +103,7 @@ describe.skipIf(!databaseUrl)('addConnection and requestSync', () => {
     ])
   })
 
-  it('requestSync enqueues an Offer pull, a stock push and a price push, only for the organization\'s own Connection', async () => {
+  it('requestSync enqueues an Offer pull and a price push, and a stock push once the Order feed caught up, only for the organization\'s own Connection', async () => {
     const ctx = context()
     const org = await createTestOrganization(ctx.db)
     const other = await createTestOrganization(ctx.db)
@@ -115,6 +115,15 @@ describe.skipIf(!databaseUrl)('addConnection and requestSync', () => {
     )
     expect((await domainError(requestSync(ctx, other, connectionId))).code).toBe('not_found')
 
+    // No Orders pull has read the feed to its end yet: the stock push is left to the one that does (#125).
+    ctx.queue.waiting.length = 0
+    await requestSync(ctx, org, connectionId)
+    expect(ctx.queue.waiting.map((job) => [job.name, job.payload])).toEqual([
+      ['offers.pull', { organizationId: org, connectionId, trigger: 'manual' }],
+      ['price.push', { organizationId: org, connectionId }],
+    ])
+
+    await orderFeedCaughtUp(ctx, org, connectionId)
     ctx.queue.waiting.length = 0
     await requestSync(ctx, org, connectionId)
     expect(ctx.queue.waiting.map((job) => [job.name, job.payload])).toEqual([

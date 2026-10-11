@@ -1,0 +1,4009 @@
+{
+  "version": 1,
+  "interactions": [
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/order/events?from=1791663869066571&limit=100",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/vnd.allegro.public.v1+json",
+          "date": "Sat, 10 Oct 2026 21:49:06 GMT"
+        },
+        "body": {
+          "json": {
+            "events": [
+              {
+                "id": "1791663872701487",
+                "order": {
+                  "seller": {
+                    "id": "111578766"
+                  },
+                  "buyer": {
+                    "id": "111578773",
+                    "email": "person-1@example.com",
+                    "guest": false,
+                    "login": "scrubbed-1",
+                    "preferences": {
+                      "language": "pl-PL"
+                    }
+                  },
+                  "lineItems": [
+                    {
+                      "offer": {
+                        "id": "7782361656",
+                        "name": "Kubek czerwony ceramiczny",
+                        "external": {
+                          "id": "HANZA-MUG-RED"
+                        }
+                      },
+                      "price": {
+                        "amount": "39.99",
+                        "currency": "PLN"
+                      },
+                      "id": "76e82c60-c4e8-11f1-904f-89bb34047197",
+                      "quantity": 2,
+                      "originalPrice": {
+                        "amount": "39.99",
+                        "currency": "PLN"
+                      },
+                      "boughtAt": "2026-10-10T20:24:12.523Z"
+                    }
+                  ],
+                  "checkoutForm": {
+                    "id": "7721b2f0-c4e8-11f1-904f-89bb34047197",
+                    "revision": "7ebb1b0e"
+                  },
+                  "marketplace": {
+                    "id": "allegro-pl"
+                  }
+                },
+                "type": "FILLED_IN",
+                "occurredAt": "2026-10-10T20:24:13.396Z"
+              },
+              {
+                "id": "1791663884335537",
+                "order": {
+                  "seller": {
+                    "id": "111578766"
+                  },
+                  "buyer": {
+                    "id": "111578773",
+                    "email": "person-1@example.com",
+                    "guest": false,
+                    "login": "scrubbed-1",
+                    "preferences": {
+                      "language": "pl-PL"
+                    }
+                  },
+                  "lineItems": [
+                    {
+                      "offer": {
+                        "id": "7782361656",
+                        "name": "Kubek czerwony ceramiczny",
+                        "external": {
+                          "id": "HANZA-MUG-RED"
+                        }
+                      },
+                      "price": {
+                        "amount": "39.99",
+                        "currency": "PLN"
+                      },
+                      "id": "76e82c60-c4e8-11f1-904f-89bb34047197",
+                      "quantity": 2,
+                      "originalPrice": {
+                        "amount": "39.99",
+                        "currency": "PLN"
+                      },
+                      "boughtAt": "2026-10-10T20:24:12.523Z"
+                    }
+                  ],
+                  "checkoutForm": {
+                    "id": "7721b2f0-c4e8-11f1-904f-89bb34047197",
+                    "revision": "b3a81206"
+                  },
+                  "marketplace": {
+                    "id": "allegro-pl"
+                  }
+                },
+                "type": "READY_FOR_PROCESSING",
+                "occurredAt": "2026-10-10T20:24:28.005Z"
+              },
+              {
+                "id": "1791663904449498",
+                "order": {
+                  "seller": {
+                    "id": "111578766"
+                  },
+                  "buyer": {
+                    "id": "111578773",
+                    "email": "person-2@example.com",
+                    "guest": false,
+                    "login": "scrubbed-1",
+                    "preferences": {
+                      "language": "pl-PL"
+                    }
+                  },
+                  "lineItems": [
+                    {
+                      "offer": {
+                        "id": "7782361657",
+                        "name": "Kubek niebieski ceramiczny",
+                        "external": {
+                          "id": "HANZA-MUG-BLUE"
+                        }
+                      },
+                      "price": {
+                        "amount": "34.50",
+                        "currency": "PLN"
+                      },
+                      "id": "9e6ee300-c4e8-11f1-904f-89bb34047197",
+                      "quantity": 1,
+                      "originalPrice": {
+                        "amount": "34.50",
+                        "currency": "PLN"
+                      },
+                      "boughtAt": "2026-10-10T20:24:47.733Z"
+                    }
+                  ],
+                  "checkoutForm": {
+                    "id": "9e806f30-c4e8-11f1-904f-89bb34047197",
+                    "revision": "7ebb1b0e"
+                  },
+                  "marketplace": {
+                    "id": "allegro-pl"
+                  }
+                },
+                "type": "BOUGHT",
+                "occurredAt": "2026-10-10T20:24:47.979Z"
+              },
+              {
+                "id": "1791663904475417",
+                "order": {
+                  "seller": {
+                    "id": "111578766"
+                  },
+                  "buyer": {
+                    "id": "111578773",
+                    "email": "person-2@example.com",
+                    "guest": false,
+                    "login": "scrubbed-1",
+                    "preferences": {
+                      "language": "pl-PL"
+                    }
+                  },
+                  "lineItems": [
+                    {
+                      "offer": {
+                        "id": "7782361657",
+                        "name": "Kubek niebieski ceramiczny",
+                        "external": {
+                          "id": "HANZA-MUG-BLUE"
+                        }
+                      },
+                      "price": {
+                        "amount": "34.50",
+                        "currency": "PLN"
+                      },
+                      "id": "9e6ee300-c4e8-11f1-904f-89bb34047197",
+                      "quantity": 1,
+                      "originalPrice": {
+                        "amount": "34.50",
+                        "currency": "PLN"
+                      },
+                      "boughtAt": "2026-10-10T20:24:47.733Z"
+                    }
+                  ],
+                  "checkoutForm": {
+                    "id": "9e806f30-c4e8-11f1-904f-89bb34047197",
+                    "revision": "7ebb1b0e"
+                  },
+                  "marketplace": {
+                    "id": "allegro-pl"
+                  }
+                },
+                "type": "FILLED_IN",
+                "occurredAt": "2026-10-10T20:24:47.979Z"
+              },
+              {
+                "id": "1791663958176019",
+                "order": {
+                  "seller": {
+                    "id": "111578766"
+                  },
+                  "buyer": {
+                    "id": "111578773",
+                    "email": "person-3@example.com",
+                    "guest": false,
+                    "login": "scrubbed-1",
+                    "preferences": {
+                      "language": "pl-PL"
+                    }
+                  },
+                  "lineItems": [
+                    {
+                      "offer": {
+                        "id": "7782361658",
+                        "name": "Produkt 1 - Talerz porcelanowy biały",
+                        "external": {
+                          "id": "HANZA-PLATE-WHITE"
+                        }
+                      },
+                      "price": {
+                        "amount": "24.00",
+                        "currency": "PLN"
+                      },
+                      "id": "b23aa2c0-c4e8-11f1-904f-89bb34047197",
+                      "quantity": 1,
+                      "originalPrice": {
+                        "amount": "24.00",
+                        "currency": "PLN"
+                      },
+                      "boughtAt": "2026-10-10T20:25:41.368Z"
+                    }
+                  ],
+                  "checkoutForm": {
+                    "id": "b24a5a30-c4e8-11f1-904f-89bb34047197",
+                    "revision": "7ebb1b0e"
+                  },
+                  "marketplace": {
+                    "id": "allegro-pl"
+                  }
+                },
+                "type": "BOUGHT",
+                "occurredAt": "2026-10-10T20:25:41.619Z"
+              },
+              {
+                "id": "1791663958697434",
+                "order": {
+                  "seller": {
+                    "id": "111578766"
+                  },
+                  "buyer": {
+                    "id": "111578773",
+                    "email": "person-3@example.com",
+                    "guest": false,
+                    "login": "scrubbed-1",
+                    "preferences": {
+                      "language": "pl-PL"
+                    }
+                  },
+                  "lineItems": [
+                    {
+                      "offer": {
+                        "id": "7782361658",
+                        "name": "Produkt 1 - Talerz porcelanowy biały",
+                        "external": {
+                          "id": "HANZA-PLATE-WHITE"
+                        }
+                      },
+                      "price": {
+                        "amount": "24.00",
+                        "currency": "PLN"
+                      },
+                      "id": "b23aa2c0-c4e8-11f1-904f-89bb34047197",
+                      "quantity": 1,
+                      "originalPrice": {
+                        "amount": "24.00",
+                        "currency": "PLN"
+                      },
+                      "boughtAt": "2026-10-10T20:25:41.368Z"
+                    }
+                  ],
+                  "checkoutForm": {
+                    "id": "b24a5a30-c4e8-11f1-904f-89bb34047197",
+                    "revision": "7ebb1b0e"
+                  },
+                  "marketplace": {
+                    "id": "allegro-pl"
+                  }
+                },
+                "type": "FILLED_IN",
+                "occurredAt": "2026-10-10T20:25:41.619Z"
+              },
+              {
+                "id": "1791663976344997",
+                "order": {
+                  "seller": {
+                    "id": "111578766"
+                  },
+                  "buyer": {
+                    "id": "111578773",
+                    "email": "person-3@example.com",
+                    "guest": false,
+                    "login": "scrubbed-1",
+                    "preferences": {
+                      "language": "pl-PL"
+                    }
+                  },
+                  "lineItems": [
+                    {
+                      "offer": {
+                        "id": "7782361658",
+                        "name": "Produkt 1 - Talerz porcelanowy biały",
+                        "external": {
+                          "id": "HANZA-PLATE-WHITE"
+                        }
+                      },
+                      "price": {
+                        "amount": "24.00",
+                        "currency": "PLN"
+                      },
+                      "id": "b23aa2c0-c4e8-11f1-904f-89bb34047197",
+                      "quantity": 1,
+                      "originalPrice": {
+                        "amount": "24.00",
+                        "currency": "PLN"
+                      },
+                      "boughtAt": "2026-10-10T20:25:41.368Z"
+                    }
+                  ],
+                  "checkoutForm": {
+                    "id": "b24a5a30-c4e8-11f1-904f-89bb34047197",
+                    "revision": "b3a81206"
+                  },
+                  "marketplace": {
+                    "id": "allegro-pl"
+                  }
+                },
+                "type": "READY_FOR_PROCESSING",
+                "occurredAt": "2026-10-10T20:25:59.128Z"
+              },
+              {
+                "id": "1791664087374998",
+                "order": {
+                  "seller": {
+                    "id": "111578766"
+                  },
+                  "buyer": {
+                    "id": "111578773",
+                    "email": "person-1@example.com",
+                    "guest": false,
+                    "login": "scrubbed-1",
+                    "preferences": {
+                      "language": "pl-PL"
+                    }
+                  },
+                  "lineItems": [
+                    {
+                      "offer": {
+                        "id": "7782361656",
+                        "name": "Kubek czerwony ceramiczny",
+                        "external": {
+                          "id": "HANZA-MUG-RED"
+                        }
+                      },
+                      "price": {
+                        "amount": "39.99",
+                        "currency": "PLN"
+                      },
+                      "id": "76e82c60-c4e8-11f1-904f-89bb34047197",
+                      "quantity": 2,
+                      "originalPrice": {
+                        "amount": "39.99",
+                        "currency": "PLN"
+                      },
+                      "boughtAt": "2026-10-10T20:24:12.523Z"
+                    }
+                  ],
+                  "checkoutForm": {
+                    "id": "7721b2f0-c4e8-11f1-904f-89bb34047197",
+                    "revision": "b3a81206"
+                  },
+                  "marketplace": {
+                    "id": "allegro-pl"
+                  }
+                },
+                "type": "FULFILLMENT_STATUS_CHANGED",
+                "occurredAt": "2026-10-10T20:27:56.336Z"
+              },
+              {
+                "id": "1791664090259191",
+                "order": {
+                  "seller": {
+                    "id": "111578766"
+                  },
+                  "buyer": {
+                    "id": "111578773",
+                    "email": "person-1@example.com",
+                    "guest": false,
+                    "login": "scrubbed-1",
+                    "preferences": {
+                      "language": "pl-PL"
+                    }
+                  },
+                  "lineItems": [
+                    {
+                      "offer": {
+                        "id": "7782361656",
+                        "name": "Kubek czerwony ceramiczny",
+                        "external": {
+                          "id": "HANZA-MUG-RED"
+                        }
+                      },
+                      "price": {
+                        "amount": "39.99",
+                        "currency": "PLN"
+                      },
+                      "id": "76e82c60-c4e8-11f1-904f-89bb34047197",
+                      "quantity": 2,
+                      "originalPrice": {
+                        "amount": "39.99",
+                        "currency": "PLN"
+                      },
+                      "boughtAt": "2026-10-10T20:24:12.523Z"
+                    }
+                  ],
+                  "checkoutForm": {
+                    "id": "7721b2f0-c4e8-11f1-904f-89bb34047197",
+                    "revision": "b3a81206"
+                  },
+                  "marketplace": {
+                    "id": "allegro-pl"
+                  }
+                },
+                "type": "FULFILLMENT_STATUS_CHANGED",
+                "occurredAt": "2026-10-10T20:27:56.336Z"
+              },
+              {
+                "id": "1791664093833382",
+                "order": {
+                  "seller": {
+                    "id": "111578766"
+                  },
+                  "buyer": {
+                    "id": "111578773",
+                    "email": "person-1@example.com",
+                    "guest": false,
+                    "login": "scrubbed-1",
+                    "preferences": {
+                      "language": "pl-PL"
+                    }
+                  },
+                  "lineItems": [
+                    {
+                      "offer": {
+                        "id": "7782361656",
+                        "name": "Kubek czerwony ceramiczny",
+                        "external": {
+                          "id": "HANZA-MUG-RED"
+                        }
+                      },
+                      "price": {
+                        "amount": "39.99",
+                        "currency": "PLN"
+                      },
+                      "id": "76e82c60-c4e8-11f1-904f-89bb34047197",
+                      "quantity": 2,
+                      "originalPrice": {
+                        "amount": "39.99",
+                        "currency": "PLN"
+                      },
+                      "boughtAt": "2026-10-10T20:24:12.523Z"
+                    }
+                  ],
+                  "checkoutForm": {
+                    "id": "7721b2f0-c4e8-11f1-904f-89bb34047197",
+                    "revision": "b3a81206"
+                  },
+                  "marketplace": {
+                    "id": "allegro-pl"
+                  }
+                },
+                "type": "FULFILLMENT_STATUS_CHANGED",
+                "occurredAt": "2026-10-10T20:27:58.992Z"
+              },
+              {
+                "id": "1791664098155496",
+                "order": {
+                  "seller": {
+                    "id": "111578766"
+                  },
+                  "buyer": {
+                    "id": "111578773",
+                    "email": "person-1@example.com",
+                    "guest": false,
+                    "login": "scrubbed-1",
+                    "preferences": {
+                      "language": "pl-PL"
+                    }
+                  },
+                  "lineItems": [
+                    {
+                      "offer": {
+                        "id": "7782361656",
+                        "name": "Kubek czerwony ceramiczny",
+                        "external": {
+                          "id": "HANZA-MUG-RED"
+                        }
+                      },
+                      "price": {
+                        "amount": "39.99",
+                        "currency": "PLN"
+                      },
+                      "id": "76e82c60-c4e8-11f1-904f-89bb34047197",
+                      "quantity": 2,
+                      "originalPrice": {
+                        "amount": "39.99",
+                        "currency": "PLN"
+                      },
+                      "boughtAt": "2026-10-10T20:24:12.523Z"
+                    }
+                  ],
+                  "checkoutForm": {
+                    "id": "7721b2f0-c4e8-11f1-904f-89bb34047197",
+                    "revision": "b3a81206"
+                  },
+                  "marketplace": {
+                    "id": "allegro-pl"
+                  }
+                },
+                "type": "FULFILLMENT_STATUS_CHANGED",
+                "occurredAt": "2026-10-10T20:28:04.025Z"
+              },
+              {
+                "id": "1791664101535294",
+                "order": {
+                  "seller": {
+                    "id": "111578766"
+                  },
+                  "buyer": {
+                    "id": "111578773",
+                    "email": "person-1@example.com",
+                    "guest": false,
+                    "login": "scrubbed-1",
+                    "preferences": {
+                      "language": "pl-PL"
+                    }
+                  },
+                  "lineItems": [
+                    {
+                      "offer": {
+                        "id": "7782361656",
+                        "name": "Kubek czerwony ceramiczny",
+                        "external": {
+                          "id": "HANZA-MUG-RED"
+                        }
+                      },
+                      "price": {
+                        "amount": "39.99",
+                        "currency": "PLN"
+                      },
+                      "id": "76e82c60-c4e8-11f1-904f-89bb34047197",
+                      "quantity": 2,
+                      "originalPrice": {
+                        "amount": "39.99",
+                        "currency": "PLN"
+                      },
+                      "boughtAt": "2026-10-10T20:24:12.523Z"
+                    }
+                  ],
+                  "checkoutForm": {
+                    "id": "7721b2f0-c4e8-11f1-904f-89bb34047197",
+                    "revision": "b3a81206"
+                  },
+                  "marketplace": {
+                    "id": "allegro-pl"
+                  }
+                },
+                "type": "FULFILLMENT_STATUS_CHANGED",
+                "occurredAt": "2026-10-10T20:28:08.619Z"
+              },
+              {
+                "id": "1791665882130973",
+                "order": {
+                  "seller": {
+                    "id": "111578766"
+                  },
+                  "buyer": {
+                    "id": "111578773",
+                    "email": "person-1@example.com",
+                    "guest": false,
+                    "login": "scrubbed-1",
+                    "preferences": {
+                      "language": "pl-PL"
+                    }
+                  },
+                  "lineItems": [
+                    {
+                      "offer": {
+                        "id": "7782361656",
+                        "name": "Kubek czerwony ceramiczny",
+                        "external": {
+                          "id": "HANZA-MUG-RED"
+                        }
+                      },
+                      "price": {
+                        "amount": "39.99",
+                        "currency": "PLN"
+                      },
+                      "id": "76e82c60-c4e8-11f1-904f-89bb34047197",
+                      "quantity": 2,
+                      "originalPrice": {
+                        "amount": "39.99",
+                        "currency": "PLN"
+                      },
+                      "boughtAt": "2026-10-10T20:24:12.523Z"
+                    }
+                  ],
+                  "checkoutForm": {
+                    "id": "7721b2f0-c4e8-11f1-904f-89bb34047197",
+                    "revision": "b3a81206"
+                  },
+                  "marketplace": {
+                    "id": "allegro-pl"
+                  }
+                },
+                "type": "FULFILLMENT_STATUS_CHANGED",
+                "occurredAt": "2026-10-10T20:57:48.218Z"
+              },
+              {
+                "id": "1791665892419349",
+                "order": {
+                  "seller": {
+                    "id": "111578766"
+                  },
+                  "buyer": {
+                    "id": "111578773",
+                    "email": "person-2@example.com",
+                    "guest": false,
+                    "login": "scrubbed-1",
+                    "preferences": {
+                      "language": "pl-PL"
+                    }
+                  },
+                  "lineItems": [
+                    {
+                      "offer": {
+                        "id": "7782361657",
+                        "name": "Kubek niebieski ceramiczny",
+                        "external": {
+                          "id": "HANZA-MUG-BLUE"
+                        }
+                      },
+                      "price": {
+                        "amount": "34.50",
+                        "currency": "PLN"
+                      },
+                      "id": "9e6ee300-c4e8-11f1-904f-89bb34047197",
+                      "quantity": 1,
+                      "originalPrice": {
+                        "amount": "34.50",
+                        "currency": "PLN"
+                      },
+                      "boughtAt": "2026-10-10T20:24:47.733Z"
+                    }
+                  ],
+                  "checkoutForm": {
+                    "id": "9e806f30-c4e8-11f1-904f-89bb34047197",
+                    "revision": "7ebb1b0e"
+                  },
+                  "marketplace": {
+                    "id": "allegro-pl"
+                  }
+                },
+                "type": "FULFILLMENT_STATUS_CHANGED",
+                "occurredAt": "2026-10-10T20:57:59.405Z"
+              },
+              {
+                "id": "1791665892661567",
+                "order": {
+                  "seller": {
+                    "id": "111578766"
+                  },
+                  "buyer": {
+                    "id": "111578773",
+                    "email": "person-2@example.com",
+                    "guest": false,
+                    "login": "scrubbed-1",
+                    "preferences": {
+                      "language": "pl-PL"
+                    }
+                  },
+                  "lineItems": [
+                    {
+                      "offer": {
+                        "id": "7782361657",
+                        "name": "Kubek niebieski ceramiczny",
+                        "external": {
+                          "id": "HANZA-MUG-BLUE"
+                        }
+                      },
+                      "price": {
+                        "amount": "34.50",
+                        "currency": "PLN"
+                      },
+                      "id": "9e6ee300-c4e8-11f1-904f-89bb34047197",
+                      "quantity": 1,
+                      "originalPrice": {
+                        "amount": "34.50",
+                        "currency": "PLN"
+                      },
+                      "boughtAt": "2026-10-10T20:24:47.733Z"
+                    }
+                  ],
+                  "checkoutForm": {
+                    "id": "9e806f30-c4e8-11f1-904f-89bb34047197",
+                    "revision": "7ebb1b0e"
+                  },
+                  "marketplace": {
+                    "id": "allegro-pl"
+                  }
+                },
+                "type": "FULFILLMENT_STATUS_CHANGED",
+                "occurredAt": "2026-10-10T20:57:59.405Z"
+              },
+              {
+                "id": "1791665892987448",
+                "order": {
+                  "seller": {
+                    "id": "111578766"
+                  },
+                  "buyer": {
+                    "id": "111578773",
+                    "email": "person-2@example.com",
+                    "guest": false,
+                    "login": "scrubbed-1",
+                    "preferences": {
+                      "language": "pl-PL"
+                    }
+                  },
+                  "lineItems": [
+                    {
+                      "offer": {
+                        "id": "7782361657",
+                        "name": "Kubek niebieski ceramiczny",
+                        "external": {
+                          "id": "HANZA-MUG-BLUE"
+                        }
+                      },
+                      "price": {
+                        "amount": "34.50",
+                        "currency": "PLN"
+                      },
+                      "id": "9e6ee300-c4e8-11f1-904f-89bb34047197",
+                      "quantity": 1,
+                      "originalPrice": {
+                        "amount": "34.50",
+                        "currency": "PLN"
+                      },
+                      "boughtAt": "2026-10-10T20:24:47.733Z"
+                    }
+                  ],
+                  "checkoutForm": {
+                    "id": "9e806f30-c4e8-11f1-904f-89bb34047197",
+                    "revision": "7ebb1b0e"
+                  },
+                  "marketplace": {
+                    "id": "allegro-pl"
+                  }
+                },
+                "type": "FULFILLMENT_STATUS_CHANGED",
+                "occurredAt": "2026-10-10T20:57:59.405Z"
+              },
+              {
+                "id": "1791665893043261",
+                "order": {
+                  "seller": {
+                    "id": "111578766"
+                  },
+                  "buyer": {
+                    "id": "111578773",
+                    "email": "person-1@example.com",
+                    "guest": false,
+                    "login": "scrubbed-1",
+                    "preferences": {
+                      "language": "pl-PL"
+                    }
+                  },
+                  "lineItems": [
+                    {
+                      "offer": {
+                        "id": "7782361656",
+                        "name": "Kubek czerwony ceramiczny",
+                        "external": {
+                          "id": "HANZA-MUG-RED"
+                        }
+                      },
+                      "price": {
+                        "amount": "39.99",
+                        "currency": "PLN"
+                      },
+                      "id": "76e82c60-c4e8-11f1-904f-89bb34047197",
+                      "quantity": 2,
+                      "originalPrice": {
+                        "amount": "39.99",
+                        "currency": "PLN"
+                      },
+                      "boughtAt": "2026-10-10T20:24:12.523Z"
+                    }
+                  ],
+                  "checkoutForm": {
+                    "id": "7721b2f0-c4e8-11f1-904f-89bb34047197",
+                    "revision": "b3a81206"
+                  },
+                  "marketplace": {
+                    "id": "allegro-pl"
+                  }
+                },
+                "type": "FULFILLMENT_STATUS_CHANGED",
+                "occurredAt": "2026-10-10T20:58:00.298Z"
+              },
+              {
+                "id": "1791665893511532",
+                "order": {
+                  "seller": {
+                    "id": "111578766"
+                  },
+                  "buyer": {
+                    "id": "111578773",
+                    "email": "person-1@example.com",
+                    "guest": false,
+                    "login": "scrubbed-1",
+                    "preferences": {
+                      "language": "pl-PL"
+                    }
+                  },
+                  "lineItems": [
+                    {
+                      "offer": {
+                        "id": "7782361656",
+                        "name": "Kubek czerwony ceramiczny",
+                        "external": {
+                          "id": "HANZA-MUG-RED"
+                        }
+                      },
+                      "price": {
+                        "amount": "39.99",
+                        "currency": "PLN"
+                      },
+                      "id": "76e82c60-c4e8-11f1-904f-89bb34047197",
+                      "quantity": 2,
+                      "originalPrice": {
+                        "amount": "39.99",
+                        "currency": "PLN"
+                      },
+                      "boughtAt": "2026-10-10T20:24:12.523Z"
+                    }
+                  ],
+                  "checkoutForm": {
+                    "id": "7721b2f0-c4e8-11f1-904f-89bb34047197",
+                    "revision": "b3a81206"
+                  },
+                  "marketplace": {
+                    "id": "allegro-pl"
+                  }
+                },
+                "type": "FULFILLMENT_STATUS_CHANGED",
+                "occurredAt": "2026-10-10T20:58:00.298Z"
+              },
+              {
+                "id": "1791665893666644",
+                "order": {
+                  "seller": {
+                    "id": "111578766"
+                  },
+                  "buyer": {
+                    "id": "111578773",
+                    "email": "person-1@example.com",
+                    "guest": false,
+                    "login": "scrubbed-1",
+                    "preferences": {
+                      "language": "pl-PL"
+                    }
+                  },
+                  "lineItems": [
+                    {
+                      "offer": {
+                        "id": "7782361656",
+                        "name": "Kubek czerwony ceramiczny",
+                        "external": {
+                          "id": "HANZA-MUG-RED"
+                        }
+                      },
+                      "price": {
+                        "amount": "39.99",
+                        "currency": "PLN"
+                      },
+                      "id": "76e82c60-c4e8-11f1-904f-89bb34047197",
+                      "quantity": 2,
+                      "originalPrice": {
+                        "amount": "39.99",
+                        "currency": "PLN"
+                      },
+                      "boughtAt": "2026-10-10T20:24:12.523Z"
+                    }
+                  ],
+                  "checkoutForm": {
+                    "id": "7721b2f0-c4e8-11f1-904f-89bb34047197",
+                    "revision": "b3a81206"
+                  },
+                  "marketplace": {
+                    "id": "allegro-pl"
+                  }
+                },
+                "type": "FULFILLMENT_STATUS_CHANGED",
+                "occurredAt": "2026-10-10T20:58:00.298Z"
+              },
+              {
+                "id": "1791665949900097",
+                "order": {
+                  "seller": {
+                    "id": "111578766"
+                  },
+                  "buyer": {
+                    "id": "111578773",
+                    "email": "person-2@example.com",
+                    "guest": false,
+                    "login": "scrubbed-1",
+                    "preferences": {
+                      "language": "pl-PL"
+                    }
+                  },
+                  "lineItems": [
+                    {
+                      "offer": {
+                        "id": "7782361657",
+                        "name": "Kubek niebieski ceramiczny",
+                        "external": {
+                          "id": "HANZA-MUG-BLUE"
+                        }
+                      },
+                      "price": {
+                        "amount": "34.50",
+                        "currency": "PLN"
+                      },
+                      "id": "9e6ee300-c4e8-11f1-904f-89bb34047197",
+                      "quantity": 1,
+                      "originalPrice": {
+                        "amount": "34.50",
+                        "currency": "PLN"
+                      },
+                      "boughtAt": "2026-10-10T20:24:47.733Z"
+                    }
+                  ],
+                  "checkoutForm": {
+                    "id": "9e806f30-c4e8-11f1-904f-89bb34047197",
+                    "revision": "7ebb1b0e"
+                  },
+                  "marketplace": {
+                    "id": "allegro-pl"
+                  }
+                },
+                "type": "FULFILLMENT_STATUS_CHANGED",
+                "occurredAt": "2026-10-10T20:58:57.028Z"
+              },
+              {
+                "id": "1791668877135169",
+                "order": {
+                  "seller": {
+                    "id": "111578766"
+                  },
+                  "buyer": {
+                    "id": "111578773",
+                    "email": "person-1@example.com",
+                    "guest": false,
+                    "login": "scrubbed-1",
+                    "preferences": {
+                      "language": "pl-PL"
+                    }
+                  },
+                  "lineItems": [
+                    {
+                      "offer": {
+                        "id": "7782361656",
+                        "name": "Kubek czerwony ceramiczny",
+                        "external": {
+                          "id": "HANZA-MUG-RED"
+                        }
+                      },
+                      "price": {
+                        "amount": "39.99",
+                        "currency": "PLN"
+                      },
+                      "id": "76e82c60-c4e8-11f1-904f-89bb34047197",
+                      "quantity": 2,
+                      "originalPrice": {
+                        "amount": "39.99",
+                        "currency": "PLN"
+                      },
+                      "boughtAt": "2026-10-10T20:24:12.523Z"
+                    }
+                  ],
+                  "checkoutForm": {
+                    "id": "7721b2f0-c4e8-11f1-904f-89bb34047197",
+                    "revision": "b3a81206"
+                  },
+                  "marketplace": {
+                    "id": "allegro-pl"
+                  }
+                },
+                "type": "FULFILLMENT_STATUS_CHANGED",
+                "occurredAt": "2026-10-10T21:47:45.067Z"
+              },
+              {
+                "id": "1791668877190290",
+                "order": {
+                  "seller": {
+                    "id": "111578766"
+                  },
+                  "buyer": {
+                    "id": "111578773",
+                    "email": "person-1@example.com",
+                    "guest": false,
+                    "login": "scrubbed-1",
+                    "preferences": {
+                      "language": "pl-PL"
+                    }
+                  },
+                  "lineItems": [
+                    {
+                      "offer": {
+                        "id": "7782361656",
+                        "name": "Kubek czerwony ceramiczny",
+                        "external": {
+                          "id": "HANZA-MUG-RED"
+                        }
+                      },
+                      "price": {
+                        "amount": "39.99",
+                        "currency": "PLN"
+                      },
+                      "id": "76e82c60-c4e8-11f1-904f-89bb34047197",
+                      "quantity": 2,
+                      "originalPrice": {
+                        "amount": "39.99",
+                        "currency": "PLN"
+                      },
+                      "boughtAt": "2026-10-10T20:24:12.523Z"
+                    }
+                  ],
+                  "checkoutForm": {
+                    "id": "7721b2f0-c4e8-11f1-904f-89bb34047197",
+                    "revision": "b3a81206"
+                  },
+                  "marketplace": {
+                    "id": "allegro-pl"
+                  }
+                },
+                "type": "FULFILLMENT_STATUS_CHANGED",
+                "occurredAt": "2026-10-10T21:47:45.067Z"
+              },
+              {
+                "id": "1791668877357845",
+                "order": {
+                  "seller": {
+                    "id": "111578766"
+                  },
+                  "buyer": {
+                    "id": "111578773",
+                    "email": "person-1@example.com",
+                    "guest": false,
+                    "login": "scrubbed-1",
+                    "preferences": {
+                      "language": "pl-PL"
+                    }
+                  },
+                  "lineItems": [
+                    {
+                      "offer": {
+                        "id": "7782361656",
+                        "name": "Kubek czerwony ceramiczny",
+                        "external": {
+                          "id": "HANZA-MUG-RED"
+                        }
+                      },
+                      "price": {
+                        "amount": "39.99",
+                        "currency": "PLN"
+                      },
+                      "id": "76e82c60-c4e8-11f1-904f-89bb34047197",
+                      "quantity": 2,
+                      "originalPrice": {
+                        "amount": "39.99",
+                        "currency": "PLN"
+                      },
+                      "boughtAt": "2026-10-10T20:24:12.523Z"
+                    }
+                  ],
+                  "checkoutForm": {
+                    "id": "7721b2f0-c4e8-11f1-904f-89bb34047197",
+                    "revision": "b3a81206"
+                  },
+                  "marketplace": {
+                    "id": "allegro-pl"
+                  }
+                },
+                "type": "FULFILLMENT_STATUS_CHANGED",
+                "occurredAt": "2026-10-10T21:47:45.067Z"
+              },
+              {
+                "id": "1791668880581479",
+                "order": {
+                  "seller": {
+                    "id": "111578766"
+                  },
+                  "buyer": {
+                    "id": "111578773",
+                    "email": "person-1@example.com",
+                    "guest": false,
+                    "login": "scrubbed-1",
+                    "preferences": {
+                      "language": "pl-PL"
+                    }
+                  },
+                  "lineItems": [
+                    {
+                      "offer": {
+                        "id": "7782361656",
+                        "name": "Kubek czerwony ceramiczny",
+                        "external": {
+                          "id": "HANZA-MUG-RED"
+                        }
+                      },
+                      "price": {
+                        "amount": "39.99",
+                        "currency": "PLN"
+                      },
+                      "id": "76e82c60-c4e8-11f1-904f-89bb34047197",
+                      "quantity": 2,
+                      "originalPrice": {
+                        "amount": "39.99",
+                        "currency": "PLN"
+                      },
+                      "boughtAt": "2026-10-10T20:24:12.523Z"
+                    }
+                  ],
+                  "checkoutForm": {
+                    "id": "7721b2f0-c4e8-11f1-904f-89bb34047197",
+                    "revision": "b3a81206"
+                  },
+                  "marketplace": {
+                    "id": "allegro-pl"
+                  }
+                },
+                "type": "FULFILLMENT_STATUS_CHANGED",
+                "occurredAt": "2026-10-10T21:47:47.322Z"
+              },
+              {
+                "id": "1791668880883087",
+                "order": {
+                  "seller": {
+                    "id": "111578766"
+                  },
+                  "buyer": {
+                    "id": "111578773",
+                    "email": "person-1@example.com",
+                    "guest": false,
+                    "login": "scrubbed-1",
+                    "preferences": {
+                      "language": "pl-PL"
+                    }
+                  },
+                  "lineItems": [
+                    {
+                      "offer": {
+                        "id": "7782361656",
+                        "name": "Kubek czerwony ceramiczny",
+                        "external": {
+                          "id": "HANZA-MUG-RED"
+                        }
+                      },
+                      "price": {
+                        "amount": "39.99",
+                        "currency": "PLN"
+                      },
+                      "id": "76e82c60-c4e8-11f1-904f-89bb34047197",
+                      "quantity": 2,
+                      "originalPrice": {
+                        "amount": "39.99",
+                        "currency": "PLN"
+                      },
+                      "boughtAt": "2026-10-10T20:24:12.523Z"
+                    }
+                  ],
+                  "checkoutForm": {
+                    "id": "7721b2f0-c4e8-11f1-904f-89bb34047197",
+                    "revision": "b3a81206"
+                  },
+                  "marketplace": {
+                    "id": "allegro-pl"
+                  }
+                },
+                "type": "FULFILLMENT_STATUS_CHANGED",
+                "occurredAt": "2026-10-10T21:47:47.322Z"
+              },
+              {
+                "id": "1791668881104907",
+                "order": {
+                  "seller": {
+                    "id": "111578766"
+                  },
+                  "buyer": {
+                    "id": "111578773",
+                    "email": "person-1@example.com",
+                    "guest": false,
+                    "login": "scrubbed-1",
+                    "preferences": {
+                      "language": "pl-PL"
+                    }
+                  },
+                  "lineItems": [
+                    {
+                      "offer": {
+                        "id": "7782361656",
+                        "name": "Kubek czerwony ceramiczny",
+                        "external": {
+                          "id": "HANZA-MUG-RED"
+                        }
+                      },
+                      "price": {
+                        "amount": "39.99",
+                        "currency": "PLN"
+                      },
+                      "id": "76e82c60-c4e8-11f1-904f-89bb34047197",
+                      "quantity": 2,
+                      "originalPrice": {
+                        "amount": "39.99",
+                        "currency": "PLN"
+                      },
+                      "boughtAt": "2026-10-10T20:24:12.523Z"
+                    }
+                  ],
+                  "checkoutForm": {
+                    "id": "7721b2f0-c4e8-11f1-904f-89bb34047197",
+                    "revision": "b3a81206"
+                  },
+                  "marketplace": {
+                    "id": "allegro-pl"
+                  }
+                },
+                "type": "FULFILLMENT_STATUS_CHANGED",
+                "occurredAt": "2026-10-10T21:47:47.322Z"
+              },
+              {
+                "id": "1791668934489078",
+                "order": {
+                  "seller": {
+                    "id": "111578766"
+                  },
+                  "buyer": {
+                    "id": "111578773",
+                    "email": "person-1@example.com",
+                    "guest": false,
+                    "login": "scrubbed-1",
+                    "preferences": {
+                      "language": "pl-PL"
+                    }
+                  },
+                  "lineItems": [
+                    {
+                      "offer": {
+                        "id": "7782361656",
+                        "name": "Kubek czerwony ceramiczny",
+                        "external": {
+                          "id": "HANZA-MUG-RED"
+                        }
+                      },
+                      "price": {
+                        "amount": "39.99",
+                        "currency": "PLN"
+                      },
+                      "id": "76e82c60-c4e8-11f1-904f-89bb34047197",
+                      "quantity": 2,
+                      "originalPrice": {
+                        "amount": "39.99",
+                        "currency": "PLN"
+                      },
+                      "boughtAt": "2026-10-10T20:24:12.523Z"
+                    }
+                  ],
+                  "checkoutForm": {
+                    "id": "7721b2f0-c4e8-11f1-904f-89bb34047197",
+                    "revision": "b3a81206"
+                  },
+                  "marketplace": {
+                    "id": "allegro-pl"
+                  }
+                },
+                "type": "FULFILLMENT_STATUS_CHANGED",
+                "occurredAt": "2026-10-10T21:48:43.373Z"
+              },
+              {
+                "id": "1791668934701698",
+                "order": {
+                  "seller": {
+                    "id": "111578766"
+                  },
+                  "buyer": {
+                    "id": "111578773",
+                    "email": "person-1@example.com",
+                    "guest": false,
+                    "login": "scrubbed-1",
+                    "preferences": {
+                      "language": "pl-PL"
+                    }
+                  },
+                  "lineItems": [
+                    {
+                      "offer": {
+                        "id": "7782361656",
+                        "name": "Kubek czerwony ceramiczny",
+                        "external": {
+                          "id": "HANZA-MUG-RED"
+                        }
+                      },
+                      "price": {
+                        "amount": "39.99",
+                        "currency": "PLN"
+                      },
+                      "id": "76e82c60-c4e8-11f1-904f-89bb34047197",
+                      "quantity": 2,
+                      "originalPrice": {
+                        "amount": "39.99",
+                        "currency": "PLN"
+                      },
+                      "boughtAt": "2026-10-10T20:24:12.523Z"
+                    }
+                  ],
+                  "checkoutForm": {
+                    "id": "7721b2f0-c4e8-11f1-904f-89bb34047197",
+                    "revision": "b3a81206"
+                  },
+                  "marketplace": {
+                    "id": "allegro-pl"
+                  }
+                },
+                "type": "FULFILLMENT_STATUS_CHANGED",
+                "occurredAt": "2026-10-10T21:48:43.373Z"
+              },
+              {
+                "id": "1791668934751593",
+                "order": {
+                  "seller": {
+                    "id": "111578766"
+                  },
+                  "buyer": {
+                    "id": "111578773",
+                    "email": "person-1@example.com",
+                    "guest": false,
+                    "login": "scrubbed-1",
+                    "preferences": {
+                      "language": "pl-PL"
+                    }
+                  },
+                  "lineItems": [
+                    {
+                      "offer": {
+                        "id": "7782361656",
+                        "name": "Kubek czerwony ceramiczny",
+                        "external": {
+                          "id": "HANZA-MUG-RED"
+                        }
+                      },
+                      "price": {
+                        "amount": "39.99",
+                        "currency": "PLN"
+                      },
+                      "id": "76e82c60-c4e8-11f1-904f-89bb34047197",
+                      "quantity": 2,
+                      "originalPrice": {
+                        "amount": "39.99",
+                        "currency": "PLN"
+                      },
+                      "boughtAt": "2026-10-10T20:24:12.523Z"
+                    }
+                  ],
+                  "checkoutForm": {
+                    "id": "7721b2f0-c4e8-11f1-904f-89bb34047197",
+                    "revision": "b3a81206"
+                  },
+                  "marketplace": {
+                    "id": "allegro-pl"
+                  }
+                },
+                "type": "FULFILLMENT_STATUS_CHANGED",
+                "occurredAt": "2026-10-10T21:48:43.373Z"
+              },
+              {
+                "id": "1791668936991426",
+                "order": {
+                  "seller": {
+                    "id": "111578766"
+                  },
+                  "buyer": {
+                    "id": "111578773",
+                    "email": "person-1@example.com",
+                    "guest": false,
+                    "login": "scrubbed-1",
+                    "preferences": {
+                      "language": "pl-PL"
+                    }
+                  },
+                  "lineItems": [
+                    {
+                      "offer": {
+                        "id": "7782361656",
+                        "name": "Kubek czerwony ceramiczny",
+                        "external": {
+                          "id": "HANZA-MUG-RED"
+                        }
+                      },
+                      "price": {
+                        "amount": "39.99",
+                        "currency": "PLN"
+                      },
+                      "id": "76e82c60-c4e8-11f1-904f-89bb34047197",
+                      "quantity": 2,
+                      "originalPrice": {
+                        "amount": "39.99",
+                        "currency": "PLN"
+                      },
+                      "boughtAt": "2026-10-10T20:24:12.523Z"
+                    }
+                  ],
+                  "checkoutForm": {
+                    "id": "7721b2f0-c4e8-11f1-904f-89bb34047197",
+                    "revision": "b3a81206"
+                  },
+                  "marketplace": {
+                    "id": "allegro-pl"
+                  }
+                },
+                "type": "FULFILLMENT_STATUS_CHANGED",
+                "occurredAt": "2026-10-10T21:48:45.183Z"
+              },
+              {
+                "id": "1791668937210624",
+                "order": {
+                  "seller": {
+                    "id": "111578766"
+                  },
+                  "buyer": {
+                    "id": "111578773",
+                    "email": "person-1@example.com",
+                    "guest": false,
+                    "login": "scrubbed-1",
+                    "preferences": {
+                      "language": "pl-PL"
+                    }
+                  },
+                  "lineItems": [
+                    {
+                      "offer": {
+                        "id": "7782361656",
+                        "name": "Kubek czerwony ceramiczny",
+                        "external": {
+                          "id": "HANZA-MUG-RED"
+                        }
+                      },
+                      "price": {
+                        "amount": "39.99",
+                        "currency": "PLN"
+                      },
+                      "id": "76e82c60-c4e8-11f1-904f-89bb34047197",
+                      "quantity": 2,
+                      "originalPrice": {
+                        "amount": "39.99",
+                        "currency": "PLN"
+                      },
+                      "boughtAt": "2026-10-10T20:24:12.523Z"
+                    }
+                  ],
+                  "checkoutForm": {
+                    "id": "7721b2f0-c4e8-11f1-904f-89bb34047197",
+                    "revision": "b3a81206"
+                  },
+                  "marketplace": {
+                    "id": "allegro-pl"
+                  }
+                },
+                "type": "FULFILLMENT_STATUS_CHANGED",
+                "occurredAt": "2026-10-10T21:48:45.183Z"
+              },
+              {
+                "id": "1791668937688157",
+                "order": {
+                  "seller": {
+                    "id": "111578766"
+                  },
+                  "buyer": {
+                    "id": "111578773",
+                    "email": "person-1@example.com",
+                    "guest": false,
+                    "login": "scrubbed-1",
+                    "preferences": {
+                      "language": "pl-PL"
+                    }
+                  },
+                  "lineItems": [
+                    {
+                      "offer": {
+                        "id": "7782361656",
+                        "name": "Kubek czerwony ceramiczny",
+                        "external": {
+                          "id": "HANZA-MUG-RED"
+                        }
+                      },
+                      "price": {
+                        "amount": "39.99",
+                        "currency": "PLN"
+                      },
+                      "id": "76e82c60-c4e8-11f1-904f-89bb34047197",
+                      "quantity": 2,
+                      "originalPrice": {
+                        "amount": "39.99",
+                        "currency": "PLN"
+                      },
+                      "boughtAt": "2026-10-10T20:24:12.523Z"
+                    }
+                  ],
+                  "checkoutForm": {
+                    "id": "7721b2f0-c4e8-11f1-904f-89bb34047197",
+                    "revision": "b3a81206"
+                  },
+                  "marketplace": {
+                    "id": "allegro-pl"
+                  }
+                },
+                "type": "FULFILLMENT_STATUS_CHANGED",
+                "occurredAt": "2026-10-10T21:48:45.183Z"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/order/checkout-forms/7721b2f0-c4e8-11f1-904f-89bb34047197",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/vnd.allegro.public.v1+json",
+          "date": "Sat, 10 Oct 2026 21:49:06 GMT"
+        },
+        "body": {
+          "json": {
+            "id": "7721b2f0-c4e8-11f1-904f-89bb34047197",
+            "messageToSeller": null,
+            "buyer": {
+              "id": "111578773",
+              "email": "person-1@example.com",
+              "login": "scrubbed-1",
+              "firstName": "scrubbed-2",
+              "lastName": "scrubbed-3",
+              "companyName": null,
+              "guest": false,
+              "personalIdentity": null,
+              "phoneNumber": "+00000000001",
+              "preferences": {
+                "language": "pl-PL"
+              },
+              "address": {
+                "street": "scrubbed-4",
+                "city": "scrubbed-5",
+                "postCode": "scrubbed-6",
+                "countryCode": "PL"
+              }
+            },
+            "payment": {
+              "id": "854feb10-c4e8-11f1-adbb-3d92744031e2",
+              "type": "ONLINE",
+              "provider": "PAYU",
+              "finishedAt": "2026-10-10T20:24:28.005Z",
+              "paidAmount": {
+                "amount": "85.97",
+                "currency": "PLN"
+              },
+              "reconciliation": null,
+              "features": []
+            },
+            "status": "READY_FOR_PROCESSING",
+            "fulfillment": {
+              "status": "NEW",
+              "shipmentSummary": {
+                "lineItemsSent": "NONE"
+              },
+              "provider": {
+                "id": "SELLER"
+              }
+            },
+            "delivery": {
+              "address": {
+                "firstName": "scrubbed-2",
+                "lastName": "scrubbed-3",
+                "street": "scrubbed-4",
+                "city": "scrubbed-5",
+                "zipCode": "scrubbed-6",
+                "countryCode": "PL",
+                "companyName": null,
+                "phoneNumber": "+00000000002",
+                "modifiedAt": null
+              },
+              "method": {
+                "id": "aa1d05e0-943b-47cb-a759-9d8c16707129",
+                "name": "Allegro Przesyłka polecona"
+              },
+              "pickupPoint": null,
+              "cost": {
+                "amount": "5.99",
+                "currency": "PLN"
+              },
+              "smart": false,
+              "time": {
+                "from": "2026-10-14T22:00:00Z",
+                "to": "2026-10-16T21:59:59.999Z",
+                "guaranteed": null,
+                "dispatch": {
+                  "from": "2026-10-11T22:00:00Z",
+                  "to": "2026-10-12T21:59:59.999Z"
+                }
+              },
+              "calculatedNumberOfPackages": 1,
+              "cancellation": null
+            },
+            "invoice": {
+              "required": false,
+              "address": null,
+              "dueDate": null,
+              "features": null
+            },
+            "lineItems": [
+              {
+                "id": "76e82c60-c4e8-11f1-904f-89bb34047197",
+                "offer": {
+                  "id": "7782361656",
+                  "name": "Kubek czerwony ceramiczny",
+                  "external": {
+                    "id": "HANZA-MUG-RED"
+                  },
+                  "productSet": null,
+                  "hsNumber": null
+                },
+                "quantity": 2,
+                "originalPrice": {
+                  "amount": "39.99",
+                  "currency": "PLN"
+                },
+                "price": {
+                  "amount": "39.99",
+                  "currency": "PLN"
+                },
+                "reconciliation": null,
+                "selectedAdditionalServices": [],
+                "vouchers": [],
+                "tax": null,
+                "boughtAt": "2026-10-10T20:24:12.523Z",
+                "discounts": null,
+                "deposit": null,
+                "serialNumbers": {
+                  "expected": false,
+                  "entries": []
+                }
+              }
+            ],
+            "surcharges": [],
+            "codBookedPayments": [],
+            "note": null,
+            "marketplace": {
+              "id": "allegro-pl"
+            },
+            "summary": {
+              "totalToPay": {
+                "amount": "85.97",
+                "currency": "PLN"
+              }
+            },
+            "updatedAt": "2026-10-10T20:24:28.005Z",
+            "revision": "b3a81206"
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/order/checkout-forms/9e806f30-c4e8-11f1-904f-89bb34047197",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/vnd.allegro.public.v1+json",
+          "date": "Sat, 10 Oct 2026 21:49:06 GMT"
+        },
+        "body": {
+          "json": {
+            "id": "9e806f30-c4e8-11f1-904f-89bb34047197",
+            "messageToSeller": null,
+            "buyer": {
+              "id": "111578773",
+              "email": "person-2@example.com",
+              "login": "scrubbed-1",
+              "firstName": "scrubbed-2",
+              "lastName": "scrubbed-3",
+              "companyName": null,
+              "guest": false,
+              "personalIdentity": null,
+              "phoneNumber": "+00000000001",
+              "preferences": {
+                "language": "pl-PL"
+              },
+              "address": {
+                "street": "scrubbed-4",
+                "city": "scrubbed-5",
+                "postCode": "scrubbed-6",
+                "countryCode": "PL"
+              }
+            },
+            "payment": {
+              "id": "9f1e8437-c4e8-11f1-adbb-3d92744031e2",
+              "type": "ONLINE",
+              "provider": "PAYU",
+              "finishedAt": null,
+              "paidAmount": null,
+              "reconciliation": null,
+              "features": []
+            },
+            "status": "FILLED_IN",
+            "fulfillment": {
+              "status": "NEW",
+              "shipmentSummary": {
+                "lineItemsSent": "NONE"
+              },
+              "provider": {
+                "id": "SELLER"
+              }
+            },
+            "delivery": {
+              "address": null,
+              "method": {
+                "id": "aa1d05e0-943b-47cb-a759-9d8c16707129",
+                "name": "Allegro Przesyłka polecona"
+              },
+              "pickupPoint": null,
+              "cost": {
+                "amount": "5.99",
+                "currency": "PLN"
+              },
+              "smart": false,
+              "time": {
+                "from": null,
+                "to": null,
+                "guaranteed": null,
+                "dispatch": null
+              },
+              "calculatedNumberOfPackages": 1,
+              "cancellation": null
+            },
+            "invoice": {
+              "required": false,
+              "address": null,
+              "dueDate": null,
+              "features": null
+            },
+            "lineItems": [
+              {
+                "id": "9e6ee300-c4e8-11f1-904f-89bb34047197",
+                "offer": {
+                  "id": "7782361657",
+                  "name": "Kubek niebieski ceramiczny",
+                  "external": {
+                    "id": "HANZA-MUG-BLUE"
+                  },
+                  "productSet": null,
+                  "hsNumber": null
+                },
+                "quantity": 1,
+                "originalPrice": {
+                  "amount": "34.50",
+                  "currency": "PLN"
+                },
+                "price": {
+                  "amount": "34.50",
+                  "currency": "PLN"
+                },
+                "reconciliation": null,
+                "selectedAdditionalServices": [],
+                "vouchers": [],
+                "tax": null,
+                "boughtAt": "2026-10-10T20:24:47.733Z",
+                "discounts": null,
+                "deposit": null,
+                "serialNumbers": {
+                  "expected": false,
+                  "entries": []
+                }
+              }
+            ],
+            "surcharges": [],
+            "codBookedPayments": [],
+            "note": null,
+            "marketplace": {
+              "id": "allegro-pl"
+            },
+            "summary": {
+              "totalToPay": {
+                "amount": "40.49",
+                "currency": "PLN"
+              }
+            },
+            "updatedAt": "2026-10-10T20:24:47.979Z",
+            "revision": "7ebb1b0e"
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/order/checkout-forms/b24a5a30-c4e8-11f1-904f-89bb34047197",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/vnd.allegro.public.v1+json",
+          "date": "Sat, 10 Oct 2026 21:49:07 GMT"
+        },
+        "body": {
+          "json": {
+            "id": "b24a5a30-c4e8-11f1-904f-89bb34047197",
+            "messageToSeller": null,
+            "buyer": {
+              "id": "111578773",
+              "email": "person-3@example.com",
+              "login": "scrubbed-1",
+              "firstName": "scrubbed-2",
+              "lastName": "scrubbed-3",
+              "companyName": null,
+              "guest": false,
+              "personalIdentity": null,
+              "phoneNumber": "+00000000001",
+              "preferences": {
+                "language": "pl-PL"
+              },
+              "address": {
+                "street": "scrubbed-4",
+                "city": "scrubbed-5",
+                "postCode": "scrubbed-6",
+                "countryCode": "PL"
+              }
+            },
+            "payment": {
+              "id": "b2e2f106-c4e8-11f1-adbb-3d92744031e2",
+              "type": "ONLINE",
+              "provider": "PAYU",
+              "finishedAt": "2026-10-10T20:25:59.128Z",
+              "paidAmount": {
+                "amount": "29.99",
+                "currency": "PLN"
+              },
+              "reconciliation": null,
+              "features": []
+            },
+            "status": "READY_FOR_PROCESSING",
+            "fulfillment": {
+              "status": "NEW",
+              "shipmentSummary": {
+                "lineItemsSent": "NONE"
+              },
+              "provider": {
+                "id": "SELLER"
+              }
+            },
+            "delivery": {
+              "address": {
+                "firstName": "scrubbed-2",
+                "lastName": "scrubbed-3",
+                "street": "scrubbed-4",
+                "city": "scrubbed-5",
+                "zipCode": "scrubbed-6",
+                "countryCode": "PL",
+                "companyName": null,
+                "phoneNumber": "+00000000002",
+                "modifiedAt": null
+              },
+              "method": {
+                "id": "aa1d05e0-943b-47cb-a759-9d8c16707129",
+                "name": "Allegro Przesyłka polecona"
+              },
+              "pickupPoint": null,
+              "cost": {
+                "amount": "5.99",
+                "currency": "PLN"
+              },
+              "smart": false,
+              "time": {
+                "from": "2026-10-14T22:00:00Z",
+                "to": "2026-10-16T21:59:59.999Z",
+                "guaranteed": null,
+                "dispatch": {
+                  "from": "2026-10-11T22:00:00Z",
+                  "to": "2026-10-12T21:59:59.999Z"
+                }
+              },
+              "calculatedNumberOfPackages": 1,
+              "cancellation": null
+            },
+            "invoice": {
+              "required": false,
+              "address": null,
+              "dueDate": null,
+              "features": null
+            },
+            "lineItems": [
+              {
+                "id": "b23aa2c0-c4e8-11f1-904f-89bb34047197",
+                "offer": {
+                  "id": "7782361658",
+                  "name": "Produkt 1 - Talerz porcelanowy biały",
+                  "external": {
+                    "id": "HANZA-PLATE-WHITE"
+                  },
+                  "productSet": null,
+                  "hsNumber": null
+                },
+                "quantity": 1,
+                "originalPrice": {
+                  "amount": "24.00",
+                  "currency": "PLN"
+                },
+                "price": {
+                  "amount": "24.00",
+                  "currency": "PLN"
+                },
+                "reconciliation": null,
+                "selectedAdditionalServices": [],
+                "vouchers": [],
+                "tax": null,
+                "boughtAt": "2026-10-10T20:25:41.368Z",
+                "discounts": null,
+                "deposit": null,
+                "serialNumbers": {
+                  "expected": false,
+                  "entries": []
+                }
+              }
+            ],
+            "surcharges": [],
+            "codBookedPayments": [],
+            "note": null,
+            "marketplace": {
+              "id": "allegro-pl"
+            },
+            "summary": {
+              "totalToPay": {
+                "amount": "29.99",
+                "currency": "PLN"
+              }
+            },
+            "updatedAt": "2026-10-10T20:25:59.128Z",
+            "revision": "b3a81206"
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/order/events?from=1791663869066571&limit=100",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/vnd.allegro.public.v1+json",
+          "date": "Sat, 10 Oct 2026 21:49:07 GMT"
+        },
+        "body": {
+          "json": {
+            "events": [
+              {
+                "id": "1791663872701487",
+                "order": {
+                  "seller": {
+                    "id": "111578766"
+                  },
+                  "buyer": {
+                    "id": "111578773",
+                    "email": "person-1@example.com",
+                    "guest": false,
+                    "login": "scrubbed-1",
+                    "preferences": {
+                      "language": "pl-PL"
+                    }
+                  },
+                  "lineItems": [
+                    {
+                      "offer": {
+                        "id": "7782361656",
+                        "name": "Kubek czerwony ceramiczny",
+                        "external": {
+                          "id": "HANZA-MUG-RED"
+                        }
+                      },
+                      "price": {
+                        "amount": "39.99",
+                        "currency": "PLN"
+                      },
+                      "id": "76e82c60-c4e8-11f1-904f-89bb34047197",
+                      "quantity": 2,
+                      "originalPrice": {
+                        "amount": "39.99",
+                        "currency": "PLN"
+                      },
+                      "boughtAt": "2026-10-10T20:24:12.523Z"
+                    }
+                  ],
+                  "checkoutForm": {
+                    "id": "7721b2f0-c4e8-11f1-904f-89bb34047197",
+                    "revision": "7ebb1b0e"
+                  },
+                  "marketplace": {
+                    "id": "allegro-pl"
+                  }
+                },
+                "type": "FILLED_IN",
+                "occurredAt": "2026-10-10T20:24:13.396Z"
+              },
+              {
+                "id": "1791663884335537",
+                "order": {
+                  "seller": {
+                    "id": "111578766"
+                  },
+                  "buyer": {
+                    "id": "111578773",
+                    "email": "person-1@example.com",
+                    "guest": false,
+                    "login": "scrubbed-1",
+                    "preferences": {
+                      "language": "pl-PL"
+                    }
+                  },
+                  "lineItems": [
+                    {
+                      "offer": {
+                        "id": "7782361656",
+                        "name": "Kubek czerwony ceramiczny",
+                        "external": {
+                          "id": "HANZA-MUG-RED"
+                        }
+                      },
+                      "price": {
+                        "amount": "39.99",
+                        "currency": "PLN"
+                      },
+                      "id": "76e82c60-c4e8-11f1-904f-89bb34047197",
+                      "quantity": 2,
+                      "originalPrice": {
+                        "amount": "39.99",
+                        "currency": "PLN"
+                      },
+                      "boughtAt": "2026-10-10T20:24:12.523Z"
+                    }
+                  ],
+                  "checkoutForm": {
+                    "id": "7721b2f0-c4e8-11f1-904f-89bb34047197",
+                    "revision": "b3a81206"
+                  },
+                  "marketplace": {
+                    "id": "allegro-pl"
+                  }
+                },
+                "type": "READY_FOR_PROCESSING",
+                "occurredAt": "2026-10-10T20:24:28.005Z"
+              },
+              {
+                "id": "1791663904449498",
+                "order": {
+                  "seller": {
+                    "id": "111578766"
+                  },
+                  "buyer": {
+                    "id": "111578773",
+                    "email": "person-2@example.com",
+                    "guest": false,
+                    "login": "scrubbed-1",
+                    "preferences": {
+                      "language": "pl-PL"
+                    }
+                  },
+                  "lineItems": [
+                    {
+                      "offer": {
+                        "id": "7782361657",
+                        "name": "Kubek niebieski ceramiczny",
+                        "external": {
+                          "id": "HANZA-MUG-BLUE"
+                        }
+                      },
+                      "price": {
+                        "amount": "34.50",
+                        "currency": "PLN"
+                      },
+                      "id": "9e6ee300-c4e8-11f1-904f-89bb34047197",
+                      "quantity": 1,
+                      "originalPrice": {
+                        "amount": "34.50",
+                        "currency": "PLN"
+                      },
+                      "boughtAt": "2026-10-10T20:24:47.733Z"
+                    }
+                  ],
+                  "checkoutForm": {
+                    "id": "9e806f30-c4e8-11f1-904f-89bb34047197",
+                    "revision": "7ebb1b0e"
+                  },
+                  "marketplace": {
+                    "id": "allegro-pl"
+                  }
+                },
+                "type": "BOUGHT",
+                "occurredAt": "2026-10-10T20:24:47.979Z"
+              },
+              {
+                "id": "1791663904475417",
+                "order": {
+                  "seller": {
+                    "id": "111578766"
+                  },
+                  "buyer": {
+                    "id": "111578773",
+                    "email": "person-2@example.com",
+                    "guest": false,
+                    "login": "scrubbed-1",
+                    "preferences": {
+                      "language": "pl-PL"
+                    }
+                  },
+                  "lineItems": [
+                    {
+                      "offer": {
+                        "id": "7782361657",
+                        "name": "Kubek niebieski ceramiczny",
+                        "external": {
+                          "id": "HANZA-MUG-BLUE"
+                        }
+                      },
+                      "price": {
+                        "amount": "34.50",
+                        "currency": "PLN"
+                      },
+                      "id": "9e6ee300-c4e8-11f1-904f-89bb34047197",
+                      "quantity": 1,
+                      "originalPrice": {
+                        "amount": "34.50",
+                        "currency": "PLN"
+                      },
+                      "boughtAt": "2026-10-10T20:24:47.733Z"
+                    }
+                  ],
+                  "checkoutForm": {
+                    "id": "9e806f30-c4e8-11f1-904f-89bb34047197",
+                    "revision": "7ebb1b0e"
+                  },
+                  "marketplace": {
+                    "id": "allegro-pl"
+                  }
+                },
+                "type": "FILLED_IN",
+                "occurredAt": "2026-10-10T20:24:47.979Z"
+              },
+              {
+                "id": "1791663958176019",
+                "order": {
+                  "seller": {
+                    "id": "111578766"
+                  },
+                  "buyer": {
+                    "id": "111578773",
+                    "email": "person-3@example.com",
+                    "guest": false,
+                    "login": "scrubbed-1",
+                    "preferences": {
+                      "language": "pl-PL"
+                    }
+                  },
+                  "lineItems": [
+                    {
+                      "offer": {
+                        "id": "7782361658",
+                        "name": "Produkt 1 - Talerz porcelanowy biały",
+                        "external": {
+                          "id": "HANZA-PLATE-WHITE"
+                        }
+                      },
+                      "price": {
+                        "amount": "24.00",
+                        "currency": "PLN"
+                      },
+                      "id": "b23aa2c0-c4e8-11f1-904f-89bb34047197",
+                      "quantity": 1,
+                      "originalPrice": {
+                        "amount": "24.00",
+                        "currency": "PLN"
+                      },
+                      "boughtAt": "2026-10-10T20:25:41.368Z"
+                    }
+                  ],
+                  "checkoutForm": {
+                    "id": "b24a5a30-c4e8-11f1-904f-89bb34047197",
+                    "revision": "7ebb1b0e"
+                  },
+                  "marketplace": {
+                    "id": "allegro-pl"
+                  }
+                },
+                "type": "BOUGHT",
+                "occurredAt": "2026-10-10T20:25:41.619Z"
+              },
+              {
+                "id": "1791663958697434",
+                "order": {
+                  "seller": {
+                    "id": "111578766"
+                  },
+                  "buyer": {
+                    "id": "111578773",
+                    "email": "person-3@example.com",
+                    "guest": false,
+                    "login": "scrubbed-1",
+                    "preferences": {
+                      "language": "pl-PL"
+                    }
+                  },
+                  "lineItems": [
+                    {
+                      "offer": {
+                        "id": "7782361658",
+                        "name": "Produkt 1 - Talerz porcelanowy biały",
+                        "external": {
+                          "id": "HANZA-PLATE-WHITE"
+                        }
+                      },
+                      "price": {
+                        "amount": "24.00",
+                        "currency": "PLN"
+                      },
+                      "id": "b23aa2c0-c4e8-11f1-904f-89bb34047197",
+                      "quantity": 1,
+                      "originalPrice": {
+                        "amount": "24.00",
+                        "currency": "PLN"
+                      },
+                      "boughtAt": "2026-10-10T20:25:41.368Z"
+                    }
+                  ],
+                  "checkoutForm": {
+                    "id": "b24a5a30-c4e8-11f1-904f-89bb34047197",
+                    "revision": "7ebb1b0e"
+                  },
+                  "marketplace": {
+                    "id": "allegro-pl"
+                  }
+                },
+                "type": "FILLED_IN",
+                "occurredAt": "2026-10-10T20:25:41.619Z"
+              },
+              {
+                "id": "1791663976344997",
+                "order": {
+                  "seller": {
+                    "id": "111578766"
+                  },
+                  "buyer": {
+                    "id": "111578773",
+                    "email": "person-3@example.com",
+                    "guest": false,
+                    "login": "scrubbed-1",
+                    "preferences": {
+                      "language": "pl-PL"
+                    }
+                  },
+                  "lineItems": [
+                    {
+                      "offer": {
+                        "id": "7782361658",
+                        "name": "Produkt 1 - Talerz porcelanowy biały",
+                        "external": {
+                          "id": "HANZA-PLATE-WHITE"
+                        }
+                      },
+                      "price": {
+                        "amount": "24.00",
+                        "currency": "PLN"
+                      },
+                      "id": "b23aa2c0-c4e8-11f1-904f-89bb34047197",
+                      "quantity": 1,
+                      "originalPrice": {
+                        "amount": "24.00",
+                        "currency": "PLN"
+                      },
+                      "boughtAt": "2026-10-10T20:25:41.368Z"
+                    }
+                  ],
+                  "checkoutForm": {
+                    "id": "b24a5a30-c4e8-11f1-904f-89bb34047197",
+                    "revision": "b3a81206"
+                  },
+                  "marketplace": {
+                    "id": "allegro-pl"
+                  }
+                },
+                "type": "READY_FOR_PROCESSING",
+                "occurredAt": "2026-10-10T20:25:59.128Z"
+              },
+              {
+                "id": "1791664087374998",
+                "order": {
+                  "seller": {
+                    "id": "111578766"
+                  },
+                  "buyer": {
+                    "id": "111578773",
+                    "email": "person-1@example.com",
+                    "guest": false,
+                    "login": "scrubbed-1",
+                    "preferences": {
+                      "language": "pl-PL"
+                    }
+                  },
+                  "lineItems": [
+                    {
+                      "offer": {
+                        "id": "7782361656",
+                        "name": "Kubek czerwony ceramiczny",
+                        "external": {
+                          "id": "HANZA-MUG-RED"
+                        }
+                      },
+                      "price": {
+                        "amount": "39.99",
+                        "currency": "PLN"
+                      },
+                      "id": "76e82c60-c4e8-11f1-904f-89bb34047197",
+                      "quantity": 2,
+                      "originalPrice": {
+                        "amount": "39.99",
+                        "currency": "PLN"
+                      },
+                      "boughtAt": "2026-10-10T20:24:12.523Z"
+                    }
+                  ],
+                  "checkoutForm": {
+                    "id": "7721b2f0-c4e8-11f1-904f-89bb34047197",
+                    "revision": "b3a81206"
+                  },
+                  "marketplace": {
+                    "id": "allegro-pl"
+                  }
+                },
+                "type": "FULFILLMENT_STATUS_CHANGED",
+                "occurredAt": "2026-10-10T20:27:56.336Z"
+              },
+              {
+                "id": "1791664090259191",
+                "order": {
+                  "seller": {
+                    "id": "111578766"
+                  },
+                  "buyer": {
+                    "id": "111578773",
+                    "email": "person-1@example.com",
+                    "guest": false,
+                    "login": "scrubbed-1",
+                    "preferences": {
+                      "language": "pl-PL"
+                    }
+                  },
+                  "lineItems": [
+                    {
+                      "offer": {
+                        "id": "7782361656",
+                        "name": "Kubek czerwony ceramiczny",
+                        "external": {
+                          "id": "HANZA-MUG-RED"
+                        }
+                      },
+                      "price": {
+                        "amount": "39.99",
+                        "currency": "PLN"
+                      },
+                      "id": "76e82c60-c4e8-11f1-904f-89bb34047197",
+                      "quantity": 2,
+                      "originalPrice": {
+                        "amount": "39.99",
+                        "currency": "PLN"
+                      },
+                      "boughtAt": "2026-10-10T20:24:12.523Z"
+                    }
+                  ],
+                  "checkoutForm": {
+                    "id": "7721b2f0-c4e8-11f1-904f-89bb34047197",
+                    "revision": "b3a81206"
+                  },
+                  "marketplace": {
+                    "id": "allegro-pl"
+                  }
+                },
+                "type": "FULFILLMENT_STATUS_CHANGED",
+                "occurredAt": "2026-10-10T20:27:56.336Z"
+              },
+              {
+                "id": "1791664093833382",
+                "order": {
+                  "seller": {
+                    "id": "111578766"
+                  },
+                  "buyer": {
+                    "id": "111578773",
+                    "email": "person-1@example.com",
+                    "guest": false,
+                    "login": "scrubbed-1",
+                    "preferences": {
+                      "language": "pl-PL"
+                    }
+                  },
+                  "lineItems": [
+                    {
+                      "offer": {
+                        "id": "7782361656",
+                        "name": "Kubek czerwony ceramiczny",
+                        "external": {
+                          "id": "HANZA-MUG-RED"
+                        }
+                      },
+                      "price": {
+                        "amount": "39.99",
+                        "currency": "PLN"
+                      },
+                      "id": "76e82c60-c4e8-11f1-904f-89bb34047197",
+                      "quantity": 2,
+                      "originalPrice": {
+                        "amount": "39.99",
+                        "currency": "PLN"
+                      },
+                      "boughtAt": "2026-10-10T20:24:12.523Z"
+                    }
+                  ],
+                  "checkoutForm": {
+                    "id": "7721b2f0-c4e8-11f1-904f-89bb34047197",
+                    "revision": "b3a81206"
+                  },
+                  "marketplace": {
+                    "id": "allegro-pl"
+                  }
+                },
+                "type": "FULFILLMENT_STATUS_CHANGED",
+                "occurredAt": "2026-10-10T20:27:58.992Z"
+              },
+              {
+                "id": "1791664098155496",
+                "order": {
+                  "seller": {
+                    "id": "111578766"
+                  },
+                  "buyer": {
+                    "id": "111578773",
+                    "email": "person-1@example.com",
+                    "guest": false,
+                    "login": "scrubbed-1",
+                    "preferences": {
+                      "language": "pl-PL"
+                    }
+                  },
+                  "lineItems": [
+                    {
+                      "offer": {
+                        "id": "7782361656",
+                        "name": "Kubek czerwony ceramiczny",
+                        "external": {
+                          "id": "HANZA-MUG-RED"
+                        }
+                      },
+                      "price": {
+                        "amount": "39.99",
+                        "currency": "PLN"
+                      },
+                      "id": "76e82c60-c4e8-11f1-904f-89bb34047197",
+                      "quantity": 2,
+                      "originalPrice": {
+                        "amount": "39.99",
+                        "currency": "PLN"
+                      },
+                      "boughtAt": "2026-10-10T20:24:12.523Z"
+                    }
+                  ],
+                  "checkoutForm": {
+                    "id": "7721b2f0-c4e8-11f1-904f-89bb34047197",
+                    "revision": "b3a81206"
+                  },
+                  "marketplace": {
+                    "id": "allegro-pl"
+                  }
+                },
+                "type": "FULFILLMENT_STATUS_CHANGED",
+                "occurredAt": "2026-10-10T20:28:04.025Z"
+              },
+              {
+                "id": "1791664101535294",
+                "order": {
+                  "seller": {
+                    "id": "111578766"
+                  },
+                  "buyer": {
+                    "id": "111578773",
+                    "email": "person-1@example.com",
+                    "guest": false,
+                    "login": "scrubbed-1",
+                    "preferences": {
+                      "language": "pl-PL"
+                    }
+                  },
+                  "lineItems": [
+                    {
+                      "offer": {
+                        "id": "7782361656",
+                        "name": "Kubek czerwony ceramiczny",
+                        "external": {
+                          "id": "HANZA-MUG-RED"
+                        }
+                      },
+                      "price": {
+                        "amount": "39.99",
+                        "currency": "PLN"
+                      },
+                      "id": "76e82c60-c4e8-11f1-904f-89bb34047197",
+                      "quantity": 2,
+                      "originalPrice": {
+                        "amount": "39.99",
+                        "currency": "PLN"
+                      },
+                      "boughtAt": "2026-10-10T20:24:12.523Z"
+                    }
+                  ],
+                  "checkoutForm": {
+                    "id": "7721b2f0-c4e8-11f1-904f-89bb34047197",
+                    "revision": "b3a81206"
+                  },
+                  "marketplace": {
+                    "id": "allegro-pl"
+                  }
+                },
+                "type": "FULFILLMENT_STATUS_CHANGED",
+                "occurredAt": "2026-10-10T20:28:08.619Z"
+              },
+              {
+                "id": "1791665882130973",
+                "order": {
+                  "seller": {
+                    "id": "111578766"
+                  },
+                  "buyer": {
+                    "id": "111578773",
+                    "email": "person-1@example.com",
+                    "guest": false,
+                    "login": "scrubbed-1",
+                    "preferences": {
+                      "language": "pl-PL"
+                    }
+                  },
+                  "lineItems": [
+                    {
+                      "offer": {
+                        "id": "7782361656",
+                        "name": "Kubek czerwony ceramiczny",
+                        "external": {
+                          "id": "HANZA-MUG-RED"
+                        }
+                      },
+                      "price": {
+                        "amount": "39.99",
+                        "currency": "PLN"
+                      },
+                      "id": "76e82c60-c4e8-11f1-904f-89bb34047197",
+                      "quantity": 2,
+                      "originalPrice": {
+                        "amount": "39.99",
+                        "currency": "PLN"
+                      },
+                      "boughtAt": "2026-10-10T20:24:12.523Z"
+                    }
+                  ],
+                  "checkoutForm": {
+                    "id": "7721b2f0-c4e8-11f1-904f-89bb34047197",
+                    "revision": "b3a81206"
+                  },
+                  "marketplace": {
+                    "id": "allegro-pl"
+                  }
+                },
+                "type": "FULFILLMENT_STATUS_CHANGED",
+                "occurredAt": "2026-10-10T20:57:48.218Z"
+              },
+              {
+                "id": "1791665892419349",
+                "order": {
+                  "seller": {
+                    "id": "111578766"
+                  },
+                  "buyer": {
+                    "id": "111578773",
+                    "email": "person-2@example.com",
+                    "guest": false,
+                    "login": "scrubbed-1",
+                    "preferences": {
+                      "language": "pl-PL"
+                    }
+                  },
+                  "lineItems": [
+                    {
+                      "offer": {
+                        "id": "7782361657",
+                        "name": "Kubek niebieski ceramiczny",
+                        "external": {
+                          "id": "HANZA-MUG-BLUE"
+                        }
+                      },
+                      "price": {
+                        "amount": "34.50",
+                        "currency": "PLN"
+                      },
+                      "id": "9e6ee300-c4e8-11f1-904f-89bb34047197",
+                      "quantity": 1,
+                      "originalPrice": {
+                        "amount": "34.50",
+                        "currency": "PLN"
+                      },
+                      "boughtAt": "2026-10-10T20:24:47.733Z"
+                    }
+                  ],
+                  "checkoutForm": {
+                    "id": "9e806f30-c4e8-11f1-904f-89bb34047197",
+                    "revision": "7ebb1b0e"
+                  },
+                  "marketplace": {
+                    "id": "allegro-pl"
+                  }
+                },
+                "type": "FULFILLMENT_STATUS_CHANGED",
+                "occurredAt": "2026-10-10T20:57:59.405Z"
+              },
+              {
+                "id": "1791665892661567",
+                "order": {
+                  "seller": {
+                    "id": "111578766"
+                  },
+                  "buyer": {
+                    "id": "111578773",
+                    "email": "person-2@example.com",
+                    "guest": false,
+                    "login": "scrubbed-1",
+                    "preferences": {
+                      "language": "pl-PL"
+                    }
+                  },
+                  "lineItems": [
+                    {
+                      "offer": {
+                        "id": "7782361657",
+                        "name": "Kubek niebieski ceramiczny",
+                        "external": {
+                          "id": "HANZA-MUG-BLUE"
+                        }
+                      },
+                      "price": {
+                        "amount": "34.50",
+                        "currency": "PLN"
+                      },
+                      "id": "9e6ee300-c4e8-11f1-904f-89bb34047197",
+                      "quantity": 1,
+                      "originalPrice": {
+                        "amount": "34.50",
+                        "currency": "PLN"
+                      },
+                      "boughtAt": "2026-10-10T20:24:47.733Z"
+                    }
+                  ],
+                  "checkoutForm": {
+                    "id": "9e806f30-c4e8-11f1-904f-89bb34047197",
+                    "revision": "7ebb1b0e"
+                  },
+                  "marketplace": {
+                    "id": "allegro-pl"
+                  }
+                },
+                "type": "FULFILLMENT_STATUS_CHANGED",
+                "occurredAt": "2026-10-10T20:57:59.405Z"
+              },
+              {
+                "id": "1791665892987448",
+                "order": {
+                  "seller": {
+                    "id": "111578766"
+                  },
+                  "buyer": {
+                    "id": "111578773",
+                    "email": "person-2@example.com",
+                    "guest": false,
+                    "login": "scrubbed-1",
+                    "preferences": {
+                      "language": "pl-PL"
+                    }
+                  },
+                  "lineItems": [
+                    {
+                      "offer": {
+                        "id": "7782361657",
+                        "name": "Kubek niebieski ceramiczny",
+                        "external": {
+                          "id": "HANZA-MUG-BLUE"
+                        }
+                      },
+                      "price": {
+                        "amount": "34.50",
+                        "currency": "PLN"
+                      },
+                      "id": "9e6ee300-c4e8-11f1-904f-89bb34047197",
+                      "quantity": 1,
+                      "originalPrice": {
+                        "amount": "34.50",
+                        "currency": "PLN"
+                      },
+                      "boughtAt": "2026-10-10T20:24:47.733Z"
+                    }
+                  ],
+                  "checkoutForm": {
+                    "id": "9e806f30-c4e8-11f1-904f-89bb34047197",
+                    "revision": "7ebb1b0e"
+                  },
+                  "marketplace": {
+                    "id": "allegro-pl"
+                  }
+                },
+                "type": "FULFILLMENT_STATUS_CHANGED",
+                "occurredAt": "2026-10-10T20:57:59.405Z"
+              },
+              {
+                "id": "1791665893043261",
+                "order": {
+                  "seller": {
+                    "id": "111578766"
+                  },
+                  "buyer": {
+                    "id": "111578773",
+                    "email": "person-1@example.com",
+                    "guest": false,
+                    "login": "scrubbed-1",
+                    "preferences": {
+                      "language": "pl-PL"
+                    }
+                  },
+                  "lineItems": [
+                    {
+                      "offer": {
+                        "id": "7782361656",
+                        "name": "Kubek czerwony ceramiczny",
+                        "external": {
+                          "id": "HANZA-MUG-RED"
+                        }
+                      },
+                      "price": {
+                        "amount": "39.99",
+                        "currency": "PLN"
+                      },
+                      "id": "76e82c60-c4e8-11f1-904f-89bb34047197",
+                      "quantity": 2,
+                      "originalPrice": {
+                        "amount": "39.99",
+                        "currency": "PLN"
+                      },
+                      "boughtAt": "2026-10-10T20:24:12.523Z"
+                    }
+                  ],
+                  "checkoutForm": {
+                    "id": "7721b2f0-c4e8-11f1-904f-89bb34047197",
+                    "revision": "b3a81206"
+                  },
+                  "marketplace": {
+                    "id": "allegro-pl"
+                  }
+                },
+                "type": "FULFILLMENT_STATUS_CHANGED",
+                "occurredAt": "2026-10-10T20:58:00.298Z"
+              },
+              {
+                "id": "1791665893511532",
+                "order": {
+                  "seller": {
+                    "id": "111578766"
+                  },
+                  "buyer": {
+                    "id": "111578773",
+                    "email": "person-1@example.com",
+                    "guest": false,
+                    "login": "scrubbed-1",
+                    "preferences": {
+                      "language": "pl-PL"
+                    }
+                  },
+                  "lineItems": [
+                    {
+                      "offer": {
+                        "id": "7782361656",
+                        "name": "Kubek czerwony ceramiczny",
+                        "external": {
+                          "id": "HANZA-MUG-RED"
+                        }
+                      },
+                      "price": {
+                        "amount": "39.99",
+                        "currency": "PLN"
+                      },
+                      "id": "76e82c60-c4e8-11f1-904f-89bb34047197",
+                      "quantity": 2,
+                      "originalPrice": {
+                        "amount": "39.99",
+                        "currency": "PLN"
+                      },
+                      "boughtAt": "2026-10-10T20:24:12.523Z"
+                    }
+                  ],
+                  "checkoutForm": {
+                    "id": "7721b2f0-c4e8-11f1-904f-89bb34047197",
+                    "revision": "b3a81206"
+                  },
+                  "marketplace": {
+                    "id": "allegro-pl"
+                  }
+                },
+                "type": "FULFILLMENT_STATUS_CHANGED",
+                "occurredAt": "2026-10-10T20:58:00.298Z"
+              },
+              {
+                "id": "1791665893666644",
+                "order": {
+                  "seller": {
+                    "id": "111578766"
+                  },
+                  "buyer": {
+                    "id": "111578773",
+                    "email": "person-1@example.com",
+                    "guest": false,
+                    "login": "scrubbed-1",
+                    "preferences": {
+                      "language": "pl-PL"
+                    }
+                  },
+                  "lineItems": [
+                    {
+                      "offer": {
+                        "id": "7782361656",
+                        "name": "Kubek czerwony ceramiczny",
+                        "external": {
+                          "id": "HANZA-MUG-RED"
+                        }
+                      },
+                      "price": {
+                        "amount": "39.99",
+                        "currency": "PLN"
+                      },
+                      "id": "76e82c60-c4e8-11f1-904f-89bb34047197",
+                      "quantity": 2,
+                      "originalPrice": {
+                        "amount": "39.99",
+                        "currency": "PLN"
+                      },
+                      "boughtAt": "2026-10-10T20:24:12.523Z"
+                    }
+                  ],
+                  "checkoutForm": {
+                    "id": "7721b2f0-c4e8-11f1-904f-89bb34047197",
+                    "revision": "b3a81206"
+                  },
+                  "marketplace": {
+                    "id": "allegro-pl"
+                  }
+                },
+                "type": "FULFILLMENT_STATUS_CHANGED",
+                "occurredAt": "2026-10-10T20:58:00.298Z"
+              },
+              {
+                "id": "1791665949900097",
+                "order": {
+                  "seller": {
+                    "id": "111578766"
+                  },
+                  "buyer": {
+                    "id": "111578773",
+                    "email": "person-2@example.com",
+                    "guest": false,
+                    "login": "scrubbed-1",
+                    "preferences": {
+                      "language": "pl-PL"
+                    }
+                  },
+                  "lineItems": [
+                    {
+                      "offer": {
+                        "id": "7782361657",
+                        "name": "Kubek niebieski ceramiczny",
+                        "external": {
+                          "id": "HANZA-MUG-BLUE"
+                        }
+                      },
+                      "price": {
+                        "amount": "34.50",
+                        "currency": "PLN"
+                      },
+                      "id": "9e6ee300-c4e8-11f1-904f-89bb34047197",
+                      "quantity": 1,
+                      "originalPrice": {
+                        "amount": "34.50",
+                        "currency": "PLN"
+                      },
+                      "boughtAt": "2026-10-10T20:24:47.733Z"
+                    }
+                  ],
+                  "checkoutForm": {
+                    "id": "9e806f30-c4e8-11f1-904f-89bb34047197",
+                    "revision": "7ebb1b0e"
+                  },
+                  "marketplace": {
+                    "id": "allegro-pl"
+                  }
+                },
+                "type": "FULFILLMENT_STATUS_CHANGED",
+                "occurredAt": "2026-10-10T20:58:57.028Z"
+              },
+              {
+                "id": "1791668877135169",
+                "order": {
+                  "seller": {
+                    "id": "111578766"
+                  },
+                  "buyer": {
+                    "id": "111578773",
+                    "email": "person-1@example.com",
+                    "guest": false,
+                    "login": "scrubbed-1",
+                    "preferences": {
+                      "language": "pl-PL"
+                    }
+                  },
+                  "lineItems": [
+                    {
+                      "offer": {
+                        "id": "7782361656",
+                        "name": "Kubek czerwony ceramiczny",
+                        "external": {
+                          "id": "HANZA-MUG-RED"
+                        }
+                      },
+                      "price": {
+                        "amount": "39.99",
+                        "currency": "PLN"
+                      },
+                      "id": "76e82c60-c4e8-11f1-904f-89bb34047197",
+                      "quantity": 2,
+                      "originalPrice": {
+                        "amount": "39.99",
+                        "currency": "PLN"
+                      },
+                      "boughtAt": "2026-10-10T20:24:12.523Z"
+                    }
+                  ],
+                  "checkoutForm": {
+                    "id": "7721b2f0-c4e8-11f1-904f-89bb34047197",
+                    "revision": "b3a81206"
+                  },
+                  "marketplace": {
+                    "id": "allegro-pl"
+                  }
+                },
+                "type": "FULFILLMENT_STATUS_CHANGED",
+                "occurredAt": "2026-10-10T21:47:45.067Z"
+              },
+              {
+                "id": "1791668877190290",
+                "order": {
+                  "seller": {
+                    "id": "111578766"
+                  },
+                  "buyer": {
+                    "id": "111578773",
+                    "email": "person-1@example.com",
+                    "guest": false,
+                    "login": "scrubbed-1",
+                    "preferences": {
+                      "language": "pl-PL"
+                    }
+                  },
+                  "lineItems": [
+                    {
+                      "offer": {
+                        "id": "7782361656",
+                        "name": "Kubek czerwony ceramiczny",
+                        "external": {
+                          "id": "HANZA-MUG-RED"
+                        }
+                      },
+                      "price": {
+                        "amount": "39.99",
+                        "currency": "PLN"
+                      },
+                      "id": "76e82c60-c4e8-11f1-904f-89bb34047197",
+                      "quantity": 2,
+                      "originalPrice": {
+                        "amount": "39.99",
+                        "currency": "PLN"
+                      },
+                      "boughtAt": "2026-10-10T20:24:12.523Z"
+                    }
+                  ],
+                  "checkoutForm": {
+                    "id": "7721b2f0-c4e8-11f1-904f-89bb34047197",
+                    "revision": "b3a81206"
+                  },
+                  "marketplace": {
+                    "id": "allegro-pl"
+                  }
+                },
+                "type": "FULFILLMENT_STATUS_CHANGED",
+                "occurredAt": "2026-10-10T21:47:45.067Z"
+              },
+              {
+                "id": "1791668877357845",
+                "order": {
+                  "seller": {
+                    "id": "111578766"
+                  },
+                  "buyer": {
+                    "id": "111578773",
+                    "email": "person-1@example.com",
+                    "guest": false,
+                    "login": "scrubbed-1",
+                    "preferences": {
+                      "language": "pl-PL"
+                    }
+                  },
+                  "lineItems": [
+                    {
+                      "offer": {
+                        "id": "7782361656",
+                        "name": "Kubek czerwony ceramiczny",
+                        "external": {
+                          "id": "HANZA-MUG-RED"
+                        }
+                      },
+                      "price": {
+                        "amount": "39.99",
+                        "currency": "PLN"
+                      },
+                      "id": "76e82c60-c4e8-11f1-904f-89bb34047197",
+                      "quantity": 2,
+                      "originalPrice": {
+                        "amount": "39.99",
+                        "currency": "PLN"
+                      },
+                      "boughtAt": "2026-10-10T20:24:12.523Z"
+                    }
+                  ],
+                  "checkoutForm": {
+                    "id": "7721b2f0-c4e8-11f1-904f-89bb34047197",
+                    "revision": "b3a81206"
+                  },
+                  "marketplace": {
+                    "id": "allegro-pl"
+                  }
+                },
+                "type": "FULFILLMENT_STATUS_CHANGED",
+                "occurredAt": "2026-10-10T21:47:45.067Z"
+              },
+              {
+                "id": "1791668880581479",
+                "order": {
+                  "seller": {
+                    "id": "111578766"
+                  },
+                  "buyer": {
+                    "id": "111578773",
+                    "email": "person-1@example.com",
+                    "guest": false,
+                    "login": "scrubbed-1",
+                    "preferences": {
+                      "language": "pl-PL"
+                    }
+                  },
+                  "lineItems": [
+                    {
+                      "offer": {
+                        "id": "7782361656",
+                        "name": "Kubek czerwony ceramiczny",
+                        "external": {
+                          "id": "HANZA-MUG-RED"
+                        }
+                      },
+                      "price": {
+                        "amount": "39.99",
+                        "currency": "PLN"
+                      },
+                      "id": "76e82c60-c4e8-11f1-904f-89bb34047197",
+                      "quantity": 2,
+                      "originalPrice": {
+                        "amount": "39.99",
+                        "currency": "PLN"
+                      },
+                      "boughtAt": "2026-10-10T20:24:12.523Z"
+                    }
+                  ],
+                  "checkoutForm": {
+                    "id": "7721b2f0-c4e8-11f1-904f-89bb34047197",
+                    "revision": "b3a81206"
+                  },
+                  "marketplace": {
+                    "id": "allegro-pl"
+                  }
+                },
+                "type": "FULFILLMENT_STATUS_CHANGED",
+                "occurredAt": "2026-10-10T21:47:47.322Z"
+              },
+              {
+                "id": "1791668880883087",
+                "order": {
+                  "seller": {
+                    "id": "111578766"
+                  },
+                  "buyer": {
+                    "id": "111578773",
+                    "email": "person-1@example.com",
+                    "guest": false,
+                    "login": "scrubbed-1",
+                    "preferences": {
+                      "language": "pl-PL"
+                    }
+                  },
+                  "lineItems": [
+                    {
+                      "offer": {
+                        "id": "7782361656",
+                        "name": "Kubek czerwony ceramiczny",
+                        "external": {
+                          "id": "HANZA-MUG-RED"
+                        }
+                      },
+                      "price": {
+                        "amount": "39.99",
+                        "currency": "PLN"
+                      },
+                      "id": "76e82c60-c4e8-11f1-904f-89bb34047197",
+                      "quantity": 2,
+                      "originalPrice": {
+                        "amount": "39.99",
+                        "currency": "PLN"
+                      },
+                      "boughtAt": "2026-10-10T20:24:12.523Z"
+                    }
+                  ],
+                  "checkoutForm": {
+                    "id": "7721b2f0-c4e8-11f1-904f-89bb34047197",
+                    "revision": "b3a81206"
+                  },
+                  "marketplace": {
+                    "id": "allegro-pl"
+                  }
+                },
+                "type": "FULFILLMENT_STATUS_CHANGED",
+                "occurredAt": "2026-10-10T21:47:47.322Z"
+              },
+              {
+                "id": "1791668881104907",
+                "order": {
+                  "seller": {
+                    "id": "111578766"
+                  },
+                  "buyer": {
+                    "id": "111578773",
+                    "email": "person-1@example.com",
+                    "guest": false,
+                    "login": "scrubbed-1",
+                    "preferences": {
+                      "language": "pl-PL"
+                    }
+                  },
+                  "lineItems": [
+                    {
+                      "offer": {
+                        "id": "7782361656",
+                        "name": "Kubek czerwony ceramiczny",
+                        "external": {
+                          "id": "HANZA-MUG-RED"
+                        }
+                      },
+                      "price": {
+                        "amount": "39.99",
+                        "currency": "PLN"
+                      },
+                      "id": "76e82c60-c4e8-11f1-904f-89bb34047197",
+                      "quantity": 2,
+                      "originalPrice": {
+                        "amount": "39.99",
+                        "currency": "PLN"
+                      },
+                      "boughtAt": "2026-10-10T20:24:12.523Z"
+                    }
+                  ],
+                  "checkoutForm": {
+                    "id": "7721b2f0-c4e8-11f1-904f-89bb34047197",
+                    "revision": "b3a81206"
+                  },
+                  "marketplace": {
+                    "id": "allegro-pl"
+                  }
+                },
+                "type": "FULFILLMENT_STATUS_CHANGED",
+                "occurredAt": "2026-10-10T21:47:47.322Z"
+              },
+              {
+                "id": "1791668934489078",
+                "order": {
+                  "seller": {
+                    "id": "111578766"
+                  },
+                  "buyer": {
+                    "id": "111578773",
+                    "email": "person-1@example.com",
+                    "guest": false,
+                    "login": "scrubbed-1",
+                    "preferences": {
+                      "language": "pl-PL"
+                    }
+                  },
+                  "lineItems": [
+                    {
+                      "offer": {
+                        "id": "7782361656",
+                        "name": "Kubek czerwony ceramiczny",
+                        "external": {
+                          "id": "HANZA-MUG-RED"
+                        }
+                      },
+                      "price": {
+                        "amount": "39.99",
+                        "currency": "PLN"
+                      },
+                      "id": "76e82c60-c4e8-11f1-904f-89bb34047197",
+                      "quantity": 2,
+                      "originalPrice": {
+                        "amount": "39.99",
+                        "currency": "PLN"
+                      },
+                      "boughtAt": "2026-10-10T20:24:12.523Z"
+                    }
+                  ],
+                  "checkoutForm": {
+                    "id": "7721b2f0-c4e8-11f1-904f-89bb34047197",
+                    "revision": "b3a81206"
+                  },
+                  "marketplace": {
+                    "id": "allegro-pl"
+                  }
+                },
+                "type": "FULFILLMENT_STATUS_CHANGED",
+                "occurredAt": "2026-10-10T21:48:43.373Z"
+              },
+              {
+                "id": "1791668934701698",
+                "order": {
+                  "seller": {
+                    "id": "111578766"
+                  },
+                  "buyer": {
+                    "id": "111578773",
+                    "email": "person-1@example.com",
+                    "guest": false,
+                    "login": "scrubbed-1",
+                    "preferences": {
+                      "language": "pl-PL"
+                    }
+                  },
+                  "lineItems": [
+                    {
+                      "offer": {
+                        "id": "7782361656",
+                        "name": "Kubek czerwony ceramiczny",
+                        "external": {
+                          "id": "HANZA-MUG-RED"
+                        }
+                      },
+                      "price": {
+                        "amount": "39.99",
+                        "currency": "PLN"
+                      },
+                      "id": "76e82c60-c4e8-11f1-904f-89bb34047197",
+                      "quantity": 2,
+                      "originalPrice": {
+                        "amount": "39.99",
+                        "currency": "PLN"
+                      },
+                      "boughtAt": "2026-10-10T20:24:12.523Z"
+                    }
+                  ],
+                  "checkoutForm": {
+                    "id": "7721b2f0-c4e8-11f1-904f-89bb34047197",
+                    "revision": "b3a81206"
+                  },
+                  "marketplace": {
+                    "id": "allegro-pl"
+                  }
+                },
+                "type": "FULFILLMENT_STATUS_CHANGED",
+                "occurredAt": "2026-10-10T21:48:43.373Z"
+              },
+              {
+                "id": "1791668934751593",
+                "order": {
+                  "seller": {
+                    "id": "111578766"
+                  },
+                  "buyer": {
+                    "id": "111578773",
+                    "email": "person-1@example.com",
+                    "guest": false,
+                    "login": "scrubbed-1",
+                    "preferences": {
+                      "language": "pl-PL"
+                    }
+                  },
+                  "lineItems": [
+                    {
+                      "offer": {
+                        "id": "7782361656",
+                        "name": "Kubek czerwony ceramiczny",
+                        "external": {
+                          "id": "HANZA-MUG-RED"
+                        }
+                      },
+                      "price": {
+                        "amount": "39.99",
+                        "currency": "PLN"
+                      },
+                      "id": "76e82c60-c4e8-11f1-904f-89bb34047197",
+                      "quantity": 2,
+                      "originalPrice": {
+                        "amount": "39.99",
+                        "currency": "PLN"
+                      },
+                      "boughtAt": "2026-10-10T20:24:12.523Z"
+                    }
+                  ],
+                  "checkoutForm": {
+                    "id": "7721b2f0-c4e8-11f1-904f-89bb34047197",
+                    "revision": "b3a81206"
+                  },
+                  "marketplace": {
+                    "id": "allegro-pl"
+                  }
+                },
+                "type": "FULFILLMENT_STATUS_CHANGED",
+                "occurredAt": "2026-10-10T21:48:43.373Z"
+              },
+              {
+                "id": "1791668936991426",
+                "order": {
+                  "seller": {
+                    "id": "111578766"
+                  },
+                  "buyer": {
+                    "id": "111578773",
+                    "email": "person-1@example.com",
+                    "guest": false,
+                    "login": "scrubbed-1",
+                    "preferences": {
+                      "language": "pl-PL"
+                    }
+                  },
+                  "lineItems": [
+                    {
+                      "offer": {
+                        "id": "7782361656",
+                        "name": "Kubek czerwony ceramiczny",
+                        "external": {
+                          "id": "HANZA-MUG-RED"
+                        }
+                      },
+                      "price": {
+                        "amount": "39.99",
+                        "currency": "PLN"
+                      },
+                      "id": "76e82c60-c4e8-11f1-904f-89bb34047197",
+                      "quantity": 2,
+                      "originalPrice": {
+                        "amount": "39.99",
+                        "currency": "PLN"
+                      },
+                      "boughtAt": "2026-10-10T20:24:12.523Z"
+                    }
+                  ],
+                  "checkoutForm": {
+                    "id": "7721b2f0-c4e8-11f1-904f-89bb34047197",
+                    "revision": "b3a81206"
+                  },
+                  "marketplace": {
+                    "id": "allegro-pl"
+                  }
+                },
+                "type": "FULFILLMENT_STATUS_CHANGED",
+                "occurredAt": "2026-10-10T21:48:45.183Z"
+              },
+              {
+                "id": "1791668937210624",
+                "order": {
+                  "seller": {
+                    "id": "111578766"
+                  },
+                  "buyer": {
+                    "id": "111578773",
+                    "email": "person-1@example.com",
+                    "guest": false,
+                    "login": "scrubbed-1",
+                    "preferences": {
+                      "language": "pl-PL"
+                    }
+                  },
+                  "lineItems": [
+                    {
+                      "offer": {
+                        "id": "7782361656",
+                        "name": "Kubek czerwony ceramiczny",
+                        "external": {
+                          "id": "HANZA-MUG-RED"
+                        }
+                      },
+                      "price": {
+                        "amount": "39.99",
+                        "currency": "PLN"
+                      },
+                      "id": "76e82c60-c4e8-11f1-904f-89bb34047197",
+                      "quantity": 2,
+                      "originalPrice": {
+                        "amount": "39.99",
+                        "currency": "PLN"
+                      },
+                      "boughtAt": "2026-10-10T20:24:12.523Z"
+                    }
+                  ],
+                  "checkoutForm": {
+                    "id": "7721b2f0-c4e8-11f1-904f-89bb34047197",
+                    "revision": "b3a81206"
+                  },
+                  "marketplace": {
+                    "id": "allegro-pl"
+                  }
+                },
+                "type": "FULFILLMENT_STATUS_CHANGED",
+                "occurredAt": "2026-10-10T21:48:45.183Z"
+              },
+              {
+                "id": "1791668937688157",
+                "order": {
+                  "seller": {
+                    "id": "111578766"
+                  },
+                  "buyer": {
+                    "id": "111578773",
+                    "email": "person-1@example.com",
+                    "guest": false,
+                    "login": "scrubbed-1",
+                    "preferences": {
+                      "language": "pl-PL"
+                    }
+                  },
+                  "lineItems": [
+                    {
+                      "offer": {
+                        "id": "7782361656",
+                        "name": "Kubek czerwony ceramiczny",
+                        "external": {
+                          "id": "HANZA-MUG-RED"
+                        }
+                      },
+                      "price": {
+                        "amount": "39.99",
+                        "currency": "PLN"
+                      },
+                      "id": "76e82c60-c4e8-11f1-904f-89bb34047197",
+                      "quantity": 2,
+                      "originalPrice": {
+                        "amount": "39.99",
+                        "currency": "PLN"
+                      },
+                      "boughtAt": "2026-10-10T20:24:12.523Z"
+                    }
+                  ],
+                  "checkoutForm": {
+                    "id": "7721b2f0-c4e8-11f1-904f-89bb34047197",
+                    "revision": "b3a81206"
+                  },
+                  "marketplace": {
+                    "id": "allegro-pl"
+                  }
+                },
+                "type": "FULFILLMENT_STATUS_CHANGED",
+                "occurredAt": "2026-10-10T21:48:45.183Z"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/order/checkout-forms/7721b2f0-c4e8-11f1-904f-89bb34047197",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/vnd.allegro.public.v1+json",
+          "date": "Sat, 10 Oct 2026 21:49:07 GMT"
+        },
+        "body": {
+          "json": {
+            "id": "7721b2f0-c4e8-11f1-904f-89bb34047197",
+            "messageToSeller": null,
+            "buyer": {
+              "id": "111578773",
+              "email": "person-1@example.com",
+              "login": "scrubbed-1",
+              "firstName": "scrubbed-2",
+              "lastName": "scrubbed-3",
+              "companyName": null,
+              "guest": false,
+              "personalIdentity": null,
+              "phoneNumber": "+00000000001",
+              "preferences": {
+                "language": "pl-PL"
+              },
+              "address": {
+                "street": "scrubbed-4",
+                "city": "scrubbed-5",
+                "postCode": "scrubbed-6",
+                "countryCode": "PL"
+              }
+            },
+            "payment": {
+              "id": "854feb10-c4e8-11f1-adbb-3d92744031e2",
+              "type": "ONLINE",
+              "provider": "PAYU",
+              "finishedAt": "2026-10-10T20:24:28.005Z",
+              "paidAmount": {
+                "amount": "85.97",
+                "currency": "PLN"
+              },
+              "reconciliation": null,
+              "features": []
+            },
+            "status": "READY_FOR_PROCESSING",
+            "fulfillment": {
+              "status": "NEW",
+              "shipmentSummary": {
+                "lineItemsSent": "NONE"
+              },
+              "provider": {
+                "id": "SELLER"
+              }
+            },
+            "delivery": {
+              "address": {
+                "firstName": "scrubbed-2",
+                "lastName": "scrubbed-3",
+                "street": "scrubbed-4",
+                "city": "scrubbed-5",
+                "zipCode": "scrubbed-6",
+                "countryCode": "PL",
+                "companyName": null,
+                "phoneNumber": "+00000000002",
+                "modifiedAt": null
+              },
+              "method": {
+                "id": "aa1d05e0-943b-47cb-a759-9d8c16707129",
+                "name": "Allegro Przesyłka polecona"
+              },
+              "pickupPoint": null,
+              "cost": {
+                "amount": "5.99",
+                "currency": "PLN"
+              },
+              "smart": false,
+              "time": {
+                "from": "2026-10-14T22:00:00Z",
+                "to": "2026-10-16T21:59:59.999Z",
+                "guaranteed": null,
+                "dispatch": {
+                  "from": "2026-10-11T22:00:00Z",
+                  "to": "2026-10-12T21:59:59.999Z"
+                }
+              },
+              "calculatedNumberOfPackages": 1,
+              "cancellation": null
+            },
+            "invoice": {
+              "required": false,
+              "address": null,
+              "dueDate": null,
+              "features": null
+            },
+            "lineItems": [
+              {
+                "id": "76e82c60-c4e8-11f1-904f-89bb34047197",
+                "offer": {
+                  "id": "7782361656",
+                  "name": "Kubek czerwony ceramiczny",
+                  "external": {
+                    "id": "HANZA-MUG-RED"
+                  },
+                  "productSet": null,
+                  "hsNumber": null
+                },
+                "quantity": 2,
+                "originalPrice": {
+                  "amount": "39.99",
+                  "currency": "PLN"
+                },
+                "price": {
+                  "amount": "39.99",
+                  "currency": "PLN"
+                },
+                "reconciliation": null,
+                "selectedAdditionalServices": [],
+                "vouchers": [],
+                "tax": null,
+                "boughtAt": "2026-10-10T20:24:12.523Z",
+                "discounts": null,
+                "deposit": null,
+                "serialNumbers": {
+                  "expected": false,
+                  "entries": []
+                }
+              }
+            ],
+            "surcharges": [],
+            "codBookedPayments": [],
+            "note": null,
+            "marketplace": {
+              "id": "allegro-pl"
+            },
+            "summary": {
+              "totalToPay": {
+                "amount": "85.97",
+                "currency": "PLN"
+              }
+            },
+            "updatedAt": "2026-10-10T20:24:28.005Z",
+            "revision": "b3a81206"
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/order/checkout-forms/9e806f30-c4e8-11f1-904f-89bb34047197",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/vnd.allegro.public.v1+json",
+          "date": "Sat, 10 Oct 2026 21:49:07 GMT"
+        },
+        "body": {
+          "json": {
+            "id": "9e806f30-c4e8-11f1-904f-89bb34047197",
+            "messageToSeller": null,
+            "buyer": {
+              "id": "111578773",
+              "email": "person-2@example.com",
+              "login": "scrubbed-1",
+              "firstName": "scrubbed-2",
+              "lastName": "scrubbed-3",
+              "companyName": null,
+              "guest": false,
+              "personalIdentity": null,
+              "phoneNumber": "+00000000001",
+              "preferences": {
+                "language": "pl-PL"
+              },
+              "address": {
+                "street": "scrubbed-4",
+                "city": "scrubbed-5",
+                "postCode": "scrubbed-6",
+                "countryCode": "PL"
+              }
+            },
+            "payment": {
+              "id": "9f1e8437-c4e8-11f1-adbb-3d92744031e2",
+              "type": "ONLINE",
+              "provider": "PAYU",
+              "finishedAt": null,
+              "paidAmount": null,
+              "reconciliation": null,
+              "features": []
+            },
+            "status": "FILLED_IN",
+            "fulfillment": {
+              "status": "NEW",
+              "shipmentSummary": {
+                "lineItemsSent": "NONE"
+              },
+              "provider": {
+                "id": "SELLER"
+              }
+            },
+            "delivery": {
+              "address": null,
+              "method": {
+                "id": "aa1d05e0-943b-47cb-a759-9d8c16707129",
+                "name": "Allegro Przesyłka polecona"
+              },
+              "pickupPoint": null,
+              "cost": {
+                "amount": "5.99",
+                "currency": "PLN"
+              },
+              "smart": false,
+              "time": {
+                "from": null,
+                "to": null,
+                "guaranteed": null,
+                "dispatch": null
+              },
+              "calculatedNumberOfPackages": 1,
+              "cancellation": null
+            },
+            "invoice": {
+              "required": false,
+              "address": null,
+              "dueDate": null,
+              "features": null
+            },
+            "lineItems": [
+              {
+                "id": "9e6ee300-c4e8-11f1-904f-89bb34047197",
+                "offer": {
+                  "id": "7782361657",
+                  "name": "Kubek niebieski ceramiczny",
+                  "external": {
+                    "id": "HANZA-MUG-BLUE"
+                  },
+                  "productSet": null,
+                  "hsNumber": null
+                },
+                "quantity": 1,
+                "originalPrice": {
+                  "amount": "34.50",
+                  "currency": "PLN"
+                },
+                "price": {
+                  "amount": "34.50",
+                  "currency": "PLN"
+                },
+                "reconciliation": null,
+                "selectedAdditionalServices": [],
+                "vouchers": [],
+                "tax": null,
+                "boughtAt": "2026-10-10T20:24:47.733Z",
+                "discounts": null,
+                "deposit": null,
+                "serialNumbers": {
+                  "expected": false,
+                  "entries": []
+                }
+              }
+            ],
+            "surcharges": [],
+            "codBookedPayments": [],
+            "note": null,
+            "marketplace": {
+              "id": "allegro-pl"
+            },
+            "summary": {
+              "totalToPay": {
+                "amount": "40.49",
+                "currency": "PLN"
+              }
+            },
+            "updatedAt": "2026-10-10T20:24:47.979Z",
+            "revision": "7ebb1b0e"
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/order/checkout-forms/b24a5a30-c4e8-11f1-904f-89bb34047197",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/vnd.allegro.public.v1+json",
+          "date": "Sat, 10 Oct 2026 21:49:07 GMT"
+        },
+        "body": {
+          "json": {
+            "id": "b24a5a30-c4e8-11f1-904f-89bb34047197",
+            "messageToSeller": null,
+            "buyer": {
+              "id": "111578773",
+              "email": "person-3@example.com",
+              "login": "scrubbed-1",
+              "firstName": "scrubbed-2",
+              "lastName": "scrubbed-3",
+              "companyName": null,
+              "guest": false,
+              "personalIdentity": null,
+              "phoneNumber": "+00000000001",
+              "preferences": {
+                "language": "pl-PL"
+              },
+              "address": {
+                "street": "scrubbed-4",
+                "city": "scrubbed-5",
+                "postCode": "scrubbed-6",
+                "countryCode": "PL"
+              }
+            },
+            "payment": {
+              "id": "b2e2f106-c4e8-11f1-adbb-3d92744031e2",
+              "type": "ONLINE",
+              "provider": "PAYU",
+              "finishedAt": "2026-10-10T20:25:59.128Z",
+              "paidAmount": {
+                "amount": "29.99",
+                "currency": "PLN"
+              },
+              "reconciliation": null,
+              "features": []
+            },
+            "status": "READY_FOR_PROCESSING",
+            "fulfillment": {
+              "status": "NEW",
+              "shipmentSummary": {
+                "lineItemsSent": "NONE"
+              },
+              "provider": {
+                "id": "SELLER"
+              }
+            },
+            "delivery": {
+              "address": {
+                "firstName": "scrubbed-2",
+                "lastName": "scrubbed-3",
+                "street": "scrubbed-4",
+                "city": "scrubbed-5",
+                "zipCode": "scrubbed-6",
+                "countryCode": "PL",
+                "companyName": null,
+                "phoneNumber": "+00000000002",
+                "modifiedAt": null
+              },
+              "method": {
+                "id": "aa1d05e0-943b-47cb-a759-9d8c16707129",
+                "name": "Allegro Przesyłka polecona"
+              },
+              "pickupPoint": null,
+              "cost": {
+                "amount": "5.99",
+                "currency": "PLN"
+              },
+              "smart": false,
+              "time": {
+                "from": "2026-10-14T22:00:00Z",
+                "to": "2026-10-16T21:59:59.999Z",
+                "guaranteed": null,
+                "dispatch": {
+                  "from": "2026-10-11T22:00:00Z",
+                  "to": "2026-10-12T21:59:59.999Z"
+                }
+              },
+              "calculatedNumberOfPackages": 1,
+              "cancellation": null
+            },
+            "invoice": {
+              "required": false,
+              "address": null,
+              "dueDate": null,
+              "features": null
+            },
+            "lineItems": [
+              {
+                "id": "b23aa2c0-c4e8-11f1-904f-89bb34047197",
+                "offer": {
+                  "id": "7782361658",
+                  "name": "Produkt 1 - Talerz porcelanowy biały",
+                  "external": {
+                    "id": "HANZA-PLATE-WHITE"
+                  },
+                  "productSet": null,
+                  "hsNumber": null
+                },
+                "quantity": 1,
+                "originalPrice": {
+                  "amount": "24.00",
+                  "currency": "PLN"
+                },
+                "price": {
+                  "amount": "24.00",
+                  "currency": "PLN"
+                },
+                "reconciliation": null,
+                "selectedAdditionalServices": [],
+                "vouchers": [],
+                "tax": null,
+                "boughtAt": "2026-10-10T20:25:41.368Z",
+                "discounts": null,
+                "deposit": null,
+                "serialNumbers": {
+                  "expected": false,
+                  "entries": []
+                }
+              }
+            ],
+            "surcharges": [],
+            "codBookedPayments": [],
+            "note": null,
+            "marketplace": {
+              "id": "allegro-pl"
+            },
+            "summary": {
+              "totalToPay": {
+                "amount": "29.99",
+                "currency": "PLN"
+              }
+            },
+            "updatedAt": "2026-10-10T20:25:59.128Z",
+            "revision": "b3a81206"
+          }
+        }
+      }
+    }
+  ]
+}

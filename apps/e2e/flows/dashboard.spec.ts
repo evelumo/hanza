@@ -49,7 +49,7 @@ test('after the first sync the dashboard leads to the Orders and Offers that wai
   await expect(page.getByRole('region', { name: 'Connections' }).getByRole('link', { name: /Fake marketplace/ })).toContainText('Working')
   // The sidebar counts the same two things, on every page, and says them in the links' names.
   await expect(navLink(page, 'Orders')).toHaveAccessibleName('Orders, 3 need attention')
-  await expect(navLink(page, 'Offers')).toHaveAccessibleName('Offers, 5 have no product')
+  await expect(navLink(page, 'Offers')).toHaveAccessibleName('Offers, 5 need attention')
   await expect(navLink(page, 'Products')).toHaveAccessibleName('Products')
 
   // Each row opens the list it counted.
@@ -63,8 +63,8 @@ test('after the first sync the dashboard leads to the Orders and Offers that wai
   await mainNavigation(page).getByRole('link', { name: 'Dashboard' }).click()
   await waitingOffers.click()
   await expect(page).toHaveURL(/\/products\/offers$/)
-  await expect(page.getByRole('heading', { level: 1, name: 'Offers without a product' })).toBeVisible()
-  await expect(page.getByRole('row').filter({ hasText: 'fake-offer-' })).toHaveCount(5)
+  await expect(page.getByRole('heading', { level: 1, name: 'Offers that need attention' })).toBeVisible()
+  await expect(page.getByRole('region', { name: 'Without a product', exact: true }).getByRole('row').filter({ hasText: 'fake-offer-' })).toHaveCount(5)
 
   await mainNavigation(page).getByRole('link', { name: 'Dashboard' }).click()
   await phaseCount('Cancelled', 1).click()
