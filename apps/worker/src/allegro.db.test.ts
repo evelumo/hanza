@@ -309,6 +309,14 @@ describe.skipIf(!databaseUrl)('Allegro through the engine (real Postgres, in-mem
       'GET /order/checkout-forms',
       'GET /order/events',
     ])
+    // Offers, then the open Orders, then Stock (#125): the first number Allegro is told is already net of their
+    // Reservations, never the full shelf.
+    const stages = sent.map(({ method, path }) => (method === 'PATCH' ? 'stock' : path.startsWith('/order') ? 'orders' : 'offers'))
+    expect(stages.filter((stage, i) => stage !== stages[i - 1])).toEqual(['offers', 'orders', 'stock'])
+    expect(writes(0)).toEqual([
+      `PATCH /sale/product-offers/${OFFER.mug} {"stock":{"available":7}}`,
+      `PATCH /sale/product-offers/${OFFER.teapot} {"stock":{"available":5}}`,
+    ])
   })
 
   it('2. a Stock change pushes the real number with one PATCH per Offer; 0 ends the Offer, a number above 0 reopens it', async () => {

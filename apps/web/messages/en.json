@@ -533,7 +533,8 @@
       "succeeded": "Succeeded",
       "running": "Running",
       "notRun": "Not run yet",
-      "nothingToSend": "Nothing to send"
+      "nothingToSend": "Nothing to send",
+      "held": "Waiting for orders"
     },
     "columns": {
       "name": "Name",
@@ -549,6 +550,7 @@
       "syncing": "Requesting…",
       "syncRequested": "Synchronisation requested. Refresh the page in a moment.",
       "syncEmpty": "No synchronisation has run yet.",
+      "stockPushHeld": "Held until the orders open on the channel are imported, so the first stock levels sent already count them.",
       "syncColumns": {
         "data": "Data",
         "started": "Started",

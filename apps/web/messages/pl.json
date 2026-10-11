@@ -533,7 +533,8 @@
       "succeeded": "Udana",
       "running": "W toku",
       "notRun": "Jeszcze nie uruchomiono",
-      "nothingToSend": "Nic do wysłania"
+      "nothingToSend": "Nic do wysłania",
+      "held": "Czeka na zamówienia"
     },
     "columns": {
       "name": "Nazwa",
@@ -549,6 +550,7 @@
       "syncing": "Zlecanie…",
       "syncRequested": "Synchronizacja zlecona. Odśwież stronę za chwilę.",
       "syncEmpty": "Synchronizacja jeszcze się nie odbyła.",
+      "stockPushHeld": "Wstrzymane do czasu zaimportowania zamówień otwartych w kanale, aby pierwsze wysłane stany już je uwzględniały.",
       "syncColumns": {
         "data": "Dane",
         "started": "Rozpoczęto",

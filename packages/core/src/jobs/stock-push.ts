@@ -1,12 +1,13 @@
 import type { StockLevel } from '@hanza/connector-sdk'
 import { decideStockPush, OFFER_ENDED_CODE } from '../catalog/offer-push'
 import { listOffersAwaitingStockPush, recordStockPushOutcomes, type StockPushOutcome } from '../catalog/offers'
-import { finishSyncRun } from '../connections/sync-state'
+import { finishSyncRun, recordSkippedSyncRun } from '../connections/sync-state'
 import { defineJob } from '../jobs'
 import { getChannelAvailability } from '../stock/channel-available'
 import { withSyncRun } from '../sync/begin-run'
 import { parseStockPushResults } from '../sync/pull-result'
 import { runConnectorCall } from '../sync/run-connector'
+import { isStockPushHeld } from '../sync/stock-push-hold'
 import { coalesceKeys, stockPushRef } from './refs'
 
 const BATCH_SIZE = 100
@@ -20,11 +21,20 @@ const MAX_BATCHES = 10
  * Offers the Channel reports ended follow ADR 0022 (see `decideStockPush`). An Offer the Channel refuses
  * on its own is recorded as rejected and counts as handled; the others of the call count as pushed and the
  * Connection stays healthy. Only a failure of the whole call fails the run.
+ *
+ * Held, without opening the Connection, until its Order feed has caught up since it was created or restarted (#125):
+ * the Orders pull that catches up enqueues the push. A held run records only its start and end, so the tick
+ * re-enqueues it at the usual interval and the Offers keep their pending push sequence.
  */
 export const stockPushJob = defineJob({
   ...stockPushRef,
   async handler(ctx, payload, run) {
     const { organizationId, connectionId } = payload
+    if (await isStockPushHeld(ctx, organizationId, connectionId)) {
+      ctx.log.info('stock push held until the Order feed has caught up', { organizationId, connectionId })
+      await recordSkippedSyncRun(ctx, organizationId, connectionId, 'stock_push')
+      return
+    }
     const input = { organizationId, connectionId, stream: 'stock_push', capability: 'stock.push', run } as const
     await withSyncRun(ctx, input, async ({ connector, context, scope }) => {
       const reopensSoldOutOffers = connector.reopensSoldOutOffers === true

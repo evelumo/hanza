@@ -9,7 +9,7 @@ import { failSyncRun } from '../connections/sync-state'
 import { importOrder } from '../orders/import'
 import { createTestOrganization } from '../testing/context'
 import { databaseUrl, useTestContext } from '../testing/db-test'
-import { buildOrder, orderLine, uniqueSku, user } from '../testing/fixtures'
+import { buildOrder, orderFeedCaughtUp, orderLine, uniqueSku, user } from '../testing/fixtures'
 import { stockPushJob } from './stock-push'
 
 const pushes: StockLevel[][] = []
@@ -44,7 +44,8 @@ const run = { attempt: 1, maxAttempts: 5, retriedLater: 0 }
 describe.skipIf(!databaseUrl)('stock.push', () => {
   const context = useTestContext({ connectors: [channel] })
 
-  async function setup() {
+  /** A Connection whose Order feed has caught up, unless `fresh` (#125). */
+  async function setup({ fresh = false } = {}) {
     const ctx = context()
     const organizationId = await createTestOrganization(ctx.db)
     const { connectionId } = await createConnection(
@@ -53,6 +54,7 @@ describe.skipIf(!databaseUrl)('stock.push', () => {
       { connectorId: 'push-channel', name: 'Channel', config: {}, credentials: {} },
       user,
     )
+    if (!fresh) await orderFeedCaughtUp(ctx, organizationId, connectionId)
     return { ctx, organizationId, connectionId }
   }
 
@@ -202,7 +204,7 @@ describe.skipIf(!databaseUrl)('stock.push', () => {
   })
 
   it('a payload naming another organization does nothing', async () => {
-    const { ctx, organizationId, connectionId } = await setup()
+    const { ctx, organizationId, connectionId } = await setup({ fresh: true })
     const sku = uniqueSku()
     await createProduct(ctx, organizationId, { sku, name: 'A', stock: 1 }, user)
     await upsertOffers(ctx, organizationId, connectionId, [{ externalId: 'offer-a', sku, name: 'A', url: null }], new Date())
