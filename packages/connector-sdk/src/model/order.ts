@@ -53,6 +53,22 @@ export const orderLineSchema = z.object({
   unitPrice: moneySchema,
 })
 
+export const pickupPointSchema = z.object({
+  /** The Carrier's own code of the locker or point, e.g. `KRA010`. */
+  id: z.string().min(1),
+  name: z.string().min(1).nullable(),
+})
+
+/**
+ * The Delivery: what the Buyer chose on the Channel for getting the Order. `method` is the Channel's name for it, shown
+ * to a person and never interpreted; `pickupPoint` is set when the Buyer picked a locker or a point, and prefills a
+ * Shipment to it.
+ */
+export const deliverySchema = z.object({
+  method: z.string().min(1).nullable(),
+  pickupPoint: pickupPointSchema.nullable(),
+})
+
 /**
  * An Order placed on the Channel. Ready to fulfil (paid, or cash on delivery) unless `awaitingPayment` is true.
  * A connector that does not report unpaid Orders leaves `awaitingPayment` out and returns only ready ones.
@@ -71,6 +87,8 @@ export const orderSchema = z
     buyer: buyerSchema,
     shippingAddress: addressSchema,
     billingAddress: addressSchema.nullable(),
+    /** Absent = the Channel did not say. A connector that knows there is no pickup point sends `pickupPoint: null`. */
+    delivery: deliverySchema.optional(),
     lines: z.array(orderLineSchema).min(1),
     /** Every Channel fact known so far, oldest first. */
     facts: z.array(channelFactSchema),
@@ -92,6 +110,8 @@ export const orderSchema = z
  * - `facts`: Channel facts, recorded once per id like the facts of a full Order (ids stable per Order).
  * - `shippingAddress` / `billingAddress`: replace the stored ones while the Order is in phase new, e.g. the delivery
  *   address a Channel reveals only at payment. Absent = unchanged; `billingAddress: null` = no billing address.
+ * - `delivery`: replaces the stored Delivery, like the addresses only while the Order is in phase new, e.g. the pickup
+ *   point a Channel reveals only at payment. Absent = unchanged.
  * An Order that disappeared on the Channel (e.g. merged into another one) is an update with a `cancelled` fact.
  */
 export const orderUpdateSchema = z.object({
@@ -100,6 +120,7 @@ export const orderUpdateSchema = z.object({
   facts: z.array(channelFactSchema),
   shippingAddress: addressSchema.optional(),
   billingAddress: addressSchema.nullable().optional(),
+  delivery: deliverySchema.optional(),
 })
 
 export type OrderPhase = z.infer<typeof orderPhaseSchema>
@@ -108,6 +129,8 @@ export type PaymentMethod = z.infer<typeof paymentMethodSchema>
 export type Address = z.infer<typeof addressSchema>
 export type Buyer = z.infer<typeof buyerSchema>
 export type ChannelFact = z.infer<typeof channelFactSchema>
+export type PickupPoint = z.infer<typeof pickupPointSchema>
+export type Delivery = z.infer<typeof deliverySchema>
 export type OrderLine = z.infer<typeof orderLineSchema>
 export type Order = z.infer<typeof orderSchema>
 export type OrderUpdate = z.infer<typeof orderUpdateSchema>
