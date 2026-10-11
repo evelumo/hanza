@@ -22,6 +22,8 @@ export interface ConnectionRow {
     lastResult: Record<string, number> | null
     lastErrorKind: SyncErrorKind | null
     lastError: string | null
+    /** `orders_pull` only: when the Order feed caught up; null holds the stock push (#125). */
+    caughtUpAt: Date | null
   }>
 }
 
@@ -56,6 +58,7 @@ const rowSelect = {
       lastResult: true,
       lastErrorKind: true,
       lastError: true,
+      caughtUpAt: true,
     },
   },
 } as const satisfies Prisma.ConnectionSelect

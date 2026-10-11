@@ -21,6 +21,8 @@ describe.skipIf(!databaseUrl)('products', () => {
 
     const product = await ctx.db.product.findFirstOrThrow({ where: { id: productId } })
     expect(product.sku).toBe('MUG-1')
+    // Entered in the form, so the Stock is set and pushed from the start (#137).
+    expect(product.stockSetAt).not.toBeNull()
     const stock = await ctx.db.stock.findMany({ where: { productId }, include: { warehouse: true } })
     expect(stock).toHaveLength(1)
     expect(stock[0]).toMatchObject({ units: 7, organizationId: org, warehouse: { code: 'default', organizationId: org } })
@@ -82,6 +84,7 @@ describe.skipIf(!databaseUrl)('products', () => {
     })
     const offers = await ctx.db.offer.findMany({ where: { organizationId: org } })
     const id = (externalId: string) => offers.find((offer) => offer.externalId === externalId)!.id
+    ctx.queue.enqueued.length = 0
 
     const result = await createProductsFromOffers(ctx, org, [id('good'), id('twin'), id('nosku'), id('linked'), takenOffer.id, 'missing'], user)
 
@@ -95,13 +98,21 @@ describe.skipIf(!databaseUrl)('products', () => {
     ])
     const product = await ctx.db.product.findFirstOrThrow({ where: { id: result.created[0] } })
     expect(product).toMatchObject({ sku: 'NEW-1', name: 'New product' })
-    // The chosen Offer and the never-linked twin both end up linked by SKU.
+    // The chosen Offer and the never-linked twin both end up linked by SKU, marked for a price push only.
     const linked = await ctx.db.offer.findMany({ where: { organizationId: org, productId: product.id }, orderBy: { externalId: 'asc' } })
-    expect(linked.map((offer) => [offer.externalId, offer.linkedBy, offer.stockPushSeq])).toEqual([
-      ['good', 'sku', 1],
-      ['twin', 'sku', 1],
+    expect(linked.map((offer) => [offer.externalId, offer.linkedBy, offer.stockPushSeq, offer.pricePushSeq])).toEqual([
+      ['good', 'sku', 0, 1],
+      ['twin', 'sku', 0, 1],
     ])
+    // Unset Stock until someone saves it, so no stock push is requested (#137); no Stock row either (none is 0).
+    expect(product.stockSetAt).toBeNull()
+    expect(await ctx.db.stock.count({ where: { organizationId: org, productId: product.id } })).toBe(0)
     expect((await getAvailability(ctx.db, org, [product.id])).get(product.id)).toEqual({ stock: 0, reserved: 0, available: 0 })
+    expect(ctx.queue.enqueued.map((job) => job.name)).toEqual(['price.push'])
+    const detail = await getProduct(ctx, org, product.id)
+    expect(detail).toMatchObject({ stockSet: false, stock: 0, available: 0 })
+    expect(detail?.offers.map((offer) => offer.stockStatus)).toEqual(['unset', 'unset'])
+    expect(detail?.warehouses.map((warehouse) => warehouse.stock)).toEqual([0])
     const created = await ctx.db.eventLog.findMany({ where: { organizationId: org, type: 'product.created', subjectId: product.id } })
     expect(created[0]?.payload).toEqual({ sku: 'NEW-1', origin: 'offer', actor: user })
   })
@@ -161,6 +172,6 @@ describe.skipIf(!databaseUrl)('products', () => {
     expect((await listProducts(ctx, org, { skip: 0, take: 10 })).total).toBe(2)
 
     const detail = await getProduct(ctx, org, productId)
-    expect(detail).toMatchObject({ id: productId, stock: 4, available: 4, offers: [], openReservations: [] })
+    expect(detail).toMatchObject({ id: productId, stock: 4, available: 4, stockSet: true, offers: [], openReservations: [] })
   })
 })

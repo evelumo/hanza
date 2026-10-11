@@ -230,68 +230,6 @@
     },
     {
       "request": {
-        "method": "PUT",
-        "url": "https://fake-channel.example.test/stock",
-        "headers": {
-          "accept": "application/json",
-          "content-type": "application/json"
-        },
-        "body": {
-          "json": {
-            "items": [
-              {
-                "offerId": "fake-offer-1",
-                "sku": "FAKE-SKU-1",
-                "quantity": 5
-              },
-              {
-                "offerId": "fake-offer-2",
-                "sku": "FAKE-SKU-2",
-                "quantity": 1
-              },
-              {
-                "offerId": "fake-offer-3",
-                "sku": "FAKE-SKU-3",
-                "quantity": 0
-              }
-            ]
-          }
-        }
-      },
-      "response": {
-        "status": 204,
-        "headers": {},
-        "body": null
-      }
-    },
-    {
-      "request": {
-        "method": "POST",
-        "url": "https://fake-channel.example.test/oauth/token",
-        "headers": {
-          "accept": "application/json",
-          "content-type": "application/x-www-form-urlencoded"
-        },
-        "body": {
-          "text": "grant_type=client_credentials&client_id=%5Bscrubbed%5D&client_secret=%5Bscrubbed%5D"
-        }
-      },
-      "response": {
-        "status": 200,
-        "headers": {
-          "content-type": "application/json"
-        },
-        "body": {
-          "json": {
-            "access_token": "[scrubbed]",
-            "token_type": "Bearer",
-            "expires_in": 3600
-          }
-        }
-      }
-    },
-    {
-      "request": {
         "method": "GET",
         "url": "https://fake-channel.example.test/orders",
         "headers": {
