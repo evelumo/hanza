@@ -34,7 +34,7 @@ export function conformanceStore(): FakeMedusa {
 
   store.place({ id: 'order_01JA0001', display_id: 1 })
   store.tick(60)
-  store.placeUnpaid({ id: 'order_01JA0002', display_id: 2, items: [rawItem('item_01JA0002', { variant_id: 'variant_01JA0002', variant_sku: 'TSHIRT-S', title: 'T-shirt', variant_title: 'S', quantity: 1, raw_quantity: raw('1'), total: 79, raw_total: raw('79') })] })
+  store.placeUnpaid({ id: 'order_01JA0002', display_id: 2, items: [rawItem('item_01JA0002', { variant_id: 'variant_01JA0002', variant_sku: 'TSHIRT-S', title: 'T-shirt', variant_title: 'S', quantity: 1, raw_quantity: raw('1'), total: 79 })] })
   store.tick(60)
   const shipped = store.place({ id: 'order_01JA0003', display_id: 3 })
   store.tick(60)
@@ -48,10 +48,9 @@ export function conformanceStore(): FakeMedusa {
     id: 'order_01JA0005',
     display_id: 5,
     total: 207.97,
-    raw_total: raw('207.97'),
     items: [
       rawItem('item_01JA0005a'),
-      rawItem('item_01JA0005b', { variant_id: 'variant_01JA0003', variant_sku: 'TSHIRT-M', title: 'T-shirt', variant_title: 'M', quantity: 1, raw_quantity: raw('1'), total: 79, raw_total: raw('79') }),
+      rawItem('item_01JA0005b', { variant_id: 'variant_01JA0003', variant_sku: 'TSHIRT-M', title: 'T-shirt', variant_title: 'M', quantity: 1, raw_quantity: raw('1'), total: 79 }),
     ],
     shipping_address: rawAddress({ first_name: 'Jan', last_name: 'Kowalski', company: 'Kowalski sp. z o.o.', address_2: null }),
     payment_collections: [{ id: 'paycol_5', payments: [rawPayment('pay_5', { amount: 207.97, captured_at: '2026-10-11T09:06:00.000Z', captured_amount: 207.97 })] }],

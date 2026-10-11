@@ -100,8 +100,22 @@ export const variantsPageSchema = z.object({
   count: z.number().optional(),
 })
 
-/** What `offers.pull` asks for: nothing it does not read. */
-export const VARIANT_FIELDS = ['id', 'sku', 'title', 'manage_inventory', 'product_id', 'product.title', 'product.status', '*prices'].join(',')
+/**
+ * What `offers.pull` asks for: nothing it does not read. Medusa's admin route rebuilds each price's `rules` from
+ * `price_rules`, which `*prices` alone does not load: without them a region's price would pass for a plain one.
+ */
+export const VARIANT_FIELDS = [
+  'id',
+  'sku',
+  'title',
+  'manage_inventory',
+  'product_id',
+  'product.title',
+  'product.status',
+  '*prices',
+  'prices.price_rules.attribute',
+  'prices.price_rules.value',
+].join(',')
 
 export const addressSchema = z.object({
   first_name: optionalText,
@@ -196,7 +210,11 @@ export const boundaryPageSchema = z.object({
   orders: z.array(z.object({ id: z.string().min(1), created_at: isoTime })),
 })
 
-/** What the Order feed asks for: the fields the mapper reads, and no more. */
+/**
+ * What the Order feed asks for: the fields the mapper reads, and no more. `payment_status` and `fulfillment_status` are
+ * not asked for: Medusa's order routes compute them on every answer (from the payment collections and fulfillments,
+ * which it loads for that). Order totals are computed too and come as numbers only; `raw_total` is read where present.
+ */
 export const ORDER_FIELDS = [
   'id',
   'display_id',
@@ -207,11 +225,8 @@ export const ORDER_FIELDS = [
   'email',
   'currency_code',
   'total',
-  'raw_total',
   'sales_channel_id',
   'is_draft_order',
-  'payment_status',
-  'fulfillment_status',
   '*items',
   '*shipping_address',
   '*billing_address',
@@ -226,8 +241,6 @@ export const ORDER_FIELDS = [
 export const ORDER_STATE_FIELDS = [
   'id',
   'status',
-  'payment_status',
-  'fulfillment_status',
   '*items',
   '*fulfillments',
   '*fulfillments.items',

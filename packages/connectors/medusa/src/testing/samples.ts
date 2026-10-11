@@ -1,7 +1,9 @@
 // Test tooling only: never imported by the connector itself.
 //
-// Medusa objects in the shapes the Admin API answers with (Medusa 2.21, as far as the docs and the plugin's wire format
-// say; AGENTS.md lists what is still to verify in the sandbox). Every person and address is invented.
+// Medusa objects in the shapes the Admin API answers with (Medusa 2.21.2, read from its route and workflow code and
+// its docs; AGENTS.md lists what is still to verify in the sandbox). Computed totals (`total` of an order and of an
+// item) come as numbers without a raw twin; stored amounts such as an item's quantity carry one (`raw_quantity`).
+// Every person and address is invented.
 
 export type Json = Record<string, unknown>
 
@@ -38,8 +40,8 @@ export function rawItem(id: string, overrides: Json = {}): Json {
     quantity: 2,
     raw_quantity: raw('2'),
     unit_price: 49.99,
+    raw_unit_price: raw('49.99'),
     total: 99.98,
-    raw_total: raw('99.98'),
     ...overrides,
   }
 }
@@ -68,7 +70,6 @@ export function rawOrder(id: string, overrides: Json = {}): Json {
     email: 'anna.nowak@example.com',
     currency_code: 'pln',
     total: 114.98,
-    raw_total: raw('114.98'),
     sales_channel_id: 'sc_01WEB',
     is_draft_order: false,
     payment_status: 'captured',

@@ -13,10 +13,13 @@
       "response": {
         "status": 401,
         "headers": {
-          "content-type": "text/plain"
+          "content-type": "application/json; charset=utf-8"
         },
         "body": {
-          "text": "Unauthorized"
+          "json": {
+            "type": "unauthorized",
+            "message": "Unauthorized"
+          }
         }
       }
     }

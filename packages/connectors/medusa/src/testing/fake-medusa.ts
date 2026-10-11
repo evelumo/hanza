@@ -224,7 +224,7 @@ export class FakeMedusa {
     }
     this.requests.push(request)
     this.beforeAnswer?.(this.requests.length, request)
-    if (incoming.headers.get('authorization') !== `Basic ${this.apiKey}`) return new Response('Unauthorized', { status: 401, headers: { 'content-type': 'text/plain' } })
+    if (incoming.headers.get('authorization') !== `Basic ${this.apiKey}`) return error(401, 'unauthorized', 'Unauthorized')
     if (this.forbidden) return error(403, 'not_allowed', 'Forbidden')
     return this.answer(request)
   }

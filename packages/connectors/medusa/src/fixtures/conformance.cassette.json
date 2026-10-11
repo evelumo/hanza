@@ -45,7 +45,7 @@
     {
       "request": {
         "method": "GET",
-        "url": "https://medusa.example.test/admin/product-variants?order=id&offset=0&limit=100&fields=id%2Csku%2Ctitle%2Cmanage_inventory%2Cproduct_id%2Cproduct.title%2Cproduct.status%2C*prices",
+        "url": "https://medusa.example.test/admin/product-variants?order=id&offset=0&limit=100&fields=id%2Csku%2Ctitle%2Cmanage_inventory%2Cproduct_id%2Cproduct.title%2Cproduct.status%2C*prices%2Cprices.price_rules.attribute%2Cprices.price_rules.value",
         "headers": {
           "accept": "application/json"
         },
@@ -242,7 +242,7 @@
     {
       "request": {
         "method": "GET",
-        "url": "https://medusa.example.test/admin/product-variants?order=id&offset=0&limit=100&fields=id%2Csku%2Ctitle%2Cmanage_inventory%2Cproduct_id%2Cproduct.title%2Cproduct.status%2C*prices",
+        "url": "https://medusa.example.test/admin/product-variants?order=id&offset=0&limit=100&fields=id%2Csku%2Ctitle%2Cmanage_inventory%2Cproduct_id%2Cproduct.title%2Cproduct.status%2C*prices%2Cprices.price_rules.attribute%2Cprices.price_rules.value",
         "headers": {
           "accept": "application/json"
         },
@@ -463,10 +463,6 @@
                 "email": "person-1@example.com",
                 "currency_code": "pln",
                 "total": 207.97,
-                "raw_total": {
-                  "value": "207.97",
-                  "precision": 20
-                },
                 "sales_channel_id": "sc_01WEB",
                 "is_draft_order": false,
                 "payment_status": "captured",
@@ -485,11 +481,11 @@
                       "precision": 20
                     },
                     "unit_price": 49.99,
-                    "total": 99.98,
-                    "raw_total": {
-                      "value": "99.98",
+                    "raw_unit_price": {
+                      "value": "49.99",
                       "precision": 20
-                    }
+                    },
+                    "total": 99.98
                   },
                   {
                     "id": "item_01JA0005b",
@@ -504,11 +500,11 @@
                       "precision": 20
                     },
                     "unit_price": 49.99,
-                    "total": 79,
-                    "raw_total": {
-                      "value": "79",
+                    "raw_unit_price": {
+                      "value": "49.99",
                       "precision": 20
-                    }
+                    },
+                    "total": 79
                   }
                 ],
                 "shipping_address": {
@@ -573,7 +569,7 @@
     {
       "request": {
         "method": "GET",
-        "url": "https://medusa.example.test/admin/orders?status%5B%5D=pending&status%5B%5D=requires_action&created_at%5B%24lt%5D=2026-10-11T09%3A06%3A00.001Z&order=created_at&limit=100&fields=id%2Cdisplay_id%2Cstatus%2Ccreated_at%2Cupdated_at%2Ccanceled_at%2Cemail%2Ccurrency_code%2Ctotal%2Craw_total%2Csales_channel_id%2Cis_draft_order%2Cpayment_status%2Cfulfillment_status%2C*items%2C*shipping_address%2C*billing_address%2C*fulfillments%2C*payment_collections%2C*payment_collections.payments%2C*shipping_methods%2Ccustomer.phone",
+        "url": "https://medusa.example.test/admin/orders?status%5B%5D=pending&status%5B%5D=requires_action&created_at%5B%24lt%5D=2026-10-11T09%3A06%3A00.001Z&order=created_at&limit=100&fields=id%2Cdisplay_id%2Cstatus%2Ccreated_at%2Cupdated_at%2Ccanceled_at%2Cemail%2Ccurrency_code%2Ctotal%2Csales_channel_id%2Cis_draft_order%2C*items%2C*shipping_address%2C*billing_address%2C*fulfillments%2C*payment_collections%2C*payment_collections.payments%2C*shipping_methods%2Ccustomer.phone",
         "headers": {
           "accept": "application/json"
         },
@@ -597,10 +593,6 @@
                 "email": "person-1@example.com",
                 "currency_code": "pln",
                 "total": 114.98,
-                "raw_total": {
-                  "value": "114.98",
-                  "precision": 20
-                },
                 "sales_channel_id": "sc_01WEB",
                 "is_draft_order": false,
                 "payment_status": "captured",
@@ -619,11 +611,11 @@
                       "precision": 20
                     },
                     "unit_price": 49.99,
-                    "total": 99.98,
-                    "raw_total": {
-                      "value": "99.98",
+                    "raw_unit_price": {
+                      "value": "49.99",
                       "precision": 20
-                    }
+                    },
+                    "total": 99.98
                   }
                 ],
                 "shipping_address": {
@@ -687,10 +679,6 @@
                 "email": "person-1@example.com",
                 "currency_code": "pln",
                 "total": 114.98,
-                "raw_total": {
-                  "value": "114.98",
-                  "precision": 20
-                },
                 "sales_channel_id": "sc_01WEB",
                 "is_draft_order": false,
                 "payment_status": "authorized",
@@ -709,11 +697,11 @@
                       "precision": 20
                     },
                     "unit_price": 49.99,
-                    "total": 79,
-                    "raw_total": {
-                      "value": "79",
+                    "raw_unit_price": {
+                      "value": "49.99",
                       "precision": 20
-                    }
+                    },
+                    "total": 79
                   }
                 ],
                 "shipping_address": {
@@ -777,10 +765,6 @@
                 "email": "person-1@example.com",
                 "currency_code": "pln",
                 "total": 114.98,
-                "raw_total": {
-                  "value": "114.98",
-                  "precision": 20
-                },
                 "sales_channel_id": "sc_01WEB",
                 "is_draft_order": false,
                 "payment_status": "captured",
@@ -799,11 +783,11 @@
                       "precision": 20
                     },
                     "unit_price": 49.99,
-                    "total": 99.98,
-                    "raw_total": {
-                      "value": "99.98",
+                    "raw_unit_price": {
+                      "value": "49.99",
                       "precision": 20
-                    }
+                    },
+                    "total": 99.98
                   }
                 ],
                 "shipping_address": {
@@ -882,10 +866,6 @@
                 "email": "person-1@example.com",
                 "currency_code": "pln",
                 "total": 207.97,
-                "raw_total": {
-                  "value": "207.97",
-                  "precision": 20
-                },
                 "sales_channel_id": "sc_01WEB",
                 "is_draft_order": false,
                 "payment_status": "captured",
@@ -904,11 +884,11 @@
                       "precision": 20
                     },
                     "unit_price": 49.99,
-                    "total": 99.98,
-                    "raw_total": {
-                      "value": "99.98",
+                    "raw_unit_price": {
+                      "value": "49.99",
                       "precision": 20
-                    }
+                    },
+                    "total": 99.98
                   },
                   {
                     "id": "item_01JA0005b",
@@ -923,11 +903,11 @@
                       "precision": 20
                     },
                     "unit_price": 49.99,
-                    "total": 79,
-                    "raw_total": {
-                      "value": "79",
+                    "raw_unit_price": {
+                      "value": "49.99",
                       "precision": 20
-                    }
+                    },
+                    "total": 79
                   }
                 ],
                 "shipping_address": {
@@ -1125,10 +1105,6 @@
                 "email": "person-1@example.com",
                 "currency_code": "pln",
                 "total": 207.97,
-                "raw_total": {
-                  "value": "207.97",
-                  "precision": 20
-                },
                 "sales_channel_id": "sc_01WEB",
                 "is_draft_order": false,
                 "payment_status": "captured",
@@ -1147,11 +1123,11 @@
                       "precision": 20
                     },
                     "unit_price": 49.99,
-                    "total": 99.98,
-                    "raw_total": {
-                      "value": "99.98",
+                    "raw_unit_price": {
+                      "value": "49.99",
                       "precision": 20
-                    }
+                    },
+                    "total": 99.98
                   },
                   {
                     "id": "item_01JA0005b",
@@ -1166,11 +1142,11 @@
                       "precision": 20
                     },
                     "unit_price": 49.99,
-                    "total": 79,
-                    "raw_total": {
-                      "value": "79",
+                    "raw_unit_price": {
+                      "value": "49.99",
                       "precision": 20
-                    }
+                    },
+                    "total": 79
                   }
                 ],
                 "shipping_address": {
@@ -1235,7 +1211,7 @@
     {
       "request": {
         "method": "GET",
-        "url": "https://medusa.example.test/admin/orders?status%5B%5D=pending&status%5B%5D=requires_action&created_at%5B%24lt%5D=2026-10-11T09%3A06%3A00.001Z&order=created_at&limit=100&fields=id%2Cdisplay_id%2Cstatus%2Ccreated_at%2Cupdated_at%2Ccanceled_at%2Cemail%2Ccurrency_code%2Ctotal%2Craw_total%2Csales_channel_id%2Cis_draft_order%2Cpayment_status%2Cfulfillment_status%2C*items%2C*shipping_address%2C*billing_address%2C*fulfillments%2C*payment_collections%2C*payment_collections.payments%2C*shipping_methods%2Ccustomer.phone",
+        "url": "https://medusa.example.test/admin/orders?status%5B%5D=pending&status%5B%5D=requires_action&created_at%5B%24lt%5D=2026-10-11T09%3A06%3A00.001Z&order=created_at&limit=100&fields=id%2Cdisplay_id%2Cstatus%2Ccreated_at%2Cupdated_at%2Ccanceled_at%2Cemail%2Ccurrency_code%2Ctotal%2Csales_channel_id%2Cis_draft_order%2C*items%2C*shipping_address%2C*billing_address%2C*fulfillments%2C*payment_collections%2C*payment_collections.payments%2C*shipping_methods%2Ccustomer.phone",
         "headers": {
           "accept": "application/json"
         },
@@ -1259,10 +1235,6 @@
                 "email": "person-1@example.com",
                 "currency_code": "pln",
                 "total": 114.98,
-                "raw_total": {
-                  "value": "114.98",
-                  "precision": 20
-                },
                 "sales_channel_id": "sc_01WEB",
                 "is_draft_order": false,
                 "payment_status": "captured",
@@ -1281,11 +1253,11 @@
                       "precision": 20
                     },
                     "unit_price": 49.99,
-                    "total": 99.98,
-                    "raw_total": {
-                      "value": "99.98",
+                    "raw_unit_price": {
+                      "value": "49.99",
                       "precision": 20
-                    }
+                    },
+                    "total": 99.98
                   }
                 ],
                 "shipping_address": {
@@ -1349,10 +1321,6 @@
                 "email": "person-1@example.com",
                 "currency_code": "pln",
                 "total": 114.98,
-                "raw_total": {
-                  "value": "114.98",
-                  "precision": 20
-                },
                 "sales_channel_id": "sc_01WEB",
                 "is_draft_order": false,
                 "payment_status": "authorized",
@@ -1371,11 +1339,11 @@
                       "precision": 20
                     },
                     "unit_price": 49.99,
-                    "total": 79,
-                    "raw_total": {
-                      "value": "79",
+                    "raw_unit_price": {
+                      "value": "49.99",
                       "precision": 20
-                    }
+                    },
+                    "total": 79
                   }
                 ],
                 "shipping_address": {
@@ -1439,10 +1407,6 @@
                 "email": "person-1@example.com",
                 "currency_code": "pln",
                 "total": 114.98,
-                "raw_total": {
-                  "value": "114.98",
-                  "precision": 20
-                },
                 "sales_channel_id": "sc_01WEB",
                 "is_draft_order": false,
                 "payment_status": "captured",
@@ -1461,11 +1425,11 @@
                       "precision": 20
                     },
                     "unit_price": 49.99,
-                    "total": 99.98,
-                    "raw_total": {
-                      "value": "99.98",
+                    "raw_unit_price": {
+                      "value": "49.99",
                       "precision": 20
-                    }
+                    },
+                    "total": 99.98
                   }
                 ],
                 "shipping_address": {
@@ -1544,10 +1508,6 @@
                 "email": "person-1@example.com",
                 "currency_code": "pln",
                 "total": 207.97,
-                "raw_total": {
-                  "value": "207.97",
-                  "precision": 20
-                },
                 "sales_channel_id": "sc_01WEB",
                 "is_draft_order": false,
                 "payment_status": "captured",
@@ -1566,11 +1526,11 @@
                       "precision": 20
                     },
                     "unit_price": 49.99,
-                    "total": 99.98,
-                    "raw_total": {
-                      "value": "99.98",
+                    "raw_unit_price": {
+                      "value": "49.99",
                       "precision": 20
-                    }
+                    },
+                    "total": 99.98
                   },
                   {
                     "id": "item_01JA0005b",
@@ -1585,11 +1545,11 @@
                       "precision": 20
                     },
                     "unit_price": 49.99,
-                    "total": 79,
-                    "raw_total": {
-                      "value": "79",
+                    "raw_unit_price": {
+                      "value": "49.99",
                       "precision": 20
-                    }
+                    },
+                    "total": 79
                   }
                 ],
                 "shipping_address": {
@@ -2083,7 +2043,7 @@
     {
       "request": {
         "method": "GET",
-        "url": "https://medusa.example.test/admin/orders/order_01JA0001?fields=id%2Cstatus%2Cpayment_status%2Cfulfillment_status%2C*items%2C*fulfillments%2C*fulfillments.items%2C*payment_collections%2C*payment_collections.payments",
+        "url": "https://medusa.example.test/admin/orders/order_01JA0001?fields=id%2Cstatus%2C*items%2C*fulfillments%2C*fulfillments.items%2C*payment_collections%2C*payment_collections.payments",
         "headers": {
           "accept": "application/json"
         },
@@ -2106,10 +2066,6 @@
               "email": "person-1@example.com",
               "currency_code": "pln",
               "total": 114.98,
-              "raw_total": {
-                "value": "114.98",
-                "precision": 20
-              },
               "sales_channel_id": "sc_01WEB",
               "is_draft_order": false,
               "payment_status": "captured",
@@ -2128,11 +2084,11 @@
                     "precision": 20
                   },
                   "unit_price": 49.99,
-                  "total": 99.98,
-                  "raw_total": {
-                    "value": "99.98",
+                  "raw_unit_price": {
+                    "value": "49.99",
                     "precision": 20
-                  }
+                  },
+                  "total": 99.98
                 }
               ],
               "shipping_address": {
@@ -2268,10 +2224,6 @@
               "email": "person-1@example.com",
               "currency_code": "pln",
               "total": 114.98,
-              "raw_total": {
-                "value": "114.98",
-                "precision": 20
-              },
               "sales_channel_id": "sc_01WEB",
               "is_draft_order": false,
               "payment_status": "captured",
@@ -2290,11 +2242,11 @@
                     "precision": 20
                   },
                   "unit_price": 49.99,
-                  "total": 99.98,
-                  "raw_total": {
-                    "value": "99.98",
+                  "raw_unit_price": {
+                    "value": "49.99",
                     "precision": 20
-                  }
+                  },
+                  "total": 99.98
                 }
               ],
               "shipping_address": {
@@ -2370,7 +2322,7 @@
     {
       "request": {
         "method": "GET",
-        "url": "https://medusa.example.test/admin/orders/order_01JA0001?fields=id%2Cstatus%2Cpayment_status%2Cfulfillment_status%2C*items%2C*fulfillments%2C*fulfillments.items%2C*payment_collections%2C*payment_collections.payments",
+        "url": "https://medusa.example.test/admin/orders/order_01JA0001?fields=id%2Cstatus%2C*items%2C*fulfillments%2C*fulfillments.items%2C*payment_collections%2C*payment_collections.payments",
         "headers": {
           "accept": "application/json"
         },
@@ -2393,10 +2345,6 @@
               "email": "person-1@example.com",
               "currency_code": "pln",
               "total": 114.98,
-              "raw_total": {
-                "value": "114.98",
-                "precision": 20
-              },
               "sales_channel_id": "sc_01WEB",
               "is_draft_order": false,
               "payment_status": "captured",
@@ -2415,11 +2363,11 @@
                     "precision": 20
                   },
                   "unit_price": 49.99,
-                  "total": 99.98,
-                  "raw_total": {
-                    "value": "99.98",
+                  "raw_unit_price": {
+                    "value": "49.99",
                     "precision": 20
-                  }
+                  },
+                  "total": 99.98
                 }
               ],
               "shipping_address": {
@@ -2529,10 +2477,6 @@
               "email": "person-1@example.com",
               "currency_code": "pln",
               "total": 114.98,
-              "raw_total": {
-                "value": "114.98",
-                "precision": 20
-              },
               "sales_channel_id": "sc_01WEB",
               "is_draft_order": false,
               "payment_status": "captured",
@@ -2551,11 +2495,11 @@
                     "precision": 20
                   },
                   "unit_price": 49.99,
-                  "total": 99.98,
-                  "raw_total": {
-                    "value": "99.98",
+                  "raw_unit_price": {
+                    "value": "49.99",
                     "precision": 20
-                  }
+                  },
+                  "total": 99.98
                 }
               ],
               "shipping_address": {
@@ -2631,7 +2575,7 @@
     {
       "request": {
         "method": "GET",
-        "url": "https://medusa.example.test/admin/orders/order_01JA0001?fields=id%2Cstatus%2Cpayment_status%2Cfulfillment_status%2C*items%2C*fulfillments%2C*fulfillments.items%2C*payment_collections%2C*payment_collections.payments",
+        "url": "https://medusa.example.test/admin/orders/order_01JA0001?fields=id%2Cstatus%2C*items%2C*fulfillments%2C*fulfillments.items%2C*payment_collections%2C*payment_collections.payments",
         "headers": {
           "accept": "application/json"
         },
@@ -2654,10 +2598,6 @@
               "email": "person-1@example.com",
               "currency_code": "pln",
               "total": 114.98,
-              "raw_total": {
-                "value": "114.98",
-                "precision": 20
-              },
               "sales_channel_id": "sc_01WEB",
               "is_draft_order": false,
               "payment_status": "captured",
@@ -2676,11 +2616,11 @@
                     "precision": 20
                   },
                   "unit_price": 49.99,
-                  "total": 99.98,
-                  "raw_total": {
-                    "value": "99.98",
+                  "raw_unit_price": {
+                    "value": "49.99",
                     "precision": 20
-                  }
+                  },
+                  "total": 99.98
                 }
               ],
               "shipping_address": {
@@ -2756,7 +2696,7 @@
     {
       "request": {
         "method": "GET",
-        "url": "https://medusa.example.test/admin/orders/order_01JA0001?fields=id%2Cstatus%2Cpayment_status%2Cfulfillment_status%2C*items%2C*fulfillments%2C*fulfillments.items%2C*payment_collections%2C*payment_collections.payments",
+        "url": "https://medusa.example.test/admin/orders/order_01JA0001?fields=id%2Cstatus%2C*items%2C*fulfillments%2C*fulfillments.items%2C*payment_collections%2C*payment_collections.payments",
         "headers": {
           "accept": "application/json"
         },
@@ -2779,10 +2719,6 @@
               "email": "person-1@example.com",
               "currency_code": "pln",
               "total": 114.98,
-              "raw_total": {
-                "value": "114.98",
-                "precision": 20
-              },
               "sales_channel_id": "sc_01WEB",
               "is_draft_order": false,
               "payment_status": "captured",
@@ -2801,11 +2737,11 @@
                     "precision": 20
                   },
                   "unit_price": 49.99,
-                  "total": 99.98,
-                  "raw_total": {
-                    "value": "99.98",
+                  "raw_unit_price": {
+                    "value": "49.99",
                     "precision": 20
-                  }
+                  },
+                  "total": 99.98
                 }
               ],
               "shipping_address": {
@@ -2881,7 +2817,7 @@
     {
       "request": {
         "method": "GET",
-        "url": "https://medusa.example.test/admin/orders/order_01JA0001?fields=id%2Cstatus%2Cpayment_status%2Cfulfillment_status%2C*items%2C*fulfillments%2C*fulfillments.items%2C*payment_collections%2C*payment_collections.payments",
+        "url": "https://medusa.example.test/admin/orders/order_01JA0001?fields=id%2Cstatus%2C*items%2C*fulfillments%2C*fulfillments.items%2C*payment_collections%2C*payment_collections.payments",
         "headers": {
           "accept": "application/json"
         },
@@ -2904,10 +2840,6 @@
               "email": "person-1@example.com",
               "currency_code": "pln",
               "total": 114.98,
-              "raw_total": {
-                "value": "114.98",
-                "precision": 20
-              },
               "sales_channel_id": "sc_01WEB",
               "is_draft_order": false,
               "payment_status": "captured",
@@ -2926,11 +2858,11 @@
                     "precision": 20
                   },
                   "unit_price": 49.99,
-                  "total": 99.98,
-                  "raw_total": {
-                    "value": "99.98",
+                  "raw_unit_price": {
+                    "value": "49.99",
                     "precision": 20
-                  }
+                  },
+                  "total": 99.98
                 }
               ],
               "shipping_address": {

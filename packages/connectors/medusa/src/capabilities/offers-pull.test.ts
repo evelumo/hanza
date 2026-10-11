@@ -36,9 +36,9 @@ describe('offers.pull', () => {
     expect(offers.map((offer) => offer.externalId)).toEqual(['variant_001', 'variant_002', 'variant_003', 'variant_004', 'variant_005'])
     expect(store.urls).toEqual([
       'GET hanza/status',
-      'GET product-variants?order=id&offset=0&limit=2&fields=id,sku,title,manage_inventory,product_id,product.title,product.status,*prices',
-      'GET product-variants?order=id&offset=0&limit=4&fields=id,sku,title,manage_inventory,product_id,product.title,product.status,*prices',
-      'GET product-variants?order=id&offset=2&limit=4&fields=id,sku,title,manage_inventory,product_id,product.title,product.status,*prices',
+      'GET product-variants?order=id&offset=0&limit=2&fields=id,sku,title,manage_inventory,product_id,product.title,product.status,*prices,prices.price_rules.attribute,prices.price_rules.value',
+      'GET product-variants?order=id&offset=0&limit=4&fields=id,sku,title,manage_inventory,product_id,product.title,product.status,*prices,prices.price_rules.attribute,prices.price_rules.value',
+      'GET product-variants?order=id&offset=2&limit=4&fields=id,sku,title,manage_inventory,product_id,product.title,product.status,*prices,prices.price_rules.attribute,prices.price_rules.value',
     ])
   })
 
