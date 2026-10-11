@@ -184,6 +184,9 @@ importers:
       '@hanza/connector-inpost':
         specifier: workspace:*
         version: link:../connectors/inpost
+      '@hanza/connector-medusa':
+        specifier: workspace:*
+        version: link:../connectors/medusa
       '@hanza/connector-sdk':
         specifier: workspace:*
         version: link:../connector-sdk
