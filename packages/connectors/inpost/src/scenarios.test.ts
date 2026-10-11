@@ -46,7 +46,7 @@ function context(fetch: typeof globalThis.fetch, config: Partial<InpostConfig> =
   }
   const ctx = {
     app: {},
-    config: inpostConfigSchema.parse({ environment: 'sandbox', organizationId: '12345', ...config }),
+    config: inpostConfigSchema.parse({ environment: 'sandbox', shipxOrganizationId: '12345', ...config }),
     credentials: { apiToken: TOKEN },
     fetch: watching,
     log: (message: string, fields?: Record<string, unknown>) => void logs.push({ message, fields }),
@@ -802,10 +802,10 @@ describe('InPost scenarios', { skip: isRecording() }, () => {
       expect(await failing('1600000901')).toBeInstanceOf(AuthExpiredError)
     })
 
-    it('fails as permanent on a 403 and points at the Organization ID setting', async () => {
+    it('fails as permanent on a 403 and points at the ShipX organization ID setting', async () => {
       const error = (await failing('1600000902')) as Error
       expect(error).toBeInstanceOf(PermanentError)
-      expect(error.message).toContain('Organization ID')
+      expect(error.message).toContain('ShipX organization ID')
       // Neither the token nor anything of the answer.
       expect(error.message).not.toContain(TOKEN)
       expect(error.message).not.toContain('Access forbidden for this token')
@@ -814,7 +814,7 @@ describe('InPost scenarios', { skip: isRecording() }, () => {
     it('fails as permanent on a 404 for the organization, with the same pointer', async () => {
       const error = (await failing('1600000903')) as Error
       expect(error).toBeInstanceOf(PermanentError)
-      expect(error.message).toContain('Organization ID')
+      expect(error.message).toContain('ShipX organization ID')
     })
 
     it('waits as long as a 429 says', async () => {

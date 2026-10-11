@@ -11,7 +11,7 @@ export const PAGE_SIZE = 100
 export type Scope = 'organization' | 'shipment'
 
 export function organizationShipmentsPath(ctx: InpostContext): string {
-  return `/v1/organizations/${encodeURIComponent(ctx.config.organizationId)}/shipments`
+  return `/v1/organizations/${encodeURIComponent(ctx.config.shipxOrganizationId)}/shipments`
 }
 
 /**
@@ -103,7 +103,7 @@ export async function readError(response: Response): Promise<z.output<typeof shi
 }
 
 const WRONG_ORGANIZATION =
-  'check that the Organization ID in the Connection settings is the one shown in the API tab of the InPost manager, for the same environment as the token'
+  'check that the ShipX organization ID in the Connection settings is the one shown in the API tab of the InPost manager, for the same environment as the token'
 
 /**
  * The error a failed response is thrown as. A 401 asks for sign-in. A 403 is what ShipX answers a valid token with
