@@ -22,6 +22,12 @@ export interface ScrubConfig {
   keepResponseHeaders?: string[]
   /** Binary bodies cannot be scrubbed, so they are dropped unless this is true. */
   keepBinaryBodies?: boolean
+  /**
+   * Puts a placeholder file where a binary body would be dropped: a blank one-page PDF for a PDF, the bytes of
+   * `[scrubbed]` for anything else. For a response the connector must receive non-empty, such as a Label, which
+   * prints a name and an address and so must not be kept. No effect with `keepBinaryBodies`.
+   */
+  replaceBinaryBodies?: boolean
 }
 
 export const SCRUBBED = '[scrubbed]'
@@ -93,6 +99,30 @@ export function isBasicCredential(token: string): boolean {
 const PLACEHOLDER = /^(\[scrubbed\]|person-\d+@example\.com|\+000\d*|scrubbed-\d+)$/
 export function isPlaceholder(value: string): boolean {
   return PLACEHOLDER.test(value)
+}
+
+// Built, not pasted: the cross-reference table holds the byte offset of every object.
+function blankPdf(): string {
+  const objects = [
+    '<< /Type /Catalog /Pages 2 0 R >>',
+    '<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
+    '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 298 420] /Resources << >> >>',
+  ]
+  let pdf = '%PDF-1.4\n'
+  const offsets = objects.map((body, index) => {
+    const offset = pdf.length
+    pdf += `${index + 1} 0 obj\n${body}\nendobj\n`
+    return offset
+  })
+  const entries = offsets.map((offset) => `${String(offset).padStart(10, '0')} 00000 n \n`).join('')
+  const size = objects.length + 1
+  return `${pdf}xref\n0 ${size}\n0000000000 65535 f \n${entries}trailer\n<< /Size ${size} /Root 1 0 R >>\nstartxref\n${pdf.length}\n%%EOF\n`
+}
+
+/** What a binary body becomes under `replaceBinaryBodies`. */
+export function binaryPlaceholder(contentType: string | null): CassetteBody {
+  const text = /\bpdf\b/i.test(contentType ?? '') ? blankPdf() : SCRUBBED
+  return { base64: Buffer.from(text, 'latin1').toString('base64') }
 }
 
 function lookup(table: Record<string, ScrubKind> | undefined): Map<string, ScrubKind> {
@@ -183,7 +213,10 @@ export class Scrubber {
   body(body: CassetteBody | null, contentType: string | null): CassetteBody | null {
     if (body === null) return null
     if ('json' in body) return { json: this.json(body.json, []) }
-    if ('base64' in body) return this.config.keepBinaryBodies ? body : null
+    if ('base64' in body) {
+      if (this.config.keepBinaryBodies) return body
+      return this.config.replaceBinaryBodies ? binaryPlaceholder(contentType) : null
+    }
     if (isFormContentType(contentType)) {
       const params = new URLSearchParams(body.text)
       const scrubbed = new URLSearchParams([...params.entries()].map(([name, value]): [string, string] => [name, this.param(name, value)]))

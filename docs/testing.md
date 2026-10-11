@@ -11,7 +11,7 @@ Hanza tests different layers separately. A green unit run does not prove the pan
 | Unit and helper tests | `pnpm test` | Vitest; no real external accounts or API traffic |
 | Database integration | `pnpm test` | `HANZA_TEST_DATABASE_URL` pointing at a server where tests may create/drop databases |
 | Redis rate limiter | `pnpm test` | A reachable Redis at `REDIS_URL`; uses an isolated prefix |
-| Connector conformance | `pnpm --filter @hanza/connector-fake test` | In-memory references and scrubbed recorded HTTP fixtures |
+| Connector conformance | `pnpm --filter @hanza/connector-fake test`, `pnpm --filter @hanza/connector-inpost test` | In-memory references and scrubbed recorded HTTP fixtures (cassettes) |
 | Web build | `pnpm build` | Valid build-time env; compiles Next.js |
 | Panel browser flows | `pnpm test:e2e` | Local Postgres, Redis and installed Playwright Chromium |
 

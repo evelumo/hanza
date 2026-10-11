@@ -1,4 +1,4 @@
-export { assertConformance, type ConformanceFixtures } from './conformance'
+export { assertConformance, type ConformanceFixtures, type ShipmentFixtures } from './conformance'
 export {
   cassetteSchema,
   loadCassette,

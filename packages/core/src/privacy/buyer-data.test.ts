@@ -56,6 +56,26 @@ describe('sealBuyerData', () => {
   it('refuses data that breaks the canonical schema', () => {
     expect(() => sealBuyerData(box(), key, { ...data, buyer: { ...data.buyer, name: '' } })).toThrow()
   })
+
+  it('seals the Delivery with the rest: the pickup point is in no plaintext column', () => {
+    const secrets = box()
+    const withDelivery: BuyerData = { ...data, delivery: { method: 'Paczkomat InPost', pickupPoint: { id: 'KRA010', name: 'Kraków, Długa 5' } } }
+    const columns = sealBuyerData(secrets, key, withDelivery)
+    for (const personal of ['KRA010', 'Paczkomat', 'Kraków']) expect(JSON.stringify(columns)).not.toContain(personal)
+    expect(openBuyerData(secrets, key, columns.buyerData)).toEqual(withDelivery)
+  })
+
+  it('opens a value sealed before the Delivery existed', () => {
+    const secrets = box()
+    // What `sealBuyerData` wrote then: the three keys and the same authenticated data.
+    const before = secrets.seal(
+      JSON.stringify({ buyer: data.buyer, shippingAddress: data.shippingAddress, billingAddress: null }),
+      JSON.stringify(['buyer-data', key.organizationId, key.connectionId, key.externalId]),
+    )
+    const opened = openBuyerData(secrets, key, before)
+    expect(opened).toEqual(data)
+    expect(opened.delivery).toBeUndefined()
+  })
 })
 
 describe('readBuyerData', () => {

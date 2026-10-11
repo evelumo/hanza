@@ -1,9 +1,10 @@
 // Preloaded into the worker by the e2e runner (`node --import`), never part of a normal start.
-// The fake Channels keep what they were told in the worker's memory; this serves it to the flows, and lets a
-// flow act as the person on the fake OAuth Channel's sign-in page (approve a code, revoke the application).
+// The fake Channels and the fake Carrier keep what they were told in the worker's memory; this serves it to the
+// flows, and lets a flow act as the person on the fake OAuth Channel's sign-in page (approve a code, revoke the
+// application).
 // It imports the same `@hanza/connector-fake` module instance as the worker's registry (one realpath).
 import { createServer, type IncomingMessage } from 'node:http'
-import { fakeChannel, fakeOAuthChannel } from '@hanza/connector-fake'
+import { fakeChannel, fakeCourier, fakeOAuthChannel } from '@hanza/connector-fake'
 
 const port = Number(process.env.HANZA_E2E_PROBE_PORT)
 if (!Number.isInteger(port) || port <= 0) throw new Error('HANZA_E2E_PROBE_PORT is not set')
@@ -17,6 +18,18 @@ async function jsonBody(request: IncomingMessage): Promise<Record<string, unknow
 createServer((request, response) => {
   if (request.method === 'GET' && request.url === '/fake-channel') {
     const body = JSON.stringify({ stockPushes: fakeChannel.stockPushes, statusUpdates: fakeChannel.statusUpdates })
+    response.writeHead(200, { 'content-type': 'application/json' }).end(body)
+    return
+  }
+  if (request.method === 'GET' && request.url === '/fake-courier') {
+    // Ids and statuses only: the requests the fake Carrier keeps hold the receivers, which no flow needs.
+    const body = JSON.stringify({
+      shipments: fakeCourier.shipments.map(({ account, externalId, reference, status, trackingNumber }) => ({ account, externalId, reference, status, trackingNumber })),
+      creates: fakeCourier.creates.map(({ reference, service }) => ({ reference, service })),
+      tracks: fakeCourier.tracks,
+      labels: fakeCourier.labels,
+      cancels: fakeCourier.cancels,
+    })
     response.writeHead(200, { 'content-type': 'application/json' }).end(body)
     return
   }

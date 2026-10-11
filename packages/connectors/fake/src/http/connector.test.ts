@@ -83,7 +83,7 @@ describe('record → scrub → replay through a real HTTP server', () => {
     server = null
 
     const text = await readFile(file, 'utf8')
-    for (const token of [recordedCredentials.clientSecret, 'fake_session', 'Bearer ey', '44051401359', '600 100 200', 'john.test@example.com', 'John']) {
+    for (const token of [recordedCredentials.clientSecret, 'fake_session', 'Bearer ey', '44051401359', '000 000 000', 'john.test@example.com', 'John']) {
       expect(text).not.toContain(token)
     }
     const cassette = await loadCassette(file)

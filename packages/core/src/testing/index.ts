@@ -10,4 +10,5 @@ export {
   type RecordedSchedule,
 } from './queue'
 export { createInMemoryRateLimiter } from '../rate-limit'
+export { createTestCarrier, TEST_CARRIER_SERVICES, type TestCarrier, type TestCarrierShipment } from './carrier'
 export { reachableTestRedis, testRedisPrefix } from './redis'

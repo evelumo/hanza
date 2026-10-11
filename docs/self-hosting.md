@@ -1,6 +1,6 @@
 # Self-hosting
 
-Hanza can run on infrastructure you control. It is currently an early-stage application with two real connectors (Allegro, a marketplace Channel, and WooCommerce, a shop Channel) and simulated ones; this guide describes the runtime and operator responsibilities, not a certified production deployment recipe.
+Hanza can run on infrastructure you control. It is currently an early-stage application whose real connectors, Allegro (a marketplace Channel), WooCommerce (a shop Channel) and InPost (a Carrier), have been checked against sandboxes only; this guide describes the runtime and operator responsibilities, not a certified production deployment recipe.
 
 ## Runtime components
 
@@ -20,9 +20,15 @@ Use Node.js 22+ and the pinned pnpm version. Supply the root `.env` or process e
 - `DATABASE_URL` and `REDIS_URL` to your protected services.
 - `BETTER_AUTH_URL` to the exact public origin, including `https://` when served through TLS.
 - An independently generated `BETTER_AUTH_SECRET` and `HANZA_ENCRYPTION_KEY`.
-- Any required connector installation settings. The current OAuth connector is simulated; real providers are planned.
+- Any required connector installation settings, such as Allegro's `HANZA_CONNECTOR_ALLEGRO_*` (see [Connecting Allegro](../README.md#connecting-allegro)). InPost needs none: its token is entered per Connection.
 
 Web and worker must agree on the database, Redis, encryption key and queue namespace. Leave `HANZA_QUEUE_PREFIX` unset for the ordinary installation; the E2E runner sets its own prefix. `WORKER_CONCURRENCY` is a positive integer, default 10.
+
+### InPost
+
+- The worker calls `api-shipx-pl.easypack24.net` (production) or `sandbox-api-shipx-pl.easypack24.net` (sandbox), so it needs outbound HTTPS to the one you use.
+- Keep the server's clock within 5 minutes of real time. Before the connector concludes that a Shipment was not created earlier, it compares the clock with InPost's, and when they differ by more it refuses to create Shipments.
+- The token is entered when the Connection is created and cannot be replaced yet ([#154](https://github.com/evelumo/hanza/issues/154)). When InPost revokes it or you regenerate it, the Connection needs sign-in and its Shipments are no longer created or followed; add a new Connection with the new token.
 
 The worker executes TypeScript from source with `tsx`, and workspace packages export source. Keep the checkout and its runtime dependencies available; do not copy only the `.next` directory and expect a complete installation.
 

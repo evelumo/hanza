@@ -92,6 +92,7 @@ model Organization {
   statusMappings    ChannelStatusMapping[]
   orderLines        OrderLine[]
   orderChannelFacts OrderChannelFact[]
+  shipments         Shipment[]
   connections       Connection[]
   connectionSignIns ConnectionSignIn[]
   syncStates        SyncState[]
