@@ -1,6 +1,6 @@
 # WooCommerce connector (`@hanza/connector-woocommerce`)
 
-A `shop` Channel for a WooCommerce store, through its REST API (`<storeUrl>/wp-json/wc/v3/`). Design record: GitHub issue #118. Registered in `@hanza/connector-registry`, so the panel lists it. It is the first real connector; everything below is read from the code and its tests, not from WooCommerce's documentation.
+A `shop` Channel for a WooCommerce store, through its REST API (`<storeUrl>/wp-json/wc/v3/`). Design record: GitHub issue #118. Registered in `@hanza/connector-registry`, so the panel lists it. It is the second real connector, after Allegro; everything below is read from the code and its tests, not from WooCommerce's documentation.
 
 Supported: WooCommerce **7.6.0 and later**, HTTPS, pretty permalinks. 7.6.0 is the floor: on 7.5.1 with HPOS the date filters are shifted by the site's UTC offset and the Order feed is broken. **Every cassette is from WooCommerce 11.2.1** (WordPress 7.1.3, PHP 8.3, MariaDB 11.8.9) with HPOS, except `orders-legacy-storage`, from 11.2.1 on legacy order storage (orders as posts). Older versions are not recorded; the Order feed and the status pushes were run against them live, in the sandbox (`sandbox/README.md`, "Another WooCommerce version"): the flows of the recorded scenarios and 130 changes between two polls (see [orders.pull](#orderspull), "Run against older versions"). The sandbox is a local shop, so nothing here has run against a merchant's.
 

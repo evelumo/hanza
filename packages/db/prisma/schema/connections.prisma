@@ -159,6 +159,9 @@ model SyncState {
   lastErrorKind   SyncErrorKind?
   /// Truncated to 1000 characters; cleared on success.
   lastError       String?
+  /// `orders_pull` only: when a run first read the Order feed to its end since the Connection was created or the feed
+  /// restarted (cleared then). Until it is set, the Connection's stock push is held (issue #125).
+  caughtUpAt      DateTime?
   updatedAt       DateTime       @updatedAt
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
