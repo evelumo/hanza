@@ -11,7 +11,8 @@
   },
   "dependencies": {
     "@hanza/connector-fake": "workspace:*",
-    "@hanza/connector-sdk": "workspace:*"
+    "@hanza/connector-sdk": "workspace:*",
+    "@hanza/connector-woocommerce": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^6.0.3"

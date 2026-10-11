@@ -34,7 +34,7 @@ An alternative to Base.com / BaseLinker that the seller runs on their own infras
 - An Order has one of four fixed phases; an organization's Order statuses are coloured labels within a phase.
 - Money is a decimal string plus ISO currency. Buyer data is sealed and may be erased.
 - Roles and per-role permissions are not implemented: every member sees the whole panel.
-- No real connectors yet: only simulated Test channels. An in-panel AI assistant is planned, not built.
+- One real connector (WooCommerce); the other channels are simulated Test channels. An in-panel AI assistant is planned, not built.
 
 ## Brand Commitments
 

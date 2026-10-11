@@ -1,0 +1,115 @@
+{
+  "version": 1,
+  "interactions": [
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://shop.example.test/wp-json/wc/v3/orders/53?_fields=id%2Cstatus",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=UTF-8",
+          "date": "Sat, 10 Oct 2026 23:15:23 GMT",
+          "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\""
+        },
+        "body": {
+          "json": {
+            "id": 53,
+            "status": "processing",
+            "_links": {
+              "self": [
+                {
+                  "href": "https://shop.example.test/wp-json/wc/v3/orders/53",
+                  "targetHints": {
+                    "allow": [
+                      "GET",
+                      "POST",
+                      "PUT",
+                      "PATCH",
+                      "DELETE"
+                    ]
+                  }
+                }
+              ],
+              "collection": [
+                {
+                  "href": "https://shop.example.test/wp-json/wc/v3/orders"
+                }
+              ],
+              "email_templates": [
+                {
+                  "embeddable": true,
+                  "href": "https://shop.example.test/wp-json/wc/v3/orders/53/actions/email_templates"
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "PUT",
+        "url": "https://shop.example.test/wp-json/wc/v3/orders/53?_fields=id%2Cstatus",
+        "headers": {
+          "accept": "application/json",
+          "content-type": "application/json"
+        },
+        "body": {
+          "json": {
+            "status": "completed"
+          }
+        }
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=UTF-8",
+          "date": "Sat, 10 Oct 2026 23:15:23 GMT",
+          "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\""
+        },
+        "body": {
+          "json": {
+            "code": "woocommerce_rest_authentication_error",
+            "message": "The API key provided does not have write permissions.",
+            "data": {
+              "status": 401
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://shop.example.test/wp-json/wc/v3/products?per_page=1&_fields=id",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=UTF-8",
+          "date": "Sat, 10 Oct 2026 23:15:23 GMT",
+          "link": "<https://shop.example.test/wp-json/wc/v3/products?per_page=1&_fields=id&page=2>; rel=\"next\"",
+          "x-wp-total": "12",
+          "x-wp-totalpages": "12"
+        },
+        "body": {
+          "json": [
+            {
+              "id": 28
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

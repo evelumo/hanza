@@ -1,0 +1,163 @@
+{
+  "version": 1,
+  "interactions": [
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://shop.example.test/wp-json/wc/v3/products?include=10&per_page=100&_fields=id%2Ctype",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=UTF-8",
+          "date": "Sat, 10 Oct 2026 23:15:30 GMT",
+          "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\"",
+          "x-wp-total": "1",
+          "x-wp-totalpages": "1"
+        },
+        "body": {
+          "json": [
+            {
+              "id": 10,
+              "type": "simple"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "url": "https://shop.example.test/wp-json/wc/v3/products/batch",
+        "headers": {
+          "accept": "application/json",
+          "content-type": "application/json"
+        },
+        "body": {
+          "json": {
+            "update": [
+              {
+                "id": 10,
+                "manage_stock": true,
+                "stock_quantity": 5
+              }
+            ]
+          }
+        }
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=UTF-8",
+          "date": "Sat, 10 Oct 2026 23:15:31 GMT",
+          "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\""
+        },
+        "body": {
+          "json": {
+            "code": "woocommerce_rest_authentication_error",
+            "message": "The API key provided does not have write permissions.",
+            "data": {
+              "status": 401
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://shop.example.test/wp-json/wc/v3/products?per_page=1&_fields=id",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=UTF-8",
+          "date": "Sat, 10 Oct 2026 23:15:31 GMT",
+          "link": "<https://shop.example.test/wp-json/wc/v3/products?per_page=1&_fields=id&page=2>; rel=\"next\"",
+          "x-wp-total": "12",
+          "x-wp-totalpages": "12"
+        },
+        "body": {
+          "json": [
+            {
+              "id": 28
+            }
+          ]
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "url": "https://shop.example.test/wp-json/wc/v3/products/19/variations/batch",
+        "headers": {
+          "accept": "application/json",
+          "content-type": "application/json"
+        },
+        "body": {
+          "json": {
+            "update": [
+              {
+                "id": 20,
+                "manage_stock": true,
+                "stock_quantity": 5
+              }
+            ]
+          }
+        }
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=UTF-8",
+          "date": "Sat, 10 Oct 2026 23:15:31 GMT",
+          "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\""
+        },
+        "body": {
+          "json": {
+            "code": "woocommerce_rest_authentication_error",
+            "message": "The API key provided does not have write permissions.",
+            "data": {
+              "status": 401
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://shop.example.test/wp-json/wc/v3/products?per_page=1&_fields=id",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=UTF-8",
+          "date": "Sat, 10 Oct 2026 23:15:31 GMT",
+          "link": "<https://shop.example.test/wp-json/wc/v3/products?per_page=1&_fields=id&page=2>; rel=\"next\"",
+          "x-wp-total": "12",
+          "x-wp-totalpages": "12"
+        },
+        "body": {
+          "json": [
+            {
+              "id": 28
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

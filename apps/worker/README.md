@@ -18,6 +18,6 @@ The entry point composes `createContext()` with connectors from `@hanza/connecto
 
 Job effects must be idempotent: retries repeat execution. Multi-step durable work uses `ctx.workflows`; its steps have an at-least-once execution contract. Read [architecture](../../docs/architecture.md) before adding background behaviour.
 
-Database-backed tests in `src/*.db.test.ts` exercise engine, workflow, privacy and sync paths with fake/reference connectors. They use throwaway databases when `HANZA_TEST_DATABASE_URL` is set. The E2E runner also preloads a fake-Channel probe in this process for browser assertions; that probe is test infrastructure, not an application endpoint.
+Database-backed tests in `src/*.db.test.ts` exercise engine, workflow, privacy and sync paths with fake/reference connectors; `src/woocommerce.db.test.ts` runs the WooCommerce connector under the engine on cassettes recorded from its sandbox shop (the top of that file says how to record them again). They use throwaway databases when `HANZA_TEST_DATABASE_URL` is set. The E2E runner also preloads a fake-Channel probe in this process for browser assertions; that probe is test infrastructure, not an application endpoint.
 
 See [testing](../../docs/testing.md) and [self-hosting](../../docs/self-hosting.md). A healthy web `/api/health` response does not prove this process is consuming jobs.

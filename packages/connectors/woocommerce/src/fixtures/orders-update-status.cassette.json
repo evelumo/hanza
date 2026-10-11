@@ -1,0 +1,1694 @@
+{
+  "version": 1,
+  "interactions": [
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://shop.example.test/wp-json/wc/v3/orders/33?_fields=id%2Cstatus",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=UTF-8",
+          "date": "Sat, 10 Oct 2026 23:15:19 GMT",
+          "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\""
+        },
+        "body": {
+          "json": {
+            "id": 33,
+            "status": "pending",
+            "_links": {
+              "self": [
+                {
+                  "href": "https://shop.example.test/wp-json/wc/v3/orders/33",
+                  "targetHints": {
+                    "allow": [
+                      "GET",
+                      "POST",
+                      "PUT",
+                      "PATCH",
+                      "DELETE"
+                    ]
+                  }
+                }
+              ],
+              "collection": [
+                {
+                  "href": "https://shop.example.test/wp-json/wc/v3/orders"
+                }
+              ],
+              "email_templates": [
+                {
+                  "embeddable": true,
+                  "href": "https://shop.example.test/wp-json/wc/v3/orders/33/actions/email_templates"
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "PUT",
+        "url": "https://shop.example.test/wp-json/wc/v3/orders/33?_fields=id%2Cstatus",
+        "headers": {
+          "accept": "application/json",
+          "content-type": "application/json"
+        },
+        "body": {
+          "json": {
+            "status": "processing"
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=UTF-8",
+          "date": "Sat, 10 Oct 2026 23:15:20 GMT",
+          "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\""
+        },
+        "body": {
+          "json": {
+            "id": 33,
+            "status": "processing",
+            "_links": {
+              "self": [
+                {
+                  "href": "https://shop.example.test/wp-json/wc/v3/orders/33",
+                  "targetHints": {
+                    "allow": [
+                      "GET",
+                      "POST",
+                      "PUT",
+                      "PATCH",
+                      "DELETE"
+                    ]
+                  }
+                }
+              ],
+              "collection": [
+                {
+                  "href": "https://shop.example.test/wp-json/wc/v3/orders"
+                }
+              ],
+              "email_templates": [
+                {
+                  "embeddable": true,
+                  "href": "https://shop.example.test/wp-json/wc/v3/orders/33/actions/email_templates"
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://shop.example.test/wp-json/wc/v3/orders/33?_fields=id%2Cstatus",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=UTF-8",
+          "date": "Sat, 10 Oct 2026 23:15:21 GMT",
+          "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\""
+        },
+        "body": {
+          "json": {
+            "id": 33,
+            "status": "processing",
+            "_links": {
+              "self": [
+                {
+                  "href": "https://shop.example.test/wp-json/wc/v3/orders/33",
+                  "targetHints": {
+                    "allow": [
+                      "GET",
+                      "POST",
+                      "PUT",
+                      "PATCH",
+                      "DELETE"
+                    ]
+                  }
+                }
+              ],
+              "collection": [
+                {
+                  "href": "https://shop.example.test/wp-json/wc/v3/orders"
+                }
+              ],
+              "email_templates": [
+                {
+                  "embeddable": true,
+                  "href": "https://shop.example.test/wp-json/wc/v3/orders/33/actions/email_templates"
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://shop.example.test/wp-json/wc/v3/orders/33?_fields=id%2Cstatus",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=UTF-8",
+          "date": "Sat, 10 Oct 2026 23:15:21 GMT",
+          "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\""
+        },
+        "body": {
+          "json": {
+            "id": 33,
+            "status": "processing",
+            "_links": {
+              "self": [
+                {
+                  "href": "https://shop.example.test/wp-json/wc/v3/orders/33",
+                  "targetHints": {
+                    "allow": [
+                      "GET",
+                      "POST",
+                      "PUT",
+                      "PATCH",
+                      "DELETE"
+                    ]
+                  }
+                }
+              ],
+              "collection": [
+                {
+                  "href": "https://shop.example.test/wp-json/wc/v3/orders"
+                }
+              ],
+              "email_templates": [
+                {
+                  "embeddable": true,
+                  "href": "https://shop.example.test/wp-json/wc/v3/orders/33/actions/email_templates"
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "PUT",
+        "url": "https://shop.example.test/wp-json/wc/v3/orders/33?_fields=id%2Cstatus",
+        "headers": {
+          "accept": "application/json",
+          "content-type": "application/json"
+        },
+        "body": {
+          "json": {
+            "status": "completed"
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=UTF-8",
+          "date": "Sat, 10 Oct 2026 23:15:21 GMT",
+          "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\""
+        },
+        "body": {
+          "json": {
+            "id": 33,
+            "status": "completed",
+            "_links": {
+              "self": [
+                {
+                  "href": "https://shop.example.test/wp-json/wc/v3/orders/33",
+                  "targetHints": {
+                    "allow": [
+                      "GET",
+                      "POST",
+                      "PUT",
+                      "PATCH",
+                      "DELETE"
+                    ]
+                  }
+                }
+              ],
+              "collection": [
+                {
+                  "href": "https://shop.example.test/wp-json/wc/v3/orders"
+                }
+              ],
+              "email_templates": [
+                {
+                  "embeddable": true,
+                  "href": "https://shop.example.test/wp-json/wc/v3/orders/33/actions/email_templates"
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://shop.example.test/wp-json/wc/v3/orders/33?_fields=id%2Cstatus",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=UTF-8",
+          "date": "Sat, 10 Oct 2026 23:15:21 GMT",
+          "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\""
+        },
+        "body": {
+          "json": {
+            "id": 33,
+            "status": "completed",
+            "_links": {
+              "self": [
+                {
+                  "href": "https://shop.example.test/wp-json/wc/v3/orders/33",
+                  "targetHints": {
+                    "allow": [
+                      "GET",
+                      "POST",
+                      "PUT",
+                      "PATCH",
+                      "DELETE"
+                    ]
+                  }
+                }
+              ],
+              "collection": [
+                {
+                  "href": "https://shop.example.test/wp-json/wc/v3/orders"
+                }
+              ],
+              "email_templates": [
+                {
+                  "embeddable": true,
+                  "href": "https://shop.example.test/wp-json/wc/v3/orders/33/actions/email_templates"
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://shop.example.test/wp-json/wc/v3/orders/33?_fields=id%2Cstatus",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=UTF-8",
+          "date": "Sat, 10 Oct 2026 23:15:21 GMT",
+          "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\""
+        },
+        "body": {
+          "json": {
+            "id": 33,
+            "status": "completed",
+            "_links": {
+              "self": [
+                {
+                  "href": "https://shop.example.test/wp-json/wc/v3/orders/33",
+                  "targetHints": {
+                    "allow": [
+                      "GET",
+                      "POST",
+                      "PUT",
+                      "PATCH",
+                      "DELETE"
+                    ]
+                  }
+                }
+              ],
+              "collection": [
+                {
+                  "href": "https://shop.example.test/wp-json/wc/v3/orders"
+                }
+              ],
+              "email_templates": [
+                {
+                  "embeddable": true,
+                  "href": "https://shop.example.test/wp-json/wc/v3/orders/33/actions/email_templates"
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://shop.example.test/wp-json/wc/v3/orders/33?_fields=id%2Cstatus",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=UTF-8",
+          "date": "Sat, 10 Oct 2026 23:15:21 GMT",
+          "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\""
+        },
+        "body": {
+          "json": {
+            "id": 33,
+            "status": "completed",
+            "_links": {
+              "self": [
+                {
+                  "href": "https://shop.example.test/wp-json/wc/v3/orders/33",
+                  "targetHints": {
+                    "allow": [
+                      "GET",
+                      "POST",
+                      "PUT",
+                      "PATCH",
+                      "DELETE"
+                    ]
+                  }
+                }
+              ],
+              "collection": [
+                {
+                  "href": "https://shop.example.test/wp-json/wc/v3/orders"
+                }
+              ],
+              "email_templates": [
+                {
+                  "embeddable": true,
+                  "href": "https://shop.example.test/wp-json/wc/v3/orders/33/actions/email_templates"
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://shop.example.test/wp-json/wc/v3/orders/32?_fields=id%2Cstatus",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=UTF-8",
+          "date": "Sat, 10 Oct 2026 23:15:21 GMT",
+          "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\""
+        },
+        "body": {
+          "json": {
+            "id": 32,
+            "status": "on-hold",
+            "_links": {
+              "self": [
+                {
+                  "href": "https://shop.example.test/wp-json/wc/v3/orders/32",
+                  "targetHints": {
+                    "allow": [
+                      "GET",
+                      "POST",
+                      "PUT",
+                      "PATCH",
+                      "DELETE"
+                    ]
+                  }
+                }
+              ],
+              "collection": [
+                {
+                  "href": "https://shop.example.test/wp-json/wc/v3/orders"
+                }
+              ],
+              "email_templates": [
+                {
+                  "embeddable": true,
+                  "href": "https://shop.example.test/wp-json/wc/v3/orders/32/actions/email_templates"
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "PUT",
+        "url": "https://shop.example.test/wp-json/wc/v3/orders/32?_fields=id%2Cstatus",
+        "headers": {
+          "accept": "application/json",
+          "content-type": "application/json"
+        },
+        "body": {
+          "json": {
+            "status": "cancelled"
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=UTF-8",
+          "date": "Sat, 10 Oct 2026 23:15:21 GMT",
+          "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\""
+        },
+        "body": {
+          "json": {
+            "id": 32,
+            "status": "cancelled",
+            "_links": {
+              "self": [
+                {
+                  "href": "https://shop.example.test/wp-json/wc/v3/orders/32",
+                  "targetHints": {
+                    "allow": [
+                      "GET",
+                      "POST",
+                      "PUT",
+                      "PATCH",
+                      "DELETE"
+                    ]
+                  }
+                }
+              ],
+              "collection": [
+                {
+                  "href": "https://shop.example.test/wp-json/wc/v3/orders"
+                }
+              ],
+              "email_templates": [
+                {
+                  "embeddable": true,
+                  "href": "https://shop.example.test/wp-json/wc/v3/orders/32/actions/email_templates"
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://shop.example.test/wp-json/wc/v3/orders/32?_fields=id%2Cstatus",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=UTF-8",
+          "date": "Sat, 10 Oct 2026 23:15:21 GMT",
+          "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\""
+        },
+        "body": {
+          "json": {
+            "id": 32,
+            "status": "cancelled",
+            "_links": {
+              "self": [
+                {
+                  "href": "https://shop.example.test/wp-json/wc/v3/orders/32",
+                  "targetHints": {
+                    "allow": [
+                      "GET",
+                      "POST",
+                      "PUT",
+                      "PATCH",
+                      "DELETE"
+                    ]
+                  }
+                }
+              ],
+              "collection": [
+                {
+                  "href": "https://shop.example.test/wp-json/wc/v3/orders"
+                }
+              ],
+              "email_templates": [
+                {
+                  "embeddable": true,
+                  "href": "https://shop.example.test/wp-json/wc/v3/orders/32/actions/email_templates"
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://shop.example.test/wp-json/wc/v3/orders/32?_fields=id%2Cstatus",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=UTF-8",
+          "date": "Sat, 10 Oct 2026 23:15:21 GMT",
+          "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\""
+        },
+        "body": {
+          "json": {
+            "id": 32,
+            "status": "cancelled",
+            "_links": {
+              "self": [
+                {
+                  "href": "https://shop.example.test/wp-json/wc/v3/orders/32",
+                  "targetHints": {
+                    "allow": [
+                      "GET",
+                      "POST",
+                      "PUT",
+                      "PATCH",
+                      "DELETE"
+                    ]
+                  }
+                }
+              ],
+              "collection": [
+                {
+                  "href": "https://shop.example.test/wp-json/wc/v3/orders"
+                }
+              ],
+              "email_templates": [
+                {
+                  "embeddable": true,
+                  "href": "https://shop.example.test/wp-json/wc/v3/orders/32/actions/email_templates"
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://shop.example.test/wp-json/wc/v3/orders/32?_fields=id%2Cstatus",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=UTF-8",
+          "date": "Sat, 10 Oct 2026 23:15:21 GMT",
+          "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\""
+        },
+        "body": {
+          "json": {
+            "id": 32,
+            "status": "cancelled",
+            "_links": {
+              "self": [
+                {
+                  "href": "https://shop.example.test/wp-json/wc/v3/orders/32",
+                  "targetHints": {
+                    "allow": [
+                      "GET",
+                      "POST",
+                      "PUT",
+                      "PATCH",
+                      "DELETE"
+                    ]
+                  }
+                }
+              ],
+              "collection": [
+                {
+                  "href": "https://shop.example.test/wp-json/wc/v3/orders"
+                }
+              ],
+              "email_templates": [
+                {
+                  "embeddable": true,
+                  "href": "https://shop.example.test/wp-json/wc/v3/orders/32/actions/email_templates"
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://shop.example.test/wp-json/wc/v3/orders/38?_fields=id%2Cstatus",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=UTF-8",
+          "date": "Sat, 10 Oct 2026 23:15:21 GMT",
+          "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\""
+        },
+        "body": {
+          "json": {
+            "id": 38,
+            "status": "failed",
+            "_links": {
+              "self": [
+                {
+                  "href": "https://shop.example.test/wp-json/wc/v3/orders/38",
+                  "targetHints": {
+                    "allow": [
+                      "GET",
+                      "POST",
+                      "PUT",
+                      "PATCH",
+                      "DELETE"
+                    ]
+                  }
+                }
+              ],
+              "collection": [
+                {
+                  "href": "https://shop.example.test/wp-json/wc/v3/orders"
+                }
+              ],
+              "email_templates": [
+                {
+                  "embeddable": true,
+                  "href": "https://shop.example.test/wp-json/wc/v3/orders/38/actions/email_templates"
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://shop.example.test/wp-json/wc/v3/orders/38?_fields=id%2Cstatus",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=UTF-8",
+          "date": "Sat, 10 Oct 2026 23:15:22 GMT",
+          "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\""
+        },
+        "body": {
+          "json": {
+            "id": 38,
+            "status": "failed",
+            "_links": {
+              "self": [
+                {
+                  "href": "https://shop.example.test/wp-json/wc/v3/orders/38",
+                  "targetHints": {
+                    "allow": [
+                      "GET",
+                      "POST",
+                      "PUT",
+                      "PATCH",
+                      "DELETE"
+                    ]
+                  }
+                }
+              ],
+              "collection": [
+                {
+                  "href": "https://shop.example.test/wp-json/wc/v3/orders"
+                }
+              ],
+              "email_templates": [
+                {
+                  "embeddable": true,
+                  "href": "https://shop.example.test/wp-json/wc/v3/orders/38/actions/email_templates"
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://shop.example.test/wp-json/wc/v3/orders/38?_fields=id%2Cstatus",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=UTF-8",
+          "date": "Sat, 10 Oct 2026 23:15:22 GMT",
+          "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\""
+        },
+        "body": {
+          "json": {
+            "id": 38,
+            "status": "failed",
+            "_links": {
+              "self": [
+                {
+                  "href": "https://shop.example.test/wp-json/wc/v3/orders/38",
+                  "targetHints": {
+                    "allow": [
+                      "GET",
+                      "POST",
+                      "PUT",
+                      "PATCH",
+                      "DELETE"
+                    ]
+                  }
+                }
+              ],
+              "collection": [
+                {
+                  "href": "https://shop.example.test/wp-json/wc/v3/orders"
+                }
+              ],
+              "email_templates": [
+                {
+                  "embeddable": true,
+                  "href": "https://shop.example.test/wp-json/wc/v3/orders/38/actions/email_templates"
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "PUT",
+        "url": "https://shop.example.test/wp-json/wc/v3/orders/38?_fields=id%2Cstatus",
+        "headers": {
+          "accept": "application/json",
+          "content-type": "application/json"
+        },
+        "body": {
+          "json": {
+            "status": "processing"
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=UTF-8",
+          "date": "Sat, 10 Oct 2026 23:15:22 GMT",
+          "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\""
+        },
+        "body": {
+          "json": {
+            "id": 38,
+            "status": "processing",
+            "_links": {
+              "self": [
+                {
+                  "href": "https://shop.example.test/wp-json/wc/v3/orders/38",
+                  "targetHints": {
+                    "allow": [
+                      "GET",
+                      "POST",
+                      "PUT",
+                      "PATCH",
+                      "DELETE"
+                    ]
+                  }
+                }
+              ],
+              "collection": [
+                {
+                  "href": "https://shop.example.test/wp-json/wc/v3/orders"
+                }
+              ],
+              "email_templates": [
+                {
+                  "embeddable": true,
+                  "href": "https://shop.example.test/wp-json/wc/v3/orders/38/actions/email_templates"
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://shop.example.test/wp-json/wc/v3/orders/49?_fields=id%2Cstatus",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=UTF-8",
+          "date": "Sat, 10 Oct 2026 23:15:22 GMT",
+          "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\""
+        },
+        "body": {
+          "json": {
+            "id": 49,
+            "status": "packing",
+            "_links": {
+              "self": [
+                {
+                  "href": "https://shop.example.test/wp-json/wc/v3/orders/49",
+                  "targetHints": {
+                    "allow": [
+                      "GET",
+                      "POST",
+                      "PUT",
+                      "PATCH",
+                      "DELETE"
+                    ]
+                  }
+                }
+              ],
+              "collection": [
+                {
+                  "href": "https://shop.example.test/wp-json/wc/v3/orders"
+                }
+              ],
+              "email_templates": [
+                {
+                  "embeddable": true,
+                  "href": "https://shop.example.test/wp-json/wc/v3/orders/49/actions/email_templates"
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://shop.example.test/wp-json/wc/v3/orders/49?_fields=id%2Cstatus",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=UTF-8",
+          "date": "Sat, 10 Oct 2026 23:15:22 GMT",
+          "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\""
+        },
+        "body": {
+          "json": {
+            "id": 49,
+            "status": "packing",
+            "_links": {
+              "self": [
+                {
+                  "href": "https://shop.example.test/wp-json/wc/v3/orders/49",
+                  "targetHints": {
+                    "allow": [
+                      "GET",
+                      "POST",
+                      "PUT",
+                      "PATCH",
+                      "DELETE"
+                    ]
+                  }
+                }
+              ],
+              "collection": [
+                {
+                  "href": "https://shop.example.test/wp-json/wc/v3/orders"
+                }
+              ],
+              "email_templates": [
+                {
+                  "embeddable": true,
+                  "href": "https://shop.example.test/wp-json/wc/v3/orders/49/actions/email_templates"
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "PUT",
+        "url": "https://shop.example.test/wp-json/wc/v3/orders/49?_fields=id%2Cstatus",
+        "headers": {
+          "accept": "application/json",
+          "content-type": "application/json"
+        },
+        "body": {
+          "json": {
+            "status": "completed"
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=UTF-8",
+          "date": "Sat, 10 Oct 2026 23:15:22 GMT",
+          "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\""
+        },
+        "body": {
+          "json": {
+            "id": 49,
+            "status": "completed",
+            "_links": {
+              "self": [
+                {
+                  "href": "https://shop.example.test/wp-json/wc/v3/orders/49",
+                  "targetHints": {
+                    "allow": [
+                      "GET",
+                      "POST",
+                      "PUT",
+                      "PATCH",
+                      "DELETE"
+                    ]
+                  }
+                }
+              ],
+              "collection": [
+                {
+                  "href": "https://shop.example.test/wp-json/wc/v3/orders"
+                }
+              ],
+              "email_templates": [
+                {
+                  "embeddable": true,
+                  "href": "https://shop.example.test/wp-json/wc/v3/orders/49/actions/email_templates"
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://shop.example.test/wp-json/wc/v3/orders/36?_fields=id%2Cstatus",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=UTF-8",
+          "date": "Sat, 10 Oct 2026 23:15:22 GMT",
+          "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\""
+        },
+        "body": {
+          "json": {
+            "id": 36,
+            "status": "refunded",
+            "_links": {
+              "self": [
+                {
+                  "href": "https://shop.example.test/wp-json/wc/v3/orders/36",
+                  "targetHints": {
+                    "allow": [
+                      "GET",
+                      "POST",
+                      "PUT",
+                      "PATCH",
+                      "DELETE"
+                    ]
+                  }
+                }
+              ],
+              "collection": [
+                {
+                  "href": "https://shop.example.test/wp-json/wc/v3/orders"
+                }
+              ],
+              "email_templates": [
+                {
+                  "embeddable": true,
+                  "href": "https://shop.example.test/wp-json/wc/v3/orders/36/actions/email_templates"
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://shop.example.test/wp-json/wc/v3/orders/48?_fields=id%2Cstatus",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=UTF-8",
+          "date": "Sat, 10 Oct 2026 23:15:22 GMT",
+          "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\""
+        },
+        "body": {
+          "json": {
+            "id": 48,
+            "status": "completed",
+            "_links": {
+              "self": [
+                {
+                  "href": "https://shop.example.test/wp-json/wc/v3/orders/48",
+                  "targetHints": {
+                    "allow": [
+                      "GET",
+                      "POST",
+                      "PUT",
+                      "PATCH",
+                      "DELETE"
+                    ]
+                  }
+                }
+              ],
+              "collection": [
+                {
+                  "href": "https://shop.example.test/wp-json/wc/v3/orders"
+                }
+              ],
+              "email_templates": [
+                {
+                  "embeddable": true,
+                  "href": "https://shop.example.test/wp-json/wc/v3/orders/48/actions/email_templates"
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://shop.example.test/wp-json/wc/v3/orders/52?_fields=id%2Cstatus",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=UTF-8",
+          "date": "Sat, 10 Oct 2026 23:15:22 GMT",
+          "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\""
+        },
+        "body": {
+          "json": {
+            "id": 52,
+            "status": "trash",
+            "_links": {
+              "self": [
+                {
+                  "href": "https://shop.example.test/wp-json/wc/v3/orders/52",
+                  "targetHints": {
+                    "allow": [
+                      "GET",
+                      "POST",
+                      "PUT",
+                      "PATCH",
+                      "DELETE"
+                    ]
+                  }
+                }
+              ],
+              "collection": [
+                {
+                  "href": "https://shop.example.test/wp-json/wc/v3/orders"
+                }
+              ],
+              "email_templates": [
+                {
+                  "embeddable": true,
+                  "href": "https://shop.example.test/wp-json/wc/v3/orders/52/actions/email_templates"
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://shop.example.test/wp-json/wc/v3/orders/52?_fields=id%2Cstatus",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=UTF-8",
+          "date": "Sat, 10 Oct 2026 23:15:22 GMT",
+          "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\""
+        },
+        "body": {
+          "json": {
+            "id": 52,
+            "status": "trash",
+            "_links": {
+              "self": [
+                {
+                  "href": "https://shop.example.test/wp-json/wc/v3/orders/52",
+                  "targetHints": {
+                    "allow": [
+                      "GET",
+                      "POST",
+                      "PUT",
+                      "PATCH",
+                      "DELETE"
+                    ]
+                  }
+                }
+              ],
+              "collection": [
+                {
+                  "href": "https://shop.example.test/wp-json/wc/v3/orders"
+                }
+              ],
+              "email_templates": [
+                {
+                  "embeddable": true,
+                  "href": "https://shop.example.test/wp-json/wc/v3/orders/52/actions/email_templates"
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://shop.example.test/wp-json/wc/v3/orders/52?_fields=id%2Cstatus",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=UTF-8",
+          "date": "Sat, 10 Oct 2026 23:15:22 GMT",
+          "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\""
+        },
+        "body": {
+          "json": {
+            "id": 52,
+            "status": "trash",
+            "_links": {
+              "self": [
+                {
+                  "href": "https://shop.example.test/wp-json/wc/v3/orders/52",
+                  "targetHints": {
+                    "allow": [
+                      "GET",
+                      "POST",
+                      "PUT",
+                      "PATCH",
+                      "DELETE"
+                    ]
+                  }
+                }
+              ],
+              "collection": [
+                {
+                  "href": "https://shop.example.test/wp-json/wc/v3/orders"
+                }
+              ],
+              "email_templates": [
+                {
+                  "embeddable": true,
+                  "href": "https://shop.example.test/wp-json/wc/v3/orders/52/actions/email_templates"
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://shop.example.test/wp-json/wc/v3/orders/57?_fields=id%2Cstatus",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=UTF-8",
+          "date": "Sat, 10 Oct 2026 23:15:23 GMT",
+          "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\""
+        },
+        "body": {
+          "json": {
+            "id": 57,
+            "status": "processing",
+            "_links": {
+              "self": [
+                {
+                  "href": "https://shop.example.test/wp-json/wc/v3/orders/57",
+                  "targetHints": {
+                    "allow": [
+                      "GET",
+                      "POST",
+                      "PUT",
+                      "PATCH",
+                      "DELETE"
+                    ]
+                  }
+                }
+              ],
+              "collection": [
+                {
+                  "href": "https://shop.example.test/wp-json/wc/v3/orders"
+                }
+              ],
+              "email_templates": [
+                {
+                  "embeddable": true,
+                  "href": "https://shop.example.test/wp-json/wc/v3/orders/57/actions/email_templates"
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://shop.example.test/wp-json/wc/v3/orders/57?_fields=id%2Cstatus",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=UTF-8",
+          "date": "Sat, 10 Oct 2026 23:15:23 GMT",
+          "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\""
+        },
+        "body": {
+          "json": {
+            "id": 57,
+            "status": "processing",
+            "_links": {
+              "self": [
+                {
+                  "href": "https://shop.example.test/wp-json/wc/v3/orders/57",
+                  "targetHints": {
+                    "allow": [
+                      "GET",
+                      "POST",
+                      "PUT",
+                      "PATCH",
+                      "DELETE"
+                    ]
+                  }
+                }
+              ],
+              "collection": [
+                {
+                  "href": "https://shop.example.test/wp-json/wc/v3/orders"
+                }
+              ],
+              "email_templates": [
+                {
+                  "embeddable": true,
+                  "href": "https://shop.example.test/wp-json/wc/v3/orders/57/actions/email_templates"
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://shop.example.test/wp-json/wc/v3/orders/57?_fields=id%2Cstatus",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=UTF-8",
+          "date": "Sat, 10 Oct 2026 23:15:23 GMT",
+          "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\""
+        },
+        "body": {
+          "json": {
+            "id": 57,
+            "status": "processing",
+            "_links": {
+              "self": [
+                {
+                  "href": "https://shop.example.test/wp-json/wc/v3/orders/57",
+                  "targetHints": {
+                    "allow": [
+                      "GET",
+                      "POST",
+                      "PUT",
+                      "PATCH",
+                      "DELETE"
+                    ]
+                  }
+                }
+              ],
+              "collection": [
+                {
+                  "href": "https://shop.example.test/wp-json/wc/v3/orders"
+                }
+              ],
+              "email_templates": [
+                {
+                  "embeddable": true,
+                  "href": "https://shop.example.test/wp-json/wc/v3/orders/57/actions/email_templates"
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "PUT",
+        "url": "https://shop.example.test/wp-json/wc/v3/orders/57?_fields=id%2Cstatus",
+        "headers": {
+          "accept": "application/json",
+          "content-type": "application/json"
+        },
+        "body": {
+          "json": {
+            "status": "completed"
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=UTF-8",
+          "date": "Sat, 10 Oct 2026 23:15:23 GMT",
+          "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\""
+        },
+        "body": {
+          "json": {
+            "id": 57,
+            "status": "completed",
+            "_links": {
+              "self": [
+                {
+                  "href": "https://shop.example.test/wp-json/wc/v3/orders/57",
+                  "targetHints": {
+                    "allow": [
+                      "GET",
+                      "POST",
+                      "PUT",
+                      "PATCH",
+                      "DELETE"
+                    ]
+                  }
+                }
+              ],
+              "collection": [
+                {
+                  "href": "https://shop.example.test/wp-json/wc/v3/orders"
+                }
+              ],
+              "email_templates": [
+                {
+                  "embeddable": true,
+                  "href": "https://shop.example.test/wp-json/wc/v3/orders/57/actions/email_templates"
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://shop.example.test/wp-json/wc/v3/orders/57?_fields=id%2Cstatus",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=UTF-8",
+          "date": "Sat, 10 Oct 2026 23:15:23 GMT",
+          "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\""
+        },
+        "body": {
+          "json": {
+            "id": 57,
+            "status": "completed",
+            "_links": {
+              "self": [
+                {
+                  "href": "https://shop.example.test/wp-json/wc/v3/orders/57",
+                  "targetHints": {
+                    "allow": [
+                      "GET",
+                      "POST",
+                      "PUT",
+                      "PATCH",
+                      "DELETE"
+                    ]
+                  }
+                }
+              ],
+              "collection": [
+                {
+                  "href": "https://shop.example.test/wp-json/wc/v3/orders"
+                }
+              ],
+              "email_templates": [
+                {
+                  "embeddable": true,
+                  "href": "https://shop.example.test/wp-json/wc/v3/orders/57/actions/email_templates"
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://shop.example.test/wp-json/wc/v3/orders/57?_fields=id%2Cstatus",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=UTF-8",
+          "date": "Sat, 10 Oct 2026 23:15:23 GMT",
+          "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\""
+        },
+        "body": {
+          "json": {
+            "id": 57,
+            "status": "completed",
+            "_links": {
+              "self": [
+                {
+                  "href": "https://shop.example.test/wp-json/wc/v3/orders/57",
+                  "targetHints": {
+                    "allow": [
+                      "GET",
+                      "POST",
+                      "PUT",
+                      "PATCH",
+                      "DELETE"
+                    ]
+                  }
+                }
+              ],
+              "collection": [
+                {
+                  "href": "https://shop.example.test/wp-json/wc/v3/orders"
+                }
+              ],
+              "email_templates": [
+                {
+                  "embeddable": true,
+                  "href": "https://shop.example.test/wp-json/wc/v3/orders/57/actions/email_templates"
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://shop.example.test/wp-json/wc/v3/orders/57?_fields=id%2Cstatus",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=UTF-8",
+          "date": "Sat, 10 Oct 2026 23:15:23 GMT",
+          "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\""
+        },
+        "body": {
+          "json": {
+            "id": 57,
+            "status": "completed",
+            "_links": {
+              "self": [
+                {
+                  "href": "https://shop.example.test/wp-json/wc/v3/orders/57",
+                  "targetHints": {
+                    "allow": [
+                      "GET",
+                      "POST",
+                      "PUT",
+                      "PATCH",
+                      "DELETE"
+                    ]
+                  }
+                }
+              ],
+              "collection": [
+                {
+                  "href": "https://shop.example.test/wp-json/wc/v3/orders"
+                }
+              ],
+              "email_templates": [
+                {
+                  "embeddable": true,
+                  "href": "https://shop.example.test/wp-json/wc/v3/orders/57/actions/email_templates"
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://shop.example.test/wp-json/wc/v3/orders/999999?_fields=id%2Cstatus",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 404,
+        "headers": {
+          "content-type": "application/json; charset=UTF-8",
+          "date": "Sat, 10 Oct 2026 23:15:23 GMT",
+          "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\""
+        },
+        "body": {
+          "json": {
+            "code": "woocommerce_rest_shop_order_invalid_id",
+            "message": "Invalid ID.",
+            "data": {
+              "status": 404
+            }
+          }
+        }
+      }
+    }
+  ]
+}
