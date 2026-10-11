@@ -24,7 +24,7 @@ export function isShipmentLabelFailure(code: string | null): code is ShipmentLab
 }
 
 /**
- * Stores the Label the worker fetched, sealed and bound to the organization and the Shipment (ADR 0023). Under the
+ * Stores the Label the worker fetched, sealed and bound to the organization and the Shipment (ADR 0024). Under the
  * Order's lock, which an Erasure of that Order waits for: a Label fetched while the Buyer data was being erased is
  * dropped, never written back after it. `too_large` when the file is more than a row holds, `skipped` when nothing
  * was stored for a reason that is not the Label's (erased, final, or a Label is there already).

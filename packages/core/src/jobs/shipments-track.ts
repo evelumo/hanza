@@ -20,7 +20,7 @@ const CANCEL_UNSUPPORTED_CODE = 'cancel_unsupported'
 /**
  * Follows the Connection's due Shipments at their Carrier, at most 100 per `shipments.track` call: first the cancels
  * people asked for, then one call for the states, each applied under its Order's lock (the first status that means the
- * Carrier has the parcel ships the Order, ADR 0024), then the Label of every Shipment that is confirmed and has none.
+ * Carrier has the parcel ships the Order, ADR 0025), then the Label of every Shipment that is confirmed and has none.
  *
  * Cancelling is done here and not in a job of its own, so the run that claimed a Shipment is the only writer of what
  * a Carrier says about it: a cancel and a status of the same Shipment never race, a lost enqueue is found by the same

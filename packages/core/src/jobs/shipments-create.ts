@@ -47,7 +47,7 @@ async function storeCreated(
 }
 
 /**
- * Asks the Carrier for a Shipment that is still `requested` and stores its answer (ADR 0023). It never calls the
+ * Asks the Carrier for a Shipment that is still `requested` and stores its answer (ADR 0024). It never calls the
  * connector for a Shipment that has an `externalId` or left `requested`, so a duplicate or late job does nothing.
  *
  * The crash this is built around: the Carrier made the Shipment and the answer never reached the row (the worker

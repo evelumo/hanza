@@ -186,7 +186,7 @@ export type AppliedState =
  * Applies what a Carrier says about a Shipment, under its Order's lock: status, tracking number, the Carrier's own
  * status and the next check. `created` stores the answer to the request, giving the Shipment its `externalId`; a
  * tracked state is applied only to the Shipment that has that `externalId`. The first status that means the Carrier
- * has the parcel sets `handedOverAt` and ships the Order in the same transaction (ADR 0024). Idempotent: the same
+ * has the parcel sets `handedOverAt` and ships the Order in the same transaction (ADR 0025). Idempotent: the same
  * state again changes nothing but the next check.
  *
  * A Shipment never goes back (`statusStage`): a final status is never left, one the Carrier had is never again
