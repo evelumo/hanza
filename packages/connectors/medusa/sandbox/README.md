@@ -33,6 +33,9 @@ $S reset                # down, up, seed, key: a fresh, seeded store with a secr
 | `curl <path> [curl args]` | `curl` against `/admin/<path>` with the secret key (given to curl on its standard input, never on its command line), e.g. `$S curl 'hanza/status'`, `$S curl 'hanza/journal?after=0&limit=10'`. |
 | `status` | Lists the containers. |
 | `exec <command>` | Runs a command in the medusa container. |
+| `tls` | Opt-in: nginx with a throwaway certificate in front of the store, `https://medusa.example.test:9443`, and prints what a local Hanza worker needs to reach it (below, "A TLS front"). |
+| `tls-env` | Prints that environment again. |
+| `tls-curl …` | `curl` through the TLS front (the certificate trusted, the name sent to this machine), e.g. `$S tls-curl -i https://medusa.example.test:9443/health`. |
 
 Ports, on 127.0.0.1 only and away from the defaults (Hanza's own Postgres and Redis are on 5442 and 6389): Medusa
 **9100**, Postgres **5443**, Redis **6390** (`MEDUSA_SANDBOX_PORT`, `MEDUSA_SANDBOX_POSTGRES_PORT`,
@@ -118,3 +121,65 @@ $S down
 - Read the diff: no `127.0.0.1`, no port, no key, no `Authorization`, no name, address, phone or e-mail but the
   placeholders (`scrubbed-N`, `person-N@example.com`, `+0000000000N`). Then replay without the variable.
 - `.recording/` must never be committed, and holds nothing once you are done (`down` removes the keys file).
+
+## A TLS front
+
+The recording flow talks to the store over plain HTTP and rewrites the address in the test transport. To run the real
+application against the store (the core's `ctx.fetch`, the rate limiter, the scheduler, the panel), the store has to
+be reachable the way a real one is: `https://medusa.example.test:<port>` → nginx, which ends TLS → Medusa over HTTP
+with `X-Forwarded-Proto: https`. It is opt-in and changes nothing of the plain port or the recording flow: `up`,
+`seed`, `key`, `prune`, `reset` and `curl` work as before, with or without it.
+
+```sh
+S=packages/connectors/medusa/sandbox/sandbox.sh
+MEDUSA_SANDBOX_DISABLE_ADMIN=false $S reset   # the store, with its admin at http://127.0.0.1:9100/app
+$S tls                                        # certificate, nginx, and the lines below
+$S tls-curl -i https://medusa.example.test:9443/health
+$S down                                       # removes the front, its certificate and its log too
+```
+
+| Variable | Default | Meaning |
+| --- | --- | --- |
+| `MEDUSA_SANDBOX_TLS_PORT` | `9443` | Host port of the front, bound to 127.0.0.1 only. Give each instance its own, like `MEDUSA_SANDBOX_PORT`. |
+| `MEDUSA_SANDBOX_RESOLVE` | unset | Read by `resolve-store.mjs` (below), not by the script: the host names to answer with 127.0.0.1. |
+
+What `tls` sets up:
+
+- **nginx** (`nginx:1.30.0-alpine`, the Compose service `tls` behind the profile `tls`, config in `nginx/store.conf`):
+  TLS 1.2 and 1.3, HTTP/2 offered, gzip on, `X-Forwarded-Proto: https` set by nginx whatever the client sends, and
+  Medusa looked up again on every request, so the front answers **502** while the store is stopped and works again
+  once it is back. `tls` starts the front without touching the store (`--no-deps`), so a store started with
+  `MEDUSA_SANDBOX_DISABLE_ADMIN=false` keeps its admin.
+- **A certificate** for `medusa.example.test`, signed by a certificate authority made for this instance with `openssl`.
+  The authority may sign for that name only (a name constraint), its private key is deleted as soon as the certificate
+  is signed, and both expire after 30 days. Everything is in `../.recording/tls[.<project>]/` (git-ignored, never
+  commit it): `ca.crt`, `cert/server.crt`, `cert/server.key`.
+- **An access log**, one JSON object per request, in `../.recording/tls[.<project>]/log/access.log` and in
+  `docker compose -p <project> logs tls`: time, method, path with its query, status, bytes, duration, TLS version, and
+  whether an `Authorization` header came (`basic`, `other`, `none`), never its value. It is the audit of what the
+  connector really sends: a key in a URL would show in `uri`.
+
+### Pointing a locally running Hanza at it
+
+The connector accepts only a public-looking `https://` address (`../src/settings.ts`), so the store keeps its name and
+the name is made to resolve to this machine **in the worker process only**: `resolve-store.mjs`, preloaded with
+`node --import`, answers `dns.lookup` for the names in `MEDUSA_SANDBOX_RESOLVE` with 127.0.0.1 and leaves every other
+name alone. No `/etc/hosts`, no sudo, no DNS service. Node trusts the certificate through `NODE_EXTRA_CA_CERTS`.
+`tls-env` prints the three variables:
+
+```sh
+eval "$($S tls-env)"                    # NODE_EXTRA_CA_CERTS, MEDUSA_SANDBOX_RESOLVE, NODE_OPTIONS=--import=…/resolve-store.mjs
+pnpm --filter @hanza/worker dev         # in that shell. Not `pnpm dev`: Turborepo hides variables it was not told about
+pnpm --filter @hanza/web dev            # in another shell; the web app never calls the store and needs none of them
+```
+
+Then add a Medusa Connection in the panel with the address `tls` printed (`https://medusa.example.test:9443`) and the
+`apiKey` from `../.recording/credentials.json`. Only the worker calls the store. Use a database and a
+`HANZA_QUEUE_PREFIX` of your own if the default ones hold data you care about (`apps/e2e/src/run.ts` shows how a run
+isolates itself): the first sync imports the seed's open orders.
+
+To act as the merchant, sign in to the admin at http://127.0.0.1:9100/app as `hanza@example.com` with
+`hanza-sandbox-password` (docker-compose.yml): the Hanza page is in its sidebar, orders can be fulfilled, captured and
+cancelled there, and every change reaches Hanza through the plugin's journal on the next `sync.tick`. To act as a
+Buyer, the seed's `app/src/scripts/seed.ts` shows the Store API calls that place an order (a publishable key, a cart
+in the region, a shipping method, the manual payment provider, complete).

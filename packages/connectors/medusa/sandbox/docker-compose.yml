@@ -57,7 +57,7 @@ services:
       AUTH_CORS: http://localhost:9000
       JWT_SECRET: hanza-sandbox-jwt-secret
       COOKIE_SECRET: hanza-sandbox-cookie-secret
-      # The admin UI is not needed to record; MEDUSA_SANDBOX_DISABLE_ADMIN=false turns it on, to look at Extensions → Hanza.
+      # The admin UI is not needed to record; MEDUSA_SANDBOX_DISABLE_ADMIN=false turns it on, to look at the Hanza page in its sidebar.
       MEDUSA_DISABLE_ADMIN: ${MEDUSA_SANDBOX_DISABLE_ADMIN:-true}
     ports:
       # Loopback only: the sandbox's admin password is in this file.
@@ -69,6 +69,21 @@ services:
       # Migrations and the first start of `medusa develop` take a while.
       retries: 100
       start_period: 20s
+
+  # Opt-in (`./sandbox.sh tls`): nginx ending TLS in front of Medusa, as a real store is reached. The certificate and
+  # the access log live in the directory sandbox.sh passes (git-ignored, under ../.recording).
+  tls:
+    image: nginx:1.30.0-alpine
+    profiles: ["tls"]
+    depends_on:
+      - medusa
+    ports:
+      # Loopback only, like the plain port.
+      - "127.0.0.1:${MEDUSA_SANDBOX_TLS_PORT:-9443}:443"
+    volumes:
+      - ./nginx/store.conf:/etc/nginx/conf.d/default.conf:ro
+      - ${MEDUSA_SANDBOX_TLS_DIR:-../.recording/tls}/cert:/etc/nginx/tls:ro
+      - ${MEDUSA_SANDBOX_TLS_DIR:-../.recording/tls}/log:/var/log/sandbox
 
 volumes:
   postgres:
