@@ -1,0 +1,3007 @@
+{
+  "version": 1,
+  "interactions": [
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://medusa.example.test/admin/hanza/status",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "json": {
+            "format": 1,
+            "plugin": {
+              "name": "medusa-plugin-hanza",
+              "version": "0.1.0"
+            },
+            "store": {
+              "default_currency_code": "pln"
+            },
+            "settings": {
+              "stock_location_id": "sloc_01MAIN",
+              "sales_channel_ids": [],
+              "pay_on_delivery_provider_ids": [],
+              "paid_when": "captured",
+              "notify_customer_on_shipment": true,
+              "journal_retention_days": 60,
+              "currency_code": null
+            },
+            "journal": {
+              "oldest_seq": 3,
+              "newest_seq": 10
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://medusa.example.test/admin/product-variants?order=id&offset=0&limit=100&fields=id%2Csku%2Ctitle%2Cmanage_inventory%2Cproduct_id%2Cproduct.title%2Cproduct.status%2C*prices",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "json": {
+            "variants": [
+              {
+                "id": "variant_01JA0001",
+                "sku": "MUG-1",
+                "title": "Default variant",
+                "manage_inventory": true,
+                "product_id": "prod_001",
+                "product": {
+                  "title": "Mug",
+                  "status": "published"
+                },
+                "prices": [
+                  {
+                    "id": "price_variant_01JA0001",
+                    "currency_code": "pln",
+                    "amount": 49.99,
+                    "min_quantity": null,
+                    "max_quantity": null,
+                    "rules": {}
+                  }
+                ]
+              },
+              {
+                "id": "variant_01JA0002",
+                "sku": "TSHIRT-S",
+                "title": "S",
+                "manage_inventory": true,
+                "product_id": "prod_002",
+                "product": {
+                  "title": "T-shirt",
+                  "status": "published"
+                },
+                "prices": [
+                  {
+                    "id": "price_2",
+                    "currency_code": "pln",
+                    "amount": 79,
+                    "raw_amount": {
+                      "value": "79",
+                      "precision": 20
+                    },
+                    "min_quantity": null,
+                    "max_quantity": null,
+                    "rules": {}
+                  }
+                ]
+              },
+              {
+                "id": "variant_01JA0003",
+                "sku": "TSHIRT-M",
+                "title": "M",
+                "manage_inventory": true,
+                "product_id": "prod_003",
+                "product": {
+                  "title": "T-shirt",
+                  "status": "published"
+                },
+                "prices": [
+                  {
+                    "id": "price_3a",
+                    "currency_code": "pln",
+                    "amount": 75,
+                    "min_quantity": null,
+                    "max_quantity": null,
+                    "rules": {
+                      "region_id": "reg_01PL"
+                    }
+                  },
+                  {
+                    "id": "price_3b",
+                    "currency_code": "pln",
+                    "amount": 79,
+                    "min_quantity": null,
+                    "max_quantity": null,
+                    "rules": {}
+                  }
+                ]
+              },
+              {
+                "id": "variant_01JA0004",
+                "sku": "GIFT-50",
+                "title": "Default variant",
+                "manage_inventory": false,
+                "product_id": "prod_004",
+                "product": {
+                  "title": "Gift card",
+                  "status": "published"
+                },
+                "prices": [
+                  {
+                    "id": "price_variant_01JA0004",
+                    "currency_code": "pln",
+                    "amount": 49.99,
+                    "min_quantity": null,
+                    "max_quantity": null,
+                    "rules": {}
+                  }
+                ]
+              },
+              {
+                "id": "variant_01JA0005",
+                "sku": "SOON-1",
+                "title": "Default variant",
+                "manage_inventory": true,
+                "product_id": "prod_005",
+                "product": {
+                  "title": "Coming soon",
+                  "status": "draft"
+                },
+                "prices": [
+                  {
+                    "id": "price_variant_01JA0005",
+                    "currency_code": "pln",
+                    "amount": 49.99,
+                    "min_quantity": null,
+                    "max_quantity": null,
+                    "rules": {}
+                  }
+                ]
+              },
+              {
+                "id": "variant_01JA0006",
+                "sku": null,
+                "title": "Default variant",
+                "manage_inventory": true,
+                "product_id": "prod_006",
+                "product": {
+                  "title": "Poster",
+                  "status": "published"
+                },
+                "prices": []
+              }
+            ],
+            "count": 6,
+            "offset": 0,
+            "limit": 100
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://medusa.example.test/admin/hanza/status",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "json": {
+            "format": 1,
+            "plugin": {
+              "name": "medusa-plugin-hanza",
+              "version": "0.1.0"
+            },
+            "store": {
+              "default_currency_code": "pln"
+            },
+            "settings": {
+              "stock_location_id": "sloc_01MAIN",
+              "sales_channel_ids": [],
+              "pay_on_delivery_provider_ids": [],
+              "paid_when": "captured",
+              "notify_customer_on_shipment": true,
+              "journal_retention_days": 60,
+              "currency_code": null
+            },
+            "journal": {
+              "oldest_seq": 3,
+              "newest_seq": 10
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://medusa.example.test/admin/product-variants?order=id&offset=0&limit=100&fields=id%2Csku%2Ctitle%2Cmanage_inventory%2Cproduct_id%2Cproduct.title%2Cproduct.status%2C*prices",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "json": {
+            "variants": [
+              {
+                "id": "variant_01JA0001",
+                "sku": "MUG-1",
+                "title": "Default variant",
+                "manage_inventory": true,
+                "product_id": "prod_001",
+                "product": {
+                  "title": "Mug",
+                  "status": "published"
+                },
+                "prices": [
+                  {
+                    "id": "price_variant_01JA0001",
+                    "currency_code": "pln",
+                    "amount": 49.99,
+                    "min_quantity": null,
+                    "max_quantity": null,
+                    "rules": {}
+                  }
+                ]
+              },
+              {
+                "id": "variant_01JA0002",
+                "sku": "TSHIRT-S",
+                "title": "S",
+                "manage_inventory": true,
+                "product_id": "prod_002",
+                "product": {
+                  "title": "T-shirt",
+                  "status": "published"
+                },
+                "prices": [
+                  {
+                    "id": "price_2",
+                    "currency_code": "pln",
+                    "amount": 79,
+                    "raw_amount": {
+                      "value": "79",
+                      "precision": 20
+                    },
+                    "min_quantity": null,
+                    "max_quantity": null,
+                    "rules": {}
+                  }
+                ]
+              },
+              {
+                "id": "variant_01JA0003",
+                "sku": "TSHIRT-M",
+                "title": "M",
+                "manage_inventory": true,
+                "product_id": "prod_003",
+                "product": {
+                  "title": "T-shirt",
+                  "status": "published"
+                },
+                "prices": [
+                  {
+                    "id": "price_3a",
+                    "currency_code": "pln",
+                    "amount": 75,
+                    "min_quantity": null,
+                    "max_quantity": null,
+                    "rules": {
+                      "region_id": "reg_01PL"
+                    }
+                  },
+                  {
+                    "id": "price_3b",
+                    "currency_code": "pln",
+                    "amount": 79,
+                    "min_quantity": null,
+                    "max_quantity": null,
+                    "rules": {}
+                  }
+                ]
+              },
+              {
+                "id": "variant_01JA0004",
+                "sku": "GIFT-50",
+                "title": "Default variant",
+                "manage_inventory": false,
+                "product_id": "prod_004",
+                "product": {
+                  "title": "Gift card",
+                  "status": "published"
+                },
+                "prices": [
+                  {
+                    "id": "price_variant_01JA0004",
+                    "currency_code": "pln",
+                    "amount": 49.99,
+                    "min_quantity": null,
+                    "max_quantity": null,
+                    "rules": {}
+                  }
+                ]
+              },
+              {
+                "id": "variant_01JA0005",
+                "sku": "SOON-1",
+                "title": "Default variant",
+                "manage_inventory": true,
+                "product_id": "prod_005",
+                "product": {
+                  "title": "Coming soon",
+                  "status": "draft"
+                },
+                "prices": [
+                  {
+                    "id": "price_variant_01JA0005",
+                    "currency_code": "pln",
+                    "amount": 49.99,
+                    "min_quantity": null,
+                    "max_quantity": null,
+                    "rules": {}
+                  }
+                ]
+              },
+              {
+                "id": "variant_01JA0006",
+                "sku": null,
+                "title": "Default variant",
+                "manage_inventory": true,
+                "product_id": "prod_006",
+                "product": {
+                  "title": "Poster",
+                  "status": "published"
+                },
+                "prices": []
+              }
+            ],
+            "count": 6,
+            "offset": 0,
+            "limit": 100
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://medusa.example.test/admin/hanza/status",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "json": {
+            "format": 1,
+            "plugin": {
+              "name": "medusa-plugin-hanza",
+              "version": "0.1.0"
+            },
+            "store": {
+              "default_currency_code": "pln"
+            },
+            "settings": {
+              "stock_location_id": "sloc_01MAIN",
+              "sales_channel_ids": [],
+              "pay_on_delivery_provider_ids": [],
+              "paid_when": "captured",
+              "notify_customer_on_shipment": true,
+              "journal_retention_days": 60,
+              "currency_code": null
+            },
+            "journal": {
+              "oldest_seq": 3,
+              "newest_seq": 10
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://medusa.example.test/admin/orders?order=-created_at&limit=1&fields=id%2Ccreated_at",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "json": {
+            "orders": [
+              {
+                "id": "order_01JA0005",
+                "display_id": 5,
+                "status": "pending",
+                "created_at": "2026-10-11T09:06:00.000Z",
+                "updated_at": "2026-10-11T09:06:00.000Z",
+                "canceled_at": null,
+                "email": "person-1@example.com",
+                "currency_code": "pln",
+                "total": 207.97,
+                "raw_total": {
+                  "value": "207.97",
+                  "precision": 20
+                },
+                "sales_channel_id": "sc_01WEB",
+                "is_draft_order": false,
+                "payment_status": "captured",
+                "fulfillment_status": "not_fulfilled",
+                "items": [
+                  {
+                    "id": "item_01JA0005a",
+                    "title": "Mug",
+                    "product_title": "Mug",
+                    "variant_title": "Default variant",
+                    "variant_id": "variant_01MUG",
+                    "variant_sku": "MUG-1",
+                    "quantity": 2,
+                    "raw_quantity": {
+                      "value": "2",
+                      "precision": 20
+                    },
+                    "unit_price": 49.99,
+                    "total": 99.98,
+                    "raw_total": {
+                      "value": "99.98",
+                      "precision": 20
+                    }
+                  },
+                  {
+                    "id": "item_01JA0005b",
+                    "title": "T-shirt",
+                    "product_title": "Mug",
+                    "variant_title": "M",
+                    "variant_id": "variant_01JA0003",
+                    "variant_sku": "TSHIRT-M",
+                    "quantity": 1,
+                    "raw_quantity": {
+                      "value": "1",
+                      "precision": 20
+                    },
+                    "unit_price": 49.99,
+                    "total": 79,
+                    "raw_total": {
+                      "value": "79",
+                      "precision": 20
+                    }
+                  }
+                ],
+                "shipping_address": {
+                  "id": "caaddr_1",
+                  "first_name": "scrubbed-1",
+                  "last_name": "scrubbed-2",
+                  "company": "scrubbed-3",
+                  "address_1": "scrubbed-4",
+                  "address_2": null,
+                  "city": "scrubbed-5",
+                  "postal_code": "scrubbed-6",
+                  "country_code": "pl",
+                  "province": null,
+                  "phone": "+00000000001"
+                },
+                "billing_address": {
+                  "id": "caaddr_2",
+                  "first_name": "scrubbed-7",
+                  "last_name": "scrubbed-8",
+                  "company": null,
+                  "address_1": "scrubbed-4",
+                  "address_2": "scrubbed-9",
+                  "city": "scrubbed-5",
+                  "postal_code": "scrubbed-6",
+                  "country_code": "pl",
+                  "province": null,
+                  "phone": "+00000000001"
+                },
+                "fulfillments": [],
+                "payment_collections": [
+                  {
+                    "id": "paycol_5",
+                    "payments": [
+                      {
+                        "id": "pay_5",
+                        "provider_id": "pp_system_default",
+                        "amount": 207.97,
+                        "captured_at": "2026-10-11T09:06:00.000Z",
+                        "canceled_at": null,
+                        "captured_amount": 207.97
+                      }
+                    ]
+                  }
+                ],
+                "shipping_methods": [
+                  {
+                    "name": "Standard shipping"
+                  }
+                ],
+                "customer": {
+                  "phone": "scrubbed-10"
+                }
+              }
+            ],
+            "count": 5,
+            "offset": 0,
+            "limit": 1
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://medusa.example.test/admin/orders?status%5B%5D=pending&status%5B%5D=requires_action&created_at%5B%24lt%5D=2026-10-11T09%3A06%3A00.001Z&order=created_at&limit=100&fields=id%2Cdisplay_id%2Cstatus%2Ccreated_at%2Cupdated_at%2Ccanceled_at%2Cemail%2Ccurrency_code%2Ctotal%2Craw_total%2Csales_channel_id%2Cis_draft_order%2Cpayment_status%2Cfulfillment_status%2C*items%2C*shipping_address%2C*billing_address%2C*fulfillments%2C*payment_collections%2C*payment_collections.payments%2C*shipping_methods%2Ccustomer.phone",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "json": {
+            "orders": [
+              {
+                "id": "order_01JA0001",
+                "display_id": 1,
+                "status": "pending",
+                "created_at": "2026-10-11T09:00:00.000Z",
+                "updated_at": "2026-10-11T09:00:00.000Z",
+                "canceled_at": null,
+                "email": "person-1@example.com",
+                "currency_code": "pln",
+                "total": 114.98,
+                "raw_total": {
+                  "value": "114.98",
+                  "precision": 20
+                },
+                "sales_channel_id": "sc_01WEB",
+                "is_draft_order": false,
+                "payment_status": "captured",
+                "fulfillment_status": "not_fulfilled",
+                "items": [
+                  {
+                    "id": "order_01JA0001_item_1",
+                    "title": "Mug",
+                    "product_title": "Mug",
+                    "variant_title": "Default variant",
+                    "variant_id": "variant_01MUG",
+                    "variant_sku": "MUG-1",
+                    "quantity": 2,
+                    "raw_quantity": {
+                      "value": "2",
+                      "precision": 20
+                    },
+                    "unit_price": 49.99,
+                    "total": 99.98,
+                    "raw_total": {
+                      "value": "99.98",
+                      "precision": 20
+                    }
+                  }
+                ],
+                "shipping_address": {
+                  "id": "caaddr_1",
+                  "first_name": "scrubbed-7",
+                  "last_name": "scrubbed-8",
+                  "company": null,
+                  "address_1": "scrubbed-4",
+                  "address_2": "scrubbed-9",
+                  "city": "scrubbed-5",
+                  "postal_code": "scrubbed-6",
+                  "country_code": "pl",
+                  "province": null,
+                  "phone": "+00000000001"
+                },
+                "billing_address": {
+                  "id": "caaddr_2",
+                  "first_name": "scrubbed-7",
+                  "last_name": "scrubbed-8",
+                  "company": null,
+                  "address_1": "scrubbed-4",
+                  "address_2": "scrubbed-9",
+                  "city": "scrubbed-5",
+                  "postal_code": "scrubbed-6",
+                  "country_code": "pl",
+                  "province": null,
+                  "phone": "+00000000001"
+                },
+                "fulfillments": [],
+                "payment_collections": [
+                  {
+                    "id": "paycol_order_01JA0001",
+                    "payments": [
+                      {
+                        "id": "pay_order_01JA0001",
+                        "provider_id": "pp_system_default",
+                        "amount": 114.98,
+                        "captured_at": "2026-10-11T09:00:00.000Z",
+                        "canceled_at": null,
+                        "captured_amount": 114.98
+                      }
+                    ]
+                  }
+                ],
+                "shipping_methods": [
+                  {
+                    "name": "Standard shipping"
+                  }
+                ],
+                "customer": {
+                  "phone": "scrubbed-10"
+                }
+              },
+              {
+                "id": "order_01JA0002",
+                "display_id": 2,
+                "status": "pending",
+                "created_at": "2026-10-11T09:01:00.000Z",
+                "updated_at": "2026-10-11T09:01:00.000Z",
+                "canceled_at": null,
+                "email": "person-1@example.com",
+                "currency_code": "pln",
+                "total": 114.98,
+                "raw_total": {
+                  "value": "114.98",
+                  "precision": 20
+                },
+                "sales_channel_id": "sc_01WEB",
+                "is_draft_order": false,
+                "payment_status": "authorized",
+                "fulfillment_status": "not_fulfilled",
+                "items": [
+                  {
+                    "id": "item_01JA0002",
+                    "title": "T-shirt",
+                    "product_title": "Mug",
+                    "variant_title": "S",
+                    "variant_id": "variant_01JA0002",
+                    "variant_sku": "TSHIRT-S",
+                    "quantity": 1,
+                    "raw_quantity": {
+                      "value": "1",
+                      "precision": 20
+                    },
+                    "unit_price": 49.99,
+                    "total": 79,
+                    "raw_total": {
+                      "value": "79",
+                      "precision": 20
+                    }
+                  }
+                ],
+                "shipping_address": {
+                  "id": "caaddr_1",
+                  "first_name": "scrubbed-7",
+                  "last_name": "scrubbed-8",
+                  "company": null,
+                  "address_1": "scrubbed-4",
+                  "address_2": "scrubbed-9",
+                  "city": "scrubbed-5",
+                  "postal_code": "scrubbed-6",
+                  "country_code": "pl",
+                  "province": null,
+                  "phone": "+00000000001"
+                },
+                "billing_address": {
+                  "id": "caaddr_2",
+                  "first_name": "scrubbed-7",
+                  "last_name": "scrubbed-8",
+                  "company": null,
+                  "address_1": "scrubbed-4",
+                  "address_2": "scrubbed-9",
+                  "city": "scrubbed-5",
+                  "postal_code": "scrubbed-6",
+                  "country_code": "pl",
+                  "province": null,
+                  "phone": "+00000000001"
+                },
+                "fulfillments": [],
+                "payment_collections": [
+                  {
+                    "id": "paycol_unpaid",
+                    "payments": [
+                      {
+                        "id": "pay_unpaid",
+                        "provider_id": "pp_system_default",
+                        "amount": 114.98,
+                        "captured_at": null,
+                        "canceled_at": null,
+                        "captured_amount": 0
+                      }
+                    ]
+                  }
+                ],
+                "shipping_methods": [
+                  {
+                    "name": "Standard shipping"
+                  }
+                ],
+                "customer": {
+                  "phone": "scrubbed-10"
+                }
+              },
+              {
+                "id": "order_01JA0003",
+                "display_id": 3,
+                "status": "pending",
+                "created_at": "2026-10-11T09:02:00.000Z",
+                "updated_at": "2026-10-11T09:03:00.000Z",
+                "canceled_at": null,
+                "email": "person-1@example.com",
+                "currency_code": "pln",
+                "total": 114.98,
+                "raw_total": {
+                  "value": "114.98",
+                  "precision": 20
+                },
+                "sales_channel_id": "sc_01WEB",
+                "is_draft_order": false,
+                "payment_status": "captured",
+                "fulfillment_status": "shipped",
+                "items": [
+                  {
+                    "id": "order_01JA0003_item_1",
+                    "title": "Mug",
+                    "product_title": "Mug",
+                    "variant_title": "Default variant",
+                    "variant_id": "variant_01MUG",
+                    "variant_sku": "MUG-1",
+                    "quantity": 2,
+                    "raw_quantity": {
+                      "value": "2",
+                      "precision": 20
+                    },
+                    "unit_price": 49.99,
+                    "total": 99.98,
+                    "raw_total": {
+                      "value": "99.98",
+                      "precision": 20
+                    }
+                  }
+                ],
+                "shipping_address": {
+                  "id": "caaddr_1",
+                  "first_name": "scrubbed-7",
+                  "last_name": "scrubbed-8",
+                  "company": null,
+                  "address_1": "scrubbed-4",
+                  "address_2": "scrubbed-9",
+                  "city": "scrubbed-5",
+                  "postal_code": "scrubbed-6",
+                  "country_code": "pl",
+                  "province": null,
+                  "phone": "+00000000001"
+                },
+                "billing_address": {
+                  "id": "caaddr_2",
+                  "first_name": "scrubbed-7",
+                  "last_name": "scrubbed-8",
+                  "company": null,
+                  "address_1": "scrubbed-4",
+                  "address_2": "scrubbed-9",
+                  "city": "scrubbed-5",
+                  "postal_code": "scrubbed-6",
+                  "country_code": "pl",
+                  "province": null,
+                  "phone": "+00000000001"
+                },
+                "fulfillments": [
+                  {
+                    "id": "ful_order_01JA0003_1",
+                    "location_id": "sloc_01MAIN",
+                    "shipped_at": "2026-10-11T09:03:00.000Z",
+                    "delivered_at": null,
+                    "canceled_at": null,
+                    "items": [
+                      {
+                        "id": "fulitem_ful_order_01JA0003_1_1",
+                        "line_item_id": "order_01JA0003_item_1",
+                        "quantity": 2
+                      }
+                    ]
+                  }
+                ],
+                "payment_collections": [
+                  {
+                    "id": "paycol_order_01JA0003",
+                    "payments": [
+                      {
+                        "id": "pay_order_01JA0003",
+                        "provider_id": "pp_system_default",
+                        "amount": 114.98,
+                        "captured_at": "2026-10-11T09:02:00.000Z",
+                        "canceled_at": null,
+                        "captured_amount": 114.98
+                      }
+                    ]
+                  }
+                ],
+                "shipping_methods": [
+                  {
+                    "name": "Standard shipping"
+                  }
+                ],
+                "customer": {
+                  "phone": "scrubbed-10"
+                }
+              },
+              {
+                "id": "order_01JA0005",
+                "display_id": 5,
+                "status": "pending",
+                "created_at": "2026-10-11T09:06:00.000Z",
+                "updated_at": "2026-10-11T09:06:00.000Z",
+                "canceled_at": null,
+                "email": "person-1@example.com",
+                "currency_code": "pln",
+                "total": 207.97,
+                "raw_total": {
+                  "value": "207.97",
+                  "precision": 20
+                },
+                "sales_channel_id": "sc_01WEB",
+                "is_draft_order": false,
+                "payment_status": "captured",
+                "fulfillment_status": "not_fulfilled",
+                "items": [
+                  {
+                    "id": "item_01JA0005a",
+                    "title": "Mug",
+                    "product_title": "Mug",
+                    "variant_title": "Default variant",
+                    "variant_id": "variant_01MUG",
+                    "variant_sku": "MUG-1",
+                    "quantity": 2,
+                    "raw_quantity": {
+                      "value": "2",
+                      "precision": 20
+                    },
+                    "unit_price": 49.99,
+                    "total": 99.98,
+                    "raw_total": {
+                      "value": "99.98",
+                      "precision": 20
+                    }
+                  },
+                  {
+                    "id": "item_01JA0005b",
+                    "title": "T-shirt",
+                    "product_title": "Mug",
+                    "variant_title": "M",
+                    "variant_id": "variant_01JA0003",
+                    "variant_sku": "TSHIRT-M",
+                    "quantity": 1,
+                    "raw_quantity": {
+                      "value": "1",
+                      "precision": 20
+                    },
+                    "unit_price": 49.99,
+                    "total": 79,
+                    "raw_total": {
+                      "value": "79",
+                      "precision": 20
+                    }
+                  }
+                ],
+                "shipping_address": {
+                  "id": "caaddr_1",
+                  "first_name": "scrubbed-1",
+                  "last_name": "scrubbed-2",
+                  "company": "scrubbed-3",
+                  "address_1": "scrubbed-4",
+                  "address_2": null,
+                  "city": "scrubbed-5",
+                  "postal_code": "scrubbed-6",
+                  "country_code": "pl",
+                  "province": null,
+                  "phone": "+00000000001"
+                },
+                "billing_address": {
+                  "id": "caaddr_2",
+                  "first_name": "scrubbed-7",
+                  "last_name": "scrubbed-8",
+                  "company": null,
+                  "address_1": "scrubbed-4",
+                  "address_2": "scrubbed-9",
+                  "city": "scrubbed-5",
+                  "postal_code": "scrubbed-6",
+                  "country_code": "pl",
+                  "province": null,
+                  "phone": "+00000000001"
+                },
+                "fulfillments": [],
+                "payment_collections": [
+                  {
+                    "id": "paycol_5",
+                    "payments": [
+                      {
+                        "id": "pay_5",
+                        "provider_id": "pp_system_default",
+                        "amount": 207.97,
+                        "captured_at": "2026-10-11T09:06:00.000Z",
+                        "canceled_at": null,
+                        "captured_amount": 207.97
+                      }
+                    ]
+                  }
+                ],
+                "shipping_methods": [
+                  {
+                    "name": "Standard shipping"
+                  }
+                ],
+                "customer": {
+                  "phone": "scrubbed-10"
+                }
+              }
+            ],
+            "count": 4,
+            "offset": 0,
+            "limit": 100
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://medusa.example.test/admin/hanza/status",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "json": {
+            "format": 1,
+            "plugin": {
+              "name": "medusa-plugin-hanza",
+              "version": "0.1.0"
+            },
+            "store": {
+              "default_currency_code": "pln"
+            },
+            "settings": {
+              "stock_location_id": "sloc_01MAIN",
+              "sales_channel_ids": [],
+              "pay_on_delivery_provider_ids": [],
+              "paid_when": "captured",
+              "notify_customer_on_shipment": true,
+              "journal_retention_days": 60,
+              "currency_code": null
+            },
+            "journal": {
+              "oldest_seq": 3,
+              "newest_seq": 10
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://medusa.example.test/admin/hanza/journal?after=10&limit=500",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "json": {
+            "format": 1,
+            "plugin": {
+              "name": "medusa-plugin-hanza",
+              "version": "0.1.0"
+            },
+            "entries": [],
+            "newest_seq": 10
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://medusa.example.test/admin/hanza/status",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "json": {
+            "format": 1,
+            "plugin": {
+              "name": "medusa-plugin-hanza",
+              "version": "0.1.0"
+            },
+            "store": {
+              "default_currency_code": "pln"
+            },
+            "settings": {
+              "stock_location_id": "sloc_01MAIN",
+              "sales_channel_ids": [],
+              "pay_on_delivery_provider_ids": [],
+              "paid_when": "captured",
+              "notify_customer_on_shipment": true,
+              "journal_retention_days": 60,
+              "currency_code": null
+            },
+            "journal": {
+              "oldest_seq": 3,
+              "newest_seq": 10
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://medusa.example.test/admin/orders?order=-created_at&limit=1&fields=id%2Ccreated_at",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "json": {
+            "orders": [
+              {
+                "id": "order_01JA0005",
+                "display_id": 5,
+                "status": "pending",
+                "created_at": "2026-10-11T09:06:00.000Z",
+                "updated_at": "2026-10-11T09:06:00.000Z",
+                "canceled_at": null,
+                "email": "person-1@example.com",
+                "currency_code": "pln",
+                "total": 207.97,
+                "raw_total": {
+                  "value": "207.97",
+                  "precision": 20
+                },
+                "sales_channel_id": "sc_01WEB",
+                "is_draft_order": false,
+                "payment_status": "captured",
+                "fulfillment_status": "not_fulfilled",
+                "items": [
+                  {
+                    "id": "item_01JA0005a",
+                    "title": "Mug",
+                    "product_title": "Mug",
+                    "variant_title": "Default variant",
+                    "variant_id": "variant_01MUG",
+                    "variant_sku": "MUG-1",
+                    "quantity": 2,
+                    "raw_quantity": {
+                      "value": "2",
+                      "precision": 20
+                    },
+                    "unit_price": 49.99,
+                    "total": 99.98,
+                    "raw_total": {
+                      "value": "99.98",
+                      "precision": 20
+                    }
+                  },
+                  {
+                    "id": "item_01JA0005b",
+                    "title": "T-shirt",
+                    "product_title": "Mug",
+                    "variant_title": "M",
+                    "variant_id": "variant_01JA0003",
+                    "variant_sku": "TSHIRT-M",
+                    "quantity": 1,
+                    "raw_quantity": {
+                      "value": "1",
+                      "precision": 20
+                    },
+                    "unit_price": 49.99,
+                    "total": 79,
+                    "raw_total": {
+                      "value": "79",
+                      "precision": 20
+                    }
+                  }
+                ],
+                "shipping_address": {
+                  "id": "caaddr_1",
+                  "first_name": "scrubbed-1",
+                  "last_name": "scrubbed-2",
+                  "company": "scrubbed-3",
+                  "address_1": "scrubbed-4",
+                  "address_2": null,
+                  "city": "scrubbed-5",
+                  "postal_code": "scrubbed-6",
+                  "country_code": "pl",
+                  "province": null,
+                  "phone": "+00000000001"
+                },
+                "billing_address": {
+                  "id": "caaddr_2",
+                  "first_name": "scrubbed-7",
+                  "last_name": "scrubbed-8",
+                  "company": null,
+                  "address_1": "scrubbed-4",
+                  "address_2": "scrubbed-9",
+                  "city": "scrubbed-5",
+                  "postal_code": "scrubbed-6",
+                  "country_code": "pl",
+                  "province": null,
+                  "phone": "+00000000001"
+                },
+                "fulfillments": [],
+                "payment_collections": [
+                  {
+                    "id": "paycol_5",
+                    "payments": [
+                      {
+                        "id": "pay_5",
+                        "provider_id": "pp_system_default",
+                        "amount": 207.97,
+                        "captured_at": "2026-10-11T09:06:00.000Z",
+                        "canceled_at": null,
+                        "captured_amount": 207.97
+                      }
+                    ]
+                  }
+                ],
+                "shipping_methods": [
+                  {
+                    "name": "Standard shipping"
+                  }
+                ],
+                "customer": {
+                  "phone": "scrubbed-10"
+                }
+              }
+            ],
+            "count": 5,
+            "offset": 0,
+            "limit": 1
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://medusa.example.test/admin/orders?status%5B%5D=pending&status%5B%5D=requires_action&created_at%5B%24lt%5D=2026-10-11T09%3A06%3A00.001Z&order=created_at&limit=100&fields=id%2Cdisplay_id%2Cstatus%2Ccreated_at%2Cupdated_at%2Ccanceled_at%2Cemail%2Ccurrency_code%2Ctotal%2Craw_total%2Csales_channel_id%2Cis_draft_order%2Cpayment_status%2Cfulfillment_status%2C*items%2C*shipping_address%2C*billing_address%2C*fulfillments%2C*payment_collections%2C*payment_collections.payments%2C*shipping_methods%2Ccustomer.phone",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "json": {
+            "orders": [
+              {
+                "id": "order_01JA0001",
+                "display_id": 1,
+                "status": "pending",
+                "created_at": "2026-10-11T09:00:00.000Z",
+                "updated_at": "2026-10-11T09:00:00.000Z",
+                "canceled_at": null,
+                "email": "person-1@example.com",
+                "currency_code": "pln",
+                "total": 114.98,
+                "raw_total": {
+                  "value": "114.98",
+                  "precision": 20
+                },
+                "sales_channel_id": "sc_01WEB",
+                "is_draft_order": false,
+                "payment_status": "captured",
+                "fulfillment_status": "not_fulfilled",
+                "items": [
+                  {
+                    "id": "order_01JA0001_item_1",
+                    "title": "Mug",
+                    "product_title": "Mug",
+                    "variant_title": "Default variant",
+                    "variant_id": "variant_01MUG",
+                    "variant_sku": "MUG-1",
+                    "quantity": 2,
+                    "raw_quantity": {
+                      "value": "2",
+                      "precision": 20
+                    },
+                    "unit_price": 49.99,
+                    "total": 99.98,
+                    "raw_total": {
+                      "value": "99.98",
+                      "precision": 20
+                    }
+                  }
+                ],
+                "shipping_address": {
+                  "id": "caaddr_1",
+                  "first_name": "scrubbed-7",
+                  "last_name": "scrubbed-8",
+                  "company": null,
+                  "address_1": "scrubbed-4",
+                  "address_2": "scrubbed-9",
+                  "city": "scrubbed-5",
+                  "postal_code": "scrubbed-6",
+                  "country_code": "pl",
+                  "province": null,
+                  "phone": "+00000000001"
+                },
+                "billing_address": {
+                  "id": "caaddr_2",
+                  "first_name": "scrubbed-7",
+                  "last_name": "scrubbed-8",
+                  "company": null,
+                  "address_1": "scrubbed-4",
+                  "address_2": "scrubbed-9",
+                  "city": "scrubbed-5",
+                  "postal_code": "scrubbed-6",
+                  "country_code": "pl",
+                  "province": null,
+                  "phone": "+00000000001"
+                },
+                "fulfillments": [],
+                "payment_collections": [
+                  {
+                    "id": "paycol_order_01JA0001",
+                    "payments": [
+                      {
+                        "id": "pay_order_01JA0001",
+                        "provider_id": "pp_system_default",
+                        "amount": 114.98,
+                        "captured_at": "2026-10-11T09:00:00.000Z",
+                        "canceled_at": null,
+                        "captured_amount": 114.98
+                      }
+                    ]
+                  }
+                ],
+                "shipping_methods": [
+                  {
+                    "name": "Standard shipping"
+                  }
+                ],
+                "customer": {
+                  "phone": "scrubbed-10"
+                }
+              },
+              {
+                "id": "order_01JA0002",
+                "display_id": 2,
+                "status": "pending",
+                "created_at": "2026-10-11T09:01:00.000Z",
+                "updated_at": "2026-10-11T09:01:00.000Z",
+                "canceled_at": null,
+                "email": "person-1@example.com",
+                "currency_code": "pln",
+                "total": 114.98,
+                "raw_total": {
+                  "value": "114.98",
+                  "precision": 20
+                },
+                "sales_channel_id": "sc_01WEB",
+                "is_draft_order": false,
+                "payment_status": "authorized",
+                "fulfillment_status": "not_fulfilled",
+                "items": [
+                  {
+                    "id": "item_01JA0002",
+                    "title": "T-shirt",
+                    "product_title": "Mug",
+                    "variant_title": "S",
+                    "variant_id": "variant_01JA0002",
+                    "variant_sku": "TSHIRT-S",
+                    "quantity": 1,
+                    "raw_quantity": {
+                      "value": "1",
+                      "precision": 20
+                    },
+                    "unit_price": 49.99,
+                    "total": 79,
+                    "raw_total": {
+                      "value": "79",
+                      "precision": 20
+                    }
+                  }
+                ],
+                "shipping_address": {
+                  "id": "caaddr_1",
+                  "first_name": "scrubbed-7",
+                  "last_name": "scrubbed-8",
+                  "company": null,
+                  "address_1": "scrubbed-4",
+                  "address_2": "scrubbed-9",
+                  "city": "scrubbed-5",
+                  "postal_code": "scrubbed-6",
+                  "country_code": "pl",
+                  "province": null,
+                  "phone": "+00000000001"
+                },
+                "billing_address": {
+                  "id": "caaddr_2",
+                  "first_name": "scrubbed-7",
+                  "last_name": "scrubbed-8",
+                  "company": null,
+                  "address_1": "scrubbed-4",
+                  "address_2": "scrubbed-9",
+                  "city": "scrubbed-5",
+                  "postal_code": "scrubbed-6",
+                  "country_code": "pl",
+                  "province": null,
+                  "phone": "+00000000001"
+                },
+                "fulfillments": [],
+                "payment_collections": [
+                  {
+                    "id": "paycol_unpaid",
+                    "payments": [
+                      {
+                        "id": "pay_unpaid",
+                        "provider_id": "pp_system_default",
+                        "amount": 114.98,
+                        "captured_at": null,
+                        "canceled_at": null,
+                        "captured_amount": 0
+                      }
+                    ]
+                  }
+                ],
+                "shipping_methods": [
+                  {
+                    "name": "Standard shipping"
+                  }
+                ],
+                "customer": {
+                  "phone": "scrubbed-10"
+                }
+              },
+              {
+                "id": "order_01JA0003",
+                "display_id": 3,
+                "status": "pending",
+                "created_at": "2026-10-11T09:02:00.000Z",
+                "updated_at": "2026-10-11T09:03:00.000Z",
+                "canceled_at": null,
+                "email": "person-1@example.com",
+                "currency_code": "pln",
+                "total": 114.98,
+                "raw_total": {
+                  "value": "114.98",
+                  "precision": 20
+                },
+                "sales_channel_id": "sc_01WEB",
+                "is_draft_order": false,
+                "payment_status": "captured",
+                "fulfillment_status": "shipped",
+                "items": [
+                  {
+                    "id": "order_01JA0003_item_1",
+                    "title": "Mug",
+                    "product_title": "Mug",
+                    "variant_title": "Default variant",
+                    "variant_id": "variant_01MUG",
+                    "variant_sku": "MUG-1",
+                    "quantity": 2,
+                    "raw_quantity": {
+                      "value": "2",
+                      "precision": 20
+                    },
+                    "unit_price": 49.99,
+                    "total": 99.98,
+                    "raw_total": {
+                      "value": "99.98",
+                      "precision": 20
+                    }
+                  }
+                ],
+                "shipping_address": {
+                  "id": "caaddr_1",
+                  "first_name": "scrubbed-7",
+                  "last_name": "scrubbed-8",
+                  "company": null,
+                  "address_1": "scrubbed-4",
+                  "address_2": "scrubbed-9",
+                  "city": "scrubbed-5",
+                  "postal_code": "scrubbed-6",
+                  "country_code": "pl",
+                  "province": null,
+                  "phone": "+00000000001"
+                },
+                "billing_address": {
+                  "id": "caaddr_2",
+                  "first_name": "scrubbed-7",
+                  "last_name": "scrubbed-8",
+                  "company": null,
+                  "address_1": "scrubbed-4",
+                  "address_2": "scrubbed-9",
+                  "city": "scrubbed-5",
+                  "postal_code": "scrubbed-6",
+                  "country_code": "pl",
+                  "province": null,
+                  "phone": "+00000000001"
+                },
+                "fulfillments": [
+                  {
+                    "id": "ful_order_01JA0003_1",
+                    "location_id": "sloc_01MAIN",
+                    "shipped_at": "2026-10-11T09:03:00.000Z",
+                    "delivered_at": null,
+                    "canceled_at": null,
+                    "items": [
+                      {
+                        "id": "fulitem_ful_order_01JA0003_1_1",
+                        "line_item_id": "order_01JA0003_item_1",
+                        "quantity": 2
+                      }
+                    ]
+                  }
+                ],
+                "payment_collections": [
+                  {
+                    "id": "paycol_order_01JA0003",
+                    "payments": [
+                      {
+                        "id": "pay_order_01JA0003",
+                        "provider_id": "pp_system_default",
+                        "amount": 114.98,
+                        "captured_at": "2026-10-11T09:02:00.000Z",
+                        "canceled_at": null,
+                        "captured_amount": 114.98
+                      }
+                    ]
+                  }
+                ],
+                "shipping_methods": [
+                  {
+                    "name": "Standard shipping"
+                  }
+                ],
+                "customer": {
+                  "phone": "scrubbed-10"
+                }
+              },
+              {
+                "id": "order_01JA0005",
+                "display_id": 5,
+                "status": "pending",
+                "created_at": "2026-10-11T09:06:00.000Z",
+                "updated_at": "2026-10-11T09:06:00.000Z",
+                "canceled_at": null,
+                "email": "person-1@example.com",
+                "currency_code": "pln",
+                "total": 207.97,
+                "raw_total": {
+                  "value": "207.97",
+                  "precision": 20
+                },
+                "sales_channel_id": "sc_01WEB",
+                "is_draft_order": false,
+                "payment_status": "captured",
+                "fulfillment_status": "not_fulfilled",
+                "items": [
+                  {
+                    "id": "item_01JA0005a",
+                    "title": "Mug",
+                    "product_title": "Mug",
+                    "variant_title": "Default variant",
+                    "variant_id": "variant_01MUG",
+                    "variant_sku": "MUG-1",
+                    "quantity": 2,
+                    "raw_quantity": {
+                      "value": "2",
+                      "precision": 20
+                    },
+                    "unit_price": 49.99,
+                    "total": 99.98,
+                    "raw_total": {
+                      "value": "99.98",
+                      "precision": 20
+                    }
+                  },
+                  {
+                    "id": "item_01JA0005b",
+                    "title": "T-shirt",
+                    "product_title": "Mug",
+                    "variant_title": "M",
+                    "variant_id": "variant_01JA0003",
+                    "variant_sku": "TSHIRT-M",
+                    "quantity": 1,
+                    "raw_quantity": {
+                      "value": "1",
+                      "precision": 20
+                    },
+                    "unit_price": 49.99,
+                    "total": 79,
+                    "raw_total": {
+                      "value": "79",
+                      "precision": 20
+                    }
+                  }
+                ],
+                "shipping_address": {
+                  "id": "caaddr_1",
+                  "first_name": "scrubbed-1",
+                  "last_name": "scrubbed-2",
+                  "company": "scrubbed-3",
+                  "address_1": "scrubbed-4",
+                  "address_2": null,
+                  "city": "scrubbed-5",
+                  "postal_code": "scrubbed-6",
+                  "country_code": "pl",
+                  "province": null,
+                  "phone": "+00000000001"
+                },
+                "billing_address": {
+                  "id": "caaddr_2",
+                  "first_name": "scrubbed-7",
+                  "last_name": "scrubbed-8",
+                  "company": null,
+                  "address_1": "scrubbed-4",
+                  "address_2": "scrubbed-9",
+                  "city": "scrubbed-5",
+                  "postal_code": "scrubbed-6",
+                  "country_code": "pl",
+                  "province": null,
+                  "phone": "+00000000001"
+                },
+                "fulfillments": [],
+                "payment_collections": [
+                  {
+                    "id": "paycol_5",
+                    "payments": [
+                      {
+                        "id": "pay_5",
+                        "provider_id": "pp_system_default",
+                        "amount": 207.97,
+                        "captured_at": "2026-10-11T09:06:00.000Z",
+                        "canceled_at": null,
+                        "captured_amount": 207.97
+                      }
+                    ]
+                  }
+                ],
+                "shipping_methods": [
+                  {
+                    "name": "Standard shipping"
+                  }
+                ],
+                "customer": {
+                  "phone": "scrubbed-10"
+                }
+              }
+            ],
+            "count": 4,
+            "offset": 0,
+            "limit": 100
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://medusa.example.test/admin/hanza/status",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "json": {
+            "format": 1,
+            "plugin": {
+              "name": "medusa-plugin-hanza",
+              "version": "0.1.0"
+            },
+            "store": {
+              "default_currency_code": "pln"
+            },
+            "settings": {
+              "stock_location_id": "sloc_01MAIN",
+              "sales_channel_ids": [],
+              "pay_on_delivery_provider_ids": [],
+              "paid_when": "captured",
+              "notify_customer_on_shipment": true,
+              "journal_retention_days": 60,
+              "currency_code": null
+            },
+            "journal": {
+              "oldest_seq": 3,
+              "newest_seq": 10
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://medusa.example.test/admin/hanza/journal?after=10&limit=500",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "json": {
+            "format": 1,
+            "plugin": {
+              "name": "medusa-plugin-hanza",
+              "version": "0.1.0"
+            },
+            "entries": [],
+            "newest_seq": 10
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://medusa.example.test/admin/hanza/status",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "json": {
+            "format": 1,
+            "plugin": {
+              "name": "medusa-plugin-hanza",
+              "version": "0.1.0"
+            },
+            "store": {
+              "default_currency_code": "pln"
+            },
+            "settings": {
+              "stock_location_id": "sloc_01MAIN",
+              "sales_channel_ids": [],
+              "pay_on_delivery_provider_ids": [],
+              "paid_when": "captured",
+              "notify_customer_on_shipment": true,
+              "journal_retention_days": 60,
+              "currency_code": null
+            },
+            "journal": {
+              "oldest_seq": 3,
+              "newest_seq": 10
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://medusa.example.test/admin/hanza/journal?after=10&limit=500",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "json": {
+            "format": 1,
+            "plugin": {
+              "name": "medusa-plugin-hanza",
+              "version": "0.1.0"
+            },
+            "entries": [],
+            "newest_seq": 10
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://medusa.example.test/admin/hanza/status",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "json": {
+            "format": 1,
+            "plugin": {
+              "name": "medusa-plugin-hanza",
+              "version": "0.1.0"
+            },
+            "store": {
+              "default_currency_code": "pln"
+            },
+            "settings": {
+              "stock_location_id": "sloc_01MAIN",
+              "sales_channel_ids": [],
+              "pay_on_delivery_provider_ids": [],
+              "paid_when": "captured",
+              "notify_customer_on_shipment": true,
+              "journal_retention_days": 60,
+              "currency_code": null
+            },
+            "journal": {
+              "oldest_seq": 3,
+              "newest_seq": 10
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://medusa.example.test/admin/hanza/journal?after=1&limit=500",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 410,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "json": {
+            "type": "gone",
+            "message": "The journal no longer has this position",
+            "code": "journal_expired",
+            "oldest_seq": 3
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "url": "https://medusa.example.test/admin/hanza/stock",
+        "headers": {
+          "accept": "application/json",
+          "content-type": "application/json"
+        },
+        "body": {
+          "json": {
+            "levels": [
+              {
+                "variant_id": "variant_01JA0001",
+                "available": 0
+              },
+              {
+                "variant_id": "variant_01JA0002",
+                "available": 0
+              },
+              {
+                "variant_id": "variant_01JA0003",
+                "available": 0
+              }
+            ]
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "json": {
+            "format": 1,
+            "plugin": {
+              "name": "medusa-plugin-hanza",
+              "version": "0.1.0"
+            },
+            "results": [
+              {
+                "variant_id": "variant_01JA0001",
+                "outcome": "ok"
+              },
+              {
+                "variant_id": "variant_01JA0002",
+                "outcome": "ok"
+              },
+              {
+                "variant_id": "variant_01JA0003",
+                "outcome": "ok"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "url": "https://medusa.example.test/admin/hanza/stock",
+        "headers": {
+          "accept": "application/json",
+          "content-type": "application/json"
+        },
+        "body": {
+          "json": {
+            "levels": [
+              {
+                "variant_id": "variant_01JA0001",
+                "available": 0
+              },
+              {
+                "variant_id": "variant_01JA0002",
+                "available": 0
+              },
+              {
+                "variant_id": "variant_01JA0003",
+                "available": 0
+              }
+            ]
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "json": {
+            "format": 1,
+            "plugin": {
+              "name": "medusa-plugin-hanza",
+              "version": "0.1.0"
+            },
+            "results": [
+              {
+                "variant_id": "variant_01JA0001",
+                "outcome": "ok"
+              },
+              {
+                "variant_id": "variant_01JA0002",
+                "outcome": "ok"
+              },
+              {
+                "variant_id": "variant_01JA0003",
+                "outcome": "ok"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "url": "https://medusa.example.test/admin/hanza/stock",
+        "headers": {
+          "accept": "application/json",
+          "content-type": "application/json"
+        },
+        "body": {
+          "json": {
+            "levels": [
+              {
+                "variant_id": "variant_01JA0001",
+                "available": 5
+              },
+              {
+                "variant_id": "variant_01JA0002",
+                "available": 5
+              },
+              {
+                "variant_id": "variant_01JA0003",
+                "available": 5
+              }
+            ]
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "json": {
+            "format": 1,
+            "plugin": {
+              "name": "medusa-plugin-hanza",
+              "version": "0.1.0"
+            },
+            "results": [
+              {
+                "variant_id": "variant_01JA0001",
+                "outcome": "ok"
+              },
+              {
+                "variant_id": "variant_01JA0002",
+                "outcome": "ok"
+              },
+              {
+                "variant_id": "variant_01JA0003",
+                "outcome": "ok"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "url": "https://medusa.example.test/admin/hanza/stock",
+        "headers": {
+          "accept": "application/json",
+          "content-type": "application/json"
+        },
+        "body": {
+          "json": {
+            "levels": [
+              {
+                "variant_id": "variant_01JA0001",
+                "available": 5
+              },
+              {
+                "variant_id": "variant_01JA0002",
+                "available": 5
+              },
+              {
+                "variant_id": "variant_01JA0003",
+                "available": 5
+              }
+            ]
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "json": {
+            "format": 1,
+            "plugin": {
+              "name": "medusa-plugin-hanza",
+              "version": "0.1.0"
+            },
+            "results": [
+              {
+                "variant_id": "variant_01JA0001",
+                "outcome": "ok"
+              },
+              {
+                "variant_id": "variant_01JA0002",
+                "outcome": "ok"
+              },
+              {
+                "variant_id": "variant_01JA0003",
+                "outcome": "ok"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://medusa.example.test/admin/orders/order_01JA0001?fields=id%2Cstatus%2Cpayment_status%2Cfulfillment_status%2C*items%2C*fulfillments%2C*fulfillments.items%2C*payment_collections%2C*payment_collections.payments",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "json": {
+            "order": {
+              "id": "order_01JA0001",
+              "display_id": 1,
+              "status": "pending",
+              "created_at": "2026-10-11T09:00:00.000Z",
+              "updated_at": "2026-10-11T09:00:00.000Z",
+              "canceled_at": null,
+              "email": "person-1@example.com",
+              "currency_code": "pln",
+              "total": 114.98,
+              "raw_total": {
+                "value": "114.98",
+                "precision": 20
+              },
+              "sales_channel_id": "sc_01WEB",
+              "is_draft_order": false,
+              "payment_status": "captured",
+              "fulfillment_status": "not_fulfilled",
+              "items": [
+                {
+                  "id": "order_01JA0001_item_1",
+                  "title": "Mug",
+                  "product_title": "Mug",
+                  "variant_title": "Default variant",
+                  "variant_id": "variant_01MUG",
+                  "variant_sku": "MUG-1",
+                  "quantity": 2,
+                  "raw_quantity": {
+                    "value": "2",
+                    "precision": 20
+                  },
+                  "unit_price": 49.99,
+                  "total": 99.98,
+                  "raw_total": {
+                    "value": "99.98",
+                    "precision": 20
+                  }
+                }
+              ],
+              "shipping_address": {
+                "id": "caaddr_1",
+                "first_name": "scrubbed-7",
+                "last_name": "scrubbed-8",
+                "company": null,
+                "address_1": "scrubbed-4",
+                "address_2": "scrubbed-9",
+                "city": "scrubbed-5",
+                "postal_code": "scrubbed-6",
+                "country_code": "pl",
+                "province": null,
+                "phone": "+00000000001"
+              },
+              "billing_address": {
+                "id": "caaddr_2",
+                "first_name": "scrubbed-7",
+                "last_name": "scrubbed-8",
+                "company": null,
+                "address_1": "scrubbed-4",
+                "address_2": "scrubbed-9",
+                "city": "scrubbed-5",
+                "postal_code": "scrubbed-6",
+                "country_code": "pl",
+                "province": null,
+                "phone": "+00000000001"
+              },
+              "fulfillments": [],
+              "payment_collections": [
+                {
+                  "id": "paycol_order_01JA0001",
+                  "payments": [
+                    {
+                      "id": "pay_order_01JA0001",
+                      "provider_id": "pp_system_default",
+                      "amount": 114.98,
+                      "captured_at": "2026-10-11T09:00:00.000Z",
+                      "canceled_at": null,
+                      "captured_amount": 114.98
+                    }
+                  ]
+                }
+              ],
+              "shipping_methods": [
+                {
+                  "name": "Standard shipping"
+                }
+              ],
+              "customer": {
+                "phone": "scrubbed-10"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://medusa.example.test/admin/hanza/status",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "json": {
+            "format": 1,
+            "plugin": {
+              "name": "medusa-plugin-hanza",
+              "version": "0.1.0"
+            },
+            "store": {
+              "default_currency_code": "pln"
+            },
+            "settings": {
+              "stock_location_id": "sloc_01MAIN",
+              "sales_channel_ids": [],
+              "pay_on_delivery_provider_ids": [],
+              "paid_when": "captured",
+              "notify_customer_on_shipment": true,
+              "journal_retention_days": 60,
+              "currency_code": null
+            },
+            "journal": {
+              "oldest_seq": 3,
+              "newest_seq": 10
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "url": "https://medusa.example.test/admin/orders/order_01JA0001/fulfillments",
+        "headers": {
+          "accept": "application/json",
+          "content-type": "application/json"
+        },
+        "body": {
+          "json": {
+            "items": [
+              {
+                "id": "order_01JA0001_item_1",
+                "quantity": 2
+              }
+            ],
+            "location_id": "sloc_01MAIN"
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "json": {
+            "order": {
+              "id": "order_01JA0001",
+              "display_id": 1,
+              "status": "pending",
+              "created_at": "2026-10-11T09:00:00.000Z",
+              "updated_at": "2026-10-11T09:07:00.000Z",
+              "canceled_at": null,
+              "email": "person-1@example.com",
+              "currency_code": "pln",
+              "total": 114.98,
+              "raw_total": {
+                "value": "114.98",
+                "precision": 20
+              },
+              "sales_channel_id": "sc_01WEB",
+              "is_draft_order": false,
+              "payment_status": "captured",
+              "fulfillment_status": "fulfilled",
+              "items": [
+                {
+                  "id": "order_01JA0001_item_1",
+                  "title": "Mug",
+                  "product_title": "Mug",
+                  "variant_title": "Default variant",
+                  "variant_id": "variant_01MUG",
+                  "variant_sku": "MUG-1",
+                  "quantity": 2,
+                  "raw_quantity": {
+                    "value": "2",
+                    "precision": 20
+                  },
+                  "unit_price": 49.99,
+                  "total": 99.98,
+                  "raw_total": {
+                    "value": "99.98",
+                    "precision": 20
+                  }
+                }
+              ],
+              "shipping_address": {
+                "id": "caaddr_1",
+                "first_name": "scrubbed-7",
+                "last_name": "scrubbed-8",
+                "company": null,
+                "address_1": "scrubbed-4",
+                "address_2": "scrubbed-9",
+                "city": "scrubbed-5",
+                "postal_code": "scrubbed-6",
+                "country_code": "pl",
+                "province": null,
+                "phone": "+00000000001"
+              },
+              "billing_address": {
+                "id": "caaddr_2",
+                "first_name": "scrubbed-7",
+                "last_name": "scrubbed-8",
+                "company": null,
+                "address_1": "scrubbed-4",
+                "address_2": "scrubbed-9",
+                "city": "scrubbed-5",
+                "postal_code": "scrubbed-6",
+                "country_code": "pl",
+                "province": null,
+                "phone": "+00000000001"
+              },
+              "fulfillments": [
+                {
+                  "id": "ful_order_01JA0001_1",
+                  "location_id": "sloc_01MAIN",
+                  "shipped_at": null,
+                  "delivered_at": null,
+                  "canceled_at": null,
+                  "items": [
+                    {
+                      "id": "fulitem_ful_order_01JA0001_1_1",
+                      "line_item_id": "order_01JA0001_item_1",
+                      "quantity": 2
+                    }
+                  ]
+                }
+              ],
+              "payment_collections": [
+                {
+                  "id": "paycol_order_01JA0001",
+                  "payments": [
+                    {
+                      "id": "pay_order_01JA0001",
+                      "provider_id": "pp_system_default",
+                      "amount": 114.98,
+                      "captured_at": "2026-10-11T09:00:00.000Z",
+                      "canceled_at": null,
+                      "captured_amount": 114.98
+                    }
+                  ]
+                }
+              ],
+              "shipping_methods": [
+                {
+                  "name": "Standard shipping"
+                }
+              ],
+              "customer": {
+                "phone": "scrubbed-10"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://medusa.example.test/admin/orders/order_01JA0001?fields=id%2Cstatus%2Cpayment_status%2Cfulfillment_status%2C*items%2C*fulfillments%2C*fulfillments.items%2C*payment_collections%2C*payment_collections.payments",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "json": {
+            "order": {
+              "id": "order_01JA0001",
+              "display_id": 1,
+              "status": "pending",
+              "created_at": "2026-10-11T09:00:00.000Z",
+              "updated_at": "2026-10-11T09:07:00.000Z",
+              "canceled_at": null,
+              "email": "person-1@example.com",
+              "currency_code": "pln",
+              "total": 114.98,
+              "raw_total": {
+                "value": "114.98",
+                "precision": 20
+              },
+              "sales_channel_id": "sc_01WEB",
+              "is_draft_order": false,
+              "payment_status": "captured",
+              "fulfillment_status": "fulfilled",
+              "items": [
+                {
+                  "id": "order_01JA0001_item_1",
+                  "title": "Mug",
+                  "product_title": "Mug",
+                  "variant_title": "Default variant",
+                  "variant_id": "variant_01MUG",
+                  "variant_sku": "MUG-1",
+                  "quantity": 2,
+                  "raw_quantity": {
+                    "value": "2",
+                    "precision": 20
+                  },
+                  "unit_price": 49.99,
+                  "total": 99.98,
+                  "raw_total": {
+                    "value": "99.98",
+                    "precision": 20
+                  }
+                }
+              ],
+              "shipping_address": {
+                "id": "caaddr_1",
+                "first_name": "scrubbed-7",
+                "last_name": "scrubbed-8",
+                "company": null,
+                "address_1": "scrubbed-4",
+                "address_2": "scrubbed-9",
+                "city": "scrubbed-5",
+                "postal_code": "scrubbed-6",
+                "country_code": "pl",
+                "province": null,
+                "phone": "+00000000001"
+              },
+              "billing_address": {
+                "id": "caaddr_2",
+                "first_name": "scrubbed-7",
+                "last_name": "scrubbed-8",
+                "company": null,
+                "address_1": "scrubbed-4",
+                "address_2": "scrubbed-9",
+                "city": "scrubbed-5",
+                "postal_code": "scrubbed-6",
+                "country_code": "pl",
+                "province": null,
+                "phone": "+00000000001"
+              },
+              "fulfillments": [
+                {
+                  "id": "ful_order_01JA0001_1",
+                  "location_id": "sloc_01MAIN",
+                  "shipped_at": null,
+                  "delivered_at": null,
+                  "canceled_at": null,
+                  "items": [
+                    {
+                      "id": "fulitem_ful_order_01JA0001_1_1",
+                      "line_item_id": "order_01JA0001_item_1",
+                      "quantity": 2
+                    }
+                  ]
+                }
+              ],
+              "payment_collections": [
+                {
+                  "id": "paycol_order_01JA0001",
+                  "payments": [
+                    {
+                      "id": "pay_order_01JA0001",
+                      "provider_id": "pp_system_default",
+                      "amount": 114.98,
+                      "captured_at": "2026-10-11T09:00:00.000Z",
+                      "canceled_at": null,
+                      "captured_amount": 114.98
+                    }
+                  ]
+                }
+              ],
+              "shipping_methods": [
+                {
+                  "name": "Standard shipping"
+                }
+              ],
+              "customer": {
+                "phone": "scrubbed-10"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "url": "https://medusa.example.test/admin/orders/order_01JA0001/fulfillments/ful_order_01JA0001_1/shipments",
+        "headers": {
+          "accept": "application/json",
+          "content-type": "application/json"
+        },
+        "body": {
+          "json": {
+            "items": [
+              {
+                "id": "order_01JA0001_item_1",
+                "quantity": 2
+              }
+            ],
+            "no_notification": false
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "json": {
+            "order": {
+              "id": "order_01JA0001",
+              "display_id": 1,
+              "status": "pending",
+              "created_at": "2026-10-11T09:00:00.000Z",
+              "updated_at": "2026-10-11T09:07:00.000Z",
+              "canceled_at": null,
+              "email": "person-1@example.com",
+              "currency_code": "pln",
+              "total": 114.98,
+              "raw_total": {
+                "value": "114.98",
+                "precision": 20
+              },
+              "sales_channel_id": "sc_01WEB",
+              "is_draft_order": false,
+              "payment_status": "captured",
+              "fulfillment_status": "shipped",
+              "items": [
+                {
+                  "id": "order_01JA0001_item_1",
+                  "title": "Mug",
+                  "product_title": "Mug",
+                  "variant_title": "Default variant",
+                  "variant_id": "variant_01MUG",
+                  "variant_sku": "MUG-1",
+                  "quantity": 2,
+                  "raw_quantity": {
+                    "value": "2",
+                    "precision": 20
+                  },
+                  "unit_price": 49.99,
+                  "total": 99.98,
+                  "raw_total": {
+                    "value": "99.98",
+                    "precision": 20
+                  }
+                }
+              ],
+              "shipping_address": {
+                "id": "caaddr_1",
+                "first_name": "scrubbed-7",
+                "last_name": "scrubbed-8",
+                "company": null,
+                "address_1": "scrubbed-4",
+                "address_2": "scrubbed-9",
+                "city": "scrubbed-5",
+                "postal_code": "scrubbed-6",
+                "country_code": "pl",
+                "province": null,
+                "phone": "+00000000001"
+              },
+              "billing_address": {
+                "id": "caaddr_2",
+                "first_name": "scrubbed-7",
+                "last_name": "scrubbed-8",
+                "company": null,
+                "address_1": "scrubbed-4",
+                "address_2": "scrubbed-9",
+                "city": "scrubbed-5",
+                "postal_code": "scrubbed-6",
+                "country_code": "pl",
+                "province": null,
+                "phone": "+00000000001"
+              },
+              "fulfillments": [
+                {
+                  "id": "ful_order_01JA0001_1",
+                  "location_id": "sloc_01MAIN",
+                  "shipped_at": "2026-10-11T09:07:00.000Z",
+                  "delivered_at": null,
+                  "canceled_at": null,
+                  "items": [
+                    {
+                      "id": "fulitem_ful_order_01JA0001_1_1",
+                      "line_item_id": "order_01JA0001_item_1",
+                      "quantity": 2
+                    }
+                  ]
+                }
+              ],
+              "payment_collections": [
+                {
+                  "id": "paycol_order_01JA0001",
+                  "payments": [
+                    {
+                      "id": "pay_order_01JA0001",
+                      "provider_id": "pp_system_default",
+                      "amount": 114.98,
+                      "captured_at": "2026-10-11T09:00:00.000Z",
+                      "canceled_at": null,
+                      "captured_amount": 114.98
+                    }
+                  ]
+                }
+              ],
+              "shipping_methods": [
+                {
+                  "name": "Standard shipping"
+                }
+              ],
+              "customer": {
+                "phone": "scrubbed-10"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://medusa.example.test/admin/orders/order_01JA0001?fields=id%2Cstatus%2Cpayment_status%2Cfulfillment_status%2C*items%2C*fulfillments%2C*fulfillments.items%2C*payment_collections%2C*payment_collections.payments",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "json": {
+            "order": {
+              "id": "order_01JA0001",
+              "display_id": 1,
+              "status": "pending",
+              "created_at": "2026-10-11T09:00:00.000Z",
+              "updated_at": "2026-10-11T09:07:00.000Z",
+              "canceled_at": null,
+              "email": "person-1@example.com",
+              "currency_code": "pln",
+              "total": 114.98,
+              "raw_total": {
+                "value": "114.98",
+                "precision": 20
+              },
+              "sales_channel_id": "sc_01WEB",
+              "is_draft_order": false,
+              "payment_status": "captured",
+              "fulfillment_status": "shipped",
+              "items": [
+                {
+                  "id": "order_01JA0001_item_1",
+                  "title": "Mug",
+                  "product_title": "Mug",
+                  "variant_title": "Default variant",
+                  "variant_id": "variant_01MUG",
+                  "variant_sku": "MUG-1",
+                  "quantity": 2,
+                  "raw_quantity": {
+                    "value": "2",
+                    "precision": 20
+                  },
+                  "unit_price": 49.99,
+                  "total": 99.98,
+                  "raw_total": {
+                    "value": "99.98",
+                    "precision": 20
+                  }
+                }
+              ],
+              "shipping_address": {
+                "id": "caaddr_1",
+                "first_name": "scrubbed-7",
+                "last_name": "scrubbed-8",
+                "company": null,
+                "address_1": "scrubbed-4",
+                "address_2": "scrubbed-9",
+                "city": "scrubbed-5",
+                "postal_code": "scrubbed-6",
+                "country_code": "pl",
+                "province": null,
+                "phone": "+00000000001"
+              },
+              "billing_address": {
+                "id": "caaddr_2",
+                "first_name": "scrubbed-7",
+                "last_name": "scrubbed-8",
+                "company": null,
+                "address_1": "scrubbed-4",
+                "address_2": "scrubbed-9",
+                "city": "scrubbed-5",
+                "postal_code": "scrubbed-6",
+                "country_code": "pl",
+                "province": null,
+                "phone": "+00000000001"
+              },
+              "fulfillments": [
+                {
+                  "id": "ful_order_01JA0001_1",
+                  "location_id": "sloc_01MAIN",
+                  "shipped_at": "2026-10-11T09:07:00.000Z",
+                  "delivered_at": null,
+                  "canceled_at": null,
+                  "items": [
+                    {
+                      "id": "fulitem_ful_order_01JA0001_1_1",
+                      "line_item_id": "order_01JA0001_item_1",
+                      "quantity": 2
+                    }
+                  ]
+                }
+              ],
+              "payment_collections": [
+                {
+                  "id": "paycol_order_01JA0001",
+                  "payments": [
+                    {
+                      "id": "pay_order_01JA0001",
+                      "provider_id": "pp_system_default",
+                      "amount": 114.98,
+                      "captured_at": "2026-10-11T09:00:00.000Z",
+                      "canceled_at": null,
+                      "captured_amount": 114.98
+                    }
+                  ]
+                }
+              ],
+              "shipping_methods": [
+                {
+                  "name": "Standard shipping"
+                }
+              ],
+              "customer": {
+                "phone": "scrubbed-10"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://medusa.example.test/admin/orders/order_01JA0001?fields=id%2Cstatus%2Cpayment_status%2Cfulfillment_status%2C*items%2C*fulfillments%2C*fulfillments.items%2C*payment_collections%2C*payment_collections.payments",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "json": {
+            "order": {
+              "id": "order_01JA0001",
+              "display_id": 1,
+              "status": "pending",
+              "created_at": "2026-10-11T09:00:00.000Z",
+              "updated_at": "2026-10-11T09:07:00.000Z",
+              "canceled_at": null,
+              "email": "person-1@example.com",
+              "currency_code": "pln",
+              "total": 114.98,
+              "raw_total": {
+                "value": "114.98",
+                "precision": 20
+              },
+              "sales_channel_id": "sc_01WEB",
+              "is_draft_order": false,
+              "payment_status": "captured",
+              "fulfillment_status": "shipped",
+              "items": [
+                {
+                  "id": "order_01JA0001_item_1",
+                  "title": "Mug",
+                  "product_title": "Mug",
+                  "variant_title": "Default variant",
+                  "variant_id": "variant_01MUG",
+                  "variant_sku": "MUG-1",
+                  "quantity": 2,
+                  "raw_quantity": {
+                    "value": "2",
+                    "precision": 20
+                  },
+                  "unit_price": 49.99,
+                  "total": 99.98,
+                  "raw_total": {
+                    "value": "99.98",
+                    "precision": 20
+                  }
+                }
+              ],
+              "shipping_address": {
+                "id": "caaddr_1",
+                "first_name": "scrubbed-7",
+                "last_name": "scrubbed-8",
+                "company": null,
+                "address_1": "scrubbed-4",
+                "address_2": "scrubbed-9",
+                "city": "scrubbed-5",
+                "postal_code": "scrubbed-6",
+                "country_code": "pl",
+                "province": null,
+                "phone": "+00000000001"
+              },
+              "billing_address": {
+                "id": "caaddr_2",
+                "first_name": "scrubbed-7",
+                "last_name": "scrubbed-8",
+                "company": null,
+                "address_1": "scrubbed-4",
+                "address_2": "scrubbed-9",
+                "city": "scrubbed-5",
+                "postal_code": "scrubbed-6",
+                "country_code": "pl",
+                "province": null,
+                "phone": "+00000000001"
+              },
+              "fulfillments": [
+                {
+                  "id": "ful_order_01JA0001_1",
+                  "location_id": "sloc_01MAIN",
+                  "shipped_at": "2026-10-11T09:07:00.000Z",
+                  "delivered_at": null,
+                  "canceled_at": null,
+                  "items": [
+                    {
+                      "id": "fulitem_ful_order_01JA0001_1_1",
+                      "line_item_id": "order_01JA0001_item_1",
+                      "quantity": 2
+                    }
+                  ]
+                }
+              ],
+              "payment_collections": [
+                {
+                  "id": "paycol_order_01JA0001",
+                  "payments": [
+                    {
+                      "id": "pay_order_01JA0001",
+                      "provider_id": "pp_system_default",
+                      "amount": 114.98,
+                      "captured_at": "2026-10-11T09:00:00.000Z",
+                      "canceled_at": null,
+                      "captured_amount": 114.98
+                    }
+                  ]
+                }
+              ],
+              "shipping_methods": [
+                {
+                  "name": "Standard shipping"
+                }
+              ],
+              "customer": {
+                "phone": "scrubbed-10"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://medusa.example.test/admin/orders/order_01JA0001?fields=id%2Cstatus%2Cpayment_status%2Cfulfillment_status%2C*items%2C*fulfillments%2C*fulfillments.items%2C*payment_collections%2C*payment_collections.payments",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "json": {
+            "order": {
+              "id": "order_01JA0001",
+              "display_id": 1,
+              "status": "pending",
+              "created_at": "2026-10-11T09:00:00.000Z",
+              "updated_at": "2026-10-11T09:07:00.000Z",
+              "canceled_at": null,
+              "email": "person-1@example.com",
+              "currency_code": "pln",
+              "total": 114.98,
+              "raw_total": {
+                "value": "114.98",
+                "precision": 20
+              },
+              "sales_channel_id": "sc_01WEB",
+              "is_draft_order": false,
+              "payment_status": "captured",
+              "fulfillment_status": "shipped",
+              "items": [
+                {
+                  "id": "order_01JA0001_item_1",
+                  "title": "Mug",
+                  "product_title": "Mug",
+                  "variant_title": "Default variant",
+                  "variant_id": "variant_01MUG",
+                  "variant_sku": "MUG-1",
+                  "quantity": 2,
+                  "raw_quantity": {
+                    "value": "2",
+                    "precision": 20
+                  },
+                  "unit_price": 49.99,
+                  "total": 99.98,
+                  "raw_total": {
+                    "value": "99.98",
+                    "precision": 20
+                  }
+                }
+              ],
+              "shipping_address": {
+                "id": "caaddr_1",
+                "first_name": "scrubbed-7",
+                "last_name": "scrubbed-8",
+                "company": null,
+                "address_1": "scrubbed-4",
+                "address_2": "scrubbed-9",
+                "city": "scrubbed-5",
+                "postal_code": "scrubbed-6",
+                "country_code": "pl",
+                "province": null,
+                "phone": "+00000000001"
+              },
+              "billing_address": {
+                "id": "caaddr_2",
+                "first_name": "scrubbed-7",
+                "last_name": "scrubbed-8",
+                "company": null,
+                "address_1": "scrubbed-4",
+                "address_2": "scrubbed-9",
+                "city": "scrubbed-5",
+                "postal_code": "scrubbed-6",
+                "country_code": "pl",
+                "province": null,
+                "phone": "+00000000001"
+              },
+              "fulfillments": [
+                {
+                  "id": "ful_order_01JA0001_1",
+                  "location_id": "sloc_01MAIN",
+                  "shipped_at": "2026-10-11T09:07:00.000Z",
+                  "delivered_at": null,
+                  "canceled_at": null,
+                  "items": [
+                    {
+                      "id": "fulitem_ful_order_01JA0001_1_1",
+                      "line_item_id": "order_01JA0001_item_1",
+                      "quantity": 2
+                    }
+                  ]
+                }
+              ],
+              "payment_collections": [
+                {
+                  "id": "paycol_order_01JA0001",
+                  "payments": [
+                    {
+                      "id": "pay_order_01JA0001",
+                      "provider_id": "pp_system_default",
+                      "amount": 114.98,
+                      "captured_at": "2026-10-11T09:00:00.000Z",
+                      "canceled_at": null,
+                      "captured_amount": 114.98
+                    }
+                  ]
+                }
+              ],
+              "shipping_methods": [
+                {
+                  "name": "Standard shipping"
+                }
+              ],
+              "customer": {
+                "phone": "scrubbed-10"
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}
