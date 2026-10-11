@@ -1,5 +1,5 @@
 import type { ChannelReportedPhase, OrderPhase } from '@hanza/core'
-import type { AttentionReason, ChannelFactType, ConnectionHealth, OrderStatusColor, PaymentMethod, SyncErrorKind, SyncStream } from '@hanza/db'
+import type { AttentionReason, ChannelFactType, ConnectionHealth, OrderStatusColor, PaymentMethod, ShipmentStatus, SyncErrorKind, SyncStream } from '@hanza/db'
 import en from '../../messages/en.json'
 import type { MessageKey, Translator } from '@/i18n/types'
 
@@ -16,6 +16,7 @@ export const paymentLabel = (t: Translator, payment: PaymentMethod) => t(`labels
 export const factLabel = (t: Translator, fact: ChannelFactType) => t(`labels.channelFact.${fact}`)
 export const reservationLabel = (t: Translator, status: 'open' | 'released' | 'consumed') => t(`labels.reservation.${status}`)
 export const syncErrorLabel = (t: Translator, kind: SyncErrorKind) => t(`labels.syncError.${kind}`)
+export const shipmentStatusLabel = (t: Translator, status: ShipmentStatus) => t(`labels.shipmentStatus.${status}`)
 
 type OpenGroup =
   | 'labels.connectorKind'
@@ -24,6 +25,7 @@ type OpenGroup =
   | 'labels.attentionReason'
   | 'labels.channelFact'
   | 'labels.erasureCause'
+  | 'labels.shipmentStatus'
   | 'sync.result'
   | 'events.title'
 

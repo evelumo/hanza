@@ -1,0 +1,82 @@
+{
+  "version": 1,
+  "interactions": [
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?created_at_gteq=1791621900&sort_by=created_at&sort_order=asc&page=1&per_page=100",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8",
+          "link": "<http://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?created_at_gteq=1791621900&owner_id=54321&per_page=100&sort_by=created_at&sort_order=asc>; rel=\"next\", <http://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?created_at_gteq=1791621900&owner_id=54321&per_page=100&sort_by=created_at&sort_order=asc>; rel=\"last\", <http://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?created_at_gteq=1791621900&owner_id=54321&per_page=100&sort_by=created_at&sort_order=asc>; rel=\"previous\", <http://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?created_at_gteq=1791621900&owner_id=54321&page=1&per_page=100&sort_by=created_at&sort_order=asc>; rel=\"first\""
+        },
+        "body": {
+          "json": {
+            "href": "http://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments?created_at_gteq=1791621900&owner_id=54321&page=1&per_page=100&sort_by=created_at&sort_order=asc",
+            "count": 0,
+            "page": 1,
+            "per_page": 100,
+            "items": []
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "url": "https://sandbox-api-shipx-pl.easypack24.net/v1/organizations/12345/shipments",
+        "headers": {
+          "accept": "application/json",
+          "content-type": "application/json"
+        },
+        "body": {
+          "json": {
+            "receiver": {
+              "first_name": "scrubbed-1",
+              "last_name": "scrubbed-2",
+              "email": "jan.kowalski@example.com",
+              "phone": "+00000000001"
+            },
+            "parcels": {
+              "template": "small"
+            },
+            "custom_attributes": {
+              "sending_method": "any_point",
+              "target_point": "XXX000X"
+            },
+            "service": "inpost_locker_standard",
+            "reference": "scrubbed-3"
+          }
+        }
+      },
+      "response": {
+        "status": 400,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "json": {
+            "status": 400,
+            "error": "validation_failed",
+            "message": "There are some validation errors. Check details object for more info.",
+            "details": {
+              "custom_attributes": [
+                {
+                  "target_point": [
+                    "does_not_exist"
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      }
+    }
+  ]
+}
