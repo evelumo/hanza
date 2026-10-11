@@ -69,13 +69,14 @@ describe.skipIf(!databaseUrl)('unset Stock end to end (real Postgres, in-memory 
     }
     await drain()
 
-    // fake-order-1's line was matched by the rematch and reserves against the unset Stock: a Shortage, no Stock row.
+    // fake-order-1's line was matched by the rematch and reserves against the unset Stock: a Shortage. The Stock rows
+    // the Reservation creates at 0 do not set it.
     const first = await ctx.db.order.findFirstOrThrow({
       where: { organizationId: org, externalId: 'fake-order-1' },
       include: { lines: { include: { reservation: true } } },
     })
     expect(first.lines.map((line) => [line.productId, line.shortage, line.reservation?.status])).toEqual([[products['FAKE-SKU-1'], true, 'open']])
-    expect(await ctx.db.stock.count({ where: { organizationId: org } })).toBe(0)
+    expect(await ctx.db.product.count({ where: { organizationId: org, stockSetAt: null } })).toBe(4)
 
     for (const offer of seedOffers) expect(pushedTo(offer)).toEqual([])
     expect(fake.stockPushes).toEqual([])
@@ -99,7 +100,7 @@ describe.skipIf(!databaseUrl)('unset Stock end to end (real Postgres, in-memory 
     expect(pushedTo('fake-offer-3')).toEqual([])
   })
 
-  it('5. shipping an Order of a Product with unset Stock takes nothing off Stock and sends the Channel no number', async () => {
+  it('5. shipping an Order of a Product with unset Stock takes it off Stock as always, and sends the Channel no number', async () => {
     fake.addOrder({
       externalId: 'poster-order',
       placedAt: '2026-10-05T09:00:00Z',
@@ -131,7 +132,7 @@ describe.skipIf(!databaseUrl)('unset Stock end to end (real Postgres, in-memory 
     expect(await ctx.db.reservation.findFirstOrThrow({ where: { organizationId: org, productId: products['FAKE-SKU-3'] } })).toMatchObject({
       status: 'consumed',
     })
-    expect(await ctx.db.stock.count({ where: { organizationId: org, productId: products['FAKE-SKU-3'] } })).toBe(0)
+    expect(await getProduct(ctx, org, products['FAKE-SKU-3']!)).toMatchObject({ stockSet: false, stock: -1, available: -1 })
     expect(pushedTo('fake-offer-3')).toEqual([])
     expect(fake.statusUpdates.filter((update) => update.orderExternalId === 'poster-order').map((update) => update.phase)).toEqual(['shipped'])
   })

@@ -21,6 +21,8 @@ describe.skipIf(!databaseUrl)('products', () => {
 
     const product = await ctx.db.product.findFirstOrThrow({ where: { id: productId } })
     expect(product.sku).toBe('MUG-1')
+    // Entered in the form, so the Stock is set and pushed from the start (#137).
+    expect(product.stockSetAt).not.toBeNull()
     const stock = await ctx.db.stock.findMany({ where: { productId }, include: { warehouse: true } })
     expect(stock).toHaveLength(1)
     expect(stock[0]).toMatchObject({ units: 7, organizationId: org, warehouse: { code: 'default', organizationId: org } })
@@ -102,7 +104,8 @@ describe.skipIf(!databaseUrl)('products', () => {
       ['good', 'sku', 0, 1],
       ['twin', 'sku', 0, 1],
     ])
-    // No Stock row: the Stock is unset until someone saves it, so no stock push is requested (#137).
+    // Unset Stock until someone saves it, so no stock push is requested (#137); no Stock row either (none is 0).
+    expect(product.stockSetAt).toBeNull()
     expect(await ctx.db.stock.count({ where: { organizationId: org, productId: product.id } })).toBe(0)
     expect((await getAvailability(ctx.db, org, [product.id])).get(product.id)).toEqual({ stock: 0, reserved: 0, available: 0 })
     expect(ctx.queue.enqueued.map((job) => job.name)).toEqual(['price.push'])

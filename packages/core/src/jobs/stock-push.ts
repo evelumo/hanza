@@ -3,7 +3,6 @@ import { decideStockPush, OFFER_ENDED_CODE } from '../catalog/offer-push'
 import { listOffersAwaitingStockPush, recordStockPushOutcomes, type StockPushOutcome } from '../catalog/offers'
 import { finishSyncRun, recordSkippedSyncRun } from '../connections/sync-state'
 import { defineJob } from '../jobs'
-import { productsWithStock } from '../stock/availability'
 import { getChannelAvailability } from '../stock/channel-available'
 import { withSyncRun } from '../sync/begin-run'
 import { parseStockPushResults } from '../sync/pull-result'
@@ -49,16 +48,12 @@ export const stockPushJob = defineJob({
           lastBatchFull = false
           break
         }
-        const productIds = offers.map((offer) => offer.productId)
-        const [channelAvailability, withStock] = await Promise.all([
-          getChannelAvailability(ctx.db, organizationId, connectionId, productIds),
-          productsWithStock(ctx.db, organizationId, productIds),
-        ])
+        const channelAvailability = await getChannelAvailability(ctx.db, organizationId, connectionId, offers.map((offer) => offer.productId))
         const outcomes: StockPushOutcome[] = []
         const toPush: Array<{ offerId: string; seq: number; wasEnded: boolean; level: StockLevel }> = []
         for (const offer of offers) {
           // Null for unset Stock: the Offer is left out until someone saves its Product's Stock (#137).
-          const available = withStock.has(offer.productId) ? (channelAvailability.get(offer.productId) ?? 0) : null
+          const available = offer.stockSet ? (channelAvailability.get(offer.productId) ?? 0) : null
           const decision = decideStockPush(available, offer.publication, reopensSoldOutOffers)
           if (decision === 'push' && available !== null) {
             toPush.push({

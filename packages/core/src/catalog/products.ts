@@ -7,7 +7,7 @@ import { rematchAfterCommit } from '../orders/rematch'
 import { describeOfferPrice, offerPriceColumns, type OfferPriceView } from '../prices/offer-price'
 import { moneyFromColumns } from '../prices/price'
 import { requestPricePushAfterCommit } from '../prices/push'
-import { getAvailability, getWarehouseAvailability, productsWithStock, type Availability } from '../stock/availability'
+import { getAvailability, getWarehouseAvailability, type Availability } from '../stock/availability'
 import { requestStockPushAfterCommit } from '../stock/push'
 import { DEFAULT_WAREHOUSE_CODE, ensureDefaultWarehouse } from '../stock/warehouse'
 import { TX_OPTIONS } from '../transaction'
@@ -38,7 +38,7 @@ export interface ProductRow {
 
 export interface ProductDetail extends ProductRow {
   basePrice: Money | null
-  /** False while the Product has unset Stock: no Stock row in any Warehouse, nothing pushed to its Offers (#137). */
+  /** False while the Product has unset Stock (`stockSetAt` null): nothing is pushed to its Offers (#137). */
   stockSet: boolean
   offers: Array<
     {
@@ -87,7 +87,8 @@ export async function createProduct(
   const { productId, connectionIds } = await ctx.db.$transaction(async (tx) => {
     let product: { id: string }
     try {
-      product = await tx.product.create({ data: { organizationId, sku, name: input.name }, select: { id: true } })
+      // The form asks for the initial Stock, so the Product's Stock is set from the start.
+      product = await tx.product.create({ data: { organizationId, sku, name: input.name, stockSetAt: new Date() }, select: { id: true } })
     } catch (error) {
       if (isUniqueViolation(error)) throw new DomainError('sku_taken')
       throw error
@@ -99,7 +100,7 @@ export async function createProduct(
       subject: { type: 'product', id: product.id },
       payload: { sku, origin: 'manual', actor },
     })
-    const linked = await autoLinkOffersBySku(tx, organizationId, { id: product.id, sku }, actor, { stockSet: true })
+    const linked = await autoLinkOffersBySku(tx, organizationId, { id: product.id, sku }, actor)
     return { productId: product.id, connectionIds: linked.connectionIds }
   }, TX_OPTIONS)
 
@@ -190,6 +191,7 @@ export async function getProduct(ctx: Context, organizationId: string, productId
       family: familySelect,
       basePriceAmount: true,
       basePriceCurrency: true,
+      stockSetAt: true,
       offers: {
         where: { organizationId },
         orderBy: { id: 'asc' },
@@ -215,9 +217,8 @@ export async function getProduct(ctx: Context, organizationId: string, productId
     orderBy: [{ priority: 'asc' }, { id: 'asc' }],
     select: { id: true, name: true, code: true },
   })
-  const [availability, withStock, byWarehouse, reservations] = await Promise.all([
+  const [availability, byWarehouse, reservations] = await Promise.all([
     getAvailability(ctx.db, organizationId, [product.id]),
-    productsWithStock(ctx.db, organizationId, [product.id]),
     getWarehouseAvailability(ctx.db, organizationId, product.id, warehouses.map((warehouse) => warehouse.id)),
     ctx.db.reservation.findMany({
       where: { organizationId, productId: product.id, status: 'open' },
@@ -230,7 +231,7 @@ export async function getProduct(ctx: Context, organizationId: string, productId
       },
     }),
   ])
-  const stockSet = withStock.has(product.id)
+  const stockSet = product.stockSetAt !== null
   return {
     id: product.id,
     sku: product.sku,
@@ -272,9 +273,9 @@ export async function getProduct(ctx: Context, organizationId: string, productId
  * The Channel price is never copied into the base price: auto-linking would push one Channel's price to every other
  * Channel selling the SKU without anyone having set it (ADR 0011).
  *
- * The Products get no Stock row: their Stock is unset until someone saves it, so the linked Offers are not marked
- * for a stock push and no push is requested. Telling the Channels 0 for goods Hanza never counted would end every
- * such Offer on most marketplaces (#137). Saving the Stock marks them.
+ * The Products have unset Stock (`stockSetAt` null) and no Stock row (none is 0 anyway): the linked Offers are not
+ * marked for a stock push and no push is requested, and the push leaves them out until someone saves the Stock.
+ * Telling the Channels 0 for goods Hanza never counted would end every such Offer on most marketplaces (#137).
  */
 export async function createProductsFromOffers(
   ctx: Context,
@@ -356,7 +357,7 @@ export async function createProductsFromOffers(
           payload: { productId, linkedBy: 'sku', actor },
         })
       }
-      const others = await autoLinkOffersBySku(tx, organizationId, { id: productId, sku: item.sku }, actor, { stockSet: false })
+      const others = await autoLinkOffersBySku(tx, organizationId, { id: productId, sku: item.sku }, actor)
       for (const connectionId of others.connectionIds) connectionIds.add(connectionId)
     }
     return { created, skipped, connectionIds: [...connectionIds] }

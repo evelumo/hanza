@@ -8,7 +8,6 @@ import { updateChannelStockRules } from '../connections/stock-rules'
 import { failSyncRun } from '../connections/sync-state'
 import { importOrder } from '../orders/import'
 import { setStock } from '../stock/set-stock'
-import { ensureDefaultWarehouse } from '../stock/warehouse'
 import { createTestOrganization } from '../testing/context'
 import { databaseUrl, useTestContext } from '../testing/db-test'
 import { buildOrder, orderFeedCaughtUp, orderLine, uniqueSku, user } from '../testing/fixtures'
@@ -184,12 +183,10 @@ describe.skipIf(!databaseUrl)('stock.push', () => {
     const { ctx, organizationId, connectionId } = await setup()
     const prefix = uniqueSku('BULK')
     const products = await ctx.db.product.createManyAndReturn({
-      data: Array.from({ length: 1_050 }, (_, i) => ({ organizationId, sku: `${prefix}-${i}`, name: `P${i}` })),
+      // Stock set: a Product whose Stock nobody saved is never pushed (#137).
+      data: Array.from({ length: 1_050 }, (_, i) => ({ organizationId, sku: `${prefix}-${i}`, name: `P${i}`, stockSetAt: new Date() })),
       select: { id: true, sku: true },
     })
-    // Stock rows of their own: a Product without one has unset Stock and is never pushed (#137).
-    const warehouseId = await ensureDefaultWarehouse(ctx.db, organizationId)
-    await ctx.db.stock.createMany({ data: products.map((product) => ({ organizationId, productId: product.id, warehouseId, units: 0 })) })
     await ctx.db.offer.createMany({
       data: products.map((product) => ({
         organizationId,
@@ -232,14 +229,16 @@ describe.skipIf(!databaseUrl)('stock.push', () => {
     clearQueue(ctx)
     const { created } = await createProductsFromOffers(ctx, organizationId, [(await offer('offer-u')).id, (await offer('offer-z')).id], user)
     const [productId, otherId] = created as [string, string]
-    // Nothing to send: no Stock row, the Offers are not marked and no push is requested.
-    expect(await ctx.db.stock.count({ where: { organizationId, productId: { in: created } } })).toBe(0)
+    // Nothing to send: Stock unset, the Offers are not marked and no push is requested.
+    expect(await ctx.db.product.count({ where: { id: { in: created }, stockSetAt: null } })).toBe(2)
     expect(await offer('offer-u')).toMatchObject({ productId, stockPushSeq: 0, stockPushedSeq: 0 })
     expect(ctx.queue.enqueued.filter((job) => job.name === 'stock.push')).toEqual([])
 
-    // An Order reserves against the unset Stock (a Shortage) and marks the Offer; the push still leaves it out.
+    // An Order reserves against the unset Stock (a Shortage; its Stock rows at 0 set nothing) and marks the Offer;
+    // the push still leaves it out.
     await importOrder(ctx, organizationId, connectionId, buildOrder({ lines: [orderLine('l1', { sku, quantity: 2 })] }))
     expect((await offer('offer-u')).stockPushSeq).toBe(1)
+    expect(await ctx.db.stock.count({ where: { organizationId, productId } })).toBeGreaterThan(0)
     pushes.length = 0
     await stockPushJob.handler(ctx, { organizationId, connectionId }, run)
     expect(pushes).toEqual([])

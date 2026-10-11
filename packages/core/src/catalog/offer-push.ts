@@ -32,7 +32,7 @@ export type StockPushDecision = 'push' | 'skip' | 'reject'
  * ended because it sold out, through a connector that reopens such Offers; any other ended Offer is rejected
  * without a call. Inactive and unknown Offers are pushed like active ones.
  *
- * `available` is null when the Offer's Product has unset Stock (no Stock row, #137): Hanza does not know the number
+ * `available` is null when the Offer's Product has unset Stock (`stockSetAt` null, #137): Hanza does not know the number
  * yet, so the Offer is left out (skip) instead of being told 0, which would end it on most marketplaces.
  */
 export function decideStockPush(
@@ -144,7 +144,7 @@ export const offerStockColumns = {
 } as const
 
 /**
- * `stockSet`: whether the Offer's Product has Stock (`productsWithStock`). Unset Stock comes before every push state:
+ * `stockSet`: whether the Offer's Product has its Stock set (`Product.stockSetAt`). Unset Stock comes before every push state:
  * whatever is waiting or was refused, nothing is sent until the Stock is saved.
  */
 export function describeOfferStock(
