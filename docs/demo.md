@@ -16,7 +16,7 @@ The seed contains **five Offers and four Orders**. One Order includes an Unmatch
 
 Open **Offers** in the sidebar (the page is titled **Offers that need attention**; the sidebar shows how many there are). In **Without a product**, select the seeded Offers with SKUs and choose **Create products from selected**. Offers can also be linked to existing Products; imports link by SKU where possible.
 
-The new Products have no Stock yet (unset Stock), so Hanza sends their Offers no number at all until you save it: they move to **Stock not set** on the same page. Telling a Channel 0 for goods Hanza never counted would end the Offers on marketplaces such as Allegro ([ADR 0023](adr/0023-unset-stock-is-no-stock-row.md)).
+Nobody has counted the new Products' Stock yet (unset Stock), so Hanza sends their Offers no number at all until you save it: they move to **Stock not set** on the same page. Telling a Channel 0 for goods Hanza never counted would end the Offers on marketplaces such as Allegro ([ADR 0023](adr/0023-unset-stock-is-recorded-on-the-product.md)).
 
 The Ceramic mug has SKU `FAKE-SKU-1` and a price of `39.99 PLN`. The Sticker set has no SKU, so create its Product separately with **Products → Add product**, then link the Offer using that SKU. The Linen tote bag has no reported price; Hanza does not know that Offer's currency and will not push a price to it.
 

@@ -35,7 +35,7 @@ How many units of a Product physically sit in a Warehouse. Hanza is the only sou
 _Avoid_: Inventory, quantity, on-hand
 
 **Unset Stock**:
-A Product's Stock before anyone saved it, for example a Product created from an Offer: it has no Stock in any Warehouse. Orders reserve against it as 0 (their lines are Shortages) and shipping takes nothing off it, but no Channel is told any number for the Product's Offers until someone saves its Stock, 0 included (ADR 0023).
+A Product whose Stock nobody has saved yet, in any Warehouse, for example a Product created from an Offer. Orders reserve against it and shipping takes from it as from Stock 0, but no Channel is told any number for the Product's Offers until someone saves its Stock, 0 included (ADR 0023).
 _Avoid_: Zero stock, empty stock, missing stock
 
 **Warehouse**:
