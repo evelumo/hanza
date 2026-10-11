@@ -60,7 +60,9 @@ export interface Capabilities<TConfig, TCredentials, TApp = unknown> {
    * - Then follow the journal from the start's position, so nothing placed meanwhile is lost. In the journal a full
    *   Order is sent **only for an Order placed after the boundary**; a change to any other Order goes as an Order
    *   update. So an Order closed before the Connection is never imported (its Stock was counted on the shelf already):
-   *   its later journal entries reach the core as updates, which it ignores.
+   *   its later journal entries reach the core as updates, which it ignores. A feed built on Order snapshots instead
+   *   of a journal (WooCommerce) also sends an Order placed before the boundary in full while it is still open, and as
+   *   an update once closed, since a snapshot tells open from closed (ADR 0021, "Feeds built on snapshots", #123).
    * The cursor is opaque, so a journal connector encodes all of this in it, e.g.
    * `l1:<journal position>:<boundary>:<last listed key>` while listing, then `e1:<journal position>:<boundary>`.
    * An Order returned twice is harmless: the import is idempotent.
