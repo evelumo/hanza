@@ -103,7 +103,7 @@ describe.skipIf(!databaseUrl)('WooCommerce under the sync engine (real Postgres,
     }
     // Answered at the global `fetch`, where the engine's own one ends (its timeout, its request budget and its count
     // of a run's requests), instead of replacing `ctx.fetch`: the engine must see that a status push reached the shop,
-    // because it then sends the Order's stock again (ADR 0023). The cassette and the sandbox took theirs before this.
+    // because it then sends the Order's stock again (ADR 0026). The cassette and the sandbox took theirs before this.
     vi.stubGlobal('fetch', spy)
     ctx = createTestContext({ databaseUrl: databaseUrl!, connectors: [woocommerceConnector] })
     org = await createTestOrganization(ctx.db)
@@ -269,7 +269,7 @@ describe.skipIf(!databaseUrl)('WooCommerce under the sync engine (real Postgres,
   })
 
   it('3. imports the Orders open when the Connection started, and only then tells the shop its Stock', async () => {
-    // Nothing was written to the shop so far: the Offers are linked, and their stock waits for the Orders (ADR 0023).
+    // Nothing was written to the shop so far: the Offers are linked, and their stock waits for the Orders (#125).
     expect(writesSince(0)).toEqual([])
     const mark = sent.length
     await drain()
@@ -355,8 +355,8 @@ describe.skipIf(!databaseUrl)('WooCommerce under the sync engine (real Postgres,
 
     const requests = requestsSince(mark).map((request) => request.replace(/&_fields=id,status,.*$/, ''))
     expect(requests).toEqual([
-      // The stock push that came with the sync ran first and sent nothing: the Order feed was not read yet, and the
-      // shop's own numbers, which already count its open orders, stay until Hanza knows those orders too.
+      // No stock push before the Order feed is read: the shop's own numbers, which already count its open orders, stay
+      // until Hanza knows those orders too.
       'GET orders?status=any&orderby=id&order=desc&per_page=1&_fields=id',
       'GET orders?status=trash&orderby=id&order=desc&per_page=1&_fields=id',
       'GET orders?status=pending,on-hold,processing&orderby=date&per_page=100&order=asc',
@@ -487,7 +487,7 @@ describe.skipIf(!databaseUrl)('WooCommerce under the sync engine (real Postgres,
       // The shop is told the new numbers, and never what it reported itself (a Channel fact is not pushed back).
       // The backpack (16) is sent too, with the number it had: Hanza took the unit of the unpaid Order 33 off it
       // when the Order arrived, and WooCommerce took it off its own stock again when the order was paid (3 became 2).
-      // The `paid` fact moves no Stock in Hanza, but it marks the Order's Offers, so the shop is back at 3 (ADR 0023).
+      // The `paid` fact moves no Stock in Hanza, but it marks the Order's Offers, so the shop is back at 3 (ADR 0026).
       expect(writesSince(mark)).toEqual([['POST products/batch', { update: [stockItem(10, 13), stockItem(11, 25), stockItem(16, 3)] }]])
       expect((await getChannelAvailability(ctx.db, org, connectionId, [product('WOO-BAG-1')])).get(product('WOO-BAG-1'))).toBe(3)
       await expectShopStock(16, 3)
@@ -603,7 +603,7 @@ describe.skipIf(!databaseUrl)('WooCommerce under the sync engine (real Postgres,
       // The freed mug is pushed (45) before the shop is told of the cancellation, since the two jobs run in the order
       // they were enqueued in, and WooCommerce then puts the unit of a cancelled order back into its own stock on top
       // of that number: 46, one mug that does not exist. The status push that reached the shop marks the Order's
-      // Offers, so 45 is sent again and stays (ADR 0023).
+      // Offers, so 45 is sent again and stays (ADR 0026).
       expect(writesSince(mark)).toEqual([
         ['POST products/batch', { update: [stockItem(10, 45)] }],
         ['PUT orders/57?_fields=id,status', { status: 'cancelled' }],

@@ -18,6 +18,10 @@ describe('stockPushState', () => {
     expect(stockPushState({ stockStatus: 'rejected', stockRejection: { code: OFFER_ENDED_CODE, at } })).toEqual({ kind: 'notSent', tone: 'attention' })
   })
 
+  it('asks for a person while the Product has unset Stock', () => {
+    expect(stockPushState({ stockStatus: 'unset', stockRejection: null })).toEqual({ kind: 'notSent', tone: 'attention' })
+  })
+
   it('is quiet when nothing is sent and nothing is wrong', () => {
     expect(stockPushState({ stockStatus: 'not_linked', stockRejection: null })).toEqual({ kind: 'notSent', tone: 'neutral' })
     expect(stockPushState({ stockStatus: 'not_sent', stockRejection: null })).toEqual({ kind: 'notSent', tone: 'neutral' })

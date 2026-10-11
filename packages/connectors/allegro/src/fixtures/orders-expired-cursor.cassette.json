@@ -1,0 +1,103 @@
+{
+  "version": 1,
+  "interactions": [
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/order/events?from=00000000-0000-0000-0000-000000000000&limit=100",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 422,
+        "headers": {
+          "content-type": "application/vnd.allegro.public.v1+json",
+          "date": "Sat, 10 Oct 2026 12:00:00 GMT"
+        },
+        "body": {
+          "json": {
+            "errors": [
+              {
+                "code": "VALIDATION_ERROR",
+                "message": "must be greater than or equal to 0",
+                "details": null,
+                "path": "getOrderEvents.from",
+                "userMessage": "must be greater than or equal to 0",
+                "metadata": {}
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/order/events?from=9223372036854775807&limit=100",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/vnd.allegro.public.v1+json",
+          "date": "Sat, 10 Oct 2026 12:00:00 GMT"
+        },
+        "body": {
+          "json": {
+            "events": []
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/order/events?from=1791663800016000&limit=100",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/vnd.allegro.public.v1+json",
+          "date": "Sat, 10 Oct 2026 12:00:00 GMT"
+        },
+        "body": {
+          "json": {
+            "events": []
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/order/events?from=1791663800016000&limit=100",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json;charset=UTF-8",
+          "date": "Sat, 10 Oct 2026 12:00:00 GMT"
+        },
+        "body": {
+          "json": {
+            "error": "invalid_token",
+            "error_description": "Invalid access token"
+          }
+        }
+      }
+    }
+  ]
+}

@@ -9,7 +9,11 @@ export const OPEN_STATUSES = ['pending', 'on-hold', 'processing'] as const
 /** The Buyer does not get the goods: reported as a `cancelled` Channel fact. */
 export const CANCELLED_STATUSES: readonly string[] = ['cancelled', 'refunded', 'failed', 'trash']
 
-/** Nothing is left to do for the seller, so Hanza never changes such an order. */
+/**
+ * Nothing is left to do for the seller, so Hanza never changes such an order. `failed` too: the feed reports it as a
+ * `cancelled` fact, and taking it up as `processing` would make the feed report a payment that never came
+ * (`PAID_STATUSES`). A Buyer who pays after all moves it on in the shop, and the feed brings the `paid` fact.
+ */
 const CLOSED_STATUSES: readonly string[] = ['completed', ...CANCELLED_STATUSES]
 
 /** A checkout that was opened and never placed: not an order yet. */
@@ -40,7 +44,7 @@ export function targetStatus(current: string, phase: OrderPhase): WooTargetStatu
     case 'new':
       return null
     case 'processing':
-      return current === 'pending' || current === 'on-hold' || current === 'failed' ? 'processing' : null
+      return current === 'pending' || current === 'on-hold' ? 'processing' : null
     case 'shipped':
       return CLOSED_STATUSES.includes(current) ? null : 'completed'
     case 'cancelled':

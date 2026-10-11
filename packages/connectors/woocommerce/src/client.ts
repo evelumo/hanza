@@ -52,7 +52,7 @@ export const READ_ONLY_KEY_MESSAGE = 'The WooCommerce API key is read-only: crea
 /**
  * `<storeUrl>/wp-json/wc/v3/<path>`, for a shop at the root of its host or in a subdirectory. Built from the parsed
  * address, never by adding to its text: a `?` or `#` at its end would turn the API path into a query or a fragment,
- * and the request, with the key, would go to the shop's front page. `configSchema` refuses such an address; this
+ * and the request, with the key, would go to the shop's front page. `woocommerceConfigSchema` refuses such an address; this
  * holds for one stored before it did.
  */
 export function apiUrl(storeUrl: string, path: string, query: Query = {}): URL {

@@ -29,7 +29,7 @@ export interface NavPage {
   label: MessageKey
 }
 
-/** `orders`: Orders that need attention. `offers`: Offers without a Product. */
+/** `orders`: Orders that need attention. `offers`: Offers without a Product or whose Product has unset Stock. */
 export type NavCount = 'orders' | 'offers'
 
 /** The pages of Settings: its sub-navigation, the breadcrumbs and the command palette all list these. */

@@ -3,7 +3,7 @@ import { pullOffers } from './capabilities/offers-pull'
 import { pullOrders } from './capabilities/orders-pull'
 import { updateOrderStatus } from './capabilities/orders-update-status'
 import { pushStock } from './capabilities/stock-push'
-import { configSchema, credentialsSchema } from './settings'
+import { woocommerceConfigSchema, woocommerceCredentialsSchema } from './settings'
 
 export interface WooCommerceConnectorOptions {
   /** Items asked for per request, 1 to 100 (WooCommerce's maximum, and the default). Tests use a small one. */
@@ -12,7 +12,7 @@ export interface WooCommerceConnectorOptions {
   holdBackSeconds?: number
 }
 
-export type WooCommerceConnector = ConnectorDefinition<typeof configSchema, typeof credentialsSchema>
+export type WooCommerceConnector = ConnectorDefinition<typeof woocommerceConfigSchema, typeof woocommerceCredentialsSchema>
 
 export const MAX_PAGE_SIZE = 100
 export const DEFAULT_HOLD_BACK_SECONDS = 20
@@ -31,8 +31,8 @@ export function createWooCommerceConnector(options: WooCommerceConnectorOptions 
     name: 'WooCommerce',
     kind: 'shop',
     auth: { type: 'apiKey' },
-    configSchema,
-    credentialsSchema,
+    configSchema: woocommerceConfigSchema,
+    credentialsSchema: woocommerceCredentialsSchema,
     // WooCommerce has no rate limit of its own, and a declared rate below the connector's natural pace would
     // refuse requests in the middle of a stock push over many variable products, which then starts over.
     rateLimits: { connection: { concurrency: 2 } },

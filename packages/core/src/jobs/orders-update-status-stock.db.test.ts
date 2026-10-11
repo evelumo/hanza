@@ -10,11 +10,11 @@ import { importOrder } from '../orders/import'
 import { getChannelAvailability } from '../stock/channel-available'
 import { createTestOrganization } from '../testing/context'
 import { databaseUrl, useTestContext } from '../testing/db-test'
-import { buildOrder, orderLine, readOrderFeed, uniqueSku, user } from '../testing/fixtures'
+import { buildOrder, orderFeedCaughtUp, orderLine, uniqueSku, user } from '../testing/fixtures'
 import { ordersUpdateStatusJob } from './orders-update-status'
 import { stockPushJob } from './stock-push'
 
-// A status push that reached the Channel is followed by a stock push of the Order's Offers there (ADR 0023).
+// A status push that reached the Channel is followed by a stock push of the Order's Offers there (ADR 0026).
 
 // A shop that keeps its own stock count, as WooCommerce does: it takes the number it is told, and puts the units
 // of an order back itself when that order is cancelled.
@@ -86,7 +86,7 @@ describe.skipIf(!databaseUrl)('orders.updateStatus sends Stock again', () => {
   async function connect(organizationId: string, name: string) {
     const ctx = context()
     const { connectionId } = await createConnection(ctx, organizationId, { connectorId: 'own-count-shop', name, config: {}, credentials: {} }, user)
-    await readOrderFeed(ctx, organizationId, connectionId)
+    await orderFeedCaughtUp(ctx, organizationId, connectionId)
     return connectionId
   }
 

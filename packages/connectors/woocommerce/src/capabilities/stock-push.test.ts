@@ -6,7 +6,7 @@ import { READ_ONLY_KEY_MESSAGE, USER_AGENT } from '../client'
 import { withScenario } from '../testing/offer-scenario'
 import { replayConfig, replayCredentials } from '../testing/recording'
 import { rawSimpleProduct, rawVariableProduct, rawVariation } from '../testing/samples'
-import { MAX_BATCH_ITEMS, MAX_READ_ITEMS, pushStock, REJECTION } from './stock-push'
+import { MAX_BATCH_ITEMS, MAX_READ_ITEMS, NOT_CONFIRMED_MESSAGE, pushStock, REJECTION, STOCK_NOT_MANAGED_MESSAGE } from './stock-push'
 
 // The scenarios below replay cassettes recorded from the sandbox shop (sandbox/README.md). To record them again:
 //
@@ -135,12 +135,18 @@ describe('stock.push against the recorded shop', () => {
       expect(scenario.requests).toEqual([...call, ...call, ...call])
     }))
 
-  it('reports every Offer rejected when stock management is off for the whole shop: a 200, and the numbers are not in use', () =>
+  it('fails for good when stock management is off for the whole shop: a 200 for every item, and the numbers are not in use', () =>
     withScenario(
       'stock-not-managed',
       async (scenario) => {
         // The product answers with the number it had, the variation with the 12 it stored; both `manage_stock: false`.
-        expect(await push(scenario.context(), [level('10', 12), level('19:20', 12)])).toEqual([rejected('10', 'stock_not_managed'), rejected('19:20', 'stock_not_managed')])
+        await expect(push(scenario.context(), [level('10', 12), level('19:20', 12)])).rejects.toMatchObject({
+          name: 'PermanentError',
+          kind: 'permanent',
+          message: STOCK_NOT_MANAGED_MESSAGE,
+        })
+        // Both writes were sent: the setting shows only in the answers.
+        expect(scenario.requests).toEqual([`GET products?include=10${TYPES}`, 'POST products/batch', 'POST products/19/variations/batch'])
       },
       {
         prepare: (sandbox) => sandbox.put('settings/products/woocommerce_manage_stock', { value: 'no' }),
@@ -445,9 +451,28 @@ describe('stock.push results', () => {
     ['a variation still on its parent\'s stock', '19:20', { manage_stock: 'parent', stock_quantity: 5 }],
     ['another number than the one sent', '10', { manage_stock: true, stock_quantity: 4 }],
     ['an answer without the stock fields', '10', { manage_stock: undefined, stock_quantity: undefined }],
-  ])('reports stock_not_managed for %s', async (_, offerExternalId, overrides) => {
-    const { ctx } = stubShop(({ path, body }) => [{ ...echo(path, body.update[0]!), ...overrides }])
-    expect(await pushStock(ctx, [level(offerExternalId, 5)])).toEqual([rejected(offerExternalId, 'stock_not_managed')])
+  ])('reports stock_not_managed for %s next to an Offer that was applied', async (_, offerExternalId, overrides) => {
+    const other = offerExternalId === '10' ? '11' : '19:21'
+    const otherId = Number(other.split(':').at(-1))
+    const { ctx } = stubShop(({ path, body }) => body.update.map((item) => (item.id === otherId ? echo(path, item) : { ...echo(path, item), ...overrides })))
+    expect(await pushStock(ctx, [level(offerExternalId, 5), level(other, 5)])).toEqual([rejected(offerExternalId, 'stock_not_managed')])
+  })
+
+  it('fails the whole call as permanent when every item the shop took came back stock_not_managed', async () => {
+    const { ctx } = stubShop(({ path, body }) => body.update.map((item) => ({ ...echo(path, item), manage_stock: false })))
+    await expect(pushStock(ctx, [level('10', 5), level('19:20', 5)])).rejects.toMatchObject({ kind: 'permanent', message: STOCK_NOT_MANAGED_MESSAGE })
+  })
+
+  it('also when the shop refused the other items for reasons of their own: none was applied', async () => {
+    const { ctx } = stubShop(({ path, body }) =>
+      body.update.map((item) => (item.id === 11 ? refusal(11, 'woocommerce_rest_product_invalid_id', 400) : { ...echo(path, item), manage_stock: false })),
+    )
+    await expect(pushStock(ctx, [level('10', 5), level('11', 5), level('not-an-id', 5)])).rejects.toMatchObject({ kind: 'permanent', message: STOCK_NOT_MANAGED_MESSAGE })
+  })
+
+  it('does not fail a call in which the shop refused every item for other reasons', async () => {
+    const { ctx } = stubShop(({ body }) => body.update.map((item) => refusal(item.id, 'woocommerce_rest_product_invalid_id', 400)))
+    expect(await pushStock(ctx, [level('10', 5)])).toEqual([rejected('10', 'woocommerce_rest_product_invalid_id')])
   })
 
   // The second line of defence: the read said "simple", and the product was changed before the write arrived.
@@ -473,14 +498,18 @@ describe('stock.push results', () => {
     expect(await pushStock(ctx, [level('10', 5), level('19:20', 0)])).toEqual([])
   })
 
-  it('reports not_confirmed for an item the answer does not mention: left out, it would count as applied', async () => {
+  it('fails as transient when the answer does not mention an item: left out, it would count as applied, and it may have been', async () => {
     const { ctx } = stubShop(({ path, body }) => (path === 'products/batch' ? [echo(path, body.update[1]!)] : []))
-    expect(await pushStock(ctx, [level('10', 5), level('11', 5), level('19:20', 5)])).toEqual([rejected('10', 'not_confirmed'), rejected('19:20', 'not_confirmed')])
+    await expect(pushStock(ctx, [level('10', 5), level('11', 5), level('19:20', 5)])).rejects.toMatchObject({
+      name: 'TransientError',
+      kind: 'transient',
+      message: NOT_CONFIRMED_MESSAGE,
+    })
   })
 
-  it('reports not_confirmed for every item of an answer without updates', async () => {
+  it('fails as transient for an answer without updates', async () => {
     const { ctx } = stubShop(() => json({}))
-    expect(await pushStock(ctx, [level('10', 5)])).toEqual([rejected('10', 'not_confirmed')])
+    await expect(pushStock(ctx, [level('10', 5)])).rejects.toMatchObject({ kind: 'transient', message: NOT_CONFIRMED_MESSAGE })
   })
 
   it('matches answers by id, in whatever order they come', async () => {

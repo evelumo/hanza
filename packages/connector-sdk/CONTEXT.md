@@ -34,6 +34,10 @@ _Avoid_: Out of stock, empty
 How many units of a Product physically sit in a Warehouse. Hanza is the only source of truth for Stock; every Channel only receives it.
 _Avoid_: Inventory, quantity, on-hand
 
+**Unset Stock**:
+A Product whose Stock nobody has saved yet, in any Warehouse, for example a Product created from an Offer. Orders reserve against it and shipping takes from it as from Stock 0, but no Channel is told any number for the Product's Offers until someone saves its Stock, 0 included (ADR 0023).
+_Avoid_: Zero stock, empty stock, missing stock
+
 **Warehouse**:
 A place where Stock is kept. Every organization has at least one, the default Warehouse, which gets a new Product's initial Stock and is always active. An inactive Warehouse holds nothing and counts for no Channel. Warehouses have a priority: lower is used first when a Reservation is placed.
 _Avoid_: Location, storage, inventory
@@ -51,7 +55,7 @@ Stock minus open Reservations, per Warehouse (for a Product's total, the sum ove
 _Avoid_: Free stock, sellable quantity
 
 **Channel Available**:
-The number Hanza tells one Channel for a Product: what one of its Channel Warehouses can cover (the largest single Available among them, and never more than their total), minus its Safety buffer, at most its Channel limit. Never below zero. A line is never split, so any line up to this number fits in one Warehouse. Orders reserve against Available, not against this number (ADR 0013, ADR 0017). It is sent when it changes, and again whenever the Channel may have moved its own count of an Order's Offers: after Hanza told it that Order's status, and when it reports a Channel fact Hanza had not recorded. A Channel is told nothing before Hanza has read the Orders open there (ADR 0023).
+The number Hanza tells one Channel for a Product: what one of its Channel Warehouses can cover (the largest single Available among them, and never more than their total), minus its Safety buffer, at most its Channel limit. Never below zero. A line is never split, so any line up to this number fits in one Warehouse. Orders reserve against Available, not against this number (ADR 0013, ADR 0017). It is sent when it changes, and again whenever the Channel may have moved its own count of an Order's Offers: after Hanza told it that Order's status, and when it reports a Channel fact Hanza had not recorded (ADR 0026). A Channel is told nothing before Hanza has read the Orders open there (#125).
 _Avoid_: Channel stock, advertised stock, allocation
 
 **Safety buffer**:

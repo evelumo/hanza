@@ -24,6 +24,7 @@ async function writeState(
     lastResult?: Prisma.InputJsonObject
     lastErrorKind?: SyncErrorKind | null
     lastError?: string | null
+    caughtUpAt?: Date | null
   },
 ): Promise<{ cursor: string | null }> {
   const row: { cursor: string | null } | null = await db.syncState.upsert({
@@ -94,11 +95,12 @@ export async function saveSyncCursor(
  * The Channel no longer has the Order feed's position (`CursorExpiredError`): back to cursor null, which starts again
  * with the Orders open now. Recorded as an Event because Orders opened and closed meanwhile are never imported, so a
  * person can see that a gap may exist. Cursor and Event in one transaction: a retry neither loses nor repeats it.
+ * The feed is no longer caught up, so the stock push is held again until the open Orders are read (#125).
  */
 export async function restartOrderFeed(ctx: Context, organizationId: string, connectionId: string): Promise<void> {
   await ctx.db.$transaction(async (tx) => {
     await requireConnection(tx, organizationId, connectionId)
-    await writeState(tx, organizationId, connectionId, 'orders_pull', { cursor: null })
+    await writeState(tx, organizationId, connectionId, 'orders_pull', { cursor: null, caughtUpAt: null })
     await appendEvent(tx, {
       organizationId,
       type: 'connection.order_feed_restarted',
@@ -108,26 +110,27 @@ export async function restartOrderFeed(ctx: Context, organizationId: string, con
   }, TX_OPTIONS)
 }
 
-/** In the result of an Orders pull that stopped at its page limit: the feed has more to read, and the next run carries on. */
-export const ORDER_FEED_MORE = 'more'
+/**
+ * An Orders pull read the feed to its end (`hasMore` false): every Order open on the Channel when the feed started is
+ * imported, so the stock push may go (#125). True only for the run that marks it first since the Connection was
+ * created or the feed restarted, so exactly one run releases the held push.
+ */
+export async function markOrderFeedCaughtUp(ctx: Context, organizationId: string, connectionId: string): Promise<boolean> {
+  const { count } = await ctx.db.syncState.updateMany({
+    where: { organizationId, connectionId, stream: 'orders_pull', caughtUpAt: null },
+    data: { caughtUpAt: new Date() },
+  })
+  return count > 0
+}
 
 /**
- * Whether the Connection's Channel may be told Stock (ADR 0023). Not before its Order feed has been read to its
- * end: until then Hanza does not know the Orders open there and would send Stock without their Reservations, on
- * top of a number the Channel counted right. Read from what the runs record anyway:
- * - the last successful Orders pull reached the end of the feed (its result has no `more`), or
- * - a stock push reached the Channel before. A Channel that was told numbers stays on them, because they also
- *   carry what other Channels sold: a feed that restarted (ADR 0021) or fell behind by more than one run does not
- *   stop its pushes, nor does a Connection older than this rule whose Orders pull never succeeded.
- * So a Channel never told a number gets none while its Orders pull keeps failing: the Connection shows failing (or
- * waiting for sign-in) with the Orders pull's error, and its Offers show their stock as waiting to be sent.
+ * A run that did nothing on purpose (a stock push held until the Order feed caught up, #125): records only when it
+ * started and finished, so the tick waits a full interval before the next one and the panel shows the stream.
  */
-export async function mayPushStock(ctx: Context, organizationId: string, connectionId: string): Promise<boolean> {
-  const states = await ctx.db.syncState.findMany({
-    where: { organizationId, connectionId, stream: { in: ['orders_pull', 'stock_push'] }, lastSucceededAt: { not: null } },
-    select: { stream: true, lastResult: true },
-  })
-  return states.some((state) => state.stream === 'stock_push' || !((state.lastResult ?? {}) as Record<string, unknown>)[ORDER_FEED_MORE])
+export async function recordSkippedSyncRun(ctx: Context, organizationId: string, connectionId: string, stream: SyncStream): Promise<void> {
+  await requireConnection(ctx.db, organizationId, connectionId)
+  const now = new Date()
+  await writeState(ctx.db, organizationId, connectionId, stream, { lastStartedAt: now, lastFinishedAt: now })
 }
 
 export async function finishSyncRun(

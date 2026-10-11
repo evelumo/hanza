@@ -11,7 +11,7 @@ import { importOrder } from '../orders/import'
 import { applyOrderUpdate } from '../orders/update'
 import { createTestOrganization } from '../testing/context'
 import { databaseUrl, useTestContext } from '../testing/db-test'
-import { buildOrder, createTestConnection, fact, orderLine, testChannel, user } from '../testing/fixtures'
+import { buildOrder, createTestConnection, fact, orderFeedCaughtUp, orderLine, testChannel, user } from '../testing/fixtures'
 import { uniqueApplicationName, untilLockWait, watchLockWaits } from '../testing/lock-waits'
 import { TX_OPTIONS } from '../transaction'
 import { getAvailability } from './availability'
@@ -142,6 +142,7 @@ describe.skipIf(!databaseUrl)('Stock and Reservations under concurrency', () => 
     const ctx = context()
     const org = await createTestOrganization(ctx.db)
     const connections = [await createTestConnection(ctx, org, 'A'), await createTestConnection(ctx, org, 'B')]
+    for (const connectionId of connections) await orderFeedCaughtUp(ctx, org, connectionId)
     const skus = ['MIX-1', 'MIX-2', 'MIX-3', 'MIX-4']
     const productIds: string[] = []
     for (const sku of skus) productIds.push((await createProduct(ctx, org, { sku, name: sku, stock: 6 }, user)).productId)
@@ -200,8 +201,8 @@ describe.skipIf(!databaseUrl)('Stock and Reservations under concurrency', () => 
       (reverse ? [...skus].reverse() : skus).map((sku) => ({ externalId: `offer-${sku}`, sku, name: sku, url: null }))
     for (const connectionId of connections) {
       await upsertOffers(ctx, org, connectionId, offers(false), new Date())
-      // The Order feed counts as read, so the stock pushes below really push (ADR 0023).
-      await finishSyncRun(ctx, org, connectionId, 'orders_pull', {})
+      // The Order feed has caught up, so the stock pushes below really push (#125).
+      await orderFeedCaughtUp(ctx, org, connectionId)
     }
     // Lines in reverse SKU order, each naming its Offer: the marks must still lock Offers in id order.
     const lines = () => [...skus].reverse().map((sku, i) => orderLine(`l${i}`, { offerExternalId: `offer-${sku}`, sku }))

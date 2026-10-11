@@ -11,7 +11,7 @@ import { importOrder } from './import'
 import { applyOrderUpdate } from './update'
 
 // A new Channel fact for an Order Hanza has marks that Order's Offers on its own Connection for a stock push, also
-// when it moved no Stock: the Channel may have changed its own count with what it reports (ADR 0023).
+// when it moved no Stock: the Channel may have changed its own count with what it reports (ADR 0026).
 
 /** How the feed reports facts for an Order Hanza has: the whole Order again, or an Order update. */
 const ways = ['a full Order', 'an Order update'] as const

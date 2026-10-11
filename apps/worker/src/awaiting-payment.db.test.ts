@@ -168,7 +168,7 @@ describe.skipIf(!databaseUrl)('Orders awaiting payment end to end (real Postgres
     expect(await ctx.db.reservation.count({ where: { organizationId: org, orderLine: { orderId: paid.id } } })).toBe(1)
     expect(await available()).toEqual({ stock: 3, reserved: 2, available: 1 })
     // Available did not change, but a Channel may take the units off its own count at payment: the Order's Offer
-    // is told the same number again (ADR 0023).
+    // is told the same number again (ADR 0026).
     expect(fake.stockPushes.slice(pushesBefore).map((levels) => levels.map((level) => [level.offerExternalId, level.available]))).toEqual([
       [['fake-offer-5', 1]],
     ])

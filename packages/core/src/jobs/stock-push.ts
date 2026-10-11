@@ -1,12 +1,13 @@
 import type { StockLevel } from '@hanza/connector-sdk'
 import { decideStockPush, OFFER_ENDED_CODE } from '../catalog/offer-push'
 import { listOffersAwaitingStockPush, recordStockPushOutcomes, type StockPushOutcome } from '../catalog/offers'
-import { finishSyncRun, mayPushStock } from '../connections/sync-state'
+import { finishSyncRun, recordSkippedSyncRun } from '../connections/sync-state'
 import { defineJob } from '../jobs'
 import { getChannelAvailability } from '../stock/channel-available'
 import { withSyncRun } from '../sync/begin-run'
 import { parseStockPushResults } from '../sync/pull-result'
 import { runConnectorCall } from '../sync/run-connector'
+import { isStockPushHeld } from '../sync/stock-push-hold'
 import { coalesceKeys, stockPushRef } from './refs'
 
 const BATCH_SIZE = 100
@@ -17,26 +18,26 @@ const MAX_BATCHES = 10
  * moved since its last push. The Offers are read before the rules and Available, so a change after
  * that read leaves its bump ahead of the sequence marked here.
  *
- * Offers the Channel reports ended follow ADR 0022 (see `decideStockPush`). An Offer the Channel refuses
+ * Offers the Channel reports ended follow ADR 0022 (see `decideStockPush`), and an Offer whose Product has unset Stock
+ * (#137) is left out and counts as handled: saving that Stock marks it again. An Offer the Channel refuses
  * on its own is recorded as rejected and counts as handled; the others of the call count as pushed and the
  * Connection stays healthy. Only a failure of the whole call fails the run.
  *
- * Whoever asked for the push (a link, a Stock edit, a Retry, the tick), a Channel is told nothing before its Order
- * feed has been read to its end (`mayPushStock`, ADR 0023): its Offers stay pending, the Channel keeps its own
- * number, and the Orders pull that reaches the end requests the push.
+ * Held, without opening the Connection, until its Order feed has caught up since it was created or restarted (#125):
+ * the Orders pull that catches up enqueues the push. A held run records only its start and end, so the tick
+ * re-enqueues it at the usual interval and the Offers keep their pending push sequence.
  */
 export const stockPushJob = defineJob({
   ...stockPushRef,
   async handler(ctx, payload, run) {
     const { organizationId, connectionId } = payload
+    if (await isStockPushHeld(ctx, organizationId, connectionId)) {
+      ctx.log.info('stock push held until the Order feed has caught up', { organizationId, connectionId })
+      await recordSkippedSyncRun(ctx, organizationId, connectionId, 'stock_push')
+      return
+    }
     const input = { organizationId, connectionId, stream: 'stock_push', capability: 'stock.push', run } as const
     await withSyncRun(ctx, input, async ({ connector, context, scope }) => {
-      // A connector without an Order feed has nothing to wait for (no Channel is one: `defineConnector` refuses it).
-      if (connector.capabilities['orders.pull'] && !(await mayPushStock(ctx, organizationId, connectionId))) {
-        ctx.log.info('stock push waits: the Order feed has not been read to its end yet', { organizationId, connectionId })
-        await finishSyncRun(ctx, organizationId, connectionId, 'stock_push', {}, { calledChannel: false })
-        return
-      }
       const reopensSoldOutOffers = connector.reopensSoldOutOffers === true
       const totals = { pushed: 0, rejected: 0, skipped: 0 }
       let calledChannel = false
@@ -51,9 +52,10 @@ export const stockPushJob = defineJob({
         const outcomes: StockPushOutcome[] = []
         const toPush: Array<{ offerId: string; seq: number; wasEnded: boolean; level: StockLevel }> = []
         for (const offer of offers) {
-          const available = channelAvailability.get(offer.productId) ?? 0
+          // Null for unset Stock: the Offer is left out until someone saves its Product's Stock (#137).
+          const available = offer.stockSet ? (channelAvailability.get(offer.productId) ?? 0) : null
           const decision = decideStockPush(available, offer.publication, reopensSoldOutOffers)
-          if (decision === 'push') {
+          if (decision === 'push' && available !== null) {
             toPush.push({
               offerId: offer.offerId,
               seq: offer.seq,
