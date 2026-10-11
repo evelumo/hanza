@@ -9,6 +9,9 @@ model Product {
   /// Amount and currency are set together (CHECK constraint in the migration).
   basePriceAmount   Decimal? @db.Decimal(19, 4)
   basePriceCurrency String?  @db.Char(3)
+  /// When someone first saved this Product's Stock, in any Warehouse. Null = unset Stock: nothing is pushed for its
+  /// Offers (issue #137, ADR 0023). Stock rows say nothing about it: a Reservation may create them at 0.
+  stockSetAt      DateTime?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
   /// Optional membership of one Product family; it never changes what the Product is.

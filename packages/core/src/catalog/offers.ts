@@ -31,6 +31,7 @@ export interface OfferRow {
   url: string | null
   productId: string | null
   productSku: string | null
+  productName: string | null
   linkedBy: 'sku' | 'manual' | null
   lastSeenAt: Date
   publication: OfferPublication | null
@@ -215,12 +216,16 @@ export async function upsertOffers(
   }, TX_OPTIONS)
 }
 
-/** Links by hand; automatic linking never touches the Offer again. */
+/**
+ * Links by hand; automatic linking never touches the Offer again. A push is requested only when the Product has
+ * Stock: with unset Stock there is nothing to send (#137). The Offer is marked either way, so Stock saved while
+ * this commits still reaches it (the stock push decides, and the tick's sweep sends what is left waiting).
+ */
 export async function linkOffer(ctx: Context, organizationId: string, offerId: string, productId: string, actor: Actor): Promise<void> {
-  const connectionId = await ctx.db.$transaction(async (tx) => {
+  const { connectionId, stockSet } = await ctx.db.$transaction(async (tx) => {
     const offer = await tx.offer.findFirst({ where: { id: offerId, organizationId }, select: { connectionId: true } })
     if (!offer) throw new DomainError('not_found')
-    const product = await tx.product.findFirst({ where: { id: productId, organizationId }, select: { id: true } })
+    const product = await tx.product.findFirst({ where: { id: productId, organizationId }, select: { stockSetAt: true } })
     if (!product) throw new DomainError('not_found')
     await tx.offer.updateMany({
       where: { id: offerId, organizationId },
@@ -232,10 +237,10 @@ export async function linkOffer(ctx: Context, organizationId: string, offerId: s
       subject: { type: 'offer', id: offerId },
       payload: { productId, linkedBy: 'manual', actor },
     })
-    return offer.connectionId
+    return { connectionId: offer.connectionId, stockSet: product.stockSetAt !== null }
   }, TX_OPTIONS)
 
-  await requestStockPushAfterCommit(ctx, organizationId, [connectionId])
+  if (stockSet) await requestStockPushAfterCommit(ctx, organizationId, [connectionId])
   await requestPricePushAfterCommit(ctx, organizationId, [connectionId])
   await rematchAfterCommit(ctx, organizationId, { offerId })
 }
@@ -257,14 +262,22 @@ export async function unlinkOffer(ctx: Context, organizationId: string, offerId:
   }, TX_OPTIONS)
 }
 
+/**
+ * `linked`: with a Product (true) or without (false). `stockUnset`: linked to a Product with unset Stock, which
+ * gets nothing pushed until someone saves it (#137); it implies `linked`.
+ */
 export async function listOffers(
   ctx: Context,
   organizationId: string,
-  query: { linked?: boolean; skip: number; take: number },
+  query: { linked?: boolean; stockUnset?: boolean; skip: number; take: number },
 ): Promise<{ total: number; items: OfferRow[] }> {
   const where = {
     organizationId,
-    ...(query.linked === undefined ? {} : { productId: query.linked ? { not: null } : null }),
+    ...(query.stockUnset
+      ? { productId: { not: null }, product: { stockSetAt: null } }
+      : query.linked === undefined
+        ? {}
+        : { productId: query.linked ? { not: null } : null }),
   }
   const [total, offers] = await Promise.all([
     ctx.db.offer.count({ where }),
@@ -273,7 +286,7 @@ export async function listOffers(
       orderBy: [{ connectionId: 'asc' }, { externalId: 'asc' }],
       skip: query.skip,
       take: query.take,
-      include: { connection: { select: { name: true } }, product: { select: { sku: true } } },
+      include: { connection: { select: { name: true } }, product: { select: { sku: true, name: true } } },
     }),
   ])
   return {
@@ -288,6 +301,7 @@ export async function listOffers(
       url: offer.url,
       productId: offer.productId,
       productSku: offer.product?.sku ?? null,
+      productName: offer.product?.name ?? null,
       linkedBy: offer.linkedBy,
       lastSeenAt: offer.lastSeenAt,
       publication: publicationFromColumns(offer.channelStatus, offer.channelEndedReason),
@@ -323,7 +337,9 @@ export async function getOffer(ctx: Context, organizationId: string, offerId: st
       ...offerPriceColumns,
       ...offerStockColumns,
       connection: { select: { name: true, connectorId: true } },
-      product: { select: { id: true, sku: true, name: true, basePriceAmount: true, basePriceCurrency: true } },
+      product: {
+        select: { id: true, sku: true, name: true, basePriceAmount: true, basePriceCurrency: true, stockSetAt: true },
+      },
     },
   })
   if (!offer) return null
@@ -347,17 +363,30 @@ export async function getOffer(ctx: Context, organizationId: string, offerId: st
     lastSeenAt: offer.lastSeenAt,
     product,
     ...describeOfferPrice(ctx, { ...offer, connectorId: offer.connection.connectorId }, product),
-    ...describeOfferStock(offer),
+    ...describeOfferStock(offer, offer.product?.stockSetAt != null),
   }
 }
 
-/** Linked Offers whose push sequence is ahead of the last pushed one, by id, with their publication on the Channel. */
+/**
+ * Linked Offers whose push sequence is ahead of the last pushed one, by id, with their publication on the Channel and
+ * whether their Product's Stock is set (`stockSetAt`, #137).
+ */
 export async function listOffersAwaitingStockPush(
   ctx: Context,
   organizationId: string,
   connectionId: string,
   limit: number,
-): Promise<Array<{ offerId: string; externalId: string; sku: string | null; productId: string; seq: number; publication: OfferPublication | null }>> {
+): Promise<
+  Array<{
+    offerId: string
+    externalId: string
+    sku: string | null
+    productId: string
+    seq: number
+    publication: OfferPublication | null
+    stockSet: boolean
+  }>
+> {
   const rows = await ctx.db.$queryRaw<
     Array<{
       offerId: string
@@ -367,13 +396,16 @@ export async function listOffersAwaitingStockPush(
       seq: number
       channelStatus: OfferPublicationStatus | null
       channelEndedReason: OfferEndedReason | null
+      stockSet: boolean
     }>
   >`
-    SELECT "id" AS "offerId", "externalId", "sku", "productId", "stockPushSeq" AS "seq", "channelStatus", "channelEndedReason"
-    FROM "offer"
-    WHERE "organizationId" = ${organizationId} AND "connectionId" = ${connectionId}
-      AND "productId" IS NOT NULL AND "stockPushSeq" > "stockPushedSeq"
-    ORDER BY "id"
+    SELECT o."id" AS "offerId", o."externalId", o."sku", o."productId", o."stockPushSeq" AS "seq", o."channelStatus",
+      o."channelEndedReason", p."stockSetAt" IS NOT NULL AS "stockSet"
+    FROM "offer" o
+    JOIN "product" p ON p."id" = o."productId" AND p."organizationId" = o."organizationId"
+    WHERE o."organizationId" = ${organizationId} AND o."connectionId" = ${connectionId}
+      AND o."stockPushSeq" > o."stockPushedSeq"
+    ORDER BY o."id"
     LIMIT ${limit}`
   return rows.map(({ channelStatus, channelEndedReason, ...row }) => ({ ...row, publication: publicationFromColumns(channelStatus, channelEndedReason) }))
 }

@@ -10,7 +10,7 @@ import { changeOrderStatus } from '../orders/change-status'
 import { importOrder } from '../orders/import'
 import { createTestOrganization } from '../testing/context'
 import { databaseUrl, useTestContext } from '../testing/db-test'
-import { buildOrder, createTestConnection, fact, orderLine, testChannel, user } from '../testing/fixtures'
+import { buildOrder, createTestConnection, fact, orderFeedCaughtUp, orderLine, testChannel, user } from '../testing/fixtures'
 import { uniqueApplicationName, untilLockWait, watchLockWaits } from '../testing/lock-waits'
 import { TX_OPTIONS } from '../transaction'
 import { getAvailability } from './availability'
@@ -140,6 +140,7 @@ describe.skipIf(!databaseUrl)('Stock and Reservations under concurrency', () => 
     const ctx = context()
     const org = await createTestOrganization(ctx.db)
     const connections = [await createTestConnection(ctx, org, 'A'), await createTestConnection(ctx, org, 'B')]
+    for (const connectionId of connections) await orderFeedCaughtUp(ctx, org, connectionId)
     const skus = ['MIX-1', 'MIX-2', 'MIX-3', 'MIX-4']
     const productIds: string[] = []
     for (const sku of skus) productIds.push((await createProduct(ctx, org, { sku, name: sku, stock: 6 }, user)).productId)

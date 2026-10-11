@@ -8,7 +8,7 @@ On Allegro, and on other marketplaces, a quantity of 0 ends an Offer, and raisin
 
 - Never push 0, keep the Offer at 1 or leave it: rejected. It sells goods that do not exist.
 - Reopen every ended Offer when stock comes back: rejected. It overrides a seller's or an admin's decision, and may cost a listing fee.
-- A per-Connection setting "reopen sold-out Offers", off by default: deferred. Needed only if a Channel cannot tell a sold-out Offer from one the seller ended (to be checked in the Allegro sandbox: whether a 0 set by the application is recorded as `EMPTY_STOCK` or `USER`).
+- A per-Connection setting "reopen sold-out Offers", off by default: deferred. Needed only if a Channel cannot tell a sold-out Offer from one the seller ended (checked in the Allegro sandbox on 2026-10-10: a 0 set by the application is recorded as `EMPTY_STOCK`, so Allegro tells them apart).
 
 ## Consequences
 
