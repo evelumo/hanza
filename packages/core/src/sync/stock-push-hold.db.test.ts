@@ -1,13 +1,16 @@
-import { CursorExpiredError, defineConnector, type Order, type OfferPrice, type PullResult, type StockLevel } from '@hanza/connector-sdk'
+import { CursorExpiredError, defineConnector, PermanentError, type Order, type OfferPrice, type PullResult, type StockLevel } from '@hanza/connector-sdk'
 import { describe, expect, it } from 'vitest'
 import { z } from 'zod'
-import { upsertOffers } from '../catalog/offers'
+import { retryOfferPush } from '../catalog/offer-push'
+import { getOffer, linkOffer, upsertOffers } from '../catalog/offers'
 import { createProduct } from '../catalog/products'
 import { createConnection } from '../connections/connections'
+import { PermanentJobError } from '../jobs'
 import { ordersPullJob } from '../jobs/orders-pull'
 import { pricePushJob } from '../jobs/price-push'
 import { stockPushJob } from '../jobs/stock-push'
 import { setBasePrice } from '../prices/set-price'
+import { setStock } from '../stock/set-stock'
 import { createTestOrganization } from '../testing/context'
 import { databaseUrl, useTestContext } from '../testing/db-test'
 import { buildOrder, orderLine, uniqueSku, user } from '../testing/fixtures'
@@ -156,6 +159,47 @@ describe.skipIf(!databaseUrl)('the stock push waits for the Order feed (#125)', 
     expect(t.waiting()).toEqual(['stock.push'])
     await t.pushStock()
     expect(t.pushed()).toEqual([6])
+  })
+
+  it('holds a push asked for by a Stock edit, a link or a Retry too, and loses nothing of it', async () => {
+    const t = await setup()
+    const offer = await t.ctx.db.offer.findFirstOrThrow({ where: { organizationId: t.organizationId, connectionId: t.connectionId } })
+    const other = await createProduct(t.ctx, t.organizationId, { sku: uniqueSku(), name: 'Teapot', stock: 7 }, user)
+    await upsertOffers(t.ctx, t.organizationId, t.connectionId, [{ externalId: 'offer-2', sku: null, name: 'Teapot', url: null, price: pln('20') }], new Date())
+    const second = await t.ctx.db.offer.findFirstOrThrow({ where: { organizationId: t.organizationId, connectionId: t.connectionId, externalId: 'offer-2' } })
+
+    await setStock(t.ctx, t.organizationId, t.productId, 15, user)
+    await linkOffer(t.ctx, t.organizationId, second.id, other.productId, user)
+    await retryOfferPush(t.ctx, t.organizationId, offer.id, 'stock', user)
+    await t.pushStock()
+    expect(stockCalls).toEqual([])
+    // What a person sees on the Offer meanwhile: its number waits to be sent.
+    expect(await getOffer(t.ctx, t.organizationId, offer.id)).toMatchObject({ stockStatus: 'pending', lastPushedAvailable: null })
+
+    await t.pullOrders()
+    await t.pushStock()
+    expect(t.pushed().sort((a, b) => a - b)).toEqual([7, 15])
+    expect(await getOffer(t.ctx, t.organizationId, offer.id)).toMatchObject({ stockStatus: 'pushed', lastPushedAvailable: 15 })
+  })
+
+  it('stays held while the Orders pull keeps failing: the Connection is failing and the Offer waits', async () => {
+    const t = await setup()
+    pull = async () => {
+      throw new PermanentError('The shop refuses to list orders')
+    }
+    await expect(t.pullOrders()).rejects.toBeInstanceOf(PermanentJobError)
+    expect(await t.state('orders_pull')).toMatchObject({ caughtUpAt: null, lastSucceededAt: null, lastErrorKind: 'permanent' })
+    await t.pushStock()
+    expect(stockCalls).toEqual([])
+    expect((await t.ctx.db.connection.findFirstOrThrow({ where: { id: t.connectionId, organizationId: t.organizationId } })).health).toBe('failing')
+
+    // Once the feed can be read, the number goes out.
+    pull = async () => ({ items: [], nextCursor: 'e1', hasMore: false })
+    t.clearQueue()
+    await t.pullOrders()
+    expect(t.waiting()).toEqual(['stock.push'])
+    await t.pushStock()
+    expect(t.pushed()).toEqual([10])
   })
 
   it('does not hold the price push', async () => {

@@ -97,6 +97,13 @@ meaning its `stock.push` reactivates such an Offer when the number is above 0
 stale, so a connector that declares it must check at push time why the Offer
 ended, reopen it only if it sold out, and report `rejected` otherwise.
 
+A Channel that changes its own stock count when an order moves (a shop takes
+the units off at payment and puts them back on a cancellation) needs no code
+for it. The core sends an Order's Offers their number again after every
+`orders.updateStatus` that made a request, and after every Channel fact it had
+not recorded (ADR 0026). It also sends a new Connection no stock until its
+`orders.pull` has reached the end of the feed (`hasMore: false`) once (#125).
+
 A connector that makes Shipments (a `courier`, or a Channel with shipping of
 its own) implements `shipments.create`, `shipments.track` and `shipments.label`
 together and declares what it offers in `shipping.services`; `shipments.cancel`

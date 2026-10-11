@@ -18,7 +18,7 @@ import {
   type Actor,
 } from '@hanza/core'
 import { createTestContext, createTestOrganization, type TestContext } from '@hanza/core/testing'
-import { afterAll, beforeAll, describe, expect, inject, it } from 'vitest'
+import { afterAll, beforeAll, describe, expect, inject, it, vi } from 'vitest'
 // The connector's package exports no test tooling (its `exports` has "." only), so its scrub config and recording
 // setup are reached by path. They must be the connector's own: a second scrub config here would drift from it.
 import {
@@ -101,7 +101,11 @@ describe.skipIf(!databaseUrl)('WooCommerce under the sync engine (real Postgres,
       })
       return cassette.fetch(request)
     }
-    ctx = createTestContext({ databaseUrl: databaseUrl!, connectors: [withFetch(woocommerceConnector, spy)] })
+    // Answered at the global `fetch`, where the engine's own one ends (its timeout, its request budget and its count
+    // of a run's requests), instead of replacing `ctx.fetch`: the engine must see that a status push reached the shop,
+    // because it then sends the Order's stock again (ADR 0026). The cassette and the sandbox took theirs before this.
+    vi.stubGlobal('fetch', spy)
+    ctx = createTestContext({ databaseUrl: databaseUrl!, connectors: [woocommerceConnector] })
     org = await createTestOrganization(ctx.db)
     for (const [sku, stock] of Object.entries(STOCK)) {
       products[sku] = (await createProduct(ctx, org, { sku, name: sku, stock }, user)).productId
@@ -119,6 +123,7 @@ describe.skipIf(!databaseUrl)('WooCommerce under the sync engine (real Postgres,
   }, RECORDING_TIMEOUT)
 
   afterAll(async () => {
+    vi.unstubAllGlobals()
     await cassette?.close()
     await ctx?.db.$disconnect()
   })
@@ -480,12 +485,13 @@ describe.skipIf(!databaseUrl)('WooCommerce under the sync engine (real Postgres,
       expect(await eventCount('order.payment_received')).toBe(1)
 
       // The shop is told the new numbers, and never what it reported itself (a Channel fact is not pushed back).
-      //
-      // WRONG TODAY, and asserted as it is: nothing is sent for the backpack (16). Hanza had already taken the unit
-      // of the unpaid Order 33 off the number it pushed (3); WooCommerce takes it off its own stock when the order is
-      // paid, and a `paid` fact moves no Stock in Hanza, so no push follows. The recorded shop was left at 2 where
-      // Hanza says 3, until something else changes that Product's Available.
-      expect(writesSince(mark)).toEqual([['POST products/batch', { update: [stockItem(10, 13), stockItem(11, 25)] }]])
+      // The backpack (16) is sent too, with the number it had: Hanza took the unit of the unpaid Order 33 off it
+      // when the Order arrived, and WooCommerce took it off its own stock again when the order was paid (3 became 2).
+      // The `paid` fact moves no Stock in Hanza, but it marks the Order's Offers, so the shop is back at 3 (ADR 0026).
+      expect(writesSince(mark)).toEqual([['POST products/batch', { update: [stockItem(10, 13), stockItem(11, 25), stockItem(16, 3)] }]])
+      expect((await getChannelAvailability(ctx.db, org, connectionId, [product('WOO-BAG-1')])).get(product('WOO-BAG-1'))).toBe(3)
+      await expectShopStock(16, 3)
+      await expectShopStock(10, 13)
       expect(await health()).toBe('ok')
     },
     RECORDING_TIMEOUT,
@@ -545,14 +551,20 @@ describe.skipIf(!databaseUrl)('WooCommerce under the sync engine (real Postgres,
       const mark = sent.length
       await changeOrderStatus(ctx, org, id, 'processing', user)
       await drain()
-      expect(requestsSince(mark)).toEqual(['GET orders/49?_fields=id,status', 'PUT orders/49?_fields=id,status'])
-      expect(writesSince(mark)).toEqual([['PUT orders/49?_fields=id,status', { status: 'processing' }]])
+      // The status reached the shop, which may have moved its own count with it: the Order's Offer (the notebook) is
+      // told its number again. Nothing changed it here, so the same 25.
+      expect(requestsSince(mark)).toEqual([
+        'GET orders/49?_fields=id,status',
+        'PUT orders/49?_fields=id,status',
+        'GET products?include=11&per_page=100&_fields=id,type',
+        'POST products/batch',
+      ])
+      expect(writesSince(mark)).toEqual([
+        ['PUT orders/49?_fields=id,status', { status: 'processing' }],
+        ['POST products/batch', { update: [stockItem(11, 25)] }],
+      ])
       expect(await order('49')).toMatchObject({ phase: 'processing', statusPushDueAt: null })
-      // No `lastResult` to assert: the engine counts a run's requests in the `fetch` it gives the connector, which
-      // `withFetch` replaces, so under a cassette it takes every status push for one that never reached the shop.
-      const push = await syncState('order_status_push')
-      expect(push.lastErrorKind).toBeNull()
-      expect(push.lastFinishedAt).not.toBeNull()
+      expect(await syncState('order_status_push')).toMatchObject({ lastErrorKind: null, lastResult: { pushed: 1 } })
 
       // The shop stamped the order as modified, so the feed reports it: open, and in full.
       await holdBackPasses()
@@ -561,7 +573,8 @@ describe.skipIf(!databaseUrl)('WooCommerce under the sync engine (real Postgres,
       expect(await syncState('orders_pull')).toMatchObject({ lastResult: { pulled: 1, imported: 0, factsApplied: 0, pages: 1 } })
       expect(await ledger()).toEqual(before)
       expect(await order('49')).toMatchObject({ phase: 'processing', attentionReasons: [] })
-      expect(sent.slice(mark).filter((entry) => entry.body !== null)).toHaveLength(1)
+      // It brings no new fact, so nothing more is written.
+      expect(writesSince(mark)).toHaveLength(2)
     },
     RECORDING_TIMEOUT,
   )
@@ -576,7 +589,10 @@ describe.skipIf(!databaseUrl)('WooCommerce under the sync engine (real Postgres,
         // The notebook left the Warehouse and its Reservation with it: the same number, sent again.
         ['POST products/batch', { update: [stockItem(11, 25)] }],
         ['PUT orders/49?_fields=id,status', { status: 'completed' }],
+        // And once more after the status reached the shop.
+        ['POST products/batch', { update: [stockItem(11, 25)] }],
       ])
+      await expectShopStock(11, 25)
       expect(await lines('49')).toEqual([['11', 'WOO-NOTE-1', 'WOO-NOTE-1', 'consumed 1']])
       expect(await availability('WOO-NOTE-1')).toEqual({ stock: 29, reserved: 4, available: 25 })
 
@@ -584,19 +600,23 @@ describe.skipIf(!databaseUrl)('WooCommerce under the sync engine (real Postgres,
       mark = sent.length
       await changeOrderStatus(ctx, org, (await order('57')).id, 'cancelled', user)
       await drain()
-      // WRONG TODAY, and asserted as it is: the freed mug is pushed (45) before the shop is told of the cancellation,
-      // and WooCommerce then puts the unit of a cancelled order back into its own stock on top of that number. The
-      // recorded shop was left at 46 where Hanza says 45: one mug that does not exist is for sale, until something
-      // else changes that Product's Available. The two jobs run in the order they were enqueued in.
+      // The freed mug is pushed (45) before the shop is told of the cancellation, since the two jobs run in the order
+      // they were enqueued in, and WooCommerce then puts the unit of a cancelled order back into its own stock on top
+      // of that number: 46, one mug that does not exist. The status push that reached the shop marks the Order's
+      // Offers, so 45 is sent again and stays (ADR 0026).
       expect(writesSince(mark)).toEqual([
         ['POST products/batch', { update: [stockItem(10, 45)] }],
         ['PUT orders/57?_fields=id,status', { status: 'cancelled' }],
+        ['POST products/batch', { update: [stockItem(10, 45)] }],
       ])
       expect(await lines('57')).toEqual([['10', 'WOO-MUG-1', 'WOO-MUG-1', 'released 1']])
       expect(await availability('WOO-MUG-1')).toEqual({ stock: 50, reserved: 5, available: 45 })
+      expect((await getChannelAvailability(ctx.db, org, connectionId, [product('WOO-MUG-1')])).get(product('WOO-MUG-1'))).toBe(45)
+      await expectShopStock(10, 45)
 
-      // Closed in the shop by Hanza itself, both orders come back as a fact. Hanza records the two facts and nothing
-      // else: no phase to change, no Stock to move, no push, nothing for a person to look at.
+      // Closed in the shop by Hanza itself, both orders come back as a fact. Hanza records the two facts and changes
+      // nothing else: no phase to change, no Stock to move, nothing for a person to look at. A fact it had not
+      // recorded is a change in the shop all the same, so their Offers are told their numbers once more.
       await holdBackPasses()
       const before = await ledger()
       mark = sent.length
@@ -609,7 +629,9 @@ describe.skipIf(!databaseUrl)('WooCommerce under the sync engine (real Postgres,
       expect(cancelled).toMatchObject({ phase: 'cancelled', attentionReasons: [], statusPushDueAt: null })
       expect(cancelled.facts.map((fact) => fact.externalId)).toEqual(['57:paid', '57:cancelled'])
       expect(await ledger()).toEqual({ ...before, facts: before.facts + 2, events: before.events + 2 })
-      expect(writesSince(mark)).toEqual([])
+      expect(writesSince(mark)).toEqual([['POST products/batch', { update: [stockItem(10, 45), stockItem(11, 25)] }]])
+      await expectShopStock(10, 45)
+      await expectShopStock(11, 25)
       expect(await ctx.db.order.count({ where: { organizationId: org, attentionReasons: { has: 'channel_fact_conflict' } } })).toBe(0)
       expect(await health()).toBe('ok')
     },
