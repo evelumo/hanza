@@ -45,7 +45,7 @@ export function isStoreUrl(value: string): boolean {
   return url.protocol === 'https:' && url.username === '' && url.password === '' && url.port !== '0' && isPublicHostname(url.hostname)
 }
 
-export const configSchema = z.object({
+export const woocommerceConfigSchema = z.object({
   storeUrl: z
     .string()
     .trim()
@@ -57,11 +57,11 @@ export const configSchema = z.object({
 // A key WooCommerce makes is 43 characters; the limit keeps what is pasted by mistake out of a request header.
 const KEY_MAX_LENGTH = 255
 
-export const credentialsSchema = z.object({
+export const woocommerceCredentialsSchema = z.object({
   consumerKey: z.string().trim().min(1).max(KEY_MAX_LENGTH).describe('Consumer key'),
   consumerSecret: z.string().trim().min(1).max(KEY_MAX_LENGTH).describe('Consumer secret'),
 })
 
-export type WooCommerceConfig = z.output<typeof configSchema>
-export type WooCommerceCredentials = z.output<typeof credentialsSchema>
+export type WooCommerceConfig = z.output<typeof woocommerceConfigSchema>
+export type WooCommerceCredentials = z.output<typeof woocommerceCredentialsSchema>
 export type WooCommerceContext = CapabilityContext<WooCommerceConfig, WooCommerceCredentials>

@@ -9,7 +9,7 @@ describe('targetStatus', () => {
   // The spec's "Order phases" table, one row per phase; a status that is not named gets no call.
   const table: Record<OrderPhase, Record<string, string>> = {
     new: {},
-    processing: { pending: 'processing', 'on-hold': 'processing', failed: 'processing' },
+    processing: { pending: 'processing', 'on-hold': 'processing' },
     shipped: { pending: 'completed', 'on-hold': 'completed', processing: 'completed', packing: 'completed' },
     cancelled: { pending: 'cancelled', 'on-hold': 'cancelled', processing: 'cancelled', packing: 'cancelled' },
   }
@@ -41,8 +41,9 @@ describe('targetStatus', () => {
     }
   })
 
-  it('takes up a failed order again only for phase processing (the Buyer paid after all)', () => {
-    expect(targetStatus('failed', 'processing')).toBe('processing')
+  it('never takes up a closed order, a failed one included: the feed would report it paid', () => {
+    expect(targetStatus('failed', 'processing')).toBeNull()
+    expect(targetStatus('completed', 'processing')).toBeNull()
     expect(targetStatus('cancelled', 'processing')).toBeNull()
     expect(targetStatus('refunded', 'processing')).toBeNull()
     expect(targetStatus('trash', 'processing')).toBeNull()

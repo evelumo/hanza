@@ -18,9 +18,9 @@ Not an Offer, not read: grouped and external products, product types a plugin ad
 
 ## Settings and auth
 
-- `configSchema`: `storeUrl`, the shop's home address as written. `isStoreUrl` (`src/settings.ts`) refuses: anything but `https:`; a user name or password; any `?` or `#`, also an empty one; whitespace, control characters and backslashes; port 0; an IP address (v4 in any spelling, v6), `localhost`, a host without a dot, and names ending in `.local`, `.localhost`, `.internal` or `.home.arpa`. A path is fine (a shop in a subdirectory). `configSchema` also limits the address to 2000 characters. Requests are built from the parsed address (`apiUrl` in `src/client.ts`), never by appending to its text, and `apiUrl` refuses `http:` again for an address stored before the schema did.
+- `configSchema` (`woocommerceConfigSchema`): `storeUrl`, the shop's home address as written. `isStoreUrl` (`src/settings.ts`) refuses: anything but `https:`; a user name or password; any `?` or `#`, also an empty one; whitespace, control characters and backslashes; port 0; an IP address (v4 in any spelling, v6), `localhost`, a host without a dot, and names ending in `.local`, `.localhost`, `.internal` or `.home.arpa`. A path is fine (a shop in a subdirectory). `configSchema` also limits the address to 2000 characters. Requests are built from the parsed address (`apiUrl` in `src/client.ts`), never by appending to its text, and `apiUrl` refuses `http:` again for an address stored before the schema did.
 - **This is partial hardening.** The worker requests a host a member names, and a public name can resolve to an internal address, at once or later. The guard on the destination belongs in the core's `ctx.fetch` and is tracked separately; do not extend `isPublicHostname` to look like one.
-- `credentialsSchema`: `consumerKey`, `consumerSecret` (each at most 255 characters). `auth: { type: 'apiKey' }`. Sent as HTTP Basic (`authorization()` encodes UTF-8), only in the `Authorization` header, which WooCommerce accepts only when WordPress sees TLS. The panel draws both as password inputs.
+- `credentialsSchema` (`woocommerceCredentialsSchema`): `consumerKey`, `consumerSecret` (each at most 255 characters). `auth: { type: 'apiKey' }`. Sent as HTTP Basic (`authorization()` encodes UTF-8), only in the `Authorization` header, which WooCommerce accepts only when WordPress sees TLS. The panel draws both as password inputs.
 - Every request carries `User-Agent: Hanza-WooCommerce-Connector (+https://github.com/evelumo/hanza)` (`USER_AGENT` in `src/client.ts`). Without it `fetch` sends `node`, which firewalls in front of shops often block. No version in it: nothing would keep it in step.
 - **The `Date` header is the client's only clock of the shop** (`shopTimeFrom`, used by the Order feed's hold-back). A proxy in front of the shop (nginx, a CDN) replaces it with its own, as the live run showed behind nginx. The hold-back then runs on the proxy's clock, which is right only as far as that clock agrees with the shop's.
 - Errors go through the SDK's `errorFromResponse`, with no `isAuthFailure`:
@@ -80,14 +80,15 @@ Measured in a live run through the real application (worker, scheduler, the core
   | Code | When |
   | --- | --- |
   | `invalid_offer_id` | The external id is neither `<product id>` nor `<parent id>:<variation id>` |
-  | `stock_not_managed` | WooCommerce answered 200 but did not take the number into use: the item answers `manage_stock` other than `true`, or another `stock_quantity` (stock management is off for the whole shop) |
+  | `stock_not_managed` | WooCommerce answered 200 but did not take the number into use: the item answers `manage_stock` other than `true`, or another `stock_quantity`. Only when some other item of the call was applied; see below for a call where none was |
   | `not_a_simple_product` | The id is a product, but no longer a simple one (read first), or the answer's `type` is not the batch's |
-  | `not_confirmed` | The batch's answer does not mention the item |
   | `unknown_error` | WooCommerce refused the item with a code that is not a short machine code (letters, digits, `_ . : -`) |
   | `woocommerce_rest_product_invalid_id` | The product is not listed (gone, in the trash, or the id is a variation's), or the answer says its `status` is `trash` |
   | `woocommerce_rest_product_variation_invalid_id` | WooCommerce refused a variation (missing, wrong parent), or the answer says it is in the trash |
 
   Any other code is WooCommerce's own for the item, passed on when it is a short machine code.
+- **Stock management off for the whole shop** (WooCommerce settings, Products, Inventory) makes every item come back `stock_not_managed`. When every item WooCommerce took did, and none was applied, the whole call fails with a `PermanentError` ("Stock management is off in the WooCommerce settings ...", `STOCK_NOT_MANAGED_MESSAGE`), so the Connection shows failing with that message instead of staying healthy with every Offer refused (as Allegro fails a call in which every Offer is forbidden). Items refused for reasons of their own do not count either way.
+- **An item the batch's answer does not mention** fails the whole call as transient (`NOT_CONFIRMED_MESSAGE`): left out, it would count as applied, and it may or may not have been, so it is no refusal. The core sends the call again, and the same numbers twice change nothing.
 - **A trashed variable product:** its variations go to the trash with it, and WooCommerce still updates them (a 200 with `status: trash`). The connector reports them `woocommerce_rest_product_variation_invalid_id`: `offers.pull` does not list them, so the Offer is gone whatever number it now holds.
 
 ## orders.pull
@@ -156,11 +157,11 @@ Reads `GET orders/<id>?_fields=id,status`, then moves the order **forward only**
 | Phase | Sets | Only from |
 | --- | --- | --- |
 | `new` | nothing (no request) | |
-| `processing` | `processing` | `pending`, `on-hold`, `failed` |
+| `processing` | `processing` | `pending`, `on-hold` |
 | `shipped` | `completed` | anything not closed (including a plugin's status such as `packing`) |
 | `cancelled` | `cancelled` | anything not closed |
 
-Closed is `completed`, `cancelled`, `refunded`, `failed`, `trash`. `checkout-draft` and `auto-draft` are left alone.
+Closed is `completed`, `cancelled`, `refunded`, `failed`, `trash`, for every phase. **`failed` is closed both ways:** the feed reports it as a `cancelled` fact, and Hanza never takes it up as `processing`, because the feed would then report that order paid (`processing` counts as paid without a payment date, `PAID_STATUSES`) although no payment came. A Buyer who pays after all moves it on in the shop, and the feed brings the `paid` fact. `checkout-draft` and `auto-draft` are left alone.
 
 - **A trashed order is never written to**: on HPOS a `PUT` to an order in the trash would take it out again. The read is what notices it.
 - **The window is unavoidable:** between the read and the write the Buyer can pay or an admin can complete the order, and the `PUT` then overwrites it. WooCommerce has no conditional write.
@@ -179,6 +180,7 @@ Each is a follow-up; do not "fix" one in passing.
 - **Orders that do not fit the model are only logged; no tax id (#121).** There is no Event on the Connection for a skipped order. `taxId` is always `null`; plugins keep it in `meta_data`.
 - **Shops that drop the `Authorization` header, or use plain permalinks (#120).** Some hosts never pass the header to PHP (answers 401, shown as "sign in again"); with plain permalinks only `?rest_route=` works (answers 404 `rest_no_route`, a `PermanentError`).
 - **`price.push` (#119)**, and multi-currency plugins: one shop currency is assumed.
+- **No `delivery` on the Order.** The connector does not fill the canonical Order's `delivery` (the delivery method and pickup point, which the SDK gained with the Shipments work, PR #127), so the panel cannot prefill a pickup point when a Shipment is made for a WooCommerce Order. WooCommerce has no field for it: a pickup point lives only in a shipping plugin's `meta_data`, which the feed does not read.
 - **The Offers pull cap (#129)**, above.
 - **Nothing reopens an Order Hanza already closed.** An order restored from the trash, or moved from `cancelled` back to `processing`, comes back as open and in full, with no `cancelled` fact (a fact is never withdrawn), and the core keeps the Order as it is: a final Order is never reopened by a fact (ADR 0003).
 - **The hold-back's assumptions.** A save commits within the 20 s; the `Date` header is the shop's clock (a cache or proxy that answers with its own `Date` breaks it); nobody stamps a modification in the past (a plugin or import that calls `set_date_modified` with an earlier time hides behind the cursor).
@@ -243,7 +245,7 @@ $S down
 
 ```
 src/connector.ts        defineConnector; createWooCommerceConnector({ pageSize?, holdBackSeconds? }) (options are for tests)
-src/settings.ts         configSchema, credentialsSchema, isStoreUrl
+src/settings.ts         woocommerceConfigSchema, woocommerceCredentialsSchema, isStoreUrl
 src/client.ts           apiUrl, authorization, request / requestIfFound / requestIfAllowed, errors, the shop's clock
 src/api.ts              zod schemas of the responses used, and the _fields lists
 src/decimal.ts          exact decimal arithmetic on strings

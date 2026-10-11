@@ -79,7 +79,7 @@ describe('apiUrl', () => {
 })
 
 describe('apiUrl and an address that is more than where the shop is', () => {
-  // `configSchema` refuses these; one stored before it did must still not send the key anywhere but the API.
+  // `woocommerceConfigSchema` refuses these; one stored before it did must still not send the key anywhere but the API.
   it.each([
     ['https://shop.example.test/?', 'https://shop.example.test/wp-json/wc/v3/orders?per_page=5'],
     ['https://shop.example.test/#', 'https://shop.example.test/wp-json/wc/v3/orders?per_page=5'],

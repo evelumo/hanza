@@ -21,7 +21,7 @@ const STATUSES = ['pending', 'on-hold', 'processing', 'completed', 'cancelled', 
 // The spec's "Order phases" table: the status that is set, by the order's status now. Not named: no change.
 const TABLE: Record<OrderPhase, Record<string, string>> = {
   new: {},
-  processing: { pending: 'processing', 'on-hold': 'processing', failed: 'processing' },
+  processing: { pending: 'processing', 'on-hold': 'processing' },
   shipped: { pending: 'completed', 'on-hold': 'completed', processing: 'completed', packing: 'completed' },
   cancelled: { pending: 'cancelled', 'on-hold': 'cancelled', processing: 'cancelled', packing: 'cancelled' },
 }
@@ -215,10 +215,10 @@ describe('orders.updateStatus against the recorded shop', () => {
         expect(await call(32, 'shipped')).toEqual([read(32)])
         expect(await call(32, 'processing')).toEqual([read(32)])
 
-        // 38 failed: closed for `shipped` and `cancelled`, taken up again for `processing`.
+        // 38 failed: closed for every phase. Taken up as `processing`, the feed would report it paid.
         expect(await call(38, 'shipped')).toEqual([read(38)])
         expect(await call(38, 'cancelled')).toEqual([read(38)])
-        expect(await call(38, 'processing')).toEqual([read(38), write(38)])
+        expect(await call(38, 'processing')).toEqual([read(38)])
 
         // 49 is put into a plugin's status (`packing`): not taken up, but shipped.
         await scenario.change((sandbox) => sandbox.put('orders/49', { status: 'packing' }))
@@ -235,7 +235,7 @@ describe('orders.updateStatus against the recorded shop', () => {
         await scenario.change(async (sandbox) => {
           expect((await sandbox.get('orders/52')).status).toBe('trash')
           // What the writes above left in the shop.
-          for (const [id, status] of [[33, 'completed'], [32, 'cancelled'], [38, 'processing'], [49, 'completed']] as const) {
+          for (const [id, status] of [[33, 'completed'], [32, 'cancelled'], [38, 'failed'], [49, 'completed']] as const) {
             expect((await sandbox.get(`orders/${id}`)).status, `order ${id}`).toBe(status)
           }
         })

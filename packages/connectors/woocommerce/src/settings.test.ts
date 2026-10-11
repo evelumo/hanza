@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import { z } from 'zod'
 import { apiUrl } from './client'
-import { configSchema, credentialsSchema } from './settings'
+import { woocommerceConfigSchema, woocommerceCredentialsSchema } from './settings'
 import { RECORDING_STORE_URL } from './testing/recording'
 
-describe('configSchema', () => {
+describe('woocommerceConfigSchema', () => {
   it.each([
     'https://shop.example.test',
     'https://shop.example.test/',
@@ -34,11 +34,11 @@ describe('configSchema', () => {
     'https://shop.locals',
     'https://example.arpa',
   ])('accepts %j', (storeUrl) => {
-    expect(configSchema.parse({ storeUrl })).toEqual({ storeUrl: storeUrl.trim() })
+    expect(woocommerceConfigSchema.parse({ storeUrl })).toEqual({ storeUrl: storeUrl.trim() })
   })
 
   it('accepts the address the cassettes are recorded under', () => {
-    expect(configSchema.safeParse({ storeUrl: RECORDING_STORE_URL }).success).toBe(true)
+    expect(woocommerceConfigSchema.safeParse({ storeUrl: RECORDING_STORE_URL }).success).toBe(true)
   })
 
   it.each([
@@ -59,7 +59,7 @@ describe('configSchema', () => {
     ['a backslash, which the parser reads as a slash', 'https://shop.example.test\\@evil.example.com'],
     ['an address longer than any', `https://shop.example.test/${'a'.repeat(2000)}`],
   ])('refuses %s', (_, storeUrl) => {
-    expect(configSchema.safeParse({ storeUrl }).success).toBe(false)
+    expect(woocommerceConfigSchema.safeParse({ storeUrl }).success).toBe(false)
   })
 
   // The parser reports no query and no fragment for these, and adding the API path to the text would have sent the
@@ -72,7 +72,7 @@ describe('configSchema', () => {
     'https://shop.example.test/sklep/?',
     'https://shop.example.test/sklep?#',
   ])('refuses %j: an empty query or fragment is one too', (storeUrl) => {
-    expect(configSchema.safeParse({ storeUrl }).success).toBe(false)
+    expect(woocommerceConfigSchema.safeParse({ storeUrl }).success).toBe(false)
     // And if one were stored, the request would still go to the API.
     expect(apiUrl(storeUrl, 'orders').pathname).toMatch(/\/wp-json\/wc\/v3\/orders$/)
   })
@@ -80,7 +80,7 @@ describe('configSchema', () => {
   it.each(['https://shop.example.test:0', 'https://shop.example.test:0/sklep', 'https://shop.example.test:00', 'https://shop.example.test:65536', 'https://shop.example.test:https'])(
     'refuses the port of %j',
     (storeUrl) => {
-      expect(configSchema.safeParse({ storeUrl }).success).toBe(false)
+      expect(woocommerceConfigSchema.safeParse({ storeUrl }).success).toBe(false)
     },
   )
 
@@ -130,41 +130,41 @@ describe('configSchema', () => {
     ['an empty label', 'https://shop..example.test'],
     ['a name that ends in a number', 'https://shop.example.1'],
   ])('refuses %s', (_, storeUrl) => {
-    expect(configSchema.safeParse({ storeUrl }).success).toBe(false)
+    expect(woocommerceConfigSchema.safeParse({ storeUrl }).success).toBe(false)
   })
 
   it('does not repeat the address in its error, which may hold a password', () => {
-    const result = configSchema.safeParse({ storeUrl: 'https://admin:hunter22@shop.example.test' })
+    const result = woocommerceConfigSchema.safeParse({ storeUrl: 'https://admin:hunter22@shop.example.test' })
     expect(JSON.stringify(result.error?.issues)).not.toContain('hunter22')
   })
 })
 
-describe('credentialsSchema', () => {
+describe('woocommerceCredentialsSchema', () => {
   it('needs both parts of the key', () => {
-    expect(credentialsSchema.parse({ consumerKey: ' ck_test_key ', consumerSecret: 'cs_test_secret' })).toEqual({ consumerKey: 'ck_test_key', consumerSecret: 'cs_test_secret' })
-    expect(credentialsSchema.safeParse({ consumerKey: 'ck_test_key' }).success).toBe(false)
-    expect(credentialsSchema.safeParse({ consumerKey: '', consumerSecret: 'cs_test_secret' }).success).toBe(false)
+    expect(woocommerceCredentialsSchema.parse({ consumerKey: ' ck_test_key ', consumerSecret: 'cs_test_secret' })).toEqual({ consumerKey: 'ck_test_key', consumerSecret: 'cs_test_secret' })
+    expect(woocommerceCredentialsSchema.safeParse({ consumerKey: 'ck_test_key' }).success).toBe(false)
+    expect(woocommerceCredentialsSchema.safeParse({ consumerKey: '', consumerSecret: 'cs_test_secret' }).success).toBe(false)
   })
 
   it('takes a key as long as WooCommerce makes them, and refuses what is far longer than a key', () => {
     // `ck_` or `cs_` and 40 hexadecimal digits.
     const key = { consumerKey: `ck_${'a1'.repeat(20)}`, consumerSecret: `cs_${'b2'.repeat(20)}` }
-    expect(credentialsSchema.parse(key)).toEqual(key)
-    expect(credentialsSchema.safeParse({ consumerKey: 'k'.repeat(255), consumerSecret: 's'.repeat(255) }).success).toBe(true)
-    expect(credentialsSchema.safeParse({ ...key, consumerKey: 'k'.repeat(256) }).success).toBe(false)
-    expect(credentialsSchema.safeParse({ ...key, consumerSecret: 's'.repeat(256) }).success).toBe(false)
+    expect(woocommerceCredentialsSchema.parse(key)).toEqual(key)
+    expect(woocommerceCredentialsSchema.safeParse({ consumerKey: 'k'.repeat(255), consumerSecret: 's'.repeat(255) }).success).toBe(true)
+    expect(woocommerceCredentialsSchema.safeParse({ ...key, consumerKey: 'k'.repeat(256) }).success).toBe(false)
+    expect(woocommerceCredentialsSchema.safeParse({ ...key, consumerSecret: 's'.repeat(256) }).success).toBe(false)
   })
 
   it('does not repeat a key in its error', () => {
-    const result = credentialsSchema.safeParse({ consumerKey: `ck_${'secret'.repeat(60)}`, consumerSecret: 'cs_test_secret' })
+    const result = woocommerceCredentialsSchema.safeParse({ consumerKey: `ck_${'secret'.repeat(60)}`, consumerSecret: 'cs_test_secret' })
     expect(JSON.stringify(result.error?.issues)).not.toContain('secret')
   })
 })
 
 describe('the connection form', () => {
   it.each([
-    ['configSchema', configSchema, { storeUrl: 'Shop address (https://…)' }],
-    ['credentialsSchema', credentialsSchema, { consumerKey: 'Consumer key', consumerSecret: 'Consumer secret' }],
+    ['woocommerceConfigSchema', woocommerceConfigSchema, { storeUrl: 'Shop address (https://…)' }],
+    ['woocommerceCredentialsSchema', woocommerceCredentialsSchema, { consumerKey: 'Consumer key', consumerSecret: 'Consumer secret' }],
   ])('%s is flat labelled text fields the panel can draw', (_, schema, labels) => {
     const json = z.toJSONSchema(schema) as { type: string; properties: Record<string, { type: string; description: string; enum?: unknown }> }
     expect(json.type).toBe('object')

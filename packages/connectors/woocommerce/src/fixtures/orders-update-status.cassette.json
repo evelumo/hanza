@@ -14,7 +14,7 @@
         "status": 200,
         "headers": {
           "content-type": "application/json; charset=UTF-8",
-          "date": "Sat, 10 Oct 2026 23:15:19 GMT",
+          "date": "Sun, 11 Oct 2026 12:01:50 GMT",
           "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\""
         },
         "body": {
@@ -70,7 +70,7 @@
         "status": 200,
         "headers": {
           "content-type": "application/json; charset=UTF-8",
-          "date": "Sat, 10 Oct 2026 23:15:20 GMT",
+          "date": "Sun, 11 Oct 2026 12:01:51 GMT",
           "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\""
         },
         "body": {
@@ -121,7 +121,7 @@
         "status": 200,
         "headers": {
           "content-type": "application/json; charset=UTF-8",
-          "date": "Sat, 10 Oct 2026 23:15:21 GMT",
+          "date": "Sun, 11 Oct 2026 12:01:51 GMT",
           "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\""
         },
         "body": {
@@ -172,7 +172,7 @@
         "status": 200,
         "headers": {
           "content-type": "application/json; charset=UTF-8",
-          "date": "Sat, 10 Oct 2026 23:15:21 GMT",
+          "date": "Sun, 11 Oct 2026 12:01:51 GMT",
           "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\""
         },
         "body": {
@@ -228,7 +228,7 @@
         "status": 200,
         "headers": {
           "content-type": "application/json; charset=UTF-8",
-          "date": "Sat, 10 Oct 2026 23:15:21 GMT",
+          "date": "Sun, 11 Oct 2026 12:01:51 GMT",
           "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\""
         },
         "body": {
@@ -279,7 +279,7 @@
         "status": 200,
         "headers": {
           "content-type": "application/json; charset=UTF-8",
-          "date": "Sat, 10 Oct 2026 23:15:21 GMT",
+          "date": "Sun, 11 Oct 2026 12:01:51 GMT",
           "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\""
         },
         "body": {
@@ -330,7 +330,7 @@
         "status": 200,
         "headers": {
           "content-type": "application/json; charset=UTF-8",
-          "date": "Sat, 10 Oct 2026 23:15:21 GMT",
+          "date": "Sun, 11 Oct 2026 12:01:51 GMT",
           "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\""
         },
         "body": {
@@ -381,7 +381,7 @@
         "status": 200,
         "headers": {
           "content-type": "application/json; charset=UTF-8",
-          "date": "Sat, 10 Oct 2026 23:15:21 GMT",
+          "date": "Sun, 11 Oct 2026 12:01:51 GMT",
           "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\""
         },
         "body": {
@@ -432,7 +432,7 @@
         "status": 200,
         "headers": {
           "content-type": "application/json; charset=UTF-8",
-          "date": "Sat, 10 Oct 2026 23:15:21 GMT",
+          "date": "Sun, 11 Oct 2026 12:01:51 GMT",
           "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\""
         },
         "body": {
@@ -488,7 +488,7 @@
         "status": 200,
         "headers": {
           "content-type": "application/json; charset=UTF-8",
-          "date": "Sat, 10 Oct 2026 23:15:21 GMT",
+          "date": "Sun, 11 Oct 2026 12:01:51 GMT",
           "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\""
         },
         "body": {
@@ -539,7 +539,7 @@
         "status": 200,
         "headers": {
           "content-type": "application/json; charset=UTF-8",
-          "date": "Sat, 10 Oct 2026 23:15:21 GMT",
+          "date": "Sun, 11 Oct 2026 12:01:52 GMT",
           "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\""
         },
         "body": {
@@ -590,7 +590,7 @@
         "status": 200,
         "headers": {
           "content-type": "application/json; charset=UTF-8",
-          "date": "Sat, 10 Oct 2026 23:15:21 GMT",
+          "date": "Sun, 11 Oct 2026 12:01:52 GMT",
           "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\""
         },
         "body": {
@@ -641,7 +641,7 @@
         "status": 200,
         "headers": {
           "content-type": "application/json; charset=UTF-8",
-          "date": "Sat, 10 Oct 2026 23:15:21 GMT",
+          "date": "Sun, 11 Oct 2026 12:01:52 GMT",
           "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\""
         },
         "body": {
@@ -692,7 +692,7 @@
         "status": 200,
         "headers": {
           "content-type": "application/json; charset=UTF-8",
-          "date": "Sat, 10 Oct 2026 23:15:21 GMT",
+          "date": "Sun, 11 Oct 2026 12:01:52 GMT",
           "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\""
         },
         "body": {
@@ -743,7 +743,7 @@
         "status": 200,
         "headers": {
           "content-type": "application/json; charset=UTF-8",
-          "date": "Sat, 10 Oct 2026 23:15:22 GMT",
+          "date": "Sun, 11 Oct 2026 12:01:52 GMT",
           "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\""
         },
         "body": {
@@ -794,69 +794,13 @@
         "status": 200,
         "headers": {
           "content-type": "application/json; charset=UTF-8",
-          "date": "Sat, 10 Oct 2026 23:15:22 GMT",
+          "date": "Sun, 11 Oct 2026 12:01:52 GMT",
           "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\""
         },
         "body": {
           "json": {
             "id": 38,
             "status": "failed",
-            "_links": {
-              "self": [
-                {
-                  "href": "https://shop.example.test/wp-json/wc/v3/orders/38",
-                  "targetHints": {
-                    "allow": [
-                      "GET",
-                      "POST",
-                      "PUT",
-                      "PATCH",
-                      "DELETE"
-                    ]
-                  }
-                }
-              ],
-              "collection": [
-                {
-                  "href": "https://shop.example.test/wp-json/wc/v3/orders"
-                }
-              ],
-              "email_templates": [
-                {
-                  "embeddable": true,
-                  "href": "https://shop.example.test/wp-json/wc/v3/orders/38/actions/email_templates"
-                }
-              ]
-            }
-          }
-        }
-      }
-    },
-    {
-      "request": {
-        "method": "PUT",
-        "url": "https://shop.example.test/wp-json/wc/v3/orders/38?_fields=id%2Cstatus",
-        "headers": {
-          "accept": "application/json",
-          "content-type": "application/json"
-        },
-        "body": {
-          "json": {
-            "status": "processing"
-          }
-        }
-      },
-      "response": {
-        "status": 200,
-        "headers": {
-          "content-type": "application/json; charset=UTF-8",
-          "date": "Sat, 10 Oct 2026 23:15:22 GMT",
-          "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\""
-        },
-        "body": {
-          "json": {
-            "id": 38,
-            "status": "processing",
             "_links": {
               "self": [
                 {
@@ -901,7 +845,7 @@
         "status": 200,
         "headers": {
           "content-type": "application/json; charset=UTF-8",
-          "date": "Sat, 10 Oct 2026 23:15:22 GMT",
+          "date": "Sun, 11 Oct 2026 12:01:52 GMT",
           "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\""
         },
         "body": {
@@ -952,7 +896,7 @@
         "status": 200,
         "headers": {
           "content-type": "application/json; charset=UTF-8",
-          "date": "Sat, 10 Oct 2026 23:15:22 GMT",
+          "date": "Sun, 11 Oct 2026 12:01:52 GMT",
           "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\""
         },
         "body": {
@@ -1008,7 +952,7 @@
         "status": 200,
         "headers": {
           "content-type": "application/json; charset=UTF-8",
-          "date": "Sat, 10 Oct 2026 23:15:22 GMT",
+          "date": "Sun, 11 Oct 2026 12:01:52 GMT",
           "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\""
         },
         "body": {
@@ -1059,7 +1003,7 @@
         "status": 200,
         "headers": {
           "content-type": "application/json; charset=UTF-8",
-          "date": "Sat, 10 Oct 2026 23:15:22 GMT",
+          "date": "Sun, 11 Oct 2026 12:01:52 GMT",
           "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\""
         },
         "body": {
@@ -1110,7 +1054,7 @@
         "status": 200,
         "headers": {
           "content-type": "application/json; charset=UTF-8",
-          "date": "Sat, 10 Oct 2026 23:15:22 GMT",
+          "date": "Sun, 11 Oct 2026 12:01:52 GMT",
           "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\""
         },
         "body": {
@@ -1161,7 +1105,7 @@
         "status": 200,
         "headers": {
           "content-type": "application/json; charset=UTF-8",
-          "date": "Sat, 10 Oct 2026 23:15:22 GMT",
+          "date": "Sun, 11 Oct 2026 12:01:52 GMT",
           "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\""
         },
         "body": {
@@ -1212,7 +1156,7 @@
         "status": 200,
         "headers": {
           "content-type": "application/json; charset=UTF-8",
-          "date": "Sat, 10 Oct 2026 23:15:22 GMT",
+          "date": "Sun, 11 Oct 2026 12:01:52 GMT",
           "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\""
         },
         "body": {
@@ -1263,7 +1207,7 @@
         "status": 200,
         "headers": {
           "content-type": "application/json; charset=UTF-8",
-          "date": "Sat, 10 Oct 2026 23:15:22 GMT",
+          "date": "Sun, 11 Oct 2026 12:01:52 GMT",
           "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\""
         },
         "body": {
@@ -1314,7 +1258,7 @@
         "status": 200,
         "headers": {
           "content-type": "application/json; charset=UTF-8",
-          "date": "Sat, 10 Oct 2026 23:15:23 GMT",
+          "date": "Sun, 11 Oct 2026 12:01:52 GMT",
           "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\""
         },
         "body": {
@@ -1365,7 +1309,7 @@
         "status": 200,
         "headers": {
           "content-type": "application/json; charset=UTF-8",
-          "date": "Sat, 10 Oct 2026 23:15:23 GMT",
+          "date": "Sun, 11 Oct 2026 12:01:52 GMT",
           "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\""
         },
         "body": {
@@ -1416,7 +1360,7 @@
         "status": 200,
         "headers": {
           "content-type": "application/json; charset=UTF-8",
-          "date": "Sat, 10 Oct 2026 23:15:23 GMT",
+          "date": "Sun, 11 Oct 2026 12:01:52 GMT",
           "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\""
         },
         "body": {
@@ -1472,7 +1416,7 @@
         "status": 200,
         "headers": {
           "content-type": "application/json; charset=UTF-8",
-          "date": "Sat, 10 Oct 2026 23:15:23 GMT",
+          "date": "Sun, 11 Oct 2026 12:01:52 GMT",
           "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\""
         },
         "body": {
@@ -1523,7 +1467,7 @@
         "status": 200,
         "headers": {
           "content-type": "application/json; charset=UTF-8",
-          "date": "Sat, 10 Oct 2026 23:15:23 GMT",
+          "date": "Sun, 11 Oct 2026 12:01:52 GMT",
           "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\""
         },
         "body": {
@@ -1574,7 +1518,7 @@
         "status": 200,
         "headers": {
           "content-type": "application/json; charset=UTF-8",
-          "date": "Sat, 10 Oct 2026 23:15:23 GMT",
+          "date": "Sun, 11 Oct 2026 12:01:52 GMT",
           "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\""
         },
         "body": {
@@ -1625,7 +1569,7 @@
         "status": 200,
         "headers": {
           "content-type": "application/json; charset=UTF-8",
-          "date": "Sat, 10 Oct 2026 23:15:23 GMT",
+          "date": "Sun, 11 Oct 2026 12:01:52 GMT",
           "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\""
         },
         "body": {
@@ -1676,7 +1620,7 @@
         "status": 404,
         "headers": {
           "content-type": "application/json; charset=UTF-8",
-          "date": "Sat, 10 Oct 2026 23:15:23 GMT",
+          "date": "Sun, 11 Oct 2026 12:01:52 GMT",
           "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\""
         },
         "body": {
