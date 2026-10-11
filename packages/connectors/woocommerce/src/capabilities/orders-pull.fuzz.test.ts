@@ -52,6 +52,12 @@ async function run(seed: number): Promise<{ shop: FakeShop; outcome: Outcome }> 
   const pick = random(seed)
   const options = { pageSize: 2 + pick(3), holdBackSeconds: pick(2) * 2 }
   const shop = new FakeShop('2026-10-01T08:00:00Z')
+  // The hardest shop there is: one that keeps no order inside a second (WooCommerce before 10.4.0). Every other
+  // run also lists unplaced checkouts under `any`, as WooCommerce before 11 does.
+  shop.unorderedSeconds = true
+  shop.listsDraftsUnderAny = seed % 2 === 0
+  // And every third one puts the trash under `any` as well, as WooCommerce 10.3.8 with HPOS does.
+  shop.listsTrashUnderAny = seed % 3 === 0
   const trashed = new Set<number>()
 
   const anyOf = (ids: number[]) => (ids.length === 0 ? null : ids[pick(ids.length)]!)

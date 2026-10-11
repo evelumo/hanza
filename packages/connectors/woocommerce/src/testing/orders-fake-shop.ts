@@ -39,6 +39,16 @@ export class FakeShop {
   productsStatus: number | null = null
   /** The statuses registered in the shop: WooCommerce's own and, as on the sandbox, a plugin's `packing`. */
   statuses: string[] = [...CORE_STATUSES, 'packing']
+  /**
+   * WooCommerce before 10.4.0: `orderby=modified` has no tie-break by id, so the orders of one second come back in
+   * whatever order the database finds them, another one on every request, also between two `offset` pages of the
+   * same list. (`orderby=date` and `orderby=id` are ordered to the end on every version.)
+   */
+  unorderedSeconds = false
+  /** WooCommerce before 11: `status=any` lists a checkout that was never placed (`checkout-draft`) too. */
+  listsDraftsUnderAny = false
+  /** Seen on WooCommerce 10.3.8 with HPOS: `status=any` lists the trash too, so a trashed order is in both lists. */
+  listsTrashUnderAny = false
   /** Called before the shop answers each request, with the number of requests so far: the place to change the shop mid-call. */
   beforeAnswer: ((count: number, request: ShopRequest) => void) | null = null
   readonly requests: ShopRequest[] = []
@@ -48,6 +58,7 @@ export class FakeShop {
   private readonly products = new Map<number, string>()
   private readonly statusBeforeTrash = new Map<number, unknown>()
   private nextId = 1
+  private shuffles = 1
 
   constructor(start = '2026-10-10T12:00:00Z') {
     this.nowMs = Date.parse(start)
@@ -195,33 +206,51 @@ export class FakeShop {
     return error(404, 'rest_no_route')
   }
 
+  /** Another order on every call, the same sequence of orders on every run of a test. */
+  private shuffle(items: unknown[]): void {
+    for (let index = items.length - 1; index > 0; index--) {
+      this.shuffles = (this.shuffles * 1_103_515_245 + 12_345) % 2_147_483_648
+      const other = Math.floor((this.shuffles / 2_147_483_648) * (index + 1))
+      ;[items[index], items[other]] = [items[other], items[index]]
+    }
+  }
+
   private list(query: Record<string, string>, cut: (item: Json) => Json, error: (status: number, code: string) => [number, unknown]): [number, unknown] {
     if ('dates_are_gmt' in query) return error(400, 'fake_shop_dates_are_gmt')
-    const filters: Array<[string, string]> = [
-      ['after', 'date_created_gmt'],
-      ['modified_after', 'date_modified_gmt'],
+    // All strict, to the second.
+    const filters: Array<[string, string, 1 | -1]> = [
+      ['after', 'date_created_gmt', 1],
+      ['modified_after', 'date_modified_gmt', 1],
+      ['modified_before', 'date_modified_gmt', -1],
     ]
     let orders = [...this.orders.values()]
-    for (const [parameter, field] of filters) {
+    for (const [parameter, field, side] of filters) {
       const value = query[parameter]
       if (value === undefined) continue
       if (!DATE_FILTER.test(value)) return error(400, `fake_shop_${parameter}_format`)
-      const after = stamp(Date.parse(value))
-      orders = orders.filter((order) => String(order[field]) > after)
+      const bound = stamp(Date.parse(value))
+      orders = orders.filter((order) => (side === 1 ? String(order[field]) > bound : String(order[field]) < bound))
     }
     const statuses = (query.status ?? 'any').split(',')
     // The parameter is checked against the registered statuses, like on the real shop.
     if (statuses.some((status) => !['any', 'trash', 'auto-draft', ...this.statuses].includes(status))) return error(400, 'rest_invalid_param')
     // `any` replaces the whole list, as on the real shop: the trash cannot be asked for along with it.
+    const hidden = HIDDEN_FROM_ANY.filter((status) => !(status === 'checkout-draft' && this.listsDraftsUnderAny) && !(status === 'trash' && this.listsTrashUnderAny))
     orders = statuses.includes('any')
-      ? orders.filter((order) => !HIDDEN_FROM_ANY.includes(String(order.status)))
+      ? orders.filter((order) => !hidden.includes(String(order.status)))
       : orders.filter((order) => statuses.includes(String(order.status)))
 
     const column = { id: 'id', date: 'date_created_gmt', modified: 'date_modified_gmt' }[query.orderby ?? 'date']
     if (column === undefined) return error(400, 'rest_invalid_param')
     const direction = query.order === 'asc' ? 1 : -1
     const compare = (a: unknown, b: unknown) => (a === b ? 0 : (a as number | string) < (b as number | string) ? -1 : 1)
-    orders.sort((a, b) => direction * (compare(a[column], b[column]) || compare(a.id, b.id)))
+    if (this.unorderedSeconds && query.orderby === 'modified') {
+      // No tie-break: the orders of a second in an order of its own for this request (the sort is stable).
+      this.shuffle(orders)
+      orders.sort((a, b) => direction * compare(a[column], b[column]))
+    } else {
+      orders.sort((a, b) => direction * (compare(a[column], b[column]) || compare(a.id, b.id)))
+    }
 
     const offset = Number(query.offset ?? 0)
     return [200, orders.slice(offset, offset + Number(query.per_page ?? 10)).map(cut)]

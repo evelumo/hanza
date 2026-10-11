@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { WooOrder } from '../api'
-import { comparePositions, MAX_RUN_REQUESTS, mergeRuns, rankAt, readRun, type Entry, type Position, type Run } from './orders-stream'
+import { comparePositions, MAX_RUN_REQUESTS, mergeRuns, mergeSeconds, rankAt, readRun, type Entry, type Position, type Run } from './orders-stream'
 
 const entry = (second: number, id: number): Entry => ({ key: { second, id }, order: { id } as WooOrder })
 const keys = (entries: readonly Entry[]) => entries.map(({ key }) => `${key.second}/${key.id}`)
@@ -279,5 +279,81 @@ describe('mergeRuns', () => {
     const merged = mergeRuns([live, run([])], from, 20)
     expect(keys(merged.entries)).toEqual(['12/5', '14/6', '15/4'])
     expect(merged.position).toEqual({ second: 15, id: 4 })
+  })
+})
+
+describe('mergeSeconds', () => {
+  // For lists whose order inside a second is not known: entries are written here in an order no shop promises.
+  const from = { second: 10, id: 7 }
+  const run = (fresh: Entry[], overrides: Partial<Run> = {}): Run => ({ fresh, page: fresh, offset: 0, exhausted: true, resumeRank: null, shopTimesMs: [], ...overrides })
+  const full = (fresh: Entry[]) => run(fresh, { exhausted: false })
+
+  it('takes everything settled from lists read to their end, in the order of time and id', () => {
+    const merged = mergeSeconds([run([entry(11, 9), entry(11, 4), entry(13, 2)]), run([entry(12, 7), entry(13, 1)])], from, 100)
+    expect(keys(merged.entries)).toEqual(['11/4', '11/9', '12/7', '13/1', '13/2'])
+    expect(merged).toMatchObject({ position: { second: 13, id: 2 }, more: false, drain: null })
+  })
+
+  it('takes nothing stamped after the cut-off', () => {
+    const merged = mergeSeconds([run([entry(11, 4), entry(21, 6), entry(20, 5)]), run([entry(21, 8)])], from, 20)
+    expect(keys(merged.entries)).toEqual(['11/4', '20/5'])
+    expect(merged).toMatchObject({ position: { second: 20, id: 5 }, more: false, drain: null })
+  })
+
+  it('of a list with more pages leaves out the last second of the page: the page may have ended inside it', () => {
+    // 12/9 and 12/3 are in the page; 12/5 may stand behind it, and would hide behind a position of 12/9.
+    const merged = mergeSeconds([full([entry(11, 8), entry(11, 2), entry(12, 9), entry(12, 3)]), run([])], from, 100)
+    expect(keys(merged.entries)).toEqual(['11/2', '11/8'])
+    // The position rests at the end of a second that is whole, whichever of its entries came last.
+    expect(merged).toMatchObject({ position: { second: 11, id: 8 }, more: true, drain: null })
+  })
+
+  it('holds every list back at the second a list with more pages gave up', () => {
+    const merged = mergeSeconds([full([entry(11, 4), entry(12, 5)]), run([entry(11, 9), entry(12, 3), entry(14, 6)])], from, 100)
+    expect(keys(merged.entries)).toEqual(['11/4', '11/9'])
+    expect(merged.position).toEqual({ second: 11, id: 9 })
+  })
+
+  it('when the page lies inside one second, says which second has to be read by id', () => {
+    const merged = mergeSeconds([full([entry(12, 9), entry(12, 3), entry(12, 5)]), run([entry(14, 6)])], from, 100)
+    expect(merged).toEqual({ entries: [], position: from, more: false, drain: 12 })
+  })
+
+  it('the second to read by id is the first there is, in whichever list', () => {
+    const merged = mergeSeconds([full([entry(12, 9), entry(12, 3)]), run([entry(11, 6)])], from, 100)
+    // The trash is whole, so its entry of second 11 is taken first; the next call finds second 12 alone.
+    expect(keys(merged.entries)).toEqual(['11/6'])
+    expect(mergeSeconds([full([entry(12, 9), entry(12, 3)]), full([entry(11, 6), entry(11, 2)])], from, 100).drain).toBe(11)
+  })
+
+  it('also for entries of the position\'s own second, as at the feed\'s start', () => {
+    const start = { second: 10, id: 0 }
+    expect(mergeSeconds([full([entry(10, 3), entry(10, 1), entry(10, 2)]), run([])], start, 100).drain).toBe(10)
+  })
+
+  it('a full page whose last settled second is followed by entries too new still gives that second up', () => {
+    // Whether 12 goes on behind the page cannot be told from an entry that may have been saved again meanwhile.
+    const merged = mergeSeconds([full([entry(11, 4), entry(12, 5), entry(30, 6)]), run([])], from, 20)
+    expect(keys(merged.entries)).toEqual(['11/4'])
+    expect(merged.more).toBe(true)
+  })
+
+  it('waits when a list with more pages shows nothing settled: what stands behind its page is unknown', () => {
+    const merged = mergeSeconds([full([entry(30, 4), entry(31, 5)]), run([entry(12, 6)])], from, 20)
+    expect(merged).toEqual({ entries: [], position: from, more: false, drain: null })
+  })
+
+  it('takes nothing while a list found no page to trust, and goes on from its new rank', () => {
+    const stalled = run([], { exhausted: false, resumeRank: 4 })
+    expect(mergeSeconds([stalled, run([entry(11, 4)])], from, 100)).toEqual({ entries: [], position: from, more: true, drain: null })
+  })
+
+  it('reports an order that two lists hold with one snapshot once', () => {
+    const merged = mergeSeconds([run([entry(11, 4), entry(11, 5)]), run([entry(11, 5)])], from, 100)
+    expect(keys(merged.entries)).toEqual(['11/4', '11/5'])
+  })
+
+  it('with nothing to take, stays where it was', () => {
+    expect(mergeSeconds([run([]), run([])], from, 100)).toEqual({ entries: [], position: from, more: false, drain: null })
   })
 })

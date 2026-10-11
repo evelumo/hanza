@@ -1,7 +1,19 @@
 import { AuthExpiredError, PermanentError, RateLimitedError, TransientError } from '@hanza/connector-sdk'
 import { describe, expect, it } from 'vitest'
 import { z } from 'zod'
-import { apiUrl, authorization, hasNextPageFrom, MAX_RESPONSE_BYTES, request, requestIfAllowed, requestIfFound, shopTimeFrom, type ClientContext } from './client'
+import {
+  apiUrl,
+  authorization,
+  hasNextPageFrom,
+  MAX_RESPONSE_BYTES,
+  READ_ONLY_KEY_MESSAGE,
+  request,
+  requestIfAllowed,
+  requestIfFound,
+  shopTimeFrom,
+  USER_AGENT,
+  type ClientContext,
+} from './client'
 
 const credentials = { consumerKey: 'ck_test_consumer_key', consumerSecret: 'cs_test_consumer_secret' }
 const schema = z.array(z.object({ id: z.number(), billing: z.object({ email: z.string() }).optional() }))
@@ -122,10 +134,23 @@ describe('request', () => {
     expect(calls[0]!.url).toBe('https://shop.example.test/wp-json/wc/v3/orders?per_page=5')
     expect(calls[0]!.init).toEqual({
       method: 'GET',
-      headers: { accept: 'application/json', authorization: authorization(credentials) },
+      headers: { accept: 'application/json', 'user-agent': USER_AGENT, authorization: authorization(credentials) },
       body: undefined,
       redirect: 'manual',
     })
+  })
+
+  it('says who is asking, the same on every request: a firewall often blocks the "node" fetch sends by itself', async () => {
+    expect(USER_AGENT).toBe('Hanza-WooCommerce-Connector (+https://github.com/evelumo/hanza)')
+    const order = z.object({ id: z.number() })
+    const { ctx, calls } = context(() => json({ id: 39 }))
+    await request(ctx, { path: 'orders/39', schema: order, what: 'order' })
+    await request(ctx, { method: 'PUT', path: 'orders/39', body: { status: 'completed' }, schema: order, what: 'order' })
+    await request(ctx, { method: 'POST', path: 'products/batch', body: { update: [] }, schema: z.unknown(), what: 'stock update' })
+    await requestIfFound(ctx, { path: 'orders/39', schema: order, what: 'order' })
+    await requestIfAllowed(ctx, { path: 'data/currencies/current', schema: z.unknown(), what: 'currency' })
+    expect(calls).toHaveLength(5)
+    for (const call of calls) expect(call.init.headers).toMatchObject({ 'user-agent': USER_AGENT })
   })
 
   it('sends a body as JSON', async () => {
@@ -337,6 +362,93 @@ describe('request', () => {
       const error = (await request(many, { path: 'orders', schema, what: 'orders' }).catch((caught: unknown) => caught)) as Error
       expect(error.message).toMatch(/9\.id \(invalid_type\) and 15 more$/)
     })
+  })
+})
+
+describe('a write the shop answers with 401', () => {
+  // WooCommerce's answers on the sandbox: the same code for a key that may only read and for a wrong secret.
+  const noWritePermission = () => wooError(401, 'woocommerce_rest_authentication_error', 'The API key provided does not have write permissions.')
+  const wrongSecret = () => wooError(401, 'woocommerce_rest_authentication_error', 'Consumer secret is invalid.')
+  const order = z.object({ id: z.number(), status: z.string() })
+  const put = (ctx: ClientContext) => request(ctx, { method: 'PUT', path: 'orders/39', query: { _fields: ['id', 'status'] }, body: { status: 'completed' }, schema: order, what: 'order' })
+  const PROBE = 'https://shop.example.test/wp-json/wc/v3/products?per_page=1&_fields=id'
+  /** Answers the write with `write` and the read that follows with `read`. */
+  const shop = (write: () => Response, read: () => Response | Promise<Response>) => context((call) => (call.init.method === 'GET' ? read() : write()))
+
+  it('asks once whether the key can read, and says the key is read-only when it can', async () => {
+    const { ctx, calls } = shop(noWritePermission, () => json([{ id: 10 }]))
+    const error = (await put(ctx).catch((caught: unknown) => caught)) as PermanentError
+    expect(error).toBeInstanceOf(PermanentError)
+    expect(error.constructor).toBe(PermanentError)
+    expect(error.message).toBe('The WooCommerce API key is read-only: create a key with Read/Write permission')
+    expect(error.message).toBe(READ_ONLY_KEY_MESSAGE)
+    expect(calls.map((call) => `${call.init.method} ${call.url}`)).toEqual(['PUT https://shop.example.test/wp-json/wc/v3/orders/39?_fields=id%2Cstatus', `GET ${PROBE}`])
+    // The read is a request like any other: the key in its header, nothing sent, no redirect followed.
+    expect(calls[1]!.init).toEqual({
+      method: 'GET',
+      headers: { accept: 'application/json', 'user-agent': USER_AGENT, authorization: authorization(credentials) },
+      body: undefined,
+      redirect: 'manual',
+    })
+    expect(JSON.stringify({ ...error, message: error.message })).not.toMatch(/ck_|cs_|Basic|write permissions/)
+  })
+
+  it('goes by the status of the read alone: what it answers is not read', async () => {
+    const { ctx } = shop(noWritePermission, () => new Response('<html>not what was asked for</html>', { status: 200, headers: { 'content-type': 'text/html' } }))
+    await expect(put(ctx)).rejects.toThrow(READ_ONLY_KEY_MESSAGE)
+    const { ctx: empty } = shop(noWritePermission, () => json([]))
+    await expect(put(empty)).rejects.toThrow(READ_ONLY_KEY_MESSAGE)
+  })
+
+  it('asks for sign-in when the read is refused with 401 as well: the key is not accepted at all', async () => {
+    const { ctx, calls } = shop(wrongSecret, wrongSecret)
+    const error = (await put(ctx).catch((caught: unknown) => caught)) as Error
+    expect(error.constructor).toBe(AuthExpiredError)
+    expect(error.message).toBe('401')
+    expect(calls).toHaveLength(2)
+  })
+
+  it.each([
+    ['is forbidden (403)', () => wooError(403, 'woocommerce_rest_cannot_view', 'Sorry, you cannot list resources.')],
+    ['finds no API (404)', () => wooError(404, 'rest_no_route', 'No route was found matching the URL and request method.')],
+    ['is limited (429)', () => new Response('slow down', { status: 429, headers: { 'retry-after': '7' } })],
+    ['fails (500)', () => new Response('<h1>Error establishing a database connection</h1>', { status: 500 })],
+    ['is redirected (301)', () => new Response(null, { status: 301, headers: { location: 'https://www.shop.example.test/' } })],
+    ['does not reach the shop', () => Promise.reject(new TypeError('fetch failed'))],
+    ['is refused by the core\'s rate limiter', () => Promise.reject(new RateLimitedError('Rate limit reached', { retryAfterMs: 1234 }))],
+  ])('still asks for sign-in when the read %s: only a read that worked speaks against a sign-out', async (_, read) => {
+    const { ctx, calls } = shop(noWritePermission, read)
+    const error = (await put(ctx).catch((caught: unknown) => caught)) as Error
+    expect(error.constructor).toBe(AuthExpiredError)
+    expect(error.message).toBe('401')
+    expect(calls).toHaveLength(2)
+  })
+
+  it('does the same for a POST, and through requestIfFound and requestIfAllowed', async () => {
+    const batch = { method: 'POST', path: 'products/batch', body: { update: [] }, schema: z.unknown(), what: 'stock update' } as const
+    for (const send of [request, requestIfFound, requestIfAllowed]) {
+      const readOnly = shop(noWritePermission, () => json([]))
+      await expect(send(readOnly.ctx, batch)).rejects.toThrow(READ_ONLY_KEY_MESSAGE)
+      expect(readOnly.calls.map((call) => call.init.method)).toEqual(['POST', 'GET'])
+      const signedOut = shop(wrongSecret, wrongSecret)
+      await expect(send(signedOut.ctx, batch)).rejects.toBeInstanceOf(AuthExpiredError)
+    }
+  })
+
+  it('does not ask after a read that got a 401: that is a sign-out', async () => {
+    const { ctx, calls } = context(wrongSecret)
+    for (const send of [request, requestIfFound, requestIfAllowed]) {
+      await expect(send(ctx, { path: 'orders', schema, what: 'orders' })).rejects.toBeInstanceOf(AuthExpiredError)
+    }
+    expect(calls).toHaveLength(3)
+  })
+
+  it.each([400, 403, 404, 413, 429, 500])('does not ask after a write that got a %i', async (status) => {
+    const { ctx, calls } = context(() => new Response(null, { status }))
+    const error = (await put(ctx).catch((caught: unknown) => caught)) as Error
+    expect(error.message).not.toBe(READ_ONLY_KEY_MESSAGE)
+    expect(error.constructor).not.toBe(AuthExpiredError)
+    expect(calls).toHaveLength(1)
   })
 })
 

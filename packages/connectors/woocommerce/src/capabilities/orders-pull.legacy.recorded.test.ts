@@ -5,11 +5,10 @@ import { withOrdersScenario } from '../testing/orders-scenario'
 
 // The Order feed against a shop that keeps its orders the old way, as posts (WooCommerce 11.2.1 with HPOS off): what
 // every shop did before WooCommerce 8.2 and many still do. The other recordings are from HPOS. To record again, the
-// sandbox has to be seeded with HPOS off, which `sandbox.sh reset` does not do:
+// sandbox has to be seeded with HPOS off:
 //
-//   export WOO_SANDBOX_PROJECT=<name> WOO_SANDBOX_PORT=<port>
-//   sandbox/sandbox.sh down && sandbox/sandbox.sh up && sandbox/sandbox.sh wp wc hpos disable
-//   sandbox/sandbox.sh seed && sandbox/sandbox.sh key
+//   export WOO_SANDBOX_PROJECT=<name> WOO_SANDBOX_PORT=<port> WOO_SANDBOX_HPOS=off
+//   sandbox/sandbox.sh reset
 //   HANZA_RECORD_FIXTURES=1 pnpm --filter @hanza/connector-woocommerce exec vitest run src/capabilities/orders-pull.legacy.recorded.test.ts
 //
 // What is the same there, and what the feed relies on: a date filter with a `Z` is compared as the instant it names
@@ -49,13 +48,15 @@ describe('orders.pull against a recorded shop on the old order storage', () => {
         const quiet = feed.cursor
         expect(await feed.page()).toEqual({ items: [], nextCursor: quiet, hasMore: false })
 
+        // The id a fresh shop of the pinned version gives the order placed below.
+        let placed = 58
         await scenario.change(async (sandbox) => {
           // THE GAP: the order in the plugin's status completes, with no other change since the Connection started.
           await sandbox.put('orders/47', { status: 'completed' })
           await sandbox.put('orders/51', { status: 'cancelled' })
           await sandbox.trash('orders/55')
           await sandbox.put('orders/30', { customer_note: 'Proszę dzwonić przed dostawą.' })
-          expectId(await sandbox.post('orders', newOrder({ set_paid: true })), 58)
+          placed = expectId(await sandbox.post('orders', newOrder({ set_paid: true })), 58)
           // On this storage an edited address does not stamp `date_modified`: the order does not come back.
           await sandbox.put('orders/31', { billing: { city: 'Sopot' } })
         })
@@ -63,13 +64,13 @@ describe('orders.pull against a recorded shop on the old order storage', () => {
 
         const changed = await feed.poll()
         const items = new Map(changed.map((item) => [label(item), item]))
-        expect([...items.keys()].sort()).toEqual(['order 30', 'order 58', 'update 47', 'update 51', 'update 55'])
+        expect([...items.keys()].sort()).toEqual(['order 30', `order ${placed}`, 'update 47', 'update 51', 'update 55'].sort())
         // 47 was never listed, so this is an update for an Order Hanza does not have: the core ignores it.
         expect(factTypes(items.get('update 47'))).toEqual(['paid', 'shipped'])
         expect(factTypes(items.get('update 51'))).toEqual(['cancelled'])
         expect(items.get('update 55')!.facts.at(-1)).toMatchObject({ id: '55:cancelled', type: 'cancelled', note: 'WooCommerce status: trash' })
         expect(factTypes(items.get('order 30'))).toEqual(['paid'])
-        expect(items.get('order 58') as Order).toMatchObject({ payment: 'prepaid', facts: [{ id: '58:paid', type: 'paid' }] })
+        expect(items.get(`order ${placed}`) as Order).toMatchObject({ payment: 'prepaid', facts: [{ id: `${placed}:paid`, type: 'paid' }] })
         const changes = scenario.requests.filter((request) => request.includes('orderby=modified'))
         expect(changes.at(-2)).toMatch(/^GET orders\?status=any&orderby=modified&per_page=5&modified_after=\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z(&offset=\d+)?&order=asc&_fields=id,status,/)
         expect(changes.at(-1)).toMatch(/^GET orders\?status=trash&orderby=modified&per_page=5&modified_after=\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z(&offset=\d+)?&order=asc&_fields=id,status,/)

@@ -2,10 +2,11 @@ import { stockPushResultSchema, type StockLevel, type StockPushResult } from '@h
 import { describe, expect, it } from 'vitest'
 import { createWooCommerceConnector } from '../connector'
 import type { WooCommerceContext } from '../settings'
+import { READ_ONLY_KEY_MESSAGE, USER_AGENT } from '../client'
 import { withScenario } from '../testing/offer-scenario'
 import { replayConfig, replayCredentials } from '../testing/recording'
 import { rawSimpleProduct, rawVariableProduct, rawVariation } from '../testing/samples'
-import { MAX_BATCH_ITEMS, pushStock, REJECTION } from './stock-push'
+import { MAX_BATCH_ITEMS, MAX_READ_ITEMS, pushStock, REJECTION } from './stock-push'
 
 // The scenarios below replay cassettes recorded from the sandbox shop (sandbox/README.md). To record them again:
 //
@@ -23,6 +24,9 @@ const connector = createWooCommerceConnector()
 const push = (ctx: WooCommerceContext, levels: StockLevel[]) => connector.capabilities['stock.push']!(ctx, levels)
 
 const TYPES = '&per_page=100&_fields=id,type'
+// The read a refused write is followed by, to tell a key that may only read from one the shop does not accept.
+const PROBE = 'products?per_page=1&_fields=id'
+const HEADERS = { accept: 'application/json', 'user-agent': USER_AGENT, 'content-type': 'application/json' }
 const update = (...items: Array<[id: number, available: number]>) => ({ update: items.map(([id, available]) => ({ id, manage_stock: true, stock_quantity: available })) })
 
 describe('stock.push against the recorded shop', () => {
@@ -144,11 +148,15 @@ describe('stock.push against the recorded shop', () => {
       },
     ))
 
-  it('fails as signed out with a key that may only read (401)', () =>
+  it('fails for good, saying the key is read-only, with a key that may only read: no sign-in is asked for', () =>
     withScenario('stock-read-only', async (scenario) => {
-      await expect(push(scenario.context('readOnly'), [level('10', 5)])).rejects.toMatchObject({ name: 'AuthExpiredError', kind: 'auth_expired' })
-      // It may read what the product is; the write is refused.
-      expect(scenario.requests).toEqual([`GET products?include=10${TYPES}`, 'POST products/batch'])
+      await expect(push(scenario.context('readOnly'), [level('10', 5)])).rejects.toMatchObject({ name: 'PermanentError', kind: 'permanent', message: READ_ONLY_KEY_MESSAGE })
+      // It may read what the product is; the write is refused with a 401, like a wrong secret would be; the read
+      // after it works, which a wrong secret's would not.
+      expect(scenario.requests).toEqual([`GET products?include=10${TYPES}`, 'POST products/batch', `GET ${PROBE}`])
+      // A variations batch is not read for first, and is told apart the same way.
+      await expect(push(scenario.context('readOnly'), [level('19:20', 5)])).rejects.toMatchObject({ kind: 'permanent', message: READ_ONLY_KEY_MESSAGE })
+      expect(scenario.requests.slice(3)).toEqual(['POST products/19/variations/batch', `GET ${PROBE}`])
     }))
 
   it('fails as permanent with a key whose user may neither read nor edit products (403)', () =>
@@ -175,8 +183,8 @@ interface Sent {
 interface StubShop {
   /** What the shop says a product is; null for one it does not list. Every other id is a simple product. */
   types?: Record<number, string | null>
-  /** Answers the read of what the products are, instead of `types`. */
-  read?(): Response
+  /** Answers a read instead of the shop, when it returns an answer: of what the products are (`include`), or the one after a refused write. */
+  read?(url: URL): Response | undefined
 }
 
 const json = (body: unknown, init: ResponseInit = {}) => new Response(JSON.stringify(body), { headers: { 'content-type': 'application/json; charset=UTF-8' }, ...init })
@@ -204,8 +212,11 @@ function stubShop(answer?: (sent: Sent, call: number) => Response | Json[] | und
       order.push(`${method} ${path}`)
       if (method === 'GET') {
         reads.push(`${path}${decodeURIComponent(url.search)}`)
-        if (shop.read) return shop.read()
-        const ids = (url.searchParams.get('include') ?? '').split(',').map(Number)
+        const custom = shop.read?.(url)
+        if (custom !== undefined) return custom
+        const include = url.searchParams.get('include')
+        if (include === null) return json([{ id: 10 }])
+        const ids = include.split(',').map(Number)
         return json(ids.flatMap((id) => (shop.types?.[id] === null ? [] : [{ id, type: shop.types?.[id] ?? 'simple' }])))
       }
       const request: Sent = {
@@ -237,24 +248,9 @@ describe('stock.push requests', () => {
     expect(results).toEqual([])
     expect(order).toEqual(['GET products', 'POST products/batch', 'POST products/19/variations/batch', 'POST products/24/variations/batch'])
     expect(sent).toEqual([
-      {
-        path: 'products/batch',
-        method: 'POST',
-        headers: { accept: 'application/json', 'content-type': 'application/json' },
-        body: update([10, 7], [13, 0]),
-      },
-      {
-        path: 'products/19/variations/batch',
-        method: 'POST',
-        headers: { accept: 'application/json', 'content-type': 'application/json' },
-        body: update([20, 6], [22, 3]),
-      },
-      {
-        path: 'products/24/variations/batch',
-        method: 'POST',
-        headers: { accept: 'application/json', 'content-type': 'application/json' },
-        body: update([25, 0]),
-      },
+      { path: 'products/batch', method: 'POST', headers: HEADERS, body: update([10, 7], [13, 0]) },
+      { path: 'products/19/variations/batch', method: 'POST', headers: HEADERS, body: update([20, 6], [22, 3]) },
+      { path: 'products/24/variations/batch', method: 'POST', headers: HEADERS, body: update([25, 0]) },
     ])
   })
 
@@ -276,38 +272,61 @@ describe('stock.push requests', () => {
     expect(levels).toHaveLength(100)
     expect(await pushStock(ctx, levels)).toEqual([])
     expect(reads).toEqual([`products?include=${Array.from({ length: 40 }, (_, index) => 1000 + index).join(',')}${TYPES}`])
+    // One read for the 40 products, then no write of more than 25 items.
     expect(sent.map((request) => [request.path, request.body.update.length])).toEqual([
-      ['products/batch', 40],
-      ['products/19/variations/batch', 35],
+      ['products/batch', 25],
+      ['products/batch', 15],
+      ['products/19/variations/batch', 25],
+      ['products/19/variations/batch', 10],
       ['products/24/variations/batch', 24],
       ['products/30/variations/batch', 1],
     ])
     expect(sent.flatMap((request) => request.body.update.map((item) => item.id))).toEqual(levels.map(({ offerExternalId }) => Number(offerExternalId.split(':').at(-1))))
   })
 
-  it('sends 100 simple products in one request, and never more in one', async () => {
-    const { ctx, sent, reads } = stubShop()
-    await pushStock(ctx, Array.from({ length: MAX_BATCH_ITEMS }, (_, index) => level(String(index + 1), 1)))
-    expect(sent.map((request) => request.body.update.length)).toEqual([100])
-    expect(reads).toHaveLength(1)
+  it('writes 25 items at a time, and reads what 100 products are in one request: four writes to a read', async () => {
+    expect([MAX_BATCH_ITEMS, MAX_READ_ITEMS]).toEqual([25, 100])
+    const { ctx, sent, reads, order } = stubShop()
+    await pushStock(ctx, Array.from({ length: 100 }, (_, index) => level(String(index + 1), 1)))
+    // The contract's 100 levels, all simple products: five requests.
+    expect(order).toEqual(['GET products', 'POST products/batch', 'POST products/batch', 'POST products/batch', 'POST products/batch'])
+    expect(reads.map((read) => /include=([\d,]+)/.exec(read)![1]!.split(',').length)).toEqual([100])
+    expect(sent.map((request) => request.body.update.length)).toEqual([25, 25, 25, 25])
+    expect(sent.flatMap((request) => request.body.update.map((item) => item.id))).toEqual(Array.from({ length: 100 }, (_, index) => index + 1))
 
-    // More than the contract's 100 levels: WooCommerce would refuse a batch of 101 as a whole (413), and a read
-    // lists 100 products at most.
-    const more = stubShop()
-    await pushStock(more.ctx, [
+    // 26 is one more write, of one item.
+    const one = stubShop()
+    await pushStock(one.ctx, Array.from({ length: 26 }, (_, index) => level(String(index + 1), 1)))
+    expect(one.sent.map((request) => request.body.update.length)).toEqual([25, 1])
+    expect(one.reads).toHaveLength(1)
+  })
+
+  it('writes only the simple ones of the products read, 25 at a time, whatever was left out between them', async () => {
+    // Every third of 90 products is not a simple one any more: 60 are written, in 25, 25 and 10.
+    const types = Object.fromEntries(Array.from({ length: 30 }, (_, index) => [index * 3 + 1, 'variable']))
+    const { ctx, sent, order } = stubShop(undefined, { types })
+    const results = await pushStock(ctx, Array.from({ length: 90 }, (_, index) => level(String(index + 1), 1)))
+    expect(results).toHaveLength(30)
+    expect(order).toEqual(['GET products', 'POST products/batch', 'POST products/batch', 'POST products/batch'])
+    expect(sent.map((request) => request.body.update.length)).toEqual([25, 25, 10])
+  })
+
+  it('never sends more in a request, also for more levels than the contract allows', async () => {
+    const { ctx, sent, reads, order } = stubShop()
+    await pushStock(ctx, [
       ...Array.from({ length: 150 }, (_, index) => level(String(index + 1), 1)),
       ...Array.from({ length: 101 }, (_, index) => level(`19:${index + 1}`, 1)),
     ])
-    expect(more.order).toEqual([
+    // A read lists 100 products at most; its writes follow it before the next read.
+    expect(order).toEqual([
       'GET products',
-      'POST products/batch',
+      ...Array.from({ length: 4 }, () => 'POST products/batch'),
       'GET products',
-      'POST products/batch',
-      'POST products/19/variations/batch',
-      'POST products/19/variations/batch',
+      ...Array.from({ length: 2 }, () => 'POST products/batch'),
+      ...Array.from({ length: 5 }, () => 'POST products/19/variations/batch'),
     ])
-    expect(more.reads.map((read) => /include=([\d,]+)/.exec(read)![1]!.split(',').length)).toEqual([100, 50])
-    expect(more.sent.map((request) => request.body.update.length)).toEqual([100, 50, 100, 1])
+    expect(reads.map((read) => /include=([\d,]+)/.exec(read)![1]!.split(',').length)).toEqual([100, 50])
+    expect(sent.map((request) => request.body.update.length)).toEqual([25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 1])
   })
 
   it('sends an Offer given twice once, with its last number', async () => {
@@ -485,16 +504,36 @@ describe('stock.push when the whole call fails', () => {
     json({ code, message: 'Sorry, you are not allowed to batch manipulate this resource.', data: { status } }, { status, headers: { 'content-type': 'application/json; charset=UTF-8', ...headers } })
 
   it.each([
-    [401, 'AuthExpiredError', 'auth_expired'],
     [403, 'PermanentError', 'permanent'],
     [404, 'PermanentError', 'permanent'],
     [413, 'PermanentError', 'permanent'],
     [500, 'TransientError', 'transient'],
     [503, 'TransientError', 'transient'],
   ])('a batch answered %i → %s', async (status, name, kind) => {
-    const { ctx } = stubShop(() => wooError(status, 'some_code'))
+    const { ctx, reads } = stubShop(() => wooError(status, 'some_code'))
     await expect(pushStock(ctx, [level('10', 5)])).rejects.toMatchObject({ name, kind })
     await expect(pushStock(ctx, [level('19:20', 5)])).rejects.toMatchObject({ name, kind })
+    // Only the read of what product 10 is: nothing is asked after a refusal that is no 401.
+    expect(reads).toHaveLength(1)
+  })
+
+  it('a batch answered 401 while the key can read → permanent, saying the key is read-only', async () => {
+    const { ctx, order } = stubShop(() => wooError(401, 'woocommerce_rest_authentication_error'))
+    await expect(pushStock(ctx, [level('10', 5), level('19:20', 5)])).rejects.toMatchObject({ name: 'PermanentError', kind: 'permanent', message: READ_ONLY_KEY_MESSAGE })
+    expect(order).toEqual(['GET products', 'POST products/batch', 'GET products'])
+    const variations = stubShop(() => wooError(401, 'woocommerce_rest_authentication_error'))
+    await expect(pushStock(variations.ctx, [level('19:20', 5)])).rejects.toMatchObject({ kind: 'permanent', message: READ_ONLY_KEY_MESSAGE })
+    expect(variations.reads).toEqual([PROBE])
+  })
+
+  it.each([401, 403, 500])('a batch answered 401 and the read after it %i → auth_expired: the key is not known to work', async (status) => {
+    // The read of what the products are still works; the one after the refused write does not.
+    const afterRefusal = (url: URL) => (url.searchParams.has('include') ? undefined : wooError(status, 'some_code'))
+    const { ctx, order } = stubShop(() => wooError(401, 'woocommerce_rest_authentication_error'), { read: afterRefusal })
+    await expect(pushStock(ctx, [level('10', 5)])).rejects.toMatchObject({ name: 'AuthExpiredError', kind: 'auth_expired' })
+    expect(order).toEqual(['GET products', 'POST products/batch', 'GET products'])
+    const variations = stubShop(() => wooError(401, 'woocommerce_rest_authentication_error'), { read: afterRefusal })
+    await expect(pushStock(variations.ctx, [level('19:20', 5)])).rejects.toMatchObject({ name: 'AuthExpiredError', kind: 'auth_expired' })
   })
 
   it('429 → rate_limited, with the wait the shop (or its firewall) asked for', async () => {

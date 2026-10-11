@@ -164,8 +164,9 @@ describe('orders.updateStatus', () => {
     })
 
     it.each([
-      // What a read-only key gets for a write.
-      ['a read-only key', () => wooError(401, 'woocommerce_rest_cannot_edit'), 'auth_expired'],
+      // What a read-only key gets for a write: a 401, like a wrong secret. The client then reads once with the key
+      // (here every GET is answered), and a key that can read is not signed out but may not write.
+      ['a read-only key', () => wooError(401, 'woocommerce_rest_cannot_edit'), 'permanent'],
       ['a status the shop does not know', () => wooError(400, 'rest_invalid_param'), 'permanent'],
       ['a server error', () => wooError(503, 'service_unavailable'), 'transient'],
     ])('%s on the write is %s', async (_, answer, kind) => {
@@ -254,12 +255,13 @@ describe('orders.updateStatus against the recorded shop', () => {
   )
 
   it(
-    'a key that may only read asks for sign-in at the write (401), after the read worked',
+    'a key that may only read fails for good at the write (401), saying it is read-only, and is not asked to sign in',
     () =>
       withOrdersScenario('orders-update-status-read-only', async (scenario) => {
         const error = await update(scenario.context('readOnly'), { orderExternalId: '53', phase: 'shipped' }).catch((caught: unknown) => caught)
-        expect(classifyConnectorError(error).kind).toBe('auth_expired')
-        expect(scenario.requests).toEqual([read(53), write(53)])
+        expect(classifyConnectorError(error)).toMatchObject({ kind: 'permanent', message: 'The WooCommerce API key is read-only: create a key with Read/Write permission' })
+        // The write is refused like a wrong secret's would be; the read after it works, which tells them apart.
+        expect(scenario.requests).toEqual([read(53), write(53), 'GET products?per_page=1&_fields=id'])
         await scenario.change(async (sandbox) => expect((await sandbox.get('orders/53')).status).toBe('processing'))
       }),
     RECORDING_TIMEOUT,

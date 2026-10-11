@@ -1,11 +1,18 @@
 import { pushRejectionCodeSchema, type StockLevel, type StockPushResult } from '@hanza/connector-sdk'
-import { WOO_PRODUCT_TYPE_FIELDS, wooBatchResponseSchema, wooProductTypesSchema, type WooBatchItem } from '../api'
+import { WOO_MAX_PER_PAGE, WOO_PRODUCT_TYPE_FIELDS, wooBatchResponseSchema, wooProductTypesSchema, type WooBatchItem } from '../api'
 import { request } from '../client'
 import { parseOfferId } from '../mapping/offer'
 import type { WooCommerceContext } from '../settings'
 
-/** WooCommerce refuses a batch of more items as a whole (413). */
-export const MAX_BATCH_ITEMS = 100
+/**
+ * Items in one write. WooCommerce takes 100 (and refuses more as a whole, 413), but it saves them one by one and
+ * answers with every product in full: on an idle local shop 100 items took 3.3 s on average and 8.3 s at worst, for
+ * 212 KB. A shared host several times slower would run into the core's 30 s timeout, and the retried call would send
+ * the same batch again, for ever. A quarter of it stays well inside.
+ */
+export const MAX_BATCH_ITEMS = 25
+/** Products in one read of what they are: a page of the list, four writes' worth. */
+export const MAX_READ_ITEMS = WOO_MAX_PER_PAGE
 
 /** The rejection codes the connector gives itself; every other code is the one WooCommerce gave for the item. */
 export const REJECTION = {
@@ -89,14 +96,15 @@ async function send(ctx: WooCommerceContext, batch: Batch): Promise<Rejections> 
 }
 
 /**
- * At most `MAX_BATCH_ITEMS` simple products. `products/batch` sets the number of whatever product has the id, and an
+ * At most `MAX_READ_ITEMS` simple products. `products/batch` sets the number of whatever product has the id, and an
  * Offer that was a simple product when it was pulled may be a variable one by now: its number is then the one every
- * variation on `"parent"` stock sells from. So the products are read first, and only the simple ones are sent.
+ * variation on `"parent"` stock sells from. So the products are read first, in one request, and only the simple ones
+ * are sent, `MAX_BATCH_ITEMS` to a write.
  */
 async function pushProducts(ctx: WooCommerceContext, targets: Target[]): Promise<Rejections> {
   const { data } = await request(ctx, {
     path: 'products',
-    query: { include: targets.map((target) => target.id), per_page: MAX_BATCH_ITEMS, _fields: WOO_PRODUCT_TYPE_FIELDS },
+    query: { include: targets.map((target) => target.id), per_page: MAX_READ_ITEMS, _fields: WOO_PRODUCT_TYPE_FIELDS },
     schema: wooProductTypesSchema,
     what: 'products',
   })
@@ -110,19 +118,24 @@ async function pushProducts(ctx: WooCommerceContext, targets: Target[]): Promise
     else if (type !== 'simple') rejected.set(target.offerExternalId, REJECTION.notAnOffer)
     else simple.push(target)
   }
-  if (simple.length === 0) return rejected
-  const refused = await send(ctx, { path: 'products/batch', type: 'simple', unknown: REJECTION.unknownProduct, targets: simple })
-  return new Map([...rejected, ...refused])
+  for (const part of chunks(simple, MAX_BATCH_ITEMS)) {
+    const refused = await send(ctx, { path: 'products/batch', type: 'simple', unknown: REJECTION.unknownProduct, targets: part })
+    for (const [offerExternalId, code] of refused) rejected.set(offerExternalId, code)
+  }
+  return rejected
 }
 
 /**
- * `stock.push`: sets `stock_quantity` with one `products/batch` request for the simple products (after one read of
- * what they are now) and one `products/<parent>/variations/batch` request per variable product, and returns a
- * result for every Offer that was not applied (Offers left out were). Never `ended`: WooCommerce keeps a product at
- * 0 published.
+ * `stock.push`: sets `stock_quantity` with `products/batch` requests for the simple products (after one read of what
+ * they are now) and `products/<parent>/variations/batch` requests for each variable product, `MAX_BATCH_ITEMS` items
+ * to a request, and returns a result for every Offer that was not applied (Offers left out were). Never `ended`:
+ * WooCommerce keeps a product at 0 published.
  *
- * A variations batch needs no read: under a parent that is gone, is not a variable product or does not own the
- * variation, WooCommerce refuses each item by itself (`woocommerce_rest_product_variation_invalid_id`) behind a 200.
+ * A variations batch gets no read. An Offer's id pairs a variation with the parent `offers.pull` found it under, so
+ * the batch only ever names a variation under its own parent, and under a parent that is gone or is no variable
+ * product WooCommerce refuses each item by itself (`woocommerce_rest_product_variation_invalid_id`) behind a 200.
+ * What it does with a variation of another parent depends on its version (refused on 10.7 and 11.2; on 7.6 to 9.3
+ * the number is applied and the variation moved under the parent named), which is why the pairing matters.
  */
 export async function pushStock(ctx: WooCommerceContext, levels: StockLevel[]): Promise<StockPushResult[]> {
   // One result per Offer at most (the core refuses two): a level given twice counts once, with its last number.
@@ -147,7 +160,7 @@ export async function pushStock(ctx: WooCommerceContext, levels: StockLevel[]): 
   // fails rejects the whole call, also when earlier batches were applied: the core tries the call again, and
   // setting the same numbers a second time changes nothing.
   const steps: Array<() => Promise<Rejections>> = [
-    ...chunks(products, MAX_BATCH_ITEMS).map((targets) => () => pushProducts(ctx, targets)),
+    ...chunks(products, MAX_READ_ITEMS).map((targets) => () => pushProducts(ctx, targets)),
     ...[...variations].flatMap(([parentId, targets]) =>
       chunks(targets, MAX_BATCH_ITEMS).map(
         (part) => () => send(ctx, { path: `products/${parentId}/variations/batch`, type: 'variation', unknown: REJECTION.unknownVariation, targets: part }),

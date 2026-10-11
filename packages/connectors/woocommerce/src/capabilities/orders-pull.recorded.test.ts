@@ -141,10 +141,11 @@ describe('orders.pull against the recorded shop', () => {
         // All three are from before the boundary and closed: facts only. Hanza has 31 and cancels it. It never had
         // 50, which closed before the listing reached it, nor 47, which was never listed: the core ignores both
         // updates, so 47's units are never taken off Stock though they left the shelf.
-        expect(labels(changes)).toEqual(['update 31', 'update 50', 'update 47'])
-        expect(changes[0]!.facts).toEqual([{ id: '31:cancelled', type: 'cancelled', occurredAt: expect.stringMatching(/Z$/), note: 'WooCommerce status: cancelled' }])
-        expect(factTypes(changes[1])).toEqual(['paid', 'shipped'])
-        expect(factTypes(changes[2])).toEqual(['paid', 'shipped'])
+        const closed = new Map(changes.map((item) => [label(item), item]))
+        expect([...closed.keys()].sort()).toEqual(['update 31', 'update 47', 'update 50'])
+        expect(closed.get('update 31')!.facts).toEqual([{ id: '31:cancelled', type: 'cancelled', occurredAt: expect.stringMatching(/Z$/), note: 'WooCommerce status: cancelled' }])
+        expect(factTypes(closed.get('update 50'))).toEqual(['paid', 'shipped'])
+        expect(factTypes(closed.get('update 47'))).toEqual(['paid', 'shipped'])
         expect(await feed.page()).toEqual({ items: [], nextCursor: feed.cursor, hasMore: false })
       }),
     RECORDING_TIMEOUT,
@@ -156,6 +157,8 @@ describe('orders.pull against the recorded shop', () => {
       withOrdersScenario('orders-changes', async (scenario) => {
         const feed = feedOf(scenario, { pageSize: 100, holdBackSeconds: 0 })
         expect((await feed.startAtChanges()).boundary).toBe(57)
+        // The ids a fresh shop of the pinned version gives the three orders placed below.
+        const placed = { paid: 58, shipped: 59, trashed: 60 }
         const quiet = feed.cursor
         expect(await feed.page()).toEqual({ items: [], nextCursor: quiet, hasMore: false })
 
@@ -166,11 +169,11 @@ describe('orders.pull against the recorded shop', () => {
           // From before the boundary, still open: a note is added.
           await sandbox.put('orders/30', { customer_note: 'Proszę dzwonić przed dostawą.' })
           // Placed after the boundary: paid; paid and shipped at once; cash on delivery and then trashed.
-          expectId(await sandbox.post('orders', newOrder({ set_paid: true, line_items: [{ product_id: 19, variation_id: 21, quantity: 1 }, { product_id: 10, quantity: 2 }] })), 58)
-          expectId(await sandbox.post('orders', newOrder({ set_paid: true })), 59)
-          await sandbox.put('orders/59', { status: 'completed' })
-          expectId(await sandbox.post('orders', newOrder({ payment_method: 'cod', payment_method_title: 'Za pobraniem', status: 'processing' })), 60)
-          await sandbox.trash('orders/60')
+          placed.paid = expectId(await sandbox.post('orders', newOrder({ set_paid: true, line_items: [{ product_id: 19, variation_id: 21, quantity: 1 }, { product_id: 10, quantity: 2 }] })), 58)
+          placed.shipped = expectId(await sandbox.post('orders', newOrder({ set_paid: true })), 59)
+          await sandbox.put(`orders/${placed.shipped}`, { status: 'completed' })
+          placed.trashed = expectId(await sandbox.post('orders', newOrder({ payment_method: 'cod', payment_method_title: 'Za pobraniem', status: 'processing' })), 60)
+          await sandbox.trash(`orders/${placed.trashed}`)
           // From before the boundary, into the trash.
           await sandbox.trash('orders/55')
           // Into a status a plugin registered.
@@ -188,7 +191,7 @@ describe('orders.pull against the recorded shop', () => {
         expect(page.hasMore).toBe(false)
         const items = new Map(page.items.map((item) => [label(item), item]))
         expect([...items.keys()].sort()).toEqual(
-          ['update 51', 'update 54', 'order 30', 'order 58', 'order 59', 'order 60', 'update 55', 'order 56', 'order 35', 'update 34', 'update 44'].sort(),
+          ['update 51', 'update 54', 'order 30', `order ${placed.paid}`, `order ${placed.shipped}`, `order ${placed.trashed}`, 'update 55', 'order 56', 'order 35', 'update 34', 'update 44'].sort(),
         )
         expect(scenario.requests.slice(-3)).toEqual([
           expect.stringContaining('GET orders?status=any&orderby=modified&per_page=100&modified_after='),
@@ -202,15 +205,15 @@ describe('orders.pull against the recorded shop', () => {
         // Open, from before the boundary: in full.
         expect(factTypes(items.get('order 30'))).toEqual(['paid'])
         // After the boundary: in full, with every fact.
-        expect(items.get('order 58')).toMatchObject({ payment: 'prepaid', facts: [{ id: '58:paid', type: 'paid' }] })
-        expect((items.get('order 58') as Order).lines.map((line) => [line.offerExternalId, line.sku])).toEqual([
+        expect(items.get(`order ${placed.paid}`)).toMatchObject({ payment: 'prepaid', facts: [{ id: `${placed.paid}:paid`, type: 'paid' }] })
+        expect((items.get(`order ${placed.paid}`) as Order).lines.map((line) => [line.offerExternalId, line.sku])).toEqual([
           ['19:21', null],
           ['10', 'WOO-MUG-1'],
         ])
-        expect(factTypes(items.get('order 59'))).toEqual(['paid', 'shipped'])
+        expect(factTypes(items.get(`order ${placed.shipped}`))).toEqual(['paid', 'shipped'])
         // The trash: a cancelled fact, as an update before the boundary and in full after it.
         expect(items.get('update 55')!.facts.at(-1)).toMatchObject({ id: '55:cancelled', type: 'cancelled', note: 'WooCommerce status: trash' })
-        expect(items.get('order 60')).toMatchObject({ payment: 'cash_on_delivery', facts: [{ id: '60:cancelled', type: 'cancelled', note: 'WooCommerce status: trash' }] })
+        expect(items.get(`order ${placed.trashed}`)).toMatchObject({ payment: 'cash_on_delivery', facts: [{ id: `${placed.trashed}:cancelled`, type: 'cancelled', note: 'WooCommerce status: trash' }] })
         // A plugin's status is neither shipped nor cancelled: open, and unpaid as before.
         expect(items.get('order 56')).toMatchObject({ awaitingPayment: true, facts: [] })
         // Reopened after it was cancelled: open, so in full. Reopened after it was completed: WooCommerce keeps
@@ -238,26 +241,29 @@ describe('orders.pull against the recorded shop', () => {
       withOrdersScenario('orders-unpaid-paid', async (scenario) => {
         const feed = feedOf(scenario, { pageSize: 100, holdBackSeconds: 0 })
         await feed.startAtChanges()
+        // The ids a fresh shop of the pinned version gives them, after the three of the scenario before.
+        const unpaidIds = { transfer: 61, checkout: 62, failed: 63 }
 
         await scenario.change(async (sandbox) => {
-          expectId(await sandbox.post('orders', newOrder({ payment_method: 'bacs', payment_method_title: 'Przelew bankowy', status: 'on-hold' })), 61)
-          expectId(await sandbox.post('orders', newOrder({ status: 'pending' })), 62)
-          expectId(await sandbox.post('orders', newOrder({ status: 'failed' })), 63)
+          unpaidIds.transfer = expectId(await sandbox.post('orders', newOrder({ payment_method: 'bacs', payment_method_title: 'Przelew bankowy', status: 'on-hold' })), 61)
+          unpaidIds.checkout = expectId(await sandbox.post('orders', newOrder({ status: 'pending' })), 62)
+          unpaidIds.failed = expectId(await sandbox.post('orders', newOrder({ status: 'failed' })), 63)
         })
         await scenario.settle()
         const unpaid = await feed.poll()
-        expect(labels(unpaid)).toEqual(['order 61', 'order 62', 'order 63'])
+        const theThree = Object.values(unpaidIds).map((id) => `order ${id}`)
+        expect(labels(unpaid)).toEqual(theThree)
         expect(unpaid[0]).toMatchObject({ payment: 'prepaid', awaitingPayment: true, facts: [] })
         expect(unpaid[1]).toMatchObject({ payment: 'prepaid', awaitingPayment: true, facts: [] })
         // A failed payment is a cancellation for now; nothing was paid.
-        expect(unpaid[2]).toMatchObject({ awaitingPayment: true, facts: [{ id: '63:cancelled', type: 'cancelled', note: 'WooCommerce status: failed' }] })
+        expect(unpaid[2]).toMatchObject({ awaitingPayment: true, facts: [{ id: `${unpaidIds.failed}:cancelled`, type: 'cancelled', note: 'WooCommerce status: failed' }] })
 
         await scenario.change(async (sandbox) => {
-          for (const id of [61, 62, 63]) await sandbox.put(`orders/${id}`, { status: 'processing' })
+          for (const id of Object.values(unpaidIds)) await sandbox.put(`orders/${id}`, { status: 'processing' })
         })
         await scenario.settle()
         const paid = await feed.poll()
-        expect(labels(paid)).toEqual(['order 61', 'order 62', 'order 63'])
+        expect(labels(paid)).toEqual(theThree)
         for (const order of paid) {
           // Never the flag dropped without the fact.
           expect(order).not.toHaveProperty('awaitingPayment')
@@ -265,10 +271,10 @@ describe('orders.pull against the recorded shop', () => {
         }
 
         // Back on hold after the payment: WooCommerce keeps `date_paid`, so the Order is not awaiting payment again.
-        await scenario.change((sandbox) => sandbox.put('orders/61', { status: 'on-hold' }))
+        await scenario.change((sandbox) => sandbox.put(`orders/${unpaidIds.transfer}`, { status: 'on-hold' }))
         await scenario.settle()
         const held = await feed.poll()
-        expect(labels(held)).toEqual(['order 61'])
+        expect(labels(held)).toEqual([`order ${unpaidIds.transfer}`])
         expect(held[0]).not.toHaveProperty('awaitingPayment')
         expect(held[0]!.facts).toEqual(paid[0]!.facts)
       }),
@@ -276,40 +282,62 @@ describe('orders.pull against the recorded shop', () => {
   )
 
   it(
-    'more changes in one second than fit a page: each order once, also when one of them is saved again between two pages',
+    'a page that ends inside a second, and a second that fills a page: each order once, also when one is saved again between two pages',
     () =>
       withOrdersScenario('orders-changes-one-second', async (scenario) => {
         const feed = feedOf(scenario, { pageSize: 3, holdBackSeconds: 0 })
         await feed.startAtChanges()
 
-        // A bulk action: seven orders saved with the same `date_modified`.
-        await scenario.change((sandbox) =>
-          sandbox.php('$t = time(); foreach ([39, 40, 41, 42, 43, 49, 53] as $id) { $o = wc_get_order($id); $o->set_date_modified($t); $o->save(); }'),
-        )
+        // Two orders saved in one second and, as by a bulk action, seven in the next: the script waits for a
+        // second to begin before each group. (The old order storage stamps a save with the clock whatever date
+        // the order is given, so the two seconds cannot simply be set.)
+        const nextSecond = '$t = time(); while (time() === $t) { usleep(10000); }'
+        const save = (ids: number[]) => `foreach ([${ids.join(', ')}] as $id) { $o = wc_get_order($id); $o->set_date_modified(time()); $o->save(); }`
+        await scenario.change((sandbox) => sandbox.php(`${nextSecond} ${save([32, 33])} ${nextSecond} ${save([39, 40, 41, 42, 43, 49, 53])}`))
         await scenario.settle()
+
+        // The first page holds the two and one of the seven: it ends inside the second of the seven, so only the
+        // second before it is taken. The position rests at the end of that one.
         const first = await feed.page()
-        // Within the second, by id.
-        expect(labels(first.items)).toEqual(['order 39', 'order 40', 'order 41'])
-        expect(first.hasMore).toBe(true)
-        // Three entries of that second are dealt with: the next request skips two and expects 41 back first.
-        expect(first.nextCursor).toMatch(/^c1:\d+:\d+:\d+:41:3:0$/)
+        expect(labels(first.items)).toEqual(['order 32', 'order 33'])
+        expect(first).toMatchObject({ hasMore: true, nextCursor: expect.stringMatching(/^c1:\d+:\d+:\d+:33:2:0$/) })
+
+        // The next page lies inside the second of the seven altogether: nothing of it can be taken by time (before
+        // WooCommerce 10.4.0 the rest of the second could come back in any order), so the feed turns to that
+        // second alone.
+        const turned = await feed.page()
+        expect(turned).toMatchObject({ items: [], hasMore: true, nextCursor: expect.stringMatching(/^s1:\d+:\d+:\d+:0:0:0$/) })
+        const second = parseCursor(turned.nextCursor!).at.second
+        expect(second).toBe(parseCursor(first.nextCursor!).at.second + 1)
+
+        // That second, by id, between the second before it and the one after.
+        const byId = await feed.page()
+        expect(labels(byId.items)).toEqual(['order 39', 'order 40', 'order 41'])
+        expect(byId).toMatchObject({ hasMore: true, nextCursor: `s1:${parseCursor(first.nextCursor!).start}:${parseCursor(first.nextCursor!).boundary}:${second}:41:3:0` })
+        const stamp = (at: number) => new Date(at * 1000).toISOString().replace('.000Z', 'Z')
+        expect(scenario.requests.slice(-3, -1)).toEqual([
+          expect.stringContaining(`GET orders?status=any&orderby=id&per_page=3&modified_after=${stamp(second - 1)}&modified_before=${stamp(second + 1)}&order=asc&_fields=id,status,`),
+          expect.stringContaining(`GET orders?status=trash&orderby=id&per_page=3&modified_after=${stamp(second - 1)}&modified_before=${stamp(second + 1)}&order=asc&_fields=id,status,`),
+        ])
 
         // 39 is saved again and leaves the second. By offset alone, the next page would now begin behind 42.
         await scenario.change((sandbox) => sandbox.put('orders/39', { customer_note: 'Jeszcze jedna zmiana.' }))
         const before = scenario.requests.length
-        const second = await feed.page()
-        expect(labels(second.items)).toEqual(['order 42'])
+        const next = await feed.page()
+        expect(labels(next.items)).toEqual(['order 42'])
         const live = scenario.requests.slice(before).filter((request) => request.includes('status=any'))
-        // The page behind two skipped entries does not begin with 41, so the second is read from its beginning.
+        // The page behind two skipped ids does not begin with 41, so the second is read from its beginning.
         expect(live).toHaveLength(2)
         expect(live[0]).toContain('&offset=2&')
+        expect(live[0]).toContain('orderby=id')
         expect(live[1]).not.toContain('offset')
 
         const rest = [...(await feed.poll())]
         await scenario.settle()
         rest.push(...(await feed.poll()))
-        // Everything else once, and 39 again with its later stamp.
+        // Everything else once, and 39 again with its later stamp; then the changes go on by time.
         expect(labels(rest)).toEqual(['order 43', 'order 49', 'order 53', 'order 39'])
+        expect(feed.cursor).toMatch(/^c1:/)
       }),
     RECORDING_TIMEOUT,
   )

@@ -41,6 +41,13 @@ const MAX_PATHS_IN_MESSAGE = 10
 export const MAX_RESPONSE_BYTES = 20 * 1024 * 1024
 // WooCommerce's errors are a code, a sentence and a status.
 const MAX_ERROR_BYTES = 64 * 1024
+/**
+ * Says who is asking, the same on every request: firewalls in front of shops often block the `node` that `fetch`
+ * sends by itself. No version in it, which would have to be kept in step by hand.
+ */
+export const USER_AGENT = 'Hanza-WooCommerce-Connector (+https://github.com/evelumo/hanza)'
+/** What a merchant has to do about a key that may only read. Shown in the panel as the Connection's failure. */
+export const READ_ONLY_KEY_MESSAGE = 'The WooCommerce API key is read-only: create a key with Read/Write permission'
 
 /**
  * `<storeUrl>/wp-json/wc/v3/<path>`, for a shop at the root of its host or in a subdirectory. Built from the parsed
@@ -75,7 +82,7 @@ export function authorization(credentials: ClientContext['credentials']): string
 }
 
 async function send(ctx: ClientContext, request: Pick<ApiRequest<z.ZodType>, 'method' | 'path' | 'query' | 'body'>): Promise<Response> {
-  const headers: Record<string, string> = { accept: 'application/json', authorization: authorization(ctx.credentials) }
+  const headers: Record<string, string> = { accept: 'application/json', 'user-agent': USER_AGENT, authorization: authorization(ctx.credentials) }
   if (request.body !== undefined) headers['content-type'] = 'application/json'
   const url = apiUrl(ctx.config.storeUrl, request.path, request.query)
   try {
@@ -181,19 +188,41 @@ async function parse<T extends z.ZodType>(response: Response, request: ApiReques
   }
 }
 
-async function failure(response: Response): Promise<Error> {
+/**
+ * Whether the shop takes the key for a read: the cheapest one there is. False for anything but a 2xx, also when the
+ * shop could not be asked, so that nothing but a read that worked can speak against a sign-out.
+ */
+async function keyCanRead(ctx: ClientContext): Promise<boolean> {
+  try {
+    const response = await send(ctx, { path: 'products', query: { per_page: 1, _fields: ['id'] } })
+    await response.body?.cancel().catch(() => {})
+    return response.ok
+  } catch {
+    return false
+  }
+}
+
+type Sent = Pick<ApiRequest<z.ZodType>, 'method'>
+
+async function failure(ctx: ClientContext, request: Sent, response: Response): Promise<Error> {
   if (response.status >= 300 && response.status < 400) {
     await response.body?.cancel().catch(() => {})
     // Typically http → https, or a missing or extra "www": the address in the Connection is not the shop's own.
     return new PermanentError(`The shop address redirects elsewhere (${response.status}): use the address it redirects to`)
   }
-  return errorFromResponse(response)
+  const error = await errorFromResponse(response)
+  // WooCommerce refuses a write with a key that may only read exactly as it refuses a wrong secret: a 401 with the
+  // same code and a sentence in the shop's language. Taken for a sign-out, it stops the Connection's reads as well
+  // and sends a person to sign in with a key that is fine. So a refused write asks once whether the key can read.
+  const refusedWrite = response.status === 401 && request.method !== undefined && request.method !== 'GET'
+  if (refusedWrite && (await keyCanRead(ctx))) return new PermanentError(READ_ONLY_KEY_MESSAGE)
+  return error
 }
 
 /** One request to the shop's `wc/v3` API. Rejects with a `ConnectorError` for anything but a 2xx answer of the expected shape. */
 export async function request<T extends z.ZodType>(ctx: ClientContext, options: ApiRequest<T>): Promise<ApiResponse<z.output<T>>> {
   const response = await send(ctx, options)
-  if (!response.ok) throw await failure(response)
+  if (!response.ok) throw await failure(ctx, options, response)
   return parse(response, options)
 }
 
@@ -219,7 +248,7 @@ export async function requestIfFound<T extends z.ZodType>(ctx: ClientContext, op
   const response = await send(ctx, options)
   if (response.ok) return parse(response, options)
   if (await isMissingResource(response)) return null
-  throw await failure(response)
+  throw await failure(ctx, options, response)
 }
 
 /**
@@ -233,5 +262,5 @@ export async function requestIfAllowed<T extends z.ZodType>(ctx: ClientContext, 
     await response.body?.cancel().catch(() => {})
     return null
   }
-  throw await failure(response)
+  throw await failure(ctx, options, response)
 }

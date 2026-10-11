@@ -1,6 +1,6 @@
 import { classifyConnectorError, isCursorExpiredError } from '@hanza/connector-sdk'
 import { describe, expect, it } from 'vitest'
-import { changesStart, encodeCursor, listingStart, parseCursor, type FeedCursor } from './orders-cursor'
+import { changesStart, encodeCursor, listingStart, parseCursor, secondStart, type FeedCursor } from './orders-cursor'
 
 const listing: FeedCursor = { phase: 'listing', start: 1791633098, boundary: 57, at: { second: 1789972200, id: 33 }, rank: 1 }
 const changes: FeedCursor = { phase: 'changes', start: 1791633098, boundary: 57, at: { second: 1791633140, id: 58 }, ranks: { live: 2, trash: 0 } }
@@ -38,11 +38,25 @@ describe('the Order feed cursor', () => {
         for (const cursor of [
           { phase: 'listing', start: 1791633098, boundary: id, at: { second, id }, rank: 100 },
           { phase: 'changes', start: 1791633098, boundary: id, at: { second, id }, ranks: { live: 100, trash: 3 } },
+          { phase: 'second', start: 1791633098, boundary: id, at: { second, id }, ranks: { live: 100, trash: 3 } },
         ] satisfies FeedCursor[]) {
           expect(parseCursor(encodeCursor(cursor))).toEqual(cursor)
           expect(encodeCursor(parseCursor(encodeCursor(cursor)))).toBe(encodeCursor(cursor))
         }
       }
+    }
+  })
+
+  it('has a cursor of its own for one second of the changes read by id', () => {
+    const second: FeedCursor = { phase: 'second', start: 1791633098, boundary: 57, at: { second: 1791633140, id: 41 }, ranks: { live: 3, trash: 0 } }
+    expect(encodeCursor(second)).toBe('s1:1791633098:57:1791633140:41:3:0')
+    expect(parseCursor('s1:1791633098:57:1791633140:41:3:0')).toEqual(second)
+    // It begins with nothing of the second dealt with.
+    expect(encodeCursor(secondStart(1791633098, 57, 1791633140))).toBe('s1:1791633098:57:1791633140:0:0:0')
+    // The same numbers under `c1:` are another place in the feed.
+    expect(parseCursor('c1:1791633098:57:1791633140:41:3:0').phase).toBe('changes')
+    for (const text of ['s1:1791633098:57:1791633140:41:3', 's2:1791633098:57:1791633140:41:3:0', 's1:1791633098:57:1791633140:41:3:0:0']) {
+      expect(() => parseCursor(text)).toThrow(/cursor/)
     }
   })
 

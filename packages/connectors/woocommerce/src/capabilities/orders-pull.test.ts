@@ -471,9 +471,10 @@ describe('the changes', () => {
       for (const id of [5, 2, 7, 1, 4, 3, 6]) shop.tick(1).save(id)
       settle(shop)
       const first = await feed.page()
-      expect(labels(first.items)).toEqual(['order 5', 'order 2', 'order 7'])
+      // The page held three; its last second may go on behind it, so that one is left for the next call.
+      expect(labels(first.items)).toEqual(['order 5', 'order 2'])
       expect(first.hasMore).toBe(true)
-      expect(labels(await feed.poll())).toEqual(['order 1', 'order 4', 'order 3', 'order 6'])
+      expect(labels(await feed.poll())).toEqual(['order 7', 'order 1', 'order 4', 'order 3', 'order 6'])
       expect(Math.max(...feed.requestsPerCall)).toBeLessThanOrEqual(2 * MAX_RUN_REQUESTS)
     })
 
@@ -482,8 +483,9 @@ describe('the changes', () => {
       const feed = await connected(shop)
       for (const id of [1, 2, 3, 4, 5, 6]) shop.tick(1).save(id)
       settle(shop)
-      expect(labels((await feed.page()).items)).toEqual(['order 1', 'order 2', 'order 3'])
-      // One already reported, the anchor itself, and one not yet reported are all saved again.
+      expect(labels((await feed.page()).items)).toEqual(['order 1', 'order 2'])
+      // The last one reported (which the next request expects back first), the one the page gave up, and one not
+      // read yet are all saved again.
       shop.cancel(2).save(3).cancel(5)
       expect(labels(await feed.poll())).toEqual(['order 4', 'order 6'])
       settle(shop)
@@ -500,6 +502,17 @@ describe('the changes', () => {
       settle(shop)
       expect(labels(await feed.poll())).toEqual(Array.from({ length: 9 }, (_, index) => `order ${index + 1}`))
       expect(Math.max(...feed.requestsPerCall)).toBeLessThanOrEqual(2 * MAX_RUN_REQUESTS)
+      // That second is asked for alone, between the second before it and the one after, in the order of its ids.
+      const at = new Date(shop.nowMs - (HOLD_BACK + 1) * 1000)
+      const [before, after] = [-1, 1].map((seconds) => dateFilter(at.getTime() / 1000 + seconds))
+      expect(shop.urls.filter((url) => url.includes('orderby=id')).slice(0, 4)).toEqual([
+        `GET orders?status=any&orderby=id&per_page=3&modified_after=${before}&modified_before=${after}&order=asc&_fields=${FIELDS}`,
+        `GET orders?status=trash&orderby=id&per_page=3&modified_after=${before}&modified_before=${after}&order=asc&_fields=${FIELDS}`,
+        `GET orders?status=any&orderby=id&per_page=3&modified_after=${before}&modified_before=${after}&offset=2&order=asc&_fields=${FIELDS}`,
+        `GET orders?status=trash&orderby=id&per_page=3&modified_after=${before}&modified_before=${after}&order=asc&_fields=${FIELDS}`,
+      ])
+      // Afterwards the changes go on from the next second, with the plain request.
+      expect(feed.cursor).toBe(`c1:${shop.second - 2 * HOLD_BACK - 100 - 1}:9:${at.getTime() / 1000 + 1}:0:0:0`)
     })
 
     it('in such a second, an order saved again between two pages makes no other order skipped', async () => {
@@ -508,7 +521,10 @@ describe('the changes', () => {
       shop.tick(100)
       for (let id = 1; id <= 9; id++) shop.save(id)
       settle(shop)
+      // The first call finds a page that lies inside one second, and turns to that second alone, by id.
+      expect(await feed.page()).toMatchObject({ items: [], hasMore: true, nextCursor: expect.stringMatching(/^s1:\d+:9:\d+:0:0:0$/) })
       expect(labels((await feed.page()).items)).toEqual(['order 1', 'order 2', 'order 3'])
+      expect(feed.cursor).toMatch(/^s1:\d+:9:\d+:3:3:0$/)
       shop.cancel(1).cancel(2)
       const rest = await feed.poll()
       expect(labels(rest)).toEqual(['order 4', 'order 5', 'order 6', 'order 7', 'order 8', 'order 9'])
@@ -527,10 +543,11 @@ describe('the changes', () => {
       shop.tick(1).trash(6)
       settle(shop)
       const first = await feed.page()
-      // The live list was read up to order 4; order 6 in the trash is later than that, so it waits.
-      expect(labels(first.items)).toEqual(['order 1', 'update 2', 'order 3', 'order 4'])
+      // The live list is whole up to order 3 (the page ended on 4, whose second may go on); order 6 in the trash
+      // is later than that, so it waits.
+      expect(labels(first.items)).toEqual(['order 1', 'update 2', 'order 3'])
       expect(first.hasMore).toBe(true)
-      expect(labels(await feed.poll())).toEqual(['order 5', 'update 6'])
+      expect(labels(await feed.poll())).toEqual(['order 4', 'order 5', 'update 6'])
     })
 
     it('never makes more than a few requests in one call', async () => {
@@ -912,6 +929,127 @@ describe('the changes', () => {
       expect(skus(item).filter((sku) => sku === null)).toHaveLength(1)
       expect(skus(item)[3]).toBeNull()
     })
+  })
+})
+
+describe('a shop that keeps no order inside a second (WooCommerce before 10.4.0)', () => {
+  // There `orderby=modified` has no tie-break: the orders of one second come back in another order on every
+  // request, also on two `offset` pages of one list. Nothing may depend on where in its second an order stands.
+  function unorderedShop(orders: number): FakeShop {
+    const shop = shopWith(Array.from({ length: orders }, () => ({})))
+    shop.unorderedSeconds = true
+    return shop
+  }
+
+  it.each([
+    ['three a second', 3],
+    ['ten a second', 10],
+    ['forty-five a second, so a page ends inside a second', 45],
+    ['a hundred a second, so one second fills a page', 100],
+    ['all in one second', 130],
+  ])('130 changes between two polls, %s: every Order placed and every completion arrives, once', async (_, perSecond) => {
+    const shop = unorderedShop(80)
+    const feed = new Feed(shop, { pageSize: 100 })
+    expect(await feed.poll()).toHaveLength(80)
+
+    // Seventy orders are placed and sixty of the eighty known ones are completed, mixed, several in each second.
+    shop.tick(60)
+    const placed: number[] = []
+    const completed: number[] = []
+    for (let change = 0; change < 130; change++) {
+      if (change > 0 && change % perSecond === 0) shop.tick(1)
+      if (change % 13 < 7) placed.push(shop.place())
+      else {
+        completed.push(completed.length + 1)
+        shop.complete(completed.length)
+      }
+    }
+    expect([placed.length, completed.length]).toEqual([70, 60])
+    settle(shop)
+
+    const items = await feed.poll()
+    const reported = new Map(items.map((item) => [item.externalId, item]))
+    // An Order that is never imported never reserves; a completion that is lost never releases its Reservation.
+    expect(placed.filter((id) => !reported.has(String(id))), 'Orders placed and never reported').toEqual([])
+    expect(completed.filter((id) => !reported.get(String(id))?.facts.some((fact) => fact.type === 'shipped')), 'completions never reported').toEqual([])
+    expect(items).toHaveLength(130)
+    expect(placed.every((id) => !isOrderUpdate(reported.get(String(id))!))).toBe(true)
+    expect(completed.every((id) => isOrderUpdate(reported.get(String(id))!))).toBe(true)
+    // Two lists of three requests at most; no line is a variation.
+    expect(Math.max(...feed.requestsPerCall)).toBeLessThanOrEqual(2 * MAX_RUN_REQUESTS)
+    // And nothing is left behind.
+    settle(shop)
+    expect(await feed.poll()).toEqual([])
+  })
+
+  it('a shop that lists the trash under any as well (seen on 10.3.8 with HPOS) gets each trashed order reported once', async () => {
+    const shop = unorderedShop(6)
+    shop.listsTrashUnderAny = true
+    shop.listsDraftsUnderAny = true
+    const feed = new Feed(shop)
+    await feed.poll()
+    shop.tick(60).trash(2).save(3)
+    const draft = shop.place({ status: 'checkout-draft', date_paid_gmt: null })
+    shop.tick(1).trash(5).cancel(6)
+    settle(shop)
+    // 2 and 5 are in both lists with one and the same snapshot; the draft is in the list and is no order yet.
+    expect(labels(await feed.poll())).toEqual(['update 2', 'order 3', 'update 5', 'update 6'])
+    expect(draft).toBe(7)
+  })
+
+  it('more changes of one second than fit a page, with small pages: each once, whatever order the shop is in', async () => {
+    const shop = unorderedShop(11)
+    const feed = new Feed(shop)
+    await feed.poll()
+    shop.tick(100)
+    for (let id = 11; id >= 1; id--) shop.save(id)
+    settle(shop)
+    expect(labels(await feed.poll()).sort()).toEqual(Array.from({ length: 11 }, (_, index) => `order ${index + 1}`).sort())
+  })
+
+  it('an order saved again while the shop answers the read of one second is left for its new second', async () => {
+    const shop = unorderedShop(5)
+    const feed = new Feed(shop)
+    await feed.poll()
+    shop.tick(100)
+    for (let id = 1; id <= 5; id++) shop.save(id)
+    settle(shop)
+    await feed.page()
+    expect(feed.cursor).toMatch(/^s1:/)
+
+    // The shop finds order 2 in that second, and by the time it writes the answer the order carries a later stamp.
+    const later = new Date(shop.nowMs).toISOString().slice(0, 19)
+    const context = shop.context()
+    const racing: typeof context = {
+      ...context,
+      fetch: async (input, init) => {
+        const response = await context.fetch(input, init)
+        if (!String(input).includes('orderby=id')) return response
+        const orders = (await response.json()) as Array<{ id: number; date_modified_gmt: string }>
+        return new Response(JSON.stringify(orders.map((order) => (order.id === 2 ? { ...order, date_modified_gmt: later } : order))), { headers: response.headers })
+      },
+    }
+    const page = await pullOrders(racing, feed.cursor, { pageSize: 3, holdBackSeconds: HOLD_BACK })
+    // Not reported as a change of this second; its place among the ids is passed all the same.
+    expect(labels(page.items)).toEqual(['order 1', 'order 3'])
+    expect(page.nextCursor).toMatch(/^s1:\d+:5:\d+:3:3:0$/)
+  })
+
+  it('a page that ends inside a second does not carry the position into it', async () => {
+    const shop = unorderedShop(8)
+    const feed = new Feed(shop)
+    await feed.poll()
+    // Two changes in one second, then four in the next: the first page of three ends inside the second one.
+    shop.tick(100).save(8).save(7)
+    shop.tick(1).save(1).save(2).save(3).save(4)
+    shop.tick(1).save(5)
+    settle(shop)
+    const first = await feed.page()
+    expect(labels(first.items).sort()).toEqual(['order 7', 'order 8'])
+    expect(first.hasMore).toBe(true)
+    // The position rests at the end of the second that was read whole, not at an order of the one that was cut.
+    expect(feed.cursor).toMatch(new RegExp(`^c1:\\d+:8:${shop.second - HOLD_BACK - 3}:8:2:0$`))
+    expect(labels(await feed.poll()).sort()).toEqual(['order 1', 'order 2', 'order 3', 'order 4', 'order 5'])
   })
 })
 

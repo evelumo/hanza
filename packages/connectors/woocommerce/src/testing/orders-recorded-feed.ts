@@ -1,5 +1,6 @@
 // Test and recording tooling only: never imported by the connector itself.
 import { isOrderUpdate, orderSchema, orderUpdateSchema, type OrderFeedItem } from '@hanza/connector-sdk'
+import { isRecording } from '@hanza/connector-sdk/testing'
 import { expect } from 'vitest'
 import { changesStart, encodeCursor, parseCursor } from '../capabilities/orders-cursor'
 import { createWooCommerceConnector, type WooCommerceConnectorOptions } from '../connector'
@@ -73,7 +74,14 @@ export const newOrder = (overrides: Record<string, unknown> = {}) => ({
   ...overrides,
 })
 
-/** The orders a scenario creates get the ids its expectations name only on a fresh shop. */
-export function expectId(created: number, expected: number): void {
-  if (created !== expected) throw new Error(`The sandbox gave the new order id ${created}, not ${expected}: record from a fresh shop (sandbox.sh reset)`)
+/**
+ * The id the shop gave an order a scenario placed. A recording must get the id its expectations name on replay
+ * (`expected`), which a fresh shop of the pinned version gives; elsewhere (a check against a live shop of another
+ * version, where other things take ids in between) the scenario goes on with the id it got.
+ */
+export function expectId(created: number, expected: number): number {
+  if (isRecording() && created !== expected) {
+    throw new Error(`The sandbox gave the new order id ${created}, not ${expected}: record from a fresh shop (sandbox.sh reset)`)
+  }
+  return created
 }

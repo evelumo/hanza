@@ -57,6 +57,43 @@ project keeps its keys in `.recording/credentials.<project>.json`. Set the port 
 (`src/testing/recording.ts`, `loadRecording()`) reads `WOO_SANDBOX_PROJECT` to pick the file, which also says
 where that instance listens.
 
+## Another WooCommerce version
+
+**Cassettes are recorded on the pinned versions only** (WooCommerce 11.2.1 on WordPress 7.1.3). To see how the
+connector fares against an older shop, the sandbox can start one; drive the connector against it from a throwaway
+script through `loadRecording()` (`src/testing/recording.ts`), without `HANZA_RECORD_FIXTURES`, and commit
+nothing it produces.
+
+| Variable | Default | What it sets |
+| --- | --- | --- |
+| `WOO_SANDBOX_WOOCOMMERCE_VERSION` | `11.2.1` | The WooCommerce release `up` installs. |
+| `WOO_SANDBOX_WORDPRESS_IMAGE` | `wordpress:7.1.3-php8.3-apache` | WordPress and PHP: an older WooCommerce needs older ones. |
+| `WOO_SANDBOX_CLI_IMAGE` | `wordpress:cli-2.12.0-php8.3` | wp-cli, on the same PHP as the WordPress image. |
+| `WOO_SANDBOX_DB_IMAGE` | `mariadb:11.8.9` | The database. |
+| `WOO_SANDBOX_HPOS` | `on` | `on`: orders in the order tables (HPOS). `off`: orders in posts, as every shop kept them before 8.2. Decided by `up` on the empty shop, so set it for `reset` (or `up`), not afterwards. |
+
+Pairs that work (the seed runs unchanged on all of them and gives the same ids):
+
+| WooCommerce | `WOO_SANDBOX_WORDPRESS_IMAGE` | `WOO_SANDBOX_CLI_IMAGE` |
+| --- | --- | --- |
+| 7.6.0 | `wordpress:6.2.0-php8.0-apache` | `wordpress:cli-2.7.1-php8.0` |
+| 8.2.5 | `wordpress:6.3.1-php8.1-apache` | `wordpress:cli-2.9.0-php8.1` |
+| 9.3.6 | `wordpress:6.6.1-php8.2-apache` | `wordpress:cli-2.10.0-php8.2` |
+| 10.3.8, 10.7.0 | `wordpress:6.9.4-php8.3-apache` | `wordpress:cli-2.12.0-php8.3` (the pinned one) |
+
+```sh
+export WOO_SANDBOX_PROJECT=hanza-woo-old WOO_SANDBOX_PORT=8097
+export WOO_SANDBOX_WOOCOMMERCE_VERSION=7.6.0 WOO_SANDBOX_HPOS=off
+export WOO_SANDBOX_WORDPRESS_IMAGE=wordpress:6.2.0-php8.0-apache WOO_SANDBOX_CLI_IMAGE=wordpress:cli-2.7.1-php8.0
+sandbox.sh reset          # keep the variables set for every later command of that shop, `down` included
+```
+
+- HPOS is turned on with `wp wc hpos enable`, where that does not exist with `wp wc cot enable` (its older name), and
+  on WooCommerce 7.6, which has neither, with `php/hpos-on.php`. Orders created after `up` on an older shop may get
+  other ids than on the pinned one (other things take ids in between); the seed's ids are the same.
+- **Mind the disk.** Each WordPress image is around 700 MB. Run one such shop at a time, and when you are done with a
+  version: `sandbox.sh down`, then `docker rmi` its WordPress and wp-cli images. Check `df -h /` before a `reset`.
+
 ## A TLS front
 
 The recording flow talks to the shop over plain HTTP and rewrites the address in the test transport. To run the
@@ -138,7 +175,8 @@ Known differences from a real shop: the port in the address (the shop itself bel
 - **Site timezone `Europe/Warsaw`**, so a date filter that confuses site time with UTC is off by an hour or two.
 - Currency PLN, prices entered with tax, one tax rate (PL, 23 %, also on shipping), stock management on.
 - **HPOS on** (order tables), as on every shop created since WooCommerce 8.2. Installed through wp-cli,
-  WooCommerce would keep orders in posts, so `up` turns it on.
+  WooCommerce would keep orders in posts, so `up` turns it on. `WOO_SANDBOX_HPOS=off` leaves the orders in posts instead (the
+  one cassette from that storage, `orders-legacy-storage`, is recorded so).
 - No WP-Cron and no updates (the shop must not change under a recording), no outgoing mail, and "hold stock" is
   empty, so WooCommerce never cancels a `pending` order on its own.
 - `mu-plugins/hanza-sandbox.php` registers one order status of its own, `packing`, as shipping plugins do.

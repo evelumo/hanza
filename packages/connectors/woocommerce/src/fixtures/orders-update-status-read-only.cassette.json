@@ -14,7 +14,7 @@
         "status": 200,
         "headers": {
           "content-type": "application/json; charset=UTF-8",
-          "date": "Sat, 10 Oct 2026 20:40:41 GMT",
+          "date": "Sat, 10 Oct 2026 23:15:23 GMT",
           "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\""
         },
         "body": {
@@ -70,7 +70,7 @@
         "status": 401,
         "headers": {
           "content-type": "application/json; charset=UTF-8",
-          "date": "Sat, 10 Oct 2026 20:40:41 GMT",
+          "date": "Sat, 10 Oct 2026 23:15:23 GMT",
           "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\""
         },
         "body": {
@@ -81,6 +81,33 @@
               "status": 401
             }
           }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://shop.example.test/wp-json/wc/v3/products?per_page=1&_fields=id",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=UTF-8",
+          "date": "Sat, 10 Oct 2026 23:15:23 GMT",
+          "link": "<https://shop.example.test/wp-json/wc/v3/products?per_page=1&_fields=id&page=2>; rel=\"next\"",
+          "x-wp-total": "12",
+          "x-wp-totalpages": "12"
+        },
+        "body": {
+          "json": [
+            {
+              "id": 28
+            }
+          ]
         }
       }
     }

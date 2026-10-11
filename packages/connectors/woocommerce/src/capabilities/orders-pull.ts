@@ -4,9 +4,9 @@ import { request, type Query } from '../client'
 import { isOpen, mapOrder, mapOrderUpdate } from '../mapping/order'
 import { isDraftStatus, OPEN_STATUSES } from '../mapping/status'
 import type { WooCommerceContext } from '../settings'
-import { changesStart, encodeCursor, listingStart, parseCursor, type ChangesCursor, type ListingCursor } from './orders-cursor'
+import { changesStart, encodeCursor, listingStart, parseCursor, secondStart, type ChangesCursor, type ListingCursor, type SecondCursor } from './orders-cursor'
 import { readParentSkus, withOwnSkus } from './orders-line-skus'
-import { comparePositions, mergeRuns, rankAt, readRun, type Entry, type Position, type Run, type StreamPage } from './orders-stream'
+import { comparePositions, mergeRuns, mergeSeconds, rankAt, readRun, type Entry, type Position, type Run, type StreamPage } from './orders-stream'
 
 export interface OrdersPullOptions {
   /** Orders asked for per request, 1 to 100. */
@@ -157,10 +157,23 @@ async function list(ctx: WooCommerceContext, cursor: ListingCursor, input: strin
   return { items, nextCursor, hasMore: nextCursor !== input }
 }
 
+/** Rule 4 for the changes: what is no order yet is left out; the rest in full while open or placed after the boundary. */
+function reportChanges(ctx: WooCommerceContext, entries: readonly Entry[], boundary: number): Promise<Array<Order | OrderUpdate>> {
+  return report(
+    ctx,
+    entries.filter((entry) => !isDraftStatus(entry.order.status)).map((entry) => ({ entry, full: entry.order.id > boundary || isOpen(entry.order) })),
+  )
+}
+
 /**
  * Rule 3. Every order changed since the position, the trash included (`status=any` leaves it out and cannot be
  * combined with it, hence two lists), up to the hold-back: `date_modified` is stamped before the row is written and
  * has second resolution, so a second is read only once it is over and its late writes have landed.
+ *
+ * The lists are taken in whole seconds (`mergeSeconds`): before WooCommerce 10.4.0 the orders of one second come
+ * in no order, so nothing may be left behind inside a second. While every list fits its page, that is all there
+ * is to it. A page that ends inside a second gives up that second to the next call, and a second that fills a
+ * page alone is read by id (`second`).
  */
 async function changes(ctx: WooCommerceContext, cursor: ChangesCursor, input: string, options: OrdersPullOptions, now: () => number): Promise<Feed> {
   const perPage = perPageOf(options)
@@ -173,28 +186,64 @@ async function changes(ctx: WooCommerceContext, cursor: ChangesCursor, input: st
 
   const shopSecond = shopSecondOf(ctx, [...live.shopTimesMs, ...trash.shopTimesMs], now)
   // The newest second that ended at least the hold-back ago.
-  const merged = mergeRuns([live, trash], at, shopSecond - options.holdBackSeconds - 1)
+  const merged = mergeSeconds([live, trash], at, shopSecond - options.holdBackSeconds - 1)
+  if (merged.drain !== null) return { items: [], nextCursor: encodeCursor(secondStart(cursor.start, boundary, merged.drain)), hasMore: true }
 
   const nextCursor = encodeCursor({ ...cursor, at: merged.position, ranks: { live: rankAt(live, at, merged.position), trash: rankAt(trash, at, merged.position) } })
   const hasMore = merged.more && nextCursor !== input
   if (merged.entries.length === 0 && !hasMore) return { items: [], nextCursor: input, hasMore: false }
+  return { items: await reportChanges(ctx, merged.entries, boundary), nextCursor, hasMore }
+}
 
-  const items = await report(
-    ctx,
-    merged.entries
-      .filter((entry) => !isDraftStatus(entry.order.status))
-      .map((entry) => ({ entry, full: entry.order.id > boundary || isOpen(entry.order) })),
-  )
-  return { items, nextCursor, hasMore }
+/**
+ * The changes of one second, for a second that holds more of them than a page: everything stamped after the second
+ * before it and before the one after it (both filters are strict), ordered by id. That order is the same on every
+ * request and every version, so the second is followed by id as the listing is followed by time, and when it is
+ * done the changes go on from the next second.
+ */
+async function second(ctx: WooCommerceContext, cursor: SecondCursor, input: string, options: OrdersPullOptions, now: () => number): Promise<Feed> {
+  const perPage = perPageOf(options)
+  const { at, boundary } = cursor
+  const window = { modified_after: dateFilter(at.second - 1), modified_before: dateFilter(at.second + 1) }
+  const read = async (status: string, rank: number): Promise<Run> =>
+    readRun(
+      async (offset) => {
+        const page = await readOrders(ctx, 'modified', { status, orderby: 'id', per_page: perPage, ...window, offset: skip(offset) })
+        // Placed by id alone. An order saved again while the shop answered carries a later stamp: it keeps its
+        // place among the ids here, and is reported with that later second, not with this one.
+        return { ...page, entries: page.entries.map((entry) => ({ order: entry.order, key: { second: at.second, id: entry.order.id } })) }
+      },
+      at,
+      rank,
+      perPage,
+    )
+  const live = await read('any', cursor.ranks.live)
+  const trash = await read('trash', cursor.ranks.trash)
+
+  // The second was settled when the changes turned to it, and the shop's clock does not run backwards; should it,
+  // the call waits like any other.
+  const shopSecond = shopSecondOf(ctx, [...live.shopTimesMs, ...trash.shopTimesMs], now)
+  if (at.second > shopSecond - options.holdBackSeconds - 1) return { items: [], nextCursor: input, hasMore: false }
+
+  const merged = mergeRuns([live, trash], at, Infinity)
+  const whole = [live, trash].every((run) => run.exhausted && run.resumeRank === null)
+  const next = whole
+    ? changesStart(at.second + 1, boundary)
+    : { ...cursor, at: merged.position, ranks: { live: rankAt(live, at, merged.position), trash: rankAt(trash, at, merged.position) } }
+  const nextCursor = encodeCursor({ ...next, start: cursor.start })
+  const still = merged.entries.filter((entry) => secondOf(entry.order.date_modified_gmt, entry.order.id) === at.second)
+  return { items: await reportChanges(ctx, still, boundary), nextCursor, hasMore: nextCursor !== input }
 }
 
 /**
  * `orders.pull`: the open orders when the feed starts, then every change, from order snapshots (WooCommerce has no
- * journal). Cursor null takes the start, `l1:` lists, `c1:` follows the changes; see `orders-cursor.ts`.
+ * journal). Cursor null takes the start, `l1:` lists, `c1:` follows the changes and `s1:` reads one crowded second
+ * of them; see `orders-cursor.ts`.
  */
 export async function pullOrders(ctx: WooCommerceContext, cursor: string | null, options: OrdersPullOptions): Promise<Feed> {
   const now = options.now ?? Date.now
   if (cursor === null) return start(ctx, options, now)
   const parsed = parseCursor(cursor)
-  return parsed.phase === 'listing' ? list(ctx, parsed, cursor, options) : changes(ctx, parsed, cursor, options, now)
+  if (parsed.phase === 'listing') return list(ctx, parsed, cursor, options)
+  return parsed.phase === 'changes' ? changes(ctx, parsed, cursor, options, now) : second(ctx, parsed, cursor, options, now)
 }

@@ -10,7 +10,15 @@ origin="http://127.0.0.1:${WOO_SANDBOX_PORT}"
 
 # What the shop believes its address is, so nothing of this machine (host, port) reaches a recorded response.
 store_url="https://shop.example.test"
-woocommerce_version="11.2.1"
+# Pinned, and what every cassette is recorded on. Another version (with the images that run it, see README.md,
+# "Another WooCommerce version") is for checking the connector against an older shop, never for recording.
+woocommerce_version="${WOO_SANDBOX_WOOCOMMERCE_VERSION:-11.2.1}"
+# Where the shop keeps its orders: `on` = the order tables (HPOS), `off` = posts, as every shop did before 8.2.
+hpos="${WOO_SANDBOX_HPOS:-on}"
+case "$hpos" in
+  on|off) ;;
+  *) echo "WOO_SANDBOX_HPOS must be \"on\" or \"off\"." >&2; exit 1 ;;
+esac
 
 recording_dir="$here/../.recording"
 if [ "$project" = "$default_project" ]; then
@@ -54,14 +62,26 @@ cmd_up() {
   if ! wp plugin is-active woocommerce 2>/dev/null; then
     wp plugin install woocommerce --version="$woocommerce_version" --activate
   fi
-  # Installed through wp-cli, WooCommerce keeps orders in posts: turn HPOS on, as it is on every shop created
-  # since WooCommerce 8.2 (it also creates the order tables).
-  if [ "$(wp option get woocommerce_custom_orders_table_enabled 2>/dev/null || true)" != "yes" ]; then
-    wp wc hpos enable >/dev/null
-  fi
+  set_order_storage
   wp rewrite structure '/%postname%/' >/dev/null
   wp eval-file /sandbox/setup.php
   echo "Sandbox \"$project\" is up on $origin (the shop calls itself $store_url)."
+}
+
+# Installed through wp-cli, WooCommerce keeps orders in posts. `on` (the default) turns HPOS on, as it is on every
+# shop created since WooCommerce 8.2, which also creates the order tables; `off` leaves or puts the orders in posts.
+# The command was renamed over the years (`hpos` from 8.x, `cot` before) and WooCommerce 7.6 has none. Run on an
+# empty shop only: `up` comes before `seed`, and switching the storage of a shop with orders needs a sync.
+set_order_storage() {
+  local enabled
+  enabled="$(wp option get woocommerce_custom_orders_table_enabled 2>/dev/null || true)"
+  if [ "$hpos" = "on" ]; then
+    [ "$enabled" = "yes" ] && return 0
+    wp wc hpos enable >/dev/null 2>&1 || wp wc cot enable >/dev/null 2>&1 || wp eval-file /sandbox/hpos-on.php >/dev/null
+  else
+    [ "$enabled" = "yes" ] || return 0
+    wp wc hpos disable >/dev/null 2>&1 || wp wc cot disable >/dev/null 2>&1 || wp option update woocommerce_custom_orders_table_enabled no >/dev/null
+  fi
 }
 
 cmd_seed() { wp eval-file /sandbox/seed.php; }
@@ -189,6 +209,9 @@ Usage: sandbox.sh <command>
 
 Environment: WOO_SANDBOX_PROJECT (default $default_project), WOO_SANDBOX_PORT (default 8089),
 WOO_SANDBOX_TLS_PORT (default 8443, only used once "tls" has run).
+Another version of the shop, for checks only (README.md, "Another WooCommerce version"):
+WOO_SANDBOX_WOOCOMMERCE_VERSION (default 11.2.1), WOO_SANDBOX_HPOS (on | off, default on),
+WOO_SANDBOX_WORDPRESS_IMAGE, WOO_SANDBOX_CLI_IMAGE, WOO_SANDBOX_DB_IMAGE.
 EOF
 }
 

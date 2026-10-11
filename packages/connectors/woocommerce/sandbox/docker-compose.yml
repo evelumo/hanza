@@ -1,6 +1,9 @@
 # A throwaway WordPress + WooCommerce, used only to record the connector's test fixtures (see README.md).
 # Started through ./sandbox.sh, which passes the project name and the port, so several instances can run at once:
 # nothing here has a fixed name, and the volumes are prefixed with the project name.
+#
+# The images are the pinned ones unless sandbox.sh is given others (README.md, "Another WooCommerce version"): an
+# older WooCommerce needs an older WordPress and PHP. Cassettes are recorded on the pinned versions only.
 
 x-wordpress-env: &wordpress-env
   WORDPRESS_DB_HOST: db
@@ -15,7 +18,7 @@ x-wordpress-env: &wordpress-env
 
 services:
   db:
-    image: mariadb:11.8.9
+    image: ${WOO_SANDBOX_DB_IMAGE:-mariadb:11.8.9}
     environment:
       MARIADB_DATABASE: wordpress
       MARIADB_USER: wordpress
@@ -30,7 +33,7 @@ services:
       retries: 60
 
   wordpress:
-    image: wordpress:7.1.3-php8.3-apache
+    image: ${WOO_SANDBOX_WORDPRESS_IMAGE:-wordpress:7.1.3-php8.3-apache}
     depends_on:
       db:
         condition: service_healthy
@@ -59,7 +62,7 @@ services:
 
   # wp-cli on the same files; run with `./sandbox.sh wp <command>`.
   cli:
-    image: wordpress:cli-2.12.0-php8.3
+    image: ${WOO_SANDBOX_CLI_IMAGE:-wordpress:cli-2.12.0-php8.3}
     profiles: ["tools"]
     depends_on:
       db:
