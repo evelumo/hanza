@@ -13,6 +13,7 @@
     "@hanza/connector-allegro": "workspace:*",
     "@hanza/connector-fake": "workspace:*",
     "@hanza/connector-inpost": "workspace:*",
+    "@hanza/connector-medusa": "workspace:*",
     "@hanza/connector-sdk": "workspace:*",
     "@hanza/connector-woocommerce": "workspace:*"
   },

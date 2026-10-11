@@ -10,7 +10,7 @@ An open-source, self-hosted e-commerce integration hub for Orders, Products, Sto
 
 [Quick start](#quick-start) · [Try the demo](docs/demo.md) · [Documentation](docs/README.md) · [Contributing](CONTRIBUTING.md) · [Roadmap](docs/roadmap.md)
 
-> **Early development.** The panel, domain core and worker work with a simulated Channel. The real connectors are **Allegro**, a marketplace, checked against the Allegro sandbox, not yet a live seller account; **WooCommerce**, a shop (Orders in, Stock out), recorded against a local sandbox shop, not yet a live one; and **InPost**, a courier, which has run against InPost's sandbox only: a locker shipment was created, bought and labelled there, while the courier service, cash on delivery and anything after the label are not proven on a live account yet. There are **no invoicing connectors yet**. Use Hanza to evaluate the architecture, try the demo and contribute; connecting a live business is a future milestone.
+> **Early development.** The panel, domain core and worker work with a simulated Channel. The real connectors are **Allegro**, a marketplace, checked against the Allegro sandbox, not yet a live seller account; **WooCommerce**, a shop (Orders in, Stock out), recorded against a local sandbox shop, not yet a live one; **Medusa**, a shop through the plugin `medusa-plugin-hanza`, tested on an in-memory Medusa only, not yet on a real store; and **InPost**, a courier, which has run against InPost's sandbox only: a locker shipment was created, bought and labelled there, while the courier service, cash on delivery and anything after the label are not proven on a live account yet. There are **no invoicing connectors yet**. Use Hanza to evaluate the architecture, try the demo and contribute; connecting a live business is a future milestone.
 
 ## Why Hanza?
 
@@ -38,7 +38,7 @@ Commerce operations need a consistent view of what was sold, what is still avail
 | Connector development | SDK, conformance kit, scrubbed HTTP recordings and simulated connectors |
 | Quality | Dependency boundary checks, type checks, Vitest tests and local Playwright panel flows |
 
-The connectors are **Allegro** (`allegro`, needs an application you register; see [Connecting Allegro](#connecting-allegro)), **WooCommerce** (`woocommerce`, a real shop through its REST API), **Test channel** (`fake`) and **Test OAuth channel** (`fake-oauth`, requires demo installation settings), which simulate a Channel, **Test courier** (`fake-courier`), which simulates a Carrier, and **InPost** (`inpost`), a Carrier. The HTTP reference implementations are tested on recordings and are not registered in the panel. See the [connector catalogue and author guide](packages/connectors/README.md).
+The connectors are **Allegro** (`allegro`, needs an application you register; see [Connecting Allegro](#connecting-allegro)), **WooCommerce** (`woocommerce`, a real shop through its REST API), **Medusa** (`medusa`, a Medusa v2 store with the plugin `medusa-plugin-hanza`; see [Connecting Medusa](#connecting-medusa)), **Test channel** (`fake`) and **Test OAuth channel** (`fake-oauth`, requires demo installation settings), which simulate a Channel, **Test courier** (`fake-courier`), which simulates a Carrier, and **InPost** (`inpost`), a Carrier. The HTTP reference implementations are tested on recordings and are not registered in the panel. See the [connector catalogue and author guide](packages/connectors/README.md).
 
 ## Quick start
 
@@ -105,6 +105,33 @@ What is synchronised in version 1:
 - Prices go out: an Offer's buy-now price on its base marketplace, in the currency Allegro reported for it. A price Allegro refuses (below its minimum, for example) is reported as rejected for that Offer.
 - The Order phase goes out (new, processing, shipped, cancelled).
 - Not yet: shipments and labels, invoices.
+
+## Connecting Medusa
+
+Medusa works through the plugin `medusa-plugin-hanza`, which keeps a journal of what happens to orders (Medusa's API has none), sets stock as availability and holds the settings that are Medusa concepts. Hanza refuses to connect a store without it and says so. Medusa 2.13 or later; the backend must be reachable over `https://` from Hanza's worker.
+
+1. In the Medusa project, install the plugin and add it to `medusa-config.ts`:
+
+   ```sh
+   npm install medusa-plugin-hanza
+   ```
+
+   ```ts
+   plugins: [{ resolve: "medusa-plugin-hanza", options: {} }],
+   ```
+
+2. Run `npx medusa db:migrate` (the plugin's two tables) and restart Medusa.
+3. In Medusa's admin, open the **Hanza** page in the sidebar and pick the stock location Hanza owns. The same page sets which sales channels' orders Hanza takes (none chosen: all), which payment providers mean cash on delivery, whether a payment counts once captured (default) or already when authorized, and whether shipping an order e-mails the Buyer. Until a stock location is picked, stock pushes fail with a message saying so.
+4. Create a **secret API key** under **Settings → Secret API Keys**, preferably while signed in as an admin user made for Hanza alone, so it can be revoked on its own.
+5. In Hanza, open **Connections → Add connection → Medusa**, paste the backend's address (`https://…`, the one the Admin API answers under, not the storefront's) and the key.
+
+What is synchronised in version 1:
+
+- Offers come in: every product variant, active when its product is published.
+- Orders come in: the ones open when the Connection is made, then every change the plugin's journal records, including orders not paid yet. A payment through a provider marked as cash on delivery makes the Order cash on delivery.
+- Stock goes out as availability at the chosen stock location: Medusa's own reservations for orders not shipped yet are kept on top. Variants that do not manage inventory, or that are made of several inventory items, are reported as rejected.
+- The Order phase goes out: shipped creates a fulfillment of what is not fulfilled yet and its shipment; cancelled cancels an order with no captured payment and no fulfillment, and leaves any other to Medusa (a refund is a person's decision).
+- Not yet: prices, tracking numbers, returns and exchanges, draft orders.
 
 ## Architecture
 
