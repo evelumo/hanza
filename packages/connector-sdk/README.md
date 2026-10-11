@@ -21,7 +21,7 @@ A connector that makes Shipments (a courier, or a Channel with its own shipping)
 
 The Shipment model lives in `src/model/shipment.ts`: `shipmentRequestSchema` (what Hanza asks for), `shipmentStateSchema` (where a Shipment is), the nine `SHIPMENT_STATUSES` with `isFinalShipmentStatus` and `isShipmentHandedOver`, the result schemas of the capabilities, and `shippingServiceSchema` with `shipmentRequestProblem`, which says whether a request fits a service. `delivery_problem` is a status of a parcel the Carrier has. Nothing a connector returns about a Shipment is free text: rejection codes and the Carrier's own status are short codes (`pushRejectionCodeSchema`), the Carrier's id is 1 to 100 letters, digits and `_ . : -`, and a tracking number the same with a space and `/`. The `reference` of a request is at most 64 letters, digits, `_` and `-` (the core sends the Shipment's UUID). The capability comments in `src/connector.ts` are the full contract.
 
-See [the Commerce model glossary](CONTEXT.md) and [the connector guide](../connectors/README.md) for the complete contract, Order feed semantics and auth behaviour. The current contract has simulated reference implementations; validation against real Channels is [planned](../../docs/roadmap.md).
+See [the Commerce model glossary](CONTEXT.md) and [the connector guide](../connectors/README.md) for the complete contract, Order feed semantics and auth behaviour. The current contract has simulated reference implementations and two real connectors, Allegro (a marketplace) and WooCommerce (a shop); neither has run against a live account yet (see the [roadmap](../../docs/roadmap.md)).
 
 ## Conformance and fixtures
 

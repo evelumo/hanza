@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "interactions": [
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://shop.example.test/wp-json/wc/v3/data/currencies/current?_fields=code",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=UTF-8",
+          "date": "Sat, 10 Oct 2026 21:58:06 GMT",
+          "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\""
+        },
+        "body": {
+          "json": {
+            "code": "woocommerce_rest_cannot_view",
+            "message": "Sorry, you cannot view this resource.",
+            "data": {
+              "status": 401
+            }
+          }
+        }
+      }
+    }
+  ]
+}

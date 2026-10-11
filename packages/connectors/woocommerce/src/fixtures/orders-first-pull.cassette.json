@@ -1,0 +1,2172 @@
+{
+  "version": 1,
+  "interactions": [
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://shop.example.test/wp-json/wc/v3/orders?status=any&orderby=id&order=desc&per_page=1&_fields=id",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=UTF-8",
+          "date": "Sat, 10 Oct 2026 20:39:54 GMT",
+          "link": "<https://shop.example.test/wp-json/wc/v3/orders?orderby=id&order=desc&per_page=1&_fields=id&status%5B0%5D=any&dp=2&context=view&page=2>; rel=\"next\"",
+          "x-wp-total": "26",
+          "x-wp-totalpages": "26"
+        },
+        "body": {
+          "json": [
+            {
+              "id": 57
+            }
+          ]
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://shop.example.test/wp-json/wc/v3/orders?status=trash&orderby=id&order=desc&per_page=1&_fields=id",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=UTF-8",
+          "date": "Sat, 10 Oct 2026 20:39:58 GMT",
+          "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\"",
+          "x-wp-total": "0",
+          "x-wp-totalpages": "0"
+        },
+        "body": {
+          "json": []
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://shop.example.test/wp-json/wc/v3/orders?status=pending%2Con-hold%2Cprocessing&orderby=date&per_page=5&order=asc&_fields=id%2Cstatus%2Ccurrency%2Cdate_created_gmt%2Cdate_modified_gmt%2Cdate_paid_gmt%2Cdate_completed_gmt%2Ctotal%2Cpayment_method%2Cbilling%2Cshipping%2Cline_items",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=UTF-8",
+          "date": "Sat, 10 Oct 2026 20:39:58 GMT",
+          "link": "<https://shop.example.test/wp-json/wc/v3/orders?orderby=date&per_page=5&order=asc&_fields=id%2Cstatus%2Ccurrency%2Cdate_created_gmt%2Cdate_modified_gmt%2Cdate_paid_gmt%2Cdate_completed_gmt%2Ctotal%2Cpayment_method%2Cbilling%2Cshipping%2Cline_items&status%5B0%5D=pending&status%5B1%5D=on-hold&status%5B2%5D=processing&dp=2&context=view&page=2>; rel=\"next\"",
+          "x-wp-total": "20",
+          "x-wp-totalpages": "4"
+        },
+        "body": {
+          "json": [
+            {
+              "id": 57,
+              "status": "processing",
+              "currency": "PLN",
+              "total": "64.98",
+              "billing": {
+                "first_name": "scrubbed-1",
+                "last_name": "scrubbed-2",
+                "company": null,
+                "address_1": "scrubbed-3",
+                "address_2": null,
+                "city": "scrubbed-4",
+                "state": null,
+                "postcode": "scrubbed-5",
+                "country": "PL",
+                "email": "person-1@example.com",
+                "phone": "+00000000001"
+              },
+              "shipping": {
+                "first_name": "scrubbed-1",
+                "last_name": "scrubbed-2",
+                "company": null,
+                "address_1": "scrubbed-3",
+                "address_2": null,
+                "city": "scrubbed-4",
+                "state": null,
+                "postcode": "scrubbed-5",
+                "country": "PL",
+                "phone": "+00000000001"
+              },
+              "payment_method": "przelewy24",
+              "line_items": [
+                {
+                  "id": 78,
+                  "name": "Kubek ceramiczny żółty",
+                  "product_id": 10,
+                  "variation_id": 0,
+                  "quantity": 1,
+                  "tax_class": "",
+                  "subtotal": "40.64",
+                  "subtotal_tax": "9.35",
+                  "total": "40.64",
+                  "total_tax": "9.35",
+                  "taxes": [
+                    {
+                      "id": 1,
+                      "total": "9.35",
+                      "subtotal": "9.35"
+                    }
+                  ],
+                  "meta_data": [
+                    {
+                      "id": 0,
+                      "key": "scrubbed-6",
+                      "value": "scrubbed-7",
+                      "display_key": "scrubbed-6",
+                      "display_value": "scrubbed-7"
+                    }
+                  ],
+                  "sku": "WOO-MUG-1",
+                  "global_unique_id": "",
+                  "price": 40.642276,
+                  "image": {
+                    "id": "",
+                    "src": ""
+                  },
+                  "parent_name": null
+                }
+              ],
+              "date_created_gmt": "2026-09-20T06:00:00",
+              "date_modified_gmt": "2026-10-10T20:39:17",
+              "date_completed_gmt": null,
+              "date_paid_gmt": "2026-09-20T06:02:00"
+            },
+            {
+              "id": 30,
+              "status": "processing",
+              "currency": "PLN",
+              "total": "64.98",
+              "billing": {
+                "first_name": "scrubbed-1",
+                "last_name": "scrubbed-2",
+                "company": null,
+                "address_1": "scrubbed-3",
+                "address_2": null,
+                "city": "scrubbed-4",
+                "state": null,
+                "postcode": "scrubbed-5",
+                "country": "PL",
+                "email": "person-1@example.com",
+                "phone": "+00000000001"
+              },
+              "shipping": {
+                "first_name": "scrubbed-1",
+                "last_name": "scrubbed-2",
+                "company": null,
+                "address_1": "scrubbed-3",
+                "address_2": null,
+                "city": "scrubbed-4",
+                "state": null,
+                "postcode": "scrubbed-5",
+                "country": "PL",
+                "phone": "+00000000001"
+              },
+              "payment_method": "przelewy24",
+              "line_items": [
+                {
+                  "id": 1,
+                  "name": "Kubek ceramiczny żółty",
+                  "product_id": 10,
+                  "variation_id": 0,
+                  "quantity": 1,
+                  "tax_class": "",
+                  "subtotal": "40.64",
+                  "subtotal_tax": "9.35",
+                  "total": "40.64",
+                  "total_tax": "9.35",
+                  "taxes": [
+                    {
+                      "id": 1,
+                      "total": "9.35",
+                      "subtotal": "9.35"
+                    }
+                  ],
+                  "meta_data": [
+                    {
+                      "id": 0,
+                      "key": "scrubbed-6",
+                      "value": "scrubbed-7",
+                      "display_key": "scrubbed-6",
+                      "display_value": "scrubbed-7"
+                    }
+                  ],
+                  "sku": "WOO-MUG-1",
+                  "global_unique_id": "",
+                  "price": 40.642276,
+                  "image": {
+                    "id": "",
+                    "src": ""
+                  },
+                  "parent_name": null
+                }
+              ],
+              "date_created_gmt": "2026-09-21T06:00:00",
+              "date_modified_gmt": "2026-10-10T20:39:00",
+              "date_completed_gmt": null,
+              "date_paid_gmt": "2026-09-21T06:02:00"
+            },
+            {
+              "id": 31,
+              "status": "processing",
+              "currency": "PLN",
+              "total": "54.79",
+              "billing": {
+                "first_name": "scrubbed-8",
+                "last_name": "scrubbed-9",
+                "company": null,
+                "address_1": "scrubbed-10",
+                "address_2": null,
+                "city": "scrubbed-11",
+                "state": null,
+                "postcode": "scrubbed-12",
+                "country": "PL",
+                "email": "person-2@example.com",
+                "phone": "+00000000002"
+              },
+              "shipping": {
+                "first_name": "scrubbed-8",
+                "last_name": "scrubbed-9",
+                "company": null,
+                "address_1": "scrubbed-10",
+                "address_2": null,
+                "city": "scrubbed-11",
+                "state": null,
+                "postcode": "scrubbed-12",
+                "country": "PL",
+                "phone": "+00000000002"
+              },
+              "payment_method": "cod",
+              "line_items": [
+                {
+                  "id": 4,
+                  "name": "Notes w kratkę A5",
+                  "product_id": 11,
+                  "variation_id": 0,
+                  "quantity": 2,
+                  "tax_class": "",
+                  "subtotal": "32.36",
+                  "subtotal_tax": "7.44",
+                  "total": "32.36",
+                  "total_tax": "7.44",
+                  "taxes": [
+                    {
+                      "id": 1,
+                      "total": "7.44",
+                      "subtotal": "7.44"
+                    }
+                  ],
+                  "meta_data": [
+                    {
+                      "id": 0,
+                      "key": "scrubbed-6",
+                      "value": "scrubbed-13",
+                      "display_key": "scrubbed-6",
+                      "display_value": "scrubbed-13"
+                    }
+                  ],
+                  "sku": "WOO-NOTE-1",
+                  "global_unique_id": "",
+                  "price": 16.178862,
+                  "image": {
+                    "id": "",
+                    "src": ""
+                  },
+                  "parent_name": null
+                }
+              ],
+              "date_created_gmt": "2026-09-21T06:10:00",
+              "date_modified_gmt": "2026-10-10T20:39:00",
+              "date_completed_gmt": null,
+              "date_paid_gmt": null
+            },
+            {
+              "id": 32,
+              "status": "on-hold",
+              "currency": "PLN",
+              "total": "84.88",
+              "billing": {
+                "first_name": "scrubbed-14",
+                "last_name": "scrubbed-15",
+                "company": null,
+                "address_1": "scrubbed-16",
+                "address_2": "scrubbed-17",
+                "city": "scrubbed-18",
+                "state": null,
+                "postcode": "scrubbed-19",
+                "country": "PL",
+                "email": "person-3@example.com",
+                "phone": "+00000000003"
+              },
+              "shipping": {
+                "first_name": "scrubbed-14",
+                "last_name": "scrubbed-15",
+                "company": null,
+                "address_1": "scrubbed-16",
+                "address_2": "scrubbed-17",
+                "city": "scrubbed-18",
+                "state": null,
+                "postcode": "scrubbed-19",
+                "country": "PL",
+                "phone": "+00000000003"
+              },
+              "payment_method": "bacs",
+              "line_items": [
+                {
+                  "id": 7,
+                  "name": "Kubek ceramiczny żółty",
+                  "product_id": 10,
+                  "variation_id": 0,
+                  "quantity": 1,
+                  "tax_class": "",
+                  "subtotal": "40.64",
+                  "subtotal_tax": "9.35",
+                  "total": "40.64",
+                  "total_tax": "9.35",
+                  "taxes": [
+                    {
+                      "id": 1,
+                      "total": "9.35",
+                      "subtotal": "9.35"
+                    }
+                  ],
+                  "meta_data": [
+                    {
+                      "id": 0,
+                      "key": "scrubbed-6",
+                      "value": "scrubbed-7",
+                      "display_key": "scrubbed-6",
+                      "display_value": "scrubbed-7"
+                    }
+                  ],
+                  "sku": "WOO-MUG-1",
+                  "global_unique_id": "",
+                  "price": 40.642276,
+                  "image": {
+                    "id": "",
+                    "src": ""
+                  },
+                  "parent_name": null
+                },
+                {
+                  "id": 8,
+                  "name": "Notes w kratkę A5",
+                  "product_id": 11,
+                  "variation_id": 0,
+                  "quantity": 1,
+                  "tax_class": "",
+                  "subtotal": "16.18",
+                  "subtotal_tax": "3.72",
+                  "total": "16.18",
+                  "total_tax": "3.72",
+                  "taxes": [
+                    {
+                      "id": 1,
+                      "total": "3.72",
+                      "subtotal": "3.72"
+                    }
+                  ],
+                  "meta_data": [
+                    {
+                      "id": 0,
+                      "key": "scrubbed-6",
+                      "value": "scrubbed-7",
+                      "display_key": "scrubbed-6",
+                      "display_value": "scrubbed-7"
+                    }
+                  ],
+                  "sku": "WOO-NOTE-1",
+                  "global_unique_id": "",
+                  "price": 16.178862,
+                  "image": {
+                    "id": "",
+                    "src": ""
+                  },
+                  "parent_name": null
+                }
+              ],
+              "date_created_gmt": "2026-09-21T06:20:00",
+              "date_modified_gmt": "2026-10-10T20:39:00",
+              "date_completed_gmt": null,
+              "date_paid_gmt": null
+            },
+            {
+              "id": 33,
+              "status": "pending",
+              "currency": "PLN",
+              "total": "113.99",
+              "billing": {
+                "first_name": "scrubbed-20",
+                "last_name": "scrubbed-21",
+                "company": "scrubbed-22",
+                "address_1": "scrubbed-23",
+                "address_2": null,
+                "city": "scrubbed-24",
+                "state": null,
+                "postcode": "scrubbed-25",
+                "country": "PL",
+                "email": "person-4@example.com",
+                "phone": "+00000000004"
+              },
+              "shipping": {
+                "first_name": "scrubbed-20",
+                "last_name": "scrubbed-21",
+                "company": "scrubbed-22",
+                "address_1": "scrubbed-23",
+                "address_2": null,
+                "city": "scrubbed-24",
+                "state": null,
+                "postcode": "scrubbed-25",
+                "country": "PL",
+                "phone": "+00000000004"
+              },
+              "payment_method": "przelewy24",
+              "line_items": [
+                {
+                  "id": 11,
+                  "name": "Plecak miejski",
+                  "product_id": 16,
+                  "variation_id": 0,
+                  "quantity": 1,
+                  "tax_class": "",
+                  "subtotal": "80.49",
+                  "subtotal_tax": "18.51",
+                  "total": "80.49",
+                  "total_tax": "18.51",
+                  "taxes": [
+                    {
+                      "id": 1,
+                      "total": "18.51",
+                      "subtotal": "18.51"
+                    }
+                  ],
+                  "meta_data": [],
+                  "sku": "WOO-BAG-1",
+                  "global_unique_id": "",
+                  "price": 80.487805,
+                  "image": {
+                    "id": "",
+                    "src": ""
+                  },
+                  "parent_name": null
+                }
+              ],
+              "date_created_gmt": "2026-09-21T06:30:00",
+              "date_modified_gmt": "2026-10-10T20:39:01",
+              "date_completed_gmt": null,
+              "date_paid_gmt": null
+            }
+          ]
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://shop.example.test/wp-json/wc/v3/orders?status=pending%2Con-hold%2Cprocessing&orderby=date&per_page=5&after=2026-09-21T06%3A29%3A59Z&order=asc&_fields=id%2Cstatus%2Ccurrency%2Cdate_created_gmt%2Cdate_modified_gmt%2Cdate_paid_gmt%2Cdate_completed_gmt%2Ctotal%2Cpayment_method%2Cbilling%2Cshipping%2Cline_items",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=UTF-8",
+          "date": "Sat, 10 Oct 2026 20:39:58 GMT",
+          "link": "<https://shop.example.test/wp-json/wc/v3/orders?orderby=date&per_page=5&after=2026-09-21T06%3A29%3A59Z&order=asc&_fields=id%2Cstatus%2Ccurrency%2Cdate_created_gmt%2Cdate_modified_gmt%2Cdate_paid_gmt%2Cdate_completed_gmt%2Ctotal%2Cpayment_method%2Cbilling%2Cshipping%2Cline_items&status%5B0%5D=pending&status%5B1%5D=on-hold&status%5B2%5D=processing&dp=2&context=view&page=2>; rel=\"next\"",
+          "x-wp-total": "16",
+          "x-wp-totalpages": "4"
+        },
+        "body": {
+          "json": [
+            {
+              "id": 33,
+              "status": "pending",
+              "currency": "PLN",
+              "total": "113.99",
+              "billing": {
+                "first_name": "scrubbed-20",
+                "last_name": "scrubbed-21",
+                "company": "scrubbed-22",
+                "address_1": "scrubbed-23",
+                "address_2": null,
+                "city": "scrubbed-24",
+                "state": null,
+                "postcode": "scrubbed-25",
+                "country": "PL",
+                "email": "person-4@example.com",
+                "phone": "+00000000004"
+              },
+              "shipping": {
+                "first_name": "scrubbed-20",
+                "last_name": "scrubbed-21",
+                "company": "scrubbed-22",
+                "address_1": "scrubbed-23",
+                "address_2": null,
+                "city": "scrubbed-24",
+                "state": null,
+                "postcode": "scrubbed-25",
+                "country": "PL",
+                "phone": "+00000000004"
+              },
+              "payment_method": "przelewy24",
+              "line_items": [
+                {
+                  "id": 11,
+                  "name": "Plecak miejski",
+                  "product_id": 16,
+                  "variation_id": 0,
+                  "quantity": 1,
+                  "tax_class": "",
+                  "subtotal": "80.49",
+                  "subtotal_tax": "18.51",
+                  "total": "80.49",
+                  "total_tax": "18.51",
+                  "taxes": [
+                    {
+                      "id": 1,
+                      "total": "18.51",
+                      "subtotal": "18.51"
+                    }
+                  ],
+                  "meta_data": [],
+                  "sku": "WOO-BAG-1",
+                  "global_unique_id": "",
+                  "price": 80.487805,
+                  "image": {
+                    "id": "",
+                    "src": ""
+                  },
+                  "parent_name": null
+                }
+              ],
+              "date_created_gmt": "2026-09-21T06:30:00",
+              "date_modified_gmt": "2026-10-10T20:39:01",
+              "date_completed_gmt": null,
+              "date_paid_gmt": null
+            },
+            {
+              "id": 39,
+              "status": "processing",
+              "currency": "PLN",
+              "total": "426.96",
+              "billing": {
+                "first_name": "scrubbed-20",
+                "last_name": "scrubbed-21",
+                "company": "scrubbed-22",
+                "address_1": "scrubbed-23",
+                "address_2": null,
+                "city": "scrubbed-24",
+                "state": null,
+                "postcode": "scrubbed-25",
+                "country": "PL",
+                "email": "person-4@example.com",
+                "phone": "+00000000004"
+              },
+              "shipping": {
+                "first_name": "scrubbed-26",
+                "last_name": "scrubbed-27",
+                "company": "scrubbed-28",
+                "address_1": "scrubbed-29",
+                "address_2": null,
+                "city": "scrubbed-30",
+                "state": null,
+                "postcode": "scrubbed-31",
+                "country": "PL",
+                "phone": "+00000000005"
+              },
+              "payment_method": "przelewy24",
+              "line_items": [
+                {
+                  "id": 26,
+                  "name": "Koszulka testowa - S",
+                  "product_id": 19,
+                  "variation_id": 20,
+                  "quantity": 2,
+                  "tax_class": "",
+                  "subtotal": "128.46",
+                  "subtotal_tax": "29.54",
+                  "total": "126.13",
+                  "total_tax": "29.01",
+                  "taxes": [
+                    {
+                      "id": 1,
+                      "total": "29.01",
+                      "subtotal": "29.54"
+                    }
+                  ],
+                  "meta_data": [
+                    {
+                      "id": 0,
+                      "key": "scrubbed-32",
+                      "value": "scrubbed-33",
+                      "display_key": "scrubbed-34",
+                      "display_value": "scrubbed-33"
+                    },
+                    {
+                      "id": 0,
+                      "key": "scrubbed-6",
+                      "value": "scrubbed-13",
+                      "display_key": "scrubbed-6",
+                      "display_value": "scrubbed-13"
+                    }
+                  ],
+                  "sku": "WOO-TSHIRT-S",
+                  "global_unique_id": "",
+                  "price": 63.065041,
+                  "image": {
+                    "id": 0,
+                    "src": ""
+                  },
+                  "parent_name": "Koszulka testowa"
+                },
+                {
+                  "id": 27,
+                  "name": "Koszulka testowa - M",
+                  "product_id": 19,
+                  "variation_id": 21,
+                  "quantity": 1,
+                  "tax_class": "",
+                  "subtotal": "64.23",
+                  "subtotal_tax": "14.77",
+                  "total": "63.07",
+                  "total_tax": "14.50",
+                  "taxes": [
+                    {
+                      "id": 1,
+                      "total": "14.50",
+                      "subtotal": "14.77"
+                    }
+                  ],
+                  "meta_data": [
+                    {
+                      "id": 0,
+                      "key": "scrubbed-32",
+                      "value": "scrubbed-35",
+                      "display_key": "scrubbed-34",
+                      "display_value": "scrubbed-35"
+                    },
+                    {
+                      "id": 0,
+                      "key": "scrubbed-6",
+                      "value": "scrubbed-7",
+                      "display_key": "scrubbed-6",
+                      "display_value": "scrubbed-7"
+                    }
+                  ],
+                  "sku": "WOO-TSHIRT",
+                  "global_unique_id": "",
+                  "price": 63.06504,
+                  "image": {
+                    "id": 0,
+                    "src": ""
+                  },
+                  "parent_name": "Koszulka testowa"
+                },
+                {
+                  "id": 28,
+                  "name": "Kubek ceramiczny żółty",
+                  "product_id": 10,
+                  "variation_id": 0,
+                  "quantity": 3,
+                  "tax_class": "",
+                  "subtotal": "121.93",
+                  "subtotal_tax": "28.04",
+                  "total": "118.44",
+                  "total_tax": "27.24",
+                  "taxes": [
+                    {
+                      "id": 1,
+                      "total": "27.24",
+                      "subtotal": "28.04"
+                    }
+                  ],
+                  "meta_data": [
+                    {
+                      "id": 0,
+                      "key": "scrubbed-6",
+                      "value": "scrubbed-36",
+                      "display_key": "scrubbed-6",
+                      "display_value": "scrubbed-36"
+                    }
+                  ],
+                  "sku": "WOO-MUG-1",
+                  "global_unique_id": "",
+                  "price": 39.47967466666667,
+                  "image": {
+                    "id": "",
+                    "src": ""
+                  },
+                  "parent_name": null
+                },
+                {
+                  "id": 29,
+                  "name": "Plakat bez SKU",
+                  "product_id": 12,
+                  "variation_id": 0,
+                  "quantity": 1,
+                  "tax_class": "",
+                  "subtotal": "28.46",
+                  "subtotal_tax": "6.54",
+                  "total": "27.30",
+                  "total_tax": "6.28",
+                  "taxes": [
+                    {
+                      "id": 1,
+                      "total": "6.28",
+                      "subtotal": "6.54"
+                    }
+                  ],
+                  "meta_data": [
+                    {
+                      "id": 0,
+                      "key": "scrubbed-6",
+                      "value": "scrubbed-7",
+                      "display_key": "scrubbed-6",
+                      "display_value": "scrubbed-7"
+                    }
+                  ],
+                  "sku": "",
+                  "global_unique_id": "",
+                  "price": 27.300813,
+                  "image": {
+                    "id": "",
+                    "src": ""
+                  },
+                  "parent_name": null
+                }
+              ],
+              "date_created_gmt": "2026-09-21T07:20:00",
+              "date_modified_gmt": "2026-10-10T20:39:03",
+              "date_completed_gmt": null,
+              "date_paid_gmt": "2026-09-21T07:22:00"
+            },
+            {
+              "id": 40,
+              "status": "processing",
+              "currency": "PLN",
+              "total": "100.00",
+              "billing": {
+                "first_name": "scrubbed-8",
+                "last_name": "scrubbed-9",
+                "company": null,
+                "address_1": "scrubbed-10",
+                "address_2": null,
+                "city": "scrubbed-11",
+                "state": null,
+                "postcode": "scrubbed-12",
+                "country": "PL",
+                "email": "person-2@example.com",
+                "phone": "+00000000002"
+              },
+              "shipping": {
+                "first_name": null,
+                "last_name": null,
+                "company": null,
+                "address_1": null,
+                "address_2": null,
+                "city": null,
+                "state": null,
+                "postcode": null,
+                "country": "",
+                "phone": null
+              },
+              "payment_method": "przelewy24",
+              "line_items": [
+                {
+                  "id": 33,
+                  "name": "Karta podarunkowa 100 zł",
+                  "product_id": 17,
+                  "variation_id": 0,
+                  "quantity": 1,
+                  "tax_class": "",
+                  "subtotal": "81.30",
+                  "subtotal_tax": "18.70",
+                  "total": "81.30",
+                  "total_tax": "18.70",
+                  "taxes": [
+                    {
+                      "id": 1,
+                      "total": "18.70",
+                      "subtotal": "18.70"
+                    }
+                  ],
+                  "meta_data": [],
+                  "sku": "WOO-GIFT-100",
+                  "global_unique_id": "",
+                  "price": 81.300813,
+                  "image": {
+                    "id": "",
+                    "src": ""
+                  },
+                  "parent_name": null
+                }
+              ],
+              "date_created_gmt": "2026-09-21T07:30:00",
+              "date_modified_gmt": "2026-10-10T20:39:03",
+              "date_completed_gmt": null,
+              "date_paid_gmt": "2026-09-21T07:32:00"
+            },
+            {
+              "id": 41,
+              "status": "processing",
+              "currency": "PLN",
+              "total": "141.46",
+              "billing": {
+                "first_name": "scrubbed-37",
+                "last_name": "scrubbed-38",
+                "company": null,
+                "address_1": "scrubbed-39",
+                "address_2": null,
+                "city": "scrubbed-40",
+                "state": "scrubbed-41",
+                "postcode": "scrubbed-42",
+                "country": "DE",
+                "email": "person-5@example.com",
+                "phone": "+00000000006"
+              },
+              "shipping": {
+                "first_name": "scrubbed-37",
+                "last_name": "scrubbed-38",
+                "company": null,
+                "address_1": "scrubbed-39",
+                "address_2": null,
+                "city": "scrubbed-40",
+                "state": "scrubbed-41",
+                "postcode": "scrubbed-42",
+                "country": "DE",
+                "phone": "+00000000006"
+              },
+              "payment_method": "stripe",
+              "line_items": [
+                {
+                  "id": 35,
+                  "name": "Bluza testowa - Czarny, M",
+                  "product_id": 24,
+                  "variation_id": 25,
+                  "quantity": 1,
+                  "tax_class": "",
+                  "subtotal": "129.27",
+                  "subtotal_tax": "0.00",
+                  "total": "129.27",
+                  "total_tax": "0.00",
+                  "taxes": [],
+                  "meta_data": [
+                    {
+                      "id": 0,
+                      "key": "scrubbed-43",
+                      "value": "scrubbed-44",
+                      "display_key": "scrubbed-45",
+                      "display_value": "scrubbed-44"
+                    },
+                    {
+                      "id": 0,
+                      "key": "scrubbed-32",
+                      "value": "scrubbed-35",
+                      "display_key": "scrubbed-34",
+                      "display_value": "scrubbed-35"
+                    },
+                    {
+                      "id": 0,
+                      "key": "scrubbed-6",
+                      "value": "scrubbed-7",
+                      "display_key": "scrubbed-6",
+                      "display_value": "scrubbed-7"
+                    }
+                  ],
+                  "sku": "WOO-HOODIE-BLK-M",
+                  "global_unique_id": "",
+                  "price": 129.268293,
+                  "image": {
+                    "id": 0,
+                    "src": ""
+                  },
+                  "parent_name": "Bluza testowa"
+                }
+              ],
+              "date_created_gmt": "2026-09-21T07:40:00",
+              "date_modified_gmt": "2026-10-10T20:39:03",
+              "date_completed_gmt": null,
+              "date_paid_gmt": "2026-09-21T07:42:00"
+            },
+            {
+              "id": 42,
+              "status": "on-hold",
+              "currency": "PLN",
+              "total": "132.99",
+              "billing": {
+                "first_name": "scrubbed-14",
+                "last_name": "scrubbed-15",
+                "company": null,
+                "address_1": "scrubbed-16",
+                "address_2": "scrubbed-17",
+                "city": "scrubbed-18",
+                "state": null,
+                "postcode": "scrubbed-19",
+                "country": "PL",
+                "email": "person-3@example.com",
+                "phone": "+00000000003"
+              },
+              "shipping": {
+                "first_name": "scrubbed-14",
+                "last_name": "scrubbed-15",
+                "company": null,
+                "address_1": "scrubbed-16",
+                "address_2": "scrubbed-17",
+                "city": "scrubbed-18",
+                "state": null,
+                "postcode": "scrubbed-19",
+                "country": "PL",
+                "phone": "+00000000003"
+              },
+              "payment_method": "bacs",
+              "line_items": [
+                {
+                  "id": 37,
+                  "name": "Świeca sojowa",
+                  "product_id": 13,
+                  "variation_id": 0,
+                  "quantity": 2,
+                  "tax_class": "",
+                  "subtotal": "95.93",
+                  "subtotal_tax": "22.07",
+                  "total": "95.93",
+                  "total_tax": "22.07",
+                  "taxes": [
+                    {
+                      "id": 1,
+                      "total": "22.07",
+                      "subtotal": "22.07"
+                    }
+                  ],
+                  "meta_data": [],
+                  "sku": "WOO-CANDLE-1",
+                  "global_unique_id": "",
+                  "price": 47.9674795,
+                  "image": {
+                    "id": "",
+                    "src": ""
+                  },
+                  "parent_name": null
+                }
+              ],
+              "date_created_gmt": "2026-09-21T07:50:00",
+              "date_modified_gmt": "2026-10-10T20:39:04",
+              "date_completed_gmt": null,
+              "date_paid_gmt": null
+            }
+          ]
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://shop.example.test/wp-json/wc/v3/products?include=19%2C24&per_page=100&_fields=id%2Csku",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=UTF-8",
+          "date": "Sat, 10 Oct 2026 20:39:58 GMT",
+          "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\"",
+          "x-wp-total": "2",
+          "x-wp-totalpages": "1"
+        },
+        "body": {
+          "json": [
+            {
+              "id": 24,
+              "sku": ""
+            },
+            {
+              "id": 19,
+              "sku": "WOO-TSHIRT"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://shop.example.test/wp-json/wc/v3/orders?status=pending%2Con-hold%2Cprocessing&orderby=date&per_page=5&after=2026-09-21T07%3A49%3A59Z&order=asc&_fields=id%2Cstatus%2Ccurrency%2Cdate_created_gmt%2Cdate_modified_gmt%2Cdate_paid_gmt%2Cdate_completed_gmt%2Ctotal%2Cpayment_method%2Cbilling%2Cshipping%2Cline_items",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=UTF-8",
+          "date": "Sat, 10 Oct 2026 20:39:59 GMT",
+          "link": "<https://shop.example.test/wp-json/wc/v3/orders?orderby=date&per_page=5&after=2026-09-21T07%3A49%3A59Z&order=asc&_fields=id%2Cstatus%2Ccurrency%2Cdate_created_gmt%2Cdate_modified_gmt%2Cdate_paid_gmt%2Cdate_completed_gmt%2Ctotal%2Cpayment_method%2Cbilling%2Cshipping%2Cline_items&status%5B0%5D=pending&status%5B1%5D=on-hold&status%5B2%5D=processing&dp=2&context=view&page=2>; rel=\"next\"",
+          "x-wp-total": "12",
+          "x-wp-totalpages": "3"
+        },
+        "body": {
+          "json": [
+            {
+              "id": 42,
+              "status": "on-hold",
+              "currency": "PLN",
+              "total": "132.99",
+              "billing": {
+                "first_name": "scrubbed-14",
+                "last_name": "scrubbed-15",
+                "company": null,
+                "address_1": "scrubbed-16",
+                "address_2": "scrubbed-17",
+                "city": "scrubbed-18",
+                "state": null,
+                "postcode": "scrubbed-19",
+                "country": "PL",
+                "email": "person-3@example.com",
+                "phone": "+00000000003"
+              },
+              "shipping": {
+                "first_name": "scrubbed-14",
+                "last_name": "scrubbed-15",
+                "company": null,
+                "address_1": "scrubbed-16",
+                "address_2": "scrubbed-17",
+                "city": "scrubbed-18",
+                "state": null,
+                "postcode": "scrubbed-19",
+                "country": "PL",
+                "phone": "+00000000003"
+              },
+              "payment_method": "bacs",
+              "line_items": [
+                {
+                  "id": 37,
+                  "name": "Świeca sojowa",
+                  "product_id": 13,
+                  "variation_id": 0,
+                  "quantity": 2,
+                  "tax_class": "",
+                  "subtotal": "95.93",
+                  "subtotal_tax": "22.07",
+                  "total": "95.93",
+                  "total_tax": "22.07",
+                  "taxes": [
+                    {
+                      "id": 1,
+                      "total": "22.07",
+                      "subtotal": "22.07"
+                    }
+                  ],
+                  "meta_data": [],
+                  "sku": "WOO-CANDLE-1",
+                  "global_unique_id": "",
+                  "price": 47.9674795,
+                  "image": {
+                    "id": "",
+                    "src": ""
+                  },
+                  "parent_name": null
+                }
+              ],
+              "date_created_gmt": "2026-09-21T07:50:00",
+              "date_modified_gmt": "2026-10-10T20:39:04",
+              "date_completed_gmt": null,
+              "date_paid_gmt": null
+            },
+            {
+              "id": 43,
+              "status": "processing",
+              "currency": "PLN",
+              "total": "79.98",
+              "billing": {
+                "first_name": "scrubbed-1",
+                "last_name": "scrubbed-2",
+                "company": null,
+                "address_1": "scrubbed-3",
+                "address_2": null,
+                "city": "scrubbed-4",
+                "state": null,
+                "postcode": "scrubbed-5",
+                "country": "PL",
+                "email": "person-1@example.com",
+                "phone": "+00000000001"
+              },
+              "shipping": {
+                "first_name": "scrubbed-1",
+                "last_name": "scrubbed-2",
+                "company": null,
+                "address_1": "scrubbed-3",
+                "address_2": null,
+                "city": "scrubbed-4",
+                "state": null,
+                "postcode": "scrubbed-5",
+                "country": "PL",
+                "phone": "+00000000001"
+              },
+              "payment_method": "przelewy24",
+              "line_items": [
+                {
+                  "id": 40,
+                  "name": "Produkt wycofany",
+                  "product_id": 0,
+                  "variation_id": 0,
+                  "quantity": 1,
+                  "tax_class": "",
+                  "subtotal": "12.20",
+                  "subtotal_tax": "2.80",
+                  "total": "12.20",
+                  "total_tax": "2.80",
+                  "taxes": [
+                    {
+                      "id": 1,
+                      "total": "2.80",
+                      "subtotal": "2.80"
+                    }
+                  ],
+                  "meta_data": [
+                    {
+                      "id": 0,
+                      "key": "scrubbed-6",
+                      "value": "scrubbed-7",
+                      "display_key": "scrubbed-6",
+                      "display_value": "scrubbed-7"
+                    }
+                  ],
+                  "sku": null,
+                  "global_unique_id": null,
+                  "price": 12.195122,
+                  "image": {
+                    "id": 0,
+                    "src": ""
+                  },
+                  "parent_name": null
+                },
+                {
+                  "id": 41,
+                  "name": "Kubek ceramiczny żółty",
+                  "product_id": 10,
+                  "variation_id": 0,
+                  "quantity": 1,
+                  "tax_class": "",
+                  "subtotal": "40.64",
+                  "subtotal_tax": "9.35",
+                  "total": "40.64",
+                  "total_tax": "9.35",
+                  "taxes": [
+                    {
+                      "id": 1,
+                      "total": "9.35",
+                      "subtotal": "9.35"
+                    }
+                  ],
+                  "meta_data": [
+                    {
+                      "id": 0,
+                      "key": "scrubbed-6",
+                      "value": "scrubbed-7",
+                      "display_key": "scrubbed-6",
+                      "display_value": "scrubbed-7"
+                    }
+                  ],
+                  "sku": "WOO-MUG-1",
+                  "global_unique_id": "",
+                  "price": 40.642276,
+                  "image": {
+                    "id": "",
+                    "src": ""
+                  },
+                  "parent_name": null
+                }
+              ],
+              "date_created_gmt": "2026-09-21T08:00:00",
+              "date_modified_gmt": "2026-10-10T20:39:04",
+              "date_completed_gmt": null,
+              "date_paid_gmt": "2026-09-21T08:02:00"
+            },
+            {
+              "id": 44,
+              "status": "on-hold",
+              "currency": "PLN",
+              "total": "0.00",
+              "billing": {
+                "first_name": "scrubbed-8",
+                "last_name": "scrubbed-9",
+                "company": null,
+                "address_1": "scrubbed-10",
+                "address_2": null,
+                "city": "scrubbed-11",
+                "state": null,
+                "postcode": "scrubbed-12",
+                "country": "PL",
+                "email": "person-2@example.com",
+                "phone": "+00000000002"
+              },
+              "shipping": {
+                "first_name": "scrubbed-8",
+                "last_name": "scrubbed-9",
+                "company": null,
+                "address_1": "scrubbed-10",
+                "address_2": null,
+                "city": "scrubbed-11",
+                "state": null,
+                "postcode": "scrubbed-12",
+                "country": "PL",
+                "phone": "+00000000002"
+              },
+              "payment_method": "bacs",
+              "line_items": [],
+              "date_created_gmt": "2026-09-21T08:10:00",
+              "date_modified_gmt": "2026-10-10T20:39:04",
+              "date_completed_gmt": null,
+              "date_paid_gmt": null
+            },
+            {
+              "id": 45,
+              "status": "processing",
+              "currency": "PLN",
+              "total": "49.99",
+              "billing": {
+                "first_name": null,
+                "last_name": null,
+                "company": null,
+                "address_1": null,
+                "address_2": null,
+                "city": null,
+                "state": null,
+                "postcode": null,
+                "country": "",
+                "email": null,
+                "phone": null
+              },
+              "shipping": {
+                "first_name": null,
+                "last_name": null,
+                "company": null,
+                "address_1": null,
+                "address_2": null,
+                "city": null,
+                "state": null,
+                "postcode": null,
+                "country": "",
+                "phone": null
+              },
+              "payment_method": "cod",
+              "line_items": [
+                {
+                  "id": 44,
+                  "name": "Kubek ceramiczny żółty",
+                  "product_id": 10,
+                  "variation_id": 0,
+                  "quantity": 1,
+                  "tax_class": "",
+                  "subtotal": "40.64",
+                  "subtotal_tax": "9.35",
+                  "total": "40.64",
+                  "total_tax": "9.35",
+                  "taxes": [
+                    {
+                      "id": 1,
+                      "total": "9.35",
+                      "subtotal": "9.35"
+                    }
+                  ],
+                  "meta_data": [
+                    {
+                      "id": 0,
+                      "key": "scrubbed-6",
+                      "value": "scrubbed-7",
+                      "display_key": "scrubbed-6",
+                      "display_value": "scrubbed-7"
+                    }
+                  ],
+                  "sku": "WOO-MUG-1",
+                  "global_unique_id": "",
+                  "price": 40.642276,
+                  "image": {
+                    "id": "",
+                    "src": ""
+                  },
+                  "parent_name": null
+                }
+              ],
+              "date_created_gmt": "2026-09-21T08:20:00",
+              "date_modified_gmt": "2026-10-10T20:39:05",
+              "date_completed_gmt": null,
+              "date_paid_gmt": null
+            },
+            {
+              "id": 49,
+              "status": "on-hold",
+              "currency": "PLN",
+              "total": "34.89",
+              "billing": {
+                "first_name": "scrubbed-1",
+                "last_name": "scrubbed-2",
+                "company": null,
+                "address_1": "scrubbed-3",
+                "address_2": null,
+                "city": "scrubbed-4",
+                "state": null,
+                "postcode": "scrubbed-5",
+                "country": "PL",
+                "email": "person-1@example.com",
+                "phone": "+00000000001"
+              },
+              "shipping": {
+                "first_name": "scrubbed-1",
+                "last_name": "scrubbed-2",
+                "company": null,
+                "address_1": "scrubbed-3",
+                "address_2": null,
+                "city": "scrubbed-4",
+                "state": null,
+                "postcode": "scrubbed-5",
+                "country": "PL",
+                "phone": "+00000000001"
+              },
+              "payment_method": "przelewy24",
+              "line_items": [
+                {
+                  "id": 54,
+                  "name": "Notes w kratkę A5",
+                  "product_id": 11,
+                  "variation_id": 0,
+                  "quantity": 1,
+                  "tax_class": "",
+                  "subtotal": "16.18",
+                  "subtotal_tax": "3.72",
+                  "total": "16.18",
+                  "total_tax": "3.72",
+                  "taxes": [
+                    {
+                      "id": 1,
+                      "total": "3.72",
+                      "subtotal": "3.72"
+                    }
+                  ],
+                  "meta_data": [
+                    {
+                      "id": 0,
+                      "key": "scrubbed-6",
+                      "value": "scrubbed-7",
+                      "display_key": "scrubbed-6",
+                      "display_value": "scrubbed-7"
+                    }
+                  ],
+                  "sku": "WOO-NOTE-1",
+                  "global_unique_id": "",
+                  "price": 16.178862,
+                  "image": {
+                    "id": "",
+                    "src": ""
+                  },
+                  "parent_name": null
+                }
+              ],
+              "date_created_gmt": "2026-09-21T09:00:00",
+              "date_modified_gmt": "2026-10-10T20:39:06",
+              "date_completed_gmt": null,
+              "date_paid_gmt": "2026-09-21T09:02:00"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://shop.example.test/wp-json/wc/v3/orders?status=pending%2Con-hold%2Cprocessing&orderby=date&per_page=5&after=2026-09-21T08%3A59%3A59Z&order=asc&_fields=id%2Cstatus%2Ccurrency%2Cdate_created_gmt%2Cdate_modified_gmt%2Cdate_paid_gmt%2Cdate_completed_gmt%2Ctotal%2Cpayment_method%2Cbilling%2Cshipping%2Cline_items",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=UTF-8",
+          "date": "Sat, 10 Oct 2026 20:39:59 GMT",
+          "link": "<https://shop.example.test/wp-json/wc/v3/orders?orderby=date&per_page=5&after=2026-09-21T08%3A59%3A59Z&order=asc&_fields=id%2Cstatus%2Ccurrency%2Cdate_created_gmt%2Cdate_modified_gmt%2Cdate_paid_gmt%2Cdate_completed_gmt%2Ctotal%2Cpayment_method%2Cbilling%2Cshipping%2Cline_items&status%5B0%5D=pending&status%5B1%5D=on-hold&status%5B2%5D=processing&dp=2&context=view&page=2>; rel=\"next\"",
+          "x-wp-total": "8",
+          "x-wp-totalpages": "2"
+        },
+        "body": {
+          "json": [
+            {
+              "id": 49,
+              "status": "on-hold",
+              "currency": "PLN",
+              "total": "34.89",
+              "billing": {
+                "first_name": "scrubbed-1",
+                "last_name": "scrubbed-2",
+                "company": null,
+                "address_1": "scrubbed-3",
+                "address_2": null,
+                "city": "scrubbed-4",
+                "state": null,
+                "postcode": "scrubbed-5",
+                "country": "PL",
+                "email": "person-1@example.com",
+                "phone": "+00000000001"
+              },
+              "shipping": {
+                "first_name": "scrubbed-1",
+                "last_name": "scrubbed-2",
+                "company": null,
+                "address_1": "scrubbed-3",
+                "address_2": null,
+                "city": "scrubbed-4",
+                "state": null,
+                "postcode": "scrubbed-5",
+                "country": "PL",
+                "phone": "+00000000001"
+              },
+              "payment_method": "przelewy24",
+              "line_items": [
+                {
+                  "id": 54,
+                  "name": "Notes w kratkę A5",
+                  "product_id": 11,
+                  "variation_id": 0,
+                  "quantity": 1,
+                  "tax_class": "",
+                  "subtotal": "16.18",
+                  "subtotal_tax": "3.72",
+                  "total": "16.18",
+                  "total_tax": "3.72",
+                  "taxes": [
+                    {
+                      "id": 1,
+                      "total": "3.72",
+                      "subtotal": "3.72"
+                    }
+                  ],
+                  "meta_data": [
+                    {
+                      "id": 0,
+                      "key": "scrubbed-6",
+                      "value": "scrubbed-7",
+                      "display_key": "scrubbed-6",
+                      "display_value": "scrubbed-7"
+                    }
+                  ],
+                  "sku": "WOO-NOTE-1",
+                  "global_unique_id": "",
+                  "price": 16.178862,
+                  "image": {
+                    "id": "",
+                    "src": ""
+                  },
+                  "parent_name": null
+                }
+              ],
+              "date_created_gmt": "2026-09-21T09:00:00",
+              "date_modified_gmt": "2026-10-10T20:39:06",
+              "date_completed_gmt": null,
+              "date_paid_gmt": "2026-09-21T09:02:00"
+            },
+            {
+              "id": 50,
+              "status": "processing",
+              "currency": "PLN",
+              "total": "34.89",
+              "billing": {
+                "first_name": "scrubbed-8",
+                "last_name": "scrubbed-9",
+                "company": null,
+                "address_1": "scrubbed-10",
+                "address_2": null,
+                "city": "scrubbed-11",
+                "state": null,
+                "postcode": "scrubbed-12",
+                "country": "PL",
+                "email": "person-2@example.com",
+                "phone": "+00000000002"
+              },
+              "shipping": {
+                "first_name": "scrubbed-8",
+                "last_name": "scrubbed-9",
+                "company": null,
+                "address_1": "scrubbed-10",
+                "address_2": null,
+                "city": "scrubbed-11",
+                "state": null,
+                "postcode": "scrubbed-12",
+                "country": "PL",
+                "phone": "+00000000002"
+              },
+              "payment_method": "przelewy24",
+              "line_items": [
+                {
+                  "id": 57,
+                  "name": "Notes w kratkę A5",
+                  "product_id": 11,
+                  "variation_id": 0,
+                  "quantity": 1,
+                  "tax_class": "",
+                  "subtotal": "16.18",
+                  "subtotal_tax": "3.72",
+                  "total": "16.18",
+                  "total_tax": "3.72",
+                  "taxes": [
+                    {
+                      "id": 1,
+                      "total": "3.72",
+                      "subtotal": "3.72"
+                    }
+                  ],
+                  "meta_data": [
+                    {
+                      "id": 0,
+                      "key": "scrubbed-6",
+                      "value": "scrubbed-7",
+                      "display_key": "scrubbed-6",
+                      "display_value": "scrubbed-7"
+                    }
+                  ],
+                  "sku": "WOO-NOTE-1",
+                  "global_unique_id": "",
+                  "price": 16.178862,
+                  "image": {
+                    "id": "",
+                    "src": ""
+                  },
+                  "parent_name": null
+                }
+              ],
+              "date_created_gmt": "2026-09-21T09:10:00",
+              "date_modified_gmt": "2026-10-10T20:39:06",
+              "date_completed_gmt": null,
+              "date_paid_gmt": "2026-09-21T09:12:00"
+            },
+            {
+              "id": 51,
+              "status": "on-hold",
+              "currency": "PLN",
+              "total": "114.97",
+              "billing": {
+                "first_name": "scrubbed-14",
+                "last_name": "scrubbed-15",
+                "company": null,
+                "address_1": "scrubbed-16",
+                "address_2": "scrubbed-17",
+                "city": "scrubbed-18",
+                "state": null,
+                "postcode": "scrubbed-19",
+                "country": "PL",
+                "email": "person-3@example.com",
+                "phone": "+00000000003"
+              },
+              "shipping": {
+                "first_name": "scrubbed-14",
+                "last_name": "scrubbed-15",
+                "company": null,
+                "address_1": "scrubbed-16",
+                "address_2": "scrubbed-17",
+                "city": "scrubbed-18",
+                "state": null,
+                "postcode": "scrubbed-19",
+                "country": "PL",
+                "phone": "+00000000003"
+              },
+              "payment_method": "bacs",
+              "line_items": [
+                {
+                  "id": 60,
+                  "name": "Kubek ceramiczny żółty",
+                  "product_id": 10,
+                  "variation_id": 0,
+                  "quantity": 2,
+                  "tax_class": "",
+                  "subtotal": "81.28",
+                  "subtotal_tax": "18.70",
+                  "total": "81.28",
+                  "total_tax": "18.70",
+                  "taxes": [
+                    {
+                      "id": 1,
+                      "total": "18.70",
+                      "subtotal": "18.70"
+                    }
+                  ],
+                  "meta_data": [
+                    {
+                      "id": 0,
+                      "key": "scrubbed-6",
+                      "value": "scrubbed-13",
+                      "display_key": "scrubbed-6",
+                      "display_value": "scrubbed-13"
+                    }
+                  ],
+                  "sku": "WOO-MUG-1",
+                  "global_unique_id": "",
+                  "price": 40.6422765,
+                  "image": {
+                    "id": "",
+                    "src": ""
+                  },
+                  "parent_name": null
+                }
+              ],
+              "date_created_gmt": "2026-09-21T09:20:00",
+              "date_modified_gmt": "2026-10-10T20:39:08",
+              "date_completed_gmt": null,
+              "date_paid_gmt": null
+            },
+            {
+              "id": 52,
+              "status": "pending",
+              "currency": "PLN",
+              "total": "93.99",
+              "billing": {
+                "first_name": "scrubbed-20",
+                "last_name": "scrubbed-21",
+                "company": "scrubbed-22",
+                "address_1": "scrubbed-23",
+                "address_2": null,
+                "city": "scrubbed-24",
+                "state": null,
+                "postcode": "scrubbed-25",
+                "country": "PL",
+                "email": "person-4@example.com",
+                "phone": "+00000000004"
+              },
+              "shipping": {
+                "first_name": "scrubbed-20",
+                "last_name": "scrubbed-21",
+                "company": "scrubbed-22",
+                "address_1": "scrubbed-23",
+                "address_2": null,
+                "city": "scrubbed-24",
+                "state": null,
+                "postcode": "scrubbed-25",
+                "country": "PL",
+                "phone": "+00000000004"
+              },
+              "payment_method": "przelewy24",
+              "line_items": [
+                {
+                  "id": 63,
+                  "name": "Koszulka testowa - L",
+                  "product_id": 19,
+                  "variation_id": 22,
+                  "quantity": 1,
+                  "tax_class": "",
+                  "subtotal": "64.23",
+                  "subtotal_tax": "14.77",
+                  "total": "64.23",
+                  "total_tax": "14.77",
+                  "taxes": [
+                    {
+                      "id": 1,
+                      "total": "14.77",
+                      "subtotal": "14.77"
+                    }
+                  ],
+                  "meta_data": [
+                    {
+                      "id": 0,
+                      "key": "scrubbed-32",
+                      "value": "scrubbed-46",
+                      "display_key": "scrubbed-34",
+                      "display_value": "scrubbed-46"
+                    }
+                  ],
+                  "sku": "WOO-TSHIRT-L",
+                  "global_unique_id": "",
+                  "price": 64.227642,
+                  "image": {
+                    "id": 0,
+                    "src": ""
+                  },
+                  "parent_name": "Koszulka testowa"
+                }
+              ],
+              "date_created_gmt": "2026-09-21T09:30:00",
+              "date_modified_gmt": "2026-10-10T20:39:08",
+              "date_completed_gmt": null,
+              "date_paid_gmt": null
+            },
+            {
+              "id": 53,
+              "status": "processing",
+              "currency": "PLN",
+              "total": "73.99",
+              "billing": {
+                "first_name": "scrubbed-1",
+                "last_name": "scrubbed-2",
+                "company": null,
+                "address_1": "scrubbed-3",
+                "address_2": null,
+                "city": "scrubbed-4",
+                "state": null,
+                "postcode": "scrubbed-5",
+                "country": "PL",
+                "email": "person-1@example.com",
+                "phone": "+00000000001"
+              },
+              "shipping": {
+                "first_name": "scrubbed-1",
+                "last_name": "scrubbed-2",
+                "company": null,
+                "address_1": "scrubbed-3",
+                "address_2": null,
+                "city": "scrubbed-4",
+                "state": null,
+                "postcode": "scrubbed-5",
+                "country": "PL",
+                "phone": "+00000000001"
+              },
+              "payment_method": "cod",
+              "line_items": [
+                {
+                  "id": 66,
+                  "name": "Świeca sojowa",
+                  "product_id": 13,
+                  "variation_id": 0,
+                  "quantity": 1,
+                  "tax_class": "",
+                  "subtotal": "47.97",
+                  "subtotal_tax": "11.03",
+                  "total": "47.97",
+                  "total_tax": "11.03",
+                  "taxes": [
+                    {
+                      "id": 1,
+                      "total": "11.03",
+                      "subtotal": "11.03"
+                    }
+                  ],
+                  "meta_data": [],
+                  "sku": "WOO-CANDLE-1",
+                  "global_unique_id": "",
+                  "price": 47.96748,
+                  "image": {
+                    "id": "",
+                    "src": ""
+                  },
+                  "parent_name": null
+                }
+              ],
+              "date_created_gmt": "2026-09-21T09:30:00",
+              "date_modified_gmt": "2026-10-10T20:39:11",
+              "date_completed_gmt": null,
+              "date_paid_gmt": null
+            }
+          ]
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://shop.example.test/wp-json/wc/v3/products?include=19&per_page=100&_fields=id%2Csku",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=UTF-8",
+          "date": "Sat, 10 Oct 2026 20:39:59 GMT",
+          "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\"",
+          "x-wp-total": "1",
+          "x-wp-totalpages": "1"
+        },
+        "body": {
+          "json": [
+            {
+              "id": 19,
+              "sku": "WOO-TSHIRT"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://shop.example.test/wp-json/wc/v3/orders?status=pending%2Con-hold%2Cprocessing&orderby=date&per_page=5&after=2026-09-21T09%3A29%3A59Z&offset=1&order=asc&_fields=id%2Cstatus%2Ccurrency%2Cdate_created_gmt%2Cdate_modified_gmt%2Cdate_paid_gmt%2Cdate_completed_gmt%2Ctotal%2Cpayment_method%2Cbilling%2Cshipping%2Cline_items",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=UTF-8",
+          "date": "Sat, 10 Oct 2026 20:39:59 GMT",
+          "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\"",
+          "x-wp-total": "5",
+          "x-wp-totalpages": "1"
+        },
+        "body": {
+          "json": [
+            {
+              "id": 53,
+              "status": "processing",
+              "currency": "PLN",
+              "total": "73.99",
+              "billing": {
+                "first_name": "scrubbed-1",
+                "last_name": "scrubbed-2",
+                "company": null,
+                "address_1": "scrubbed-3",
+                "address_2": null,
+                "city": "scrubbed-4",
+                "state": null,
+                "postcode": "scrubbed-5",
+                "country": "PL",
+                "email": "person-1@example.com",
+                "phone": "+00000000001"
+              },
+              "shipping": {
+                "first_name": "scrubbed-1",
+                "last_name": "scrubbed-2",
+                "company": null,
+                "address_1": "scrubbed-3",
+                "address_2": null,
+                "city": "scrubbed-4",
+                "state": null,
+                "postcode": "scrubbed-5",
+                "country": "PL",
+                "phone": "+00000000001"
+              },
+              "payment_method": "cod",
+              "line_items": [
+                {
+                  "id": 66,
+                  "name": "Świeca sojowa",
+                  "product_id": 13,
+                  "variation_id": 0,
+                  "quantity": 1,
+                  "tax_class": "",
+                  "subtotal": "47.97",
+                  "subtotal_tax": "11.03",
+                  "total": "47.97",
+                  "total_tax": "11.03",
+                  "taxes": [
+                    {
+                      "id": 1,
+                      "total": "11.03",
+                      "subtotal": "11.03"
+                    }
+                  ],
+                  "meta_data": [],
+                  "sku": "WOO-CANDLE-1",
+                  "global_unique_id": "",
+                  "price": 47.96748,
+                  "image": {
+                    "id": "",
+                    "src": ""
+                  },
+                  "parent_name": null
+                }
+              ],
+              "date_created_gmt": "2026-09-21T09:30:00",
+              "date_modified_gmt": "2026-10-10T20:39:11",
+              "date_completed_gmt": null,
+              "date_paid_gmt": null
+            },
+            {
+              "id": 54,
+              "status": "processing",
+              "currency": "PLN",
+              "total": "332.99",
+              "billing": {
+                "first_name": "scrubbed-8",
+                "last_name": "scrubbed-9",
+                "company": null,
+                "address_1": "scrubbed-10",
+                "address_2": null,
+                "city": "scrubbed-11",
+                "state": null,
+                "postcode": "scrubbed-12",
+                "country": "PL",
+                "email": "person-2@example.com",
+                "phone": "+00000000002"
+              },
+              "shipping": {
+                "first_name": "scrubbed-8",
+                "last_name": "scrubbed-9",
+                "company": null,
+                "address_1": "scrubbed-10",
+                "address_2": null,
+                "city": "scrubbed-11",
+                "state": null,
+                "postcode": "scrubbed-12",
+                "country": "PL",
+                "phone": "+00000000002"
+              },
+              "payment_method": "przelewy24",
+              "line_items": [
+                {
+                  "id": 69,
+                  "name": "Bluza testowa - Szary, L",
+                  "product_id": 24,
+                  "variation_id": 26,
+                  "quantity": 2,
+                  "tax_class": "",
+                  "subtotal": "258.54",
+                  "subtotal_tax": "59.46",
+                  "total": "258.54",
+                  "total_tax": "59.46",
+                  "taxes": [
+                    {
+                      "id": 1,
+                      "total": "59.46",
+                      "subtotal": "59.46"
+                    }
+                  ],
+                  "meta_data": [
+                    {
+                      "id": 0,
+                      "key": "scrubbed-43",
+                      "value": "scrubbed-47",
+                      "display_key": "scrubbed-45",
+                      "display_value": "scrubbed-47"
+                    },
+                    {
+                      "id": 0,
+                      "key": "scrubbed-32",
+                      "value": "scrubbed-46",
+                      "display_key": "scrubbed-34",
+                      "display_value": "scrubbed-46"
+                    },
+                    {
+                      "id": 0,
+                      "key": "scrubbed-6",
+                      "value": "scrubbed-13",
+                      "display_key": "scrubbed-6",
+                      "display_value": "scrubbed-13"
+                    }
+                  ],
+                  "sku": "",
+                  "global_unique_id": "",
+                  "price": 129.2682925,
+                  "image": {
+                    "id": 0,
+                    "src": ""
+                  },
+                  "parent_name": "Bluza testowa"
+                }
+              ],
+              "date_created_gmt": "2026-09-21T09:40:00",
+              "date_modified_gmt": "2026-10-10T20:39:14",
+              "date_completed_gmt": null,
+              "date_paid_gmt": "2026-09-21T09:42:00"
+            },
+            {
+              "id": 55,
+              "status": "on-hold",
+              "currency": "PLN",
+              "total": "114.49",
+              "billing": {
+                "first_name": "scrubbed-14",
+                "last_name": "scrubbed-15",
+                "company": null,
+                "address_1": "scrubbed-16",
+                "address_2": "scrubbed-17",
+                "city": "scrubbed-18",
+                "state": null,
+                "postcode": "scrubbed-19",
+                "country": "PL",
+                "email": "person-3@example.com",
+                "phone": "+00000000003"
+              },
+              "shipping": {
+                "first_name": "scrubbed-14",
+                "last_name": "scrubbed-15",
+                "company": null,
+                "address_1": "scrubbed-16",
+                "address_2": "scrubbed-17",
+                "city": "scrubbed-18",
+                "state": null,
+                "postcode": "scrubbed-19",
+                "country": "PL",
+                "phone": "+00000000003"
+              },
+              "payment_method": "bacs",
+              "line_items": [
+                {
+                  "id": 72,
+                  "name": "Notes w kratkę A5",
+                  "product_id": 11,
+                  "variation_id": 0,
+                  "quantity": 5,
+                  "tax_class": "",
+                  "subtotal": "80.89",
+                  "subtotal_tax": "18.61",
+                  "total": "80.89",
+                  "total_tax": "18.61",
+                  "taxes": [
+                    {
+                      "id": 1,
+                      "total": "18.61",
+                      "subtotal": "18.61"
+                    }
+                  ],
+                  "meta_data": [
+                    {
+                      "id": 0,
+                      "key": "scrubbed-6",
+                      "value": "scrubbed-48",
+                      "display_key": "scrubbed-6",
+                      "display_value": "scrubbed-48"
+                    }
+                  ],
+                  "sku": "WOO-NOTE-1",
+                  "global_unique_id": "",
+                  "price": 16.1788618,
+                  "image": {
+                    "id": "",
+                    "src": ""
+                  },
+                  "parent_name": null
+                }
+              ],
+              "date_created_gmt": "2026-09-21T09:50:00",
+              "date_modified_gmt": "2026-10-10T20:39:16",
+              "date_completed_gmt": null,
+              "date_paid_gmt": null
+            },
+            {
+              "id": 56,
+              "status": "pending",
+              "currency": "PLN",
+              "total": "113.99",
+              "billing": {
+                "first_name": "scrubbed-20",
+                "last_name": "scrubbed-21",
+                "company": "scrubbed-22",
+                "address_1": "scrubbed-23",
+                "address_2": null,
+                "city": "scrubbed-24",
+                "state": null,
+                "postcode": "scrubbed-25",
+                "country": "PL",
+                "email": "person-4@example.com",
+                "phone": "+00000000004"
+              },
+              "shipping": {
+                "first_name": "scrubbed-20",
+                "last_name": "scrubbed-21",
+                "company": "scrubbed-22",
+                "address_1": "scrubbed-23",
+                "address_2": null,
+                "city": "scrubbed-24",
+                "state": null,
+                "postcode": "scrubbed-25",
+                "country": "PL",
+                "phone": "+00000000004"
+              },
+              "payment_method": "przelewy24",
+              "line_items": [
+                {
+                  "id": 75,
+                  "name": "Plecak miejski",
+                  "product_id": 16,
+                  "variation_id": 0,
+                  "quantity": 1,
+                  "tax_class": "",
+                  "subtotal": "80.49",
+                  "subtotal_tax": "18.51",
+                  "total": "80.49",
+                  "total_tax": "18.51",
+                  "taxes": [
+                    {
+                      "id": 1,
+                      "total": "18.51",
+                      "subtotal": "18.51"
+                    }
+                  ],
+                  "meta_data": [],
+                  "sku": "WOO-BAG-1",
+                  "global_unique_id": "",
+                  "price": 80.487805,
+                  "image": {
+                    "id": "",
+                    "src": ""
+                  },
+                  "parent_name": null
+                }
+              ],
+              "date_created_gmt": "2026-09-21T10:00:00",
+              "date_modified_gmt": "2026-10-10T20:39:16",
+              "date_completed_gmt": null,
+              "date_paid_gmt": null
+            }
+          ]
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://shop.example.test/wp-json/wc/v3/orders?status=any&orderby=modified&per_page=5&modified_after=2026-10-10T20%3A39%3A33Z&order=asc&_fields=id%2Cstatus%2Ccurrency%2Cdate_created_gmt%2Cdate_modified_gmt%2Cdate_paid_gmt%2Cdate_completed_gmt%2Ctotal%2Cpayment_method%2Cbilling%2Cshipping%2Cline_items",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=UTF-8",
+          "date": "Sat, 10 Oct 2026 20:39:59 GMT",
+          "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\"",
+          "x-wp-total": "0",
+          "x-wp-totalpages": "0"
+        },
+        "body": {
+          "json": []
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://shop.example.test/wp-json/wc/v3/orders?status=trash&orderby=modified&per_page=5&modified_after=2026-10-10T20%3A39%3A33Z&order=asc&_fields=id%2Cstatus%2Ccurrency%2Cdate_created_gmt%2Cdate_modified_gmt%2Cdate_paid_gmt%2Cdate_completed_gmt%2Ctotal%2Cpayment_method%2Cbilling%2Cshipping%2Cline_items",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=UTF-8",
+          "date": "Sat, 10 Oct 2026 20:39:59 GMT",
+          "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\"",
+          "x-wp-total": "0",
+          "x-wp-totalpages": "0"
+        },
+        "body": {
+          "json": []
+        }
+      }
+    }
+  ]
+}

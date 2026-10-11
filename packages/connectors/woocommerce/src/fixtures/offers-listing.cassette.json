@@ -1,0 +1,423 @@
+{
+  "version": 1,
+  "interactions": [
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://shop.example.test/wp-json/wc/v3/data/currencies/current?_fields=code",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=UTF-8",
+          "date": "Sat, 10 Oct 2026 20:20:23 GMT",
+          "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\""
+        },
+        "body": {
+          "json": {
+            "code": "PLN",
+            "_links": {
+              "self": [
+                {
+                  "href": "https://shop.example.test/wp-json/wc/v3/data/currencies/PLN",
+                  "targetHints": {
+                    "allow": [
+                      "GET"
+                    ]
+                  }
+                }
+              ],
+              "collection": [
+                {
+                  "href": "https://shop.example.test/wp-json/wc/v3/data/currencies"
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://shop.example.test/wp-json/wc/v3/products?per_page=3&page=1&orderby=id&order=asc&_fields=id%2Cname%2Ctype%2Cstatus%2Csku%2Cprice%2Cpermalink",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=UTF-8",
+          "date": "Sat, 10 Oct 2026 20:20:24 GMT",
+          "link": "<https://shop.example.test/wp-json/wc/v3/products?per_page=3&page=2&orderby=id&order=asc&_fields=id%2Cname%2Ctype%2Cstatus%2Csku%2Cprice%2Cpermalink>; rel=\"next\"",
+          "x-wp-total": "12",
+          "x-wp-totalpages": "4"
+        },
+        "body": {
+          "json": [
+            {
+              "id": 10,
+              "name": "Kubek ceramiczny żółty",
+              "type": "simple",
+              "status": "publish",
+              "sku": "WOO-MUG-1",
+              "price": "49.99",
+              "permalink": "https://shop.example.test/product/kubek-ceramiczny-zolty/"
+            },
+            {
+              "id": 11,
+              "name": "Notes w kratkę A5",
+              "type": "simple",
+              "status": "publish",
+              "sku": "WOO-NOTE-1",
+              "price": "19.90",
+              "permalink": "https://shop.example.test/product/notes-w-kratke-a5/"
+            },
+            {
+              "id": 12,
+              "name": "Plakat bez SKU",
+              "type": "simple",
+              "status": "publish",
+              "sku": "",
+              "price": "35.00",
+              "permalink": "https://shop.example.test/product/plakat-bez-sku/"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://shop.example.test/wp-json/wc/v3/products?per_page=3&page=2&orderby=id&order=asc&_fields=id%2Cname%2Ctype%2Cstatus%2Csku%2Cprice%2Cpermalink",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=UTF-8",
+          "date": "Sat, 10 Oct 2026 20:20:24 GMT",
+          "link": "<https://shop.example.test/wp-json/wc/v3/products?per_page=3&page=1&orderby=id&order=asc&_fields=id%2Cname%2Ctype%2Cstatus%2Csku%2Cprice%2Cpermalink>; rel=\"prev\", <https://shop.example.test/wp-json/wc/v3/products?per_page=3&page=3&orderby=id&order=asc&_fields=id%2Cname%2Ctype%2Cstatus%2Csku%2Cprice%2Cpermalink>; rel=\"next\"",
+          "x-wp-total": "12",
+          "x-wp-totalpages": "4"
+        },
+        "body": {
+          "json": [
+            {
+              "id": 13,
+              "name": "Świeca sojowa",
+              "type": "simple",
+              "status": "publish",
+              "sku": "WOO-CANDLE-1",
+              "price": "59.00",
+              "permalink": "https://shop.example.test/product/swieca-sojowa/"
+            },
+            {
+              "id": 14,
+              "name": "Szkic produktu",
+              "type": "simple",
+              "status": "draft",
+              "sku": "WOO-DRAFT-1",
+              "price": "10.00",
+              "permalink": "https://shop.example.test/?post_type=product&p=14"
+            },
+            {
+              "id": 15,
+              "name": "Produkt bez ceny",
+              "type": "simple",
+              "status": "publish",
+              "sku": "WOO-NOPRICE-1",
+              "price": "",
+              "permalink": "https://shop.example.test/product/produkt-bez-ceny/"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://shop.example.test/wp-json/wc/v3/products?per_page=3&page=3&orderby=id&order=asc&_fields=id%2Cname%2Ctype%2Cstatus%2Csku%2Cprice%2Cpermalink",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=UTF-8",
+          "date": "Sat, 10 Oct 2026 20:20:24 GMT",
+          "link": "<https://shop.example.test/wp-json/wc/v3/products?per_page=3&page=2&orderby=id&order=asc&_fields=id%2Cname%2Ctype%2Cstatus%2Csku%2Cprice%2Cpermalink>; rel=\"prev\", <https://shop.example.test/wp-json/wc/v3/products?per_page=3&page=4&orderby=id&order=asc&_fields=id%2Cname%2Ctype%2Cstatus%2Csku%2Cprice%2Cpermalink>; rel=\"next\"",
+          "x-wp-total": "12",
+          "x-wp-totalpages": "4"
+        },
+        "body": {
+          "json": [
+            {
+              "id": 16,
+              "name": "Plecak miejski",
+              "type": "simple",
+              "status": "publish",
+              "sku": "WOO-BAG-1",
+              "price": "99.00",
+              "permalink": "https://shop.example.test/product/plecak-miejski/"
+            },
+            {
+              "id": 17,
+              "name": "Karta podarunkowa 100 zł",
+              "type": "simple",
+              "status": "publish",
+              "sku": "WOO-GIFT-100",
+              "price": "100.00",
+              "permalink": "https://shop.example.test/product/karta-podarunkowa-100-zl/"
+            },
+            {
+              "id": 19,
+              "name": "Koszulka testowa",
+              "type": "variable",
+              "status": "publish",
+              "sku": "WOO-TSHIRT",
+              "price": "79.00",
+              "permalink": "https://shop.example.test/product/koszulka-testowa/"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://shop.example.test/wp-json/wc/v3/products/19/variations?per_page=3&page=1&orderby=id&order=asc&_fields=id%2Cstatus%2Csku%2Cprice%2Cpermalink%2Cattributes",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=UTF-8",
+          "date": "Sat, 10 Oct 2026 20:20:24 GMT",
+          "link": "<https://shop.example.test/wp-json/wc/v3/products/19/variations?per_page=3&page=2&orderby=id&order=asc&_fields=id%2Cstatus%2Csku%2Cprice%2Cpermalink%2Cattributes>; rel=\"next\"",
+          "x-wp-total": "4",
+          "x-wp-totalpages": "2"
+        },
+        "body": {
+          "json": [
+            {
+              "id": 20,
+              "permalink": "https://shop.example.test/product/koszulka-testowa/?attribute_rozmiar=S",
+              "sku": "WOO-TSHIRT-S",
+              "price": "79.00",
+              "status": "publish",
+              "attributes": [
+                {
+                  "id": 0,
+                  "name": "Rozmiar",
+                  "slug": "rozmiar",
+                  "option": "S"
+                }
+              ]
+            },
+            {
+              "id": 21,
+              "permalink": "https://shop.example.test/product/koszulka-testowa/?attribute_rozmiar=M",
+              "sku": "WOO-TSHIRT",
+              "price": "79.00",
+              "status": "publish",
+              "attributes": [
+                {
+                  "id": 0,
+                  "name": "Rozmiar",
+                  "slug": "rozmiar",
+                  "option": "M"
+                }
+              ]
+            },
+            {
+              "id": 22,
+              "permalink": "https://shop.example.test/product/koszulka-testowa/?attribute_rozmiar=L",
+              "sku": "WOO-TSHIRT-L",
+              "price": "79.00",
+              "status": "publish",
+              "attributes": [
+                {
+                  "id": 0,
+                  "name": "Rozmiar",
+                  "slug": "rozmiar",
+                  "option": "L"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://shop.example.test/wp-json/wc/v3/products/19/variations?per_page=3&page=2&orderby=id&order=asc&_fields=id%2Cstatus%2Csku%2Cprice%2Cpermalink%2Cattributes",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=UTF-8",
+          "date": "Sat, 10 Oct 2026 20:20:24 GMT",
+          "link": "<https://shop.example.test/wp-json/wc/v3/products/19/variations?per_page=3&page=1&orderby=id&order=asc&_fields=id%2Cstatus%2Csku%2Cprice%2Cpermalink%2Cattributes>; rel=\"prev\"",
+          "x-wp-total": "4",
+          "x-wp-totalpages": "2"
+        },
+        "body": {
+          "json": [
+            {
+              "id": 23,
+              "permalink": "https://shop.example.test/product/koszulka-testowa/?attribute_rozmiar=XL",
+              "sku": "WOO-TSHIRT-XL",
+              "price": "89.00",
+              "status": "private",
+              "attributes": [
+                {
+                  "id": 0,
+                  "name": "Rozmiar",
+                  "slug": "rozmiar",
+                  "option": "XL"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://shop.example.test/wp-json/wc/v3/products?per_page=3&page=4&orderby=id&order=asc&_fields=id%2Cname%2Ctype%2Cstatus%2Csku%2Cprice%2Cpermalink",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=UTF-8",
+          "date": "Sat, 10 Oct 2026 20:20:24 GMT",
+          "link": "<https://shop.example.test/wp-json/wc/v3/products?per_page=3&page=3&orderby=id&order=asc&_fields=id%2Cname%2Ctype%2Cstatus%2Csku%2Cprice%2Cpermalink>; rel=\"prev\"",
+          "x-wp-total": "12",
+          "x-wp-totalpages": "4"
+        },
+        "body": {
+          "json": [
+            {
+              "id": 24,
+              "name": "Bluza testowa",
+              "type": "variable",
+              "status": "publish",
+              "sku": "",
+              "price": "159.00",
+              "permalink": "https://shop.example.test/product/bluza-testowa/"
+            },
+            {
+              "id": 27,
+              "name": "Zestaw biurowy",
+              "type": "grouped",
+              "status": "publish",
+              "sku": "WOO-SET-1",
+              "price": "19.90",
+              "permalink": "https://shop.example.test/product/zestaw-biurowy/"
+            },
+            {
+              "id": 28,
+              "name": "Produkt partnera",
+              "type": "external",
+              "status": "publish",
+              "sku": "WOO-EXT-1",
+              "price": "25.00",
+              "permalink": "https://shop.example.test/product/produkt-partnera/"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://shop.example.test/wp-json/wc/v3/products/24/variations?per_page=3&page=1&orderby=id&order=asc&_fields=id%2Cstatus%2Csku%2Cprice%2Cpermalink%2Cattributes",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=UTF-8",
+          "date": "Sat, 10 Oct 2026 20:20:24 GMT",
+          "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\"",
+          "x-wp-total": "2",
+          "x-wp-totalpages": "1"
+        },
+        "body": {
+          "json": [
+            {
+              "id": 25,
+              "permalink": "https://shop.example.test/product/bluza-testowa/?attribute_kolor=Czarny&attribute_rozmiar=M",
+              "sku": "WOO-HOODIE-BLK-M",
+              "price": "159.00",
+              "status": "publish",
+              "attributes": [
+                {
+                  "id": 0,
+                  "name": "Kolor",
+                  "slug": "kolor",
+                  "option": "Czarny"
+                },
+                {
+                  "id": 0,
+                  "name": "Rozmiar",
+                  "slug": "rozmiar",
+                  "option": "M"
+                }
+              ]
+            },
+            {
+              "id": 26,
+              "permalink": "https://shop.example.test/product/bluza-testowa/?attribute_kolor=Szary&attribute_rozmiar=L",
+              "sku": "",
+              "price": "159.00",
+              "status": "publish",
+              "attributes": [
+                {
+                  "id": 0,
+                  "name": "Kolor",
+                  "slug": "kolor",
+                  "option": "Szary"
+                },
+                {
+                  "id": 0,
+                  "name": "Rozmiar",
+                  "slug": "rozmiar",
+                  "option": "L"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

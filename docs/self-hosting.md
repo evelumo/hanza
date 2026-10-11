@@ -1,6 +1,6 @@
 # Self-hosting
 
-Hanza can run on infrastructure you control. It is currently an early-stage application whose real connectors, Allegro (a marketplace) and InPost (a courier), have been checked against their providers' sandboxes only; this guide describes the runtime and operator responsibilities, not a certified production deployment recipe.
+Hanza can run on infrastructure you control. It is currently an early-stage application whose real connectors, Allegro (a marketplace Channel), WooCommerce (a shop Channel) and InPost (a Carrier), have been checked against sandboxes only; this guide describes the runtime and operator responsibilities, not a certified production deployment recipe.
 
 ## Runtime components
 

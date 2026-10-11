@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "interactions": [
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://shop.example.test/wp-json/wc/v3/orders?status=any&orderby=id&order=desc&per_page=1&_fields=id",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=UTF-8",
+          "date": "Sat, 10 Oct 2026 20:45:30 GMT",
+          "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\""
+        },
+        "body": {
+          "json": {
+            "code": "woocommerce_rest_cannot_view",
+            "message": "Sorry, you cannot list resources.",
+            "data": {
+              "status": 401
+            }
+          }
+        }
+      }
+    }
+  ]
+}

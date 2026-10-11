@@ -1,0 +1,298 @@
+{
+  "version": 1,
+  "interactions": [
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://shop.example.test/wp-json/wc/v3/products?include=10&per_page=100&_fields=id%2Ctype",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=UTF-8",
+          "date": "Sat, 10 Oct 2026 20:20:37 GMT",
+          "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\"",
+          "x-wp-total": "1",
+          "x-wp-totalpages": "1"
+        },
+        "body": {
+          "json": [
+            {
+              "id": 10,
+              "type": "simple"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "url": "https://shop.example.test/wp-json/wc/v3/products/batch",
+        "headers": {
+          "accept": "application/json",
+          "content-type": "application/json"
+        },
+        "body": {
+          "json": {
+            "update": [
+              {
+                "id": 10,
+                "manage_stock": true,
+                "stock_quantity": 12
+              }
+            ]
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=UTF-8",
+          "date": "Sat, 10 Oct 2026 20:20:37 GMT",
+          "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\""
+        },
+        "body": {
+          "json": {
+            "update": [
+              {
+                "id": 10,
+                "name": "Kubek ceramiczny żółty",
+                "slug": "kubek-ceramiczny-zolty",
+                "permalink": "https://shop.example.test/product/kubek-ceramiczny-zolty/",
+                "date_created": "2026-10-10T22:19:58",
+                "date_created_gmt": "2026-10-10T20:19:58",
+                "date_modified": "2026-10-10T22:20:37",
+                "date_modified_gmt": "2026-10-10T20:20:37",
+                "type": "simple",
+                "status": "publish",
+                "featured": false,
+                "catalog_visibility": "visible",
+                "description": "",
+                "short_description": "",
+                "sku": "WOO-MUG-1",
+                "price": "49.99",
+                "regular_price": "49.99",
+                "sale_price": "",
+                "date_on_sale_from": null,
+                "date_on_sale_from_gmt": null,
+                "date_on_sale_to": null,
+                "date_on_sale_to_gmt": null,
+                "on_sale": false,
+                "purchasable": true,
+                "total_sales": 11,
+                "virtual": false,
+                "downloadable": false,
+                "downloads": [],
+                "download_limit": -1,
+                "download_expiry": -1,
+                "external_url": "",
+                "button_text": "",
+                "tax_status": "taxable",
+                "tax_class": "",
+                "manage_stock": false,
+                "stock_quantity": 5,
+                "backorders": "no",
+                "backorders_allowed": false,
+                "backordered": false,
+                "low_stock_amount": null,
+                "sold_individually": false,
+                "weight": "",
+                "dimensions": {
+                  "length": "",
+                  "width": "",
+                  "height": ""
+                },
+                "shipping_required": true,
+                "shipping_taxable": true,
+                "shipping_class": "",
+                "shipping_class_id": 0,
+                "reviews_allowed": true,
+                "average_rating": "0",
+                "rating_count": 0,
+                "upsell_ids": [],
+                "cross_sell_ids": [],
+                "parent_id": 0,
+                "purchase_note": "",
+                "categories": [
+                  {
+                    "id": 15,
+                    "name": "Uncategorized",
+                    "slug": "uncategorized"
+                  }
+                ],
+                "brands": [],
+                "tags": [],
+                "images": [],
+                "attributes": [],
+                "default_attributes": [],
+                "variations": [],
+                "grouped_products": [],
+                "menu_order": 0,
+                "price_html": "<span class=\"woocommerce-Price-amount amount\"><bdi><span class=\"woocommerce-Price-currencySymbol\" translate=\"no\" dir=\"auto\">&#122;&#322;</span>49.99</bdi></span>",
+                "related_ids": [
+                  28,
+                  15,
+                  13,
+                  24,
+                  17
+                ],
+                "meta_data": [],
+                "stock_status": "instock",
+                "has_options": false,
+                "post_password": "",
+                "global_unique_id": "",
+                "permalink_template": "https://shop.example.test/product/%pagename%/",
+                "generated_slug": "kubek-ceramiczny-zolty",
+                "_links": {
+                  "self": [
+                    {
+                      "href": "https://shop.example.test/wp-json/wc/v3/products/10",
+                      "targetHints": {
+                        "allow": [
+                          "GET",
+                          "POST",
+                          "PUT",
+                          "PATCH",
+                          "DELETE"
+                        ]
+                      }
+                    }
+                  ],
+                  "collection": [
+                    {
+                      "href": "https://shop.example.test/wp-json/wc/v3/products"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "url": "https://shop.example.test/wp-json/wc/v3/products/19/variations/batch",
+        "headers": {
+          "accept": "application/json",
+          "content-type": "application/json"
+        },
+        "body": {
+          "json": {
+            "update": [
+              {
+                "id": 20,
+                "manage_stock": true,
+                "stock_quantity": 12
+              }
+            ]
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=UTF-8",
+          "date": "Sat, 10 Oct 2026 20:20:37 GMT",
+          "link": "<https://shop.example.test/wp-json/>; rel=\"https://api.w.org/\""
+        },
+        "body": {
+          "json": {
+            "update": [
+              {
+                "id": 20,
+                "type": "variation",
+                "date_created": "2026-10-10T22:20:02",
+                "date_created_gmt": "2026-10-10T20:20:02",
+                "date_modified": "2026-10-10T22:20:37",
+                "date_modified_gmt": "2026-10-10T20:20:37",
+                "description": "",
+                "permalink": "https://shop.example.test/product/koszulka-testowa/?attribute_rozmiar=S",
+                "sku": "WOO-TSHIRT-S",
+                "global_unique_id": "",
+                "price": "79.00",
+                "regular_price": "79.00",
+                "sale_price": "",
+                "date_on_sale_from": null,
+                "date_on_sale_from_gmt": null,
+                "date_on_sale_to": null,
+                "date_on_sale_to_gmt": null,
+                "on_sale": false,
+                "status": "publish",
+                "purchasable": true,
+                "virtual": false,
+                "downloadable": false,
+                "downloads": [],
+                "download_limit": -1,
+                "download_expiry": -1,
+                "tax_status": "taxable",
+                "tax_class": "parent",
+                "manage_stock": false,
+                "stock_quantity": 12,
+                "stock_status": "instock",
+                "backorders": "no",
+                "backorders_allowed": false,
+                "backordered": false,
+                "low_stock_amount": null,
+                "weight": "",
+                "dimensions": {
+                  "length": "",
+                  "width": "",
+                  "height": ""
+                },
+                "shipping_class": "",
+                "shipping_class_id": 0,
+                "image": null,
+                "gallery_image_ids": [],
+                "attributes": [
+                  {
+                    "id": 0,
+                    "name": "Rozmiar",
+                    "slug": "rozmiar",
+                    "option": "S"
+                  }
+                ],
+                "menu_order": 0,
+                "meta_data": [],
+                "name": "S",
+                "parent_id": 19,
+                "_links": {
+                  "self": [
+                    {
+                      "href": "https://shop.example.test/wp-json/wc/v3/products/19/variations/20",
+                      "targetHints": {
+                        "allow": [
+                          "GET",
+                          "POST",
+                          "PUT",
+                          "PATCH",
+                          "DELETE"
+                        ]
+                      }
+                    }
+                  ],
+                  "collection": [
+                    {
+                      "href": "https://shop.example.test/wp-json/wc/v3/products/19/variations"
+                    }
+                  ],
+                  "up": [
+                    {
+                      "href": "https://shop.example.test/wp-json/wc/v3/products/19"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

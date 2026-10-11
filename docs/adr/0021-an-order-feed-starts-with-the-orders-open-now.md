@@ -1,8 +1,12 @@
 # An Order feed starts with the Orders open now, restarts the same way, and takes Order updates for Orders Hanza has
 
-Status: amends ADR 0003 (its last consequence)
+Status: amends ADR 0003 (its last consequence); amended for feeds built on snapshots (issue #123)
 
 Journal-style Channels (Allegro keeps 60 days of Order events, issue #87) left the `orders.pull` contract open in four places: where a new Connection starts, what happens when the saved cursor is older than the journal, how an address the Channel reveals only at payment reaches an imported Order, and how an Order the Channel deleted (a merged purchase) releases its Reservation. We decided that cursor `null` means "take the feed's start (a journal position, then a boundary between Orders placed before and after it, in that order, so no Order placed in between is lost), list the Orders open on the Channel now with stable paging (a keyset under the frozen boundary, or overlapping pages, never a plain offset), then follow the journal from that position", and that in the journal a full Order is sent only for an Order placed after the boundary, any other change going as an Order update, so Orders closed before the Connection never arrive; that a connector throws `CursorExpiredError` for a position the Channel no longer has, and the core resets the feed to `null` and appends `connection.order_feed_restarted`; and that `orders.pull` may return an Order update (`kind: 'update'`, facts and addresses), which the core applies only to an Order it already imported from that Connection, replacing addresses only while the Order is in phase new. Starting from history would consume Stock the seller counted on the shelf after those Orders shipped, and starting from the newest event would leave paid, unshipped Orders unreserved; both are Stock errors, not connector details.
+
+## Feeds built on snapshots
+
+Amended with issue #123 for a Channel that keeps no journal, only Order snapshots stamped with a modification time (WooCommerce). Such a feed keeps the rule's purpose, not its wording: it sends an Order placed before the boundary in full while the Order is still open and as an Order update once it is closed, its position is a time on the Channel's own clock held back by a margin for saves that commit late, and its cursor never expires (a snapshot is kept for ever), so it throws no `CursorExpiredError`. A snapshot always tells open from closed, so an Order closed before the Connection is still never imported, while a checkout opened before the boundary and placed after it is not lost.
 
 ## Considered options
 
