@@ -11,7 +11,7 @@ export const PAGE_SIZE = 100
 export type Scope = 'organization' | 'shipment'
 
 export function organizationShipmentsPath(ctx: InpostContext): string {
-  return `/v1/organizations/${encodeURIComponent(ctx.config.organizationId)}/shipments`
+  return `/v1/organizations/${encodeURIComponent(ctx.config.shipxOrganizationId)}/shipments`
 }
 
 /**
@@ -59,8 +59,33 @@ export async function send(ctx: InpostContext, path: string, init: RequestInit =
   return response
 }
 
+/**
+ * The body as JSON, or undefined when it is empty or not JSON (which the caller's schema then refuses). A
+ * `ConnectorError` raised while reading passes through; any other read failure (the connection reset, the 30 s
+ * timeout firing mid-body) is a `TransientError`, since a retry may well read it whole.
+ */
+export async function readJson(response: Response, what: string): Promise<unknown> {
+  let text: string
+  try {
+    text = await response.text()
+  } catch (error) {
+    if (isConnectorError(error)) throw error
+    throw new TransientError(`The InPost ${what} response could not be read`, { cause: error })
+  }
+  try {
+    return JSON.parse(text) as unknown
+  } catch {
+    // Empty or not JSON (a `SyntaxError`): no schema accepts it, so the caller's parse fails permanently.
+    return undefined
+  }
+}
+
+/**
+ * Reads the body and parses it with `schema`. A body that does not fit (or is not JSON) is a `PermanentError`; one
+ * that cannot be read is a `TransientError`.
+ */
 export async function parse<T extends z.ZodType>(response: Response, schema: T, what: string): Promise<z.output<T>> {
-  const parsed = schema.safeParse(await response.json().catch(() => undefined))
+  const parsed = schema.safeParse(await readJson(response, what))
   // Paths only: a zod message could echo the receiver's data back.
   if (!parsed.success) {
     throw new PermanentError(`Unexpected ${what} response from InPost: ${parsed.error.issues.map((issue) => issue.path.join('.')).join(', ')}`, { cause: parsed.error })
@@ -68,14 +93,17 @@ export async function parse<T extends z.ZodType>(response: Response, schema: T, 
   return parsed.data
 }
 
-/** The ShipX error of a failed response (`{ error, details }`), or null when its body is something else. */
+/**
+ * The ShipX error of a failed response (`{ error, details }`), or null when its body is something else. A body that
+ * cannot be read throws like `readJson` (a `TransientError`).
+ */
 export async function readError(response: Response): Promise<z.output<typeof shipxErrorSchema> | null> {
-  const parsed = shipxErrorSchema.safeParse(await response.json().catch(() => undefined))
+  const parsed = shipxErrorSchema.safeParse(await readJson(response, 'error'))
   return parsed.success ? parsed.data : null
 }
 
 const WRONG_ORGANIZATION =
-  'check that the Organization ID in the Connection settings is the one shown in the API tab of the InPost manager, for the same environment as the token'
+  'check that the ShipX organization ID in the Connection settings is the one shown in the API tab of the InPost manager, for the same environment as the token'
 
 /**
  * The error a failed response is thrown as. A 401 asks for sign-in. A 403 is what ShipX answers a valid token with

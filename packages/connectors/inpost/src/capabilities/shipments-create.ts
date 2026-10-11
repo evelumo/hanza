@@ -1,4 +1,4 @@
-import { PermanentError, type ShipmentCreateResult, type ShipmentRequest } from '@hanza/connector-sdk'
+import { PermanentError, TransientError, type ShipmentCreateResult, type ShipmentRequest } from '@hanza/connector-sdk'
 import { shipxShipmentSchema, type ShipxShipment } from '../api'
 import { failure, logUntranslated, organizationShipmentsPath, parse, readError, send } from '../client'
 import type { InpostContext } from '../config'
@@ -19,15 +19,28 @@ function created(ctx: InpostContext, shipment: ShipxShipment): ShipmentCreateRes
 }
 
 /**
+ * How long a create may have run when it reaches the `POST`. The core keeps a second create of the Shipment away for
+ * `SHIPMENT_CREATE_RETRY_DELAY_MS` (5 minutes) from when it started this one, and the search before the `POST` can take
+ * up to 20 requests of 30 s each. A `POST` sent later than this, plus its own 30 s, could meet a second create that
+ * started meanwhile, and its search would not see this parcel yet. So a late create posts nothing and fails as
+ * transient: the core repeats it no sooner than the retry delay, and the repeat finds the earlier shipment or posts.
+ */
+export const POST_DEADLINE_MS = 4 * 60_000
+
+/**
  * Repeatable: the organization's recent shipments are searched for the `reference` before anything is posted, so a
  * call repeated after a lost answer returns the shipment the first one made instead of buying a second label.
  */
 export async function createShipment(ctx: InpostContext, request: ShipmentRequest): Promise<ShipmentCreateResult> {
+  const startedAt = Date.now()
   const body = toShipxShipment(request, ctx.config)
   if (!body.ok) return { outcome: 'rejected', code: body.code }
 
   const earlier = await findEarlierShipment(ctx, request)
   if (earlier !== null) return created(ctx, earlier)
+  if (Date.now() - startedAt > POST_DEADLINE_MS) {
+    throw new TransientError('The search for an earlier attempt took too long to post safely now, so no shipment was sent; it is asked again later')
+  }
 
   const response = await send(ctx, organizationShipmentsPath(ctx), {
     method: 'POST',

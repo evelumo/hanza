@@ -12,10 +12,12 @@ export const COURIER_SERVICE = 'inpost_courier_standard'
 // Flat fields only: the panel draws the Connection form from these, with the description as the label.
 export const inpostConfigSchema = z.object({
   environment: z.enum(['production', 'sandbox']).describe('Environment'),
-  organizationId: z
+  // Not `organizationId`: that is Hanza's tenant, and a config field cannot be renamed once Connections store it.
+  shipxOrganizationId: z
     .string()
+    .trim()
     .regex(/^\d+$/)
-    .describe('Organization ID (the API tab of the InPost manager)'),
+    .describe('ShipX organization ID (the API tab of the InPost manager)'),
   // `parcel_locker` is left out: it needs a drop-off locker chosen per parcel, which a Connection setting cannot be.
   lockerSendingMethod: z
     .enum(['any_point', 'dispatch_order', 'pop', 'branch'])
@@ -29,7 +31,15 @@ export const inpostConfigSchema = z.object({
 })
 export type InpostConfig = z.output<typeof inpostConfigSchema>
 
-export const inpostCredentialsSchema = z.object({ apiToken: z.string().min(1).describe('API token') })
+// Printable ASCII without spaces, as a token is: it goes into the Authorization header, and `Headers` throws on a
+// character beyond Latin-1, which would fail every request of the Connection, retried for ever. The bound keeps what
+// is pasted by mistake out of the header too.
+const API_TOKEN = /^[\x21-\x7E]+$/
+export const API_TOKEN_MAX_LENGTH = 512
+
+export const inpostCredentialsSchema = z.object({
+  apiToken: z.string().trim().min(1).max(API_TOKEN_MAX_LENGTH).regex(API_TOKEN).describe('API token'),
+})
 export type InpostCredentials = z.output<typeof inpostCredentialsSchema>
 
 export type InpostContext = CapabilityContext<InpostConfig, InpostCredentials>

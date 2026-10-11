@@ -6,12 +6,13 @@ The build-time list of connectors available to Hanza's apps. This is the only wo
 
 ## Current registry
 
+- `allegro`: the Allegro marketplace ([`@hanza/connector-allegro`](../connectors/allegro/AGENTS.md)), usable when its installation settings `HANZA_CONNECTOR_ALLEGRO_*` are supplied; listed as "not set up" otherwise.
 - `fake`: the in-memory Test channel.
 - `fake-oauth`: the simulated Test OAuth channel, usable when required installation settings are supplied.
 - `fake-courier`: the in-memory Test courier, a simulated Carrier for Shipments.
 - `inpost`: InPost (ShipX), the first Carrier: Paczkomat lockers and the InPost courier in Poland.
 
-The `fake-http` and `fake-http-oauth` implementations are test references, not registered panel connectors.
+The `fake-http` and `fake-http-oauth` implementations are test references, not registered panel connectors. The real connectors so far are Allegro (a marketplace Channel) and InPost (a Carrier).
 
 ## Add a connector
 

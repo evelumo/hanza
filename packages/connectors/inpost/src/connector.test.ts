@@ -41,7 +41,7 @@ describe('InPost connector', () => {
 
       await runConformance(inpostConnector, {
         fixtures,
-        config: { environment: 'sandbox', organizationId: run.organizationId },
+        config: { environment: 'sandbox', shipxOrganizationId: run.organizationId },
         credentials: replayCredentials,
         unauthorized: { credentials: unknownCredentials },
         scrub: inpostScrub,

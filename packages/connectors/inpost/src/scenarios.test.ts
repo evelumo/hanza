@@ -2,6 +2,7 @@ import { AuthExpiredError, PermanentError, RateLimitedError, TransientError, typ
 import { isRecording, openCassette } from '@hanza/connector-sdk/testing'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { ZodError } from 'zod'
+import { POST_DEADLINE_MS } from './capabilities/shipments-create'
 import { MAX_LABEL_BYTES } from './capabilities/shipments-label'
 import { inpostConfigSchema, type InpostConfig } from './config'
 import { MAX_ID_LISTS } from './client'
@@ -45,7 +46,7 @@ function context(fetch: typeof globalThis.fetch, config: Partial<InpostConfig> =
   }
   const ctx = {
     app: {},
-    config: inpostConfigSchema.parse({ environment: 'sandbox', organizationId: '12345', ...config }),
+    config: inpostConfigSchema.parse({ environment: 'sandbox', shipxOrganizationId: '12345', ...config }),
     credentials: { apiToken: TOKEN },
     fetch: watching,
     log: (message: string, fields?: Record<string, unknown>) => void logs.push({ message, fields }),
@@ -221,6 +222,43 @@ describe('InPost scenarios', { skip: isRecording() }, () => {
         const { ctx, methods } = context(async () => json(500, {}))
         await expect(create(ctx, lockerRequest('shp_search_down'))).rejects.toBeInstanceOf(TransientError)
         expect(methods()).toEqual(['GET'])
+      })
+
+      describe('the deadline of the POST', () => {
+        // Every page of the search takes `minutes` on a fake clock: the core keeps a second create away for five
+        // minutes from when this one started, and a POST sent near the end of that could meet it.
+        const slowSearch = (minutes: number) => {
+          vi.useFakeTimers({ toFake: ['Date'], now: new Date('2026-10-10T09:00:00Z') })
+          return context(async (input, init) => {
+            if (isPost(init)) return json(201, item(9, { status: 'created', reference: 'shp_slow' }))
+            vi.setSystemTime(Date.now() + minutes * 60_000)
+            return pageOf(input) < 3 ? list(full(pageOf(input)), 201) : list([item(3000)], 201)
+          })
+        }
+
+        it('posts nothing, and fails as transient, once the search has taken longer than the deadline', async () => {
+          const { ctx, methods } = slowSearch(1.5)
+          expect(3 * 1.5 * 60_000).toBeGreaterThan(POST_DEADLINE_MS)
+          const error = await caught(create(ctx, lockerRequest('shp_slow')))
+          expect(error).toBeInstanceOf(TransientError)
+          expect(methods()).toEqual(['GET', 'GET', 'GET'])
+        })
+
+        it('posts when the search ended within the deadline, to the millisecond', async () => {
+          const { ctx, methods } = slowSearch(POST_DEADLINE_MS / 3 / 60_000)
+          await expect(create(ctx, lockerRequest('shp_slow'))).resolves.toMatchObject({ outcome: 'created', externalId: '9' })
+          expect(methods()).toEqual(['GET', 'GET', 'GET', 'POST'])
+        })
+
+        it('still returns an earlier shipment found after the deadline: nothing is posted for it', async () => {
+          vi.useFakeTimers({ toFake: ['Date'], now: new Date('2026-10-10T09:00:00Z') })
+          const { ctx, methods } = context(async () => {
+            vi.setSystemTime(Date.now() + 10 * 60_000)
+            return list([item(31, { status: 'confirmed', tracking_number: '620999548227330124500031', reference: 'shp_slow' })])
+          })
+          await expect(create(ctx, lockerRequest('shp_slow'))).resolves.toMatchObject({ outcome: 'created', externalId: '31' })
+          expect(methods()).toEqual(['GET'])
+        })
       })
 
       it('refuses a shipment id that is not digits, wherever InPost puts it', async () => {
@@ -764,10 +802,10 @@ describe('InPost scenarios', { skip: isRecording() }, () => {
       expect(await failing('1600000901')).toBeInstanceOf(AuthExpiredError)
     })
 
-    it('fails as permanent on a 403 and points at the Organization ID setting', async () => {
+    it('fails as permanent on a 403 and points at the ShipX organization ID setting', async () => {
       const error = (await failing('1600000902')) as Error
       expect(error).toBeInstanceOf(PermanentError)
-      expect(error.message).toContain('Organization ID')
+      expect(error.message).toContain('ShipX organization ID')
       // Neither the token nor anything of the answer.
       expect(error.message).not.toContain(TOKEN)
       expect(error.message).not.toContain('Access forbidden for this token')
@@ -776,7 +814,7 @@ describe('InPost scenarios', { skip: isRecording() }, () => {
     it('fails as permanent on a 404 for the organization, with the same pointer', async () => {
       const error = (await failing('1600000903')) as Error
       expect(error).toBeInstanceOf(PermanentError)
-      expect(error.message).toContain('Organization ID')
+      expect(error.message).toContain('ShipX organization ID')
     })
 
     it('waits as long as a 429 says', async () => {
@@ -809,6 +847,44 @@ describe('InPost scenarios', { skip: isRecording() }, () => {
       const error = await track(ctx, ['1']).catch((thrown: unknown) => thrown)
       expect(error).toBeInstanceOf(TransientError)
       expect((error as Error).cause).toBeInstanceOf(TypeError)
+    })
+
+    describe('an answer that breaks off while its body is read', () => {
+      // A connection reset or the 30 s timeout in the middle of the body: the answer was never read, so a retry may
+      // read it whole. Only a body that was read and is not what was expected is permanent.
+      const broken = (status: number, headers: Record<string, string> = {}) =>
+        new Response(
+          new ReadableStream({
+            start(controller) {
+              controller.enqueue(new TextEncoder().encode('{"count":1,"items":['))
+              controller.error(new TypeError('terminated'))
+            },
+          }),
+          { status, headers: { 'content-type': 'application/json', ...headers } },
+        )
+
+      it('fails as transient while tracking', async () => {
+        const { ctx } = context(async () => broken(200))
+        const error = (await track(ctx, ['5']).catch((thrown: unknown) => thrown)) as Error
+        expect(error).toBeInstanceOf(TransientError)
+        expect(error.cause).toBeInstanceOf(TypeError)
+      })
+
+      it('fails as transient after the POST, so the repeat looks the shipment up instead of the Connection failing', async () => {
+        const { ctx, methods } = posting(() => broken(201))
+        await expect(create(ctx, lockerRequest('shp_broken'))).rejects.toBeInstanceOf(TransientError)
+        expect(methods()).toEqual(['GET', 'POST'])
+      })
+
+      it('fails as transient when the body of a refusal breaks off', async () => {
+        const { ctx } = posting(() => broken(400))
+        await expect(create(ctx, lockerRequest('shp_broken'))).rejects.toBeInstanceOf(TransientError)
+      })
+
+      it('still fails as permanent on a body that was read whole and is not JSON', async () => {
+        const { ctx } = context(async () => new Response('<html>Service</html>', { status: 200, headers: { 'content-type': 'text/html' } }))
+        await expect(track(ctx, ['5'])).rejects.toBeInstanceOf(PermanentError)
+      })
     })
 
     it('fails as permanent, naming only paths, on an answer of another shape', async () => {

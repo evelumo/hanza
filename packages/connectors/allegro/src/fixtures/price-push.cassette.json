@@ -1,0 +1,726 @@
+{
+  "version": 1,
+  "interactions": [
+    {
+      "request": {
+        "method": "PATCH",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/sale/product-offers/7834566001",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json",
+          "content-type": "application/vnd.allegro.public.v1+json"
+        },
+        "body": {
+          "json": {
+            "sellingMode": {
+              "price": {
+                "amount": "42",
+                "currency": "PLN"
+              }
+            }
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/vnd.allegro.public.v1+json",
+          "date": "Sat, 10 Oct 2026 12:00:00 GMT"
+        },
+        "body": {
+          "json": {
+            "id": "7834566001",
+            "name": "Ceramic mug 350 ml, white",
+            "language": "pl-PL",
+            "category": {
+              "id": "257929"
+            },
+            "external": {
+              "id": "MUG-350-WHT"
+            },
+            "sellingMode": {
+              "format": "BUY_NOW",
+              "price": {
+                "amount": "42.00",
+                "currency": "PLN"
+              }
+            },
+            "stock": {
+              "available": 23,
+              "unit": "UNIT"
+            },
+            "publication": {
+              "status": "ACTIVE",
+              "endedBy": null,
+              "republish": false
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "PATCH",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/sale/product-offers/7834566004",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json",
+          "content-type": "application/vnd.allegro.public.v1+json"
+        },
+        "body": {
+          "json": {
+            "sellingMode": {
+              "price": {
+                "amount": "12.50",
+                "currency": "PLN"
+              }
+            }
+          }
+        }
+      },
+      "response": {
+        "status": 202,
+        "headers": {
+          "content-type": "application/vnd.allegro.public.v1+json",
+          "date": "Sat, 10 Oct 2026 12:00:00 GMT",
+          "location": "https://api.allegro.pl.allegrosandbox.pl/sale/product-offers/7834566004/operations/00000000-0000-4000-8000-000000000001",
+          "retry-after": "120"
+        },
+        "body": {
+          "json": {
+            "id": "7834566004",
+            "name": "Espresso cup 90 ml, black",
+            "language": "pl-PL",
+            "category": {
+              "id": "257929"
+            },
+            "external": {
+              "id": "CUP-090-BLK"
+            },
+            "sellingMode": {
+              "format": "BUY_NOW",
+              "price": {
+                "amount": "39.99",
+                "currency": "PLN"
+              }
+            },
+            "stock": {
+              "available": 0,
+              "unit": "UNIT"
+            },
+            "publication": {
+              "status": "ENDED",
+              "endedBy": "EMPTY_STOCK",
+              "republish": false
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "PATCH",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/sale/product-offers/7834566005",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json",
+          "content-type": "application/vnd.allegro.public.v1+json"
+        },
+        "body": {
+          "json": {
+            "sellingMode": {
+              "price": {
+                "amount": "59.90",
+                "currency": "EUR"
+              }
+            }
+          }
+        }
+      },
+      "response": {
+        "status": 422,
+        "headers": {
+          "content-type": "application/vnd.allegro.public.v1+json",
+          "date": "Sat, 10 Oct 2026 12:00:00 GMT"
+        },
+        "body": {
+          "json": {
+            "errors": [
+              {
+                "code": "IncorrectBaseCurrency",
+                "message": "Currency is incorrect for the specified market.",
+                "details": null,
+                "path": "prices[0].price.currency",
+                "userMessage": "Currency is incorrect for the specified market.",
+                "metadata": {}
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "PATCH",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/sale/product-offers/7834566006",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json",
+          "content-type": "application/vnd.allegro.public.v1+json"
+        },
+        "body": {
+          "json": {
+            "sellingMode": {
+              "price": {
+                "amount": "0.50",
+                "currency": "PLN"
+              }
+            }
+          }
+        }
+      },
+      "response": {
+        "status": 422,
+        "headers": {
+          "content-type": "application/vnd.allegro.public.v1+json",
+          "date": "Sat, 10 Oct 2026 12:00:00 GMT"
+        },
+        "body": {
+          "json": {
+            "errors": [
+              {
+                "code": "PriceBelowMin",
+                "message": "Price must be equal to or higher than 1.00 PLN.",
+                "details": null,
+                "path": "prices[0].price.amount",
+                "userMessage": "Price must be equal to or higher than 1.00 PLN.",
+                "metadata": {}
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "PATCH",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/sale/product-offers/7834566008",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json",
+          "content-type": "application/vnd.allegro.public.v1+json"
+        },
+        "body": {
+          "json": {
+            "sellingMode": {
+              "price": {
+                "amount": "18.00",
+                "currency": "PLN"
+              }
+            }
+          }
+        }
+      },
+      "response": {
+        "status": 422,
+        "headers": {
+          "content-type": "application/vnd.allegro.public.v1+json",
+          "date": "Sat, 10 Oct 2026 12:00:00 GMT"
+        },
+        "body": {
+          "json": {
+            "errors": [
+              {
+                "code": "OfferPriceChangeLocked",
+                "message": "The offer cannot be edited",
+                "details": null,
+                "path": null,
+                "userMessage": "The offer cannot be edited",
+                "metadata": {}
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "PATCH",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/sale/product-offers/7834566007",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json",
+          "content-type": "application/vnd.allegro.public.v1+json"
+        },
+        "body": {
+          "json": {
+            "sellingMode": {
+              "price": {
+                "amount": "9.99",
+                "currency": "PLN"
+              }
+            }
+          }
+        }
+      },
+      "response": {
+        "status": 403,
+        "headers": {
+          "content-type": "application/vnd.allegro.public.v1+json",
+          "date": "Sat, 10 Oct 2026 12:00:00 GMT"
+        },
+        "body": {
+          "json": {
+            "errors": [
+              {
+                "code": "ACCESS_DENIED",
+                "message": "Access denied",
+                "details": null,
+                "path": null,
+                "userMessage": "Access denied",
+                "metadata": {}
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "PATCH",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/sale/product-offers/7834569999",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json",
+          "content-type": "application/vnd.allegro.public.v1+json"
+        },
+        "body": {
+          "json": {
+            "sellingMode": {
+              "price": {
+                "amount": "9.99",
+                "currency": "PLN"
+              }
+            }
+          }
+        }
+      },
+      "response": {
+        "status": 404,
+        "headers": {
+          "content-type": "application/vnd.allegro.public.v1+json",
+          "date": "Sat, 10 Oct 2026 12:00:00 GMT"
+        },
+        "body": {
+          "json": {
+            "errors": [
+              {
+                "code": "NOT_FOUND",
+                "message": "Offer not found",
+                "details": null,
+                "path": null,
+                "userMessage": "Offer not found",
+                "metadata": {}
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/sale/offers?limit=1000&offset=0&publication.status=ACTIVE&publication.status=ACTIVATING&publication.status=ENDED",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/vnd.allegro.public.v1+json",
+          "date": "Sat, 10 Oct 2026 12:00:00 GMT"
+        },
+        "body": {
+          "json": {
+            "offers": [
+              {
+                "id": "7834566007",
+                "name": "Milk jug 0.5 l",
+                "category": {
+                  "id": "257929"
+                },
+                "primaryImage": {
+                  "url": "https://a.allegroimg.com/original/05a2af/929c6dae4fb8721a8539582eb421"
+                },
+                "saleInfo": {
+                  "currentPrice": null,
+                  "biddersCount": 0
+                },
+                "stats": {
+                  "watchersCount": 4,
+                  "visitsCount": 54
+                },
+                "sellingMode": {
+                  "format": "BUY_NOW",
+                  "price": {
+                    "amount": "39.99",
+                    "currency": "PLN"
+                  }
+                },
+                "stock": {
+                  "available": 23,
+                  "sold": 3
+                },
+                "publication": {
+                  "status": "ACTIVE",
+                  "startingAt": null,
+                  "startedAt": "2026-09-01T08:00:00Z",
+                  "endingAt": null,
+                  "endedAt": null,
+                  "marketplaces": {
+                    "base": {
+                      "id": "allegro-pl"
+                    }
+                  }
+                },
+                "external": {
+                  "id": "MUG-350-WHT"
+                },
+                "isFulfillment": true
+              },
+              {
+                "id": "7834566006",
+                "name": "Stoneware plate 27 cm",
+                "category": {
+                  "id": "257929"
+                },
+                "primaryImage": {
+                  "url": "https://a.allegroimg.com/original/05a2af/929c6dae4fb8721a8539582eb421"
+                },
+                "saleInfo": {
+                  "currentPrice": null,
+                  "biddersCount": 0
+                },
+                "stats": {
+                  "watchersCount": 4,
+                  "visitsCount": 54
+                },
+                "sellingMode": {
+                  "format": "BUY_NOW",
+                  "price": {
+                    "amount": "24.0",
+                    "currency": "PLN"
+                  }
+                },
+                "stock": {
+                  "available": 23,
+                  "sold": 3
+                },
+                "publication": {
+                  "status": "ACTIVE",
+                  "startingAt": null,
+                  "startedAt": "2026-09-01T08:00:00Z",
+                  "endingAt": null,
+                  "endedAt": null,
+                  "marketplaces": {
+                    "base": {
+                      "id": "allegro-pl"
+                    }
+                  }
+                },
+                "external": null,
+                "isFulfillment": false
+              },
+              {
+                "id": "7834566005",
+                "name": "Salad bowl 24 cm, grey",
+                "category": {
+                  "id": "257929"
+                },
+                "primaryImage": {
+                  "url": "https://a.allegroimg.com/original/05a2af/929c6dae4fb8721a8539582eb421"
+                },
+                "saleInfo": {
+                  "currentPrice": null,
+                  "biddersCount": 0
+                },
+                "stats": {
+                  "watchersCount": 4,
+                  "visitsCount": 54
+                },
+                "sellingMode": {
+                  "format": "BUY_NOW",
+                  "price": {
+                    "amount": "39.99",
+                    "currency": "PLN"
+                  }
+                },
+                "stock": {
+                  "available": 5
+                },
+                "publication": {
+                  "status": "ENDED"
+                },
+                "external": {
+                  "id": "BOWL-240-GRY"
+                },
+                "isFulfillment": false
+              },
+              {
+                "id": "7834566004",
+                "name": "Espresso cup 90 ml, black",
+                "category": {
+                  "id": "257929"
+                },
+                "primaryImage": {
+                  "url": "https://a.allegroimg.com/original/05a2af/929c6dae4fb8721a8539582eb421"
+                },
+                "saleInfo": {
+                  "currentPrice": null,
+                  "biddersCount": 0
+                },
+                "stats": {
+                  "watchersCount": 4,
+                  "visitsCount": 54
+                },
+                "sellingMode": {
+                  "format": "BUY_NOW",
+                  "price": {
+                    "amount": "12.5",
+                    "currency": "PLN"
+                  }
+                },
+                "stock": {
+                  "available": 0
+                },
+                "publication": {
+                  "status": "ENDED"
+                },
+                "external": {
+                  "id": "CUP-090-BLK"
+                },
+                "isFulfillment": false
+              },
+              {
+                "id": "7834566003",
+                "name": "Vintage tea set, 12 pieces",
+                "category": {
+                  "id": "257929"
+                },
+                "primaryImage": {
+                  "url": "https://a.allegroimg.com/original/05a2af/929c6dae4fb8721a8539582eb421"
+                },
+                "saleInfo": {
+                  "currentPrice": null,
+                  "biddersCount": 0
+                },
+                "stats": {
+                  "watchersCount": 4,
+                  "visitsCount": 54
+                },
+                "sellingMode": {
+                  "format": "AUCTION",
+                  "price": {
+                    "amount": "150.00",
+                    "currency": "PLN"
+                  },
+                  "startingPrice": {
+                    "amount": "50.00",
+                    "currency": "PLN"
+                  }
+                },
+                "stock": {
+                  "available": 1
+                },
+                "publication": {
+                  "status": "ACTIVE",
+                  "startingAt": null,
+                  "startedAt": "2026-09-01T08:00:00Z",
+                  "endingAt": null,
+                  "endedAt": null,
+                  "marketplaces": {
+                    "base": {
+                      "id": "allegro-pl"
+                    }
+                  }
+                },
+                "external": null,
+                "isFulfillment": false
+              },
+              {
+                "id": "7834566001",
+                "name": "Ceramic mug 350 ml, white",
+                "category": {
+                  "id": "257929"
+                },
+                "primaryImage": {
+                  "url": "https://a.allegroimg.com/original/05a2af/929c6dae4fb8721a8539582eb421"
+                },
+                "saleInfo": {
+                  "currentPrice": null,
+                  "biddersCount": 0
+                },
+                "stats": {
+                  "watchersCount": 4,
+                  "visitsCount": 54
+                },
+                "sellingMode": {
+                  "format": "BUY_NOW",
+                  "price": {
+                    "amount": "42.0",
+                    "currency": "PLN"
+                  }
+                },
+                "stock": {
+                  "available": 23,
+                  "sold": 3
+                },
+                "publication": {
+                  "status": "ACTIVE",
+                  "startingAt": null,
+                  "startedAt": "2026-09-01T08:00:00Z",
+                  "endingAt": null,
+                  "endedAt": null,
+                  "marketplaces": {
+                    "base": {
+                      "id": "allegro-pl"
+                    }
+                  }
+                },
+                "external": {
+                  "id": "MUG-350-WHT"
+                },
+                "isFulfillment": false
+              }
+            ],
+            "count": 6,
+            "totalCount": 6
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/sale/product-offers/7834566004",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/vnd.allegro.public.v1+json",
+          "date": "Sat, 10 Oct 2026 12:00:00 GMT"
+        },
+        "body": {
+          "json": {
+            "id": "7834566004",
+            "name": "Espresso cup 90 ml, black",
+            "language": "pl-PL",
+            "category": {
+              "id": "257929"
+            },
+            "external": {
+              "id": "CUP-090-BLK"
+            },
+            "sellingMode": {
+              "format": "BUY_NOW",
+              "price": {
+                "amount": "12.50",
+                "currency": "PLN"
+              }
+            },
+            "stock": {
+              "available": 0,
+              "unit": "UNIT"
+            },
+            "publication": {
+              "status": "ENDED",
+              "endedBy": "EMPTY_STOCK",
+              "republish": false
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "PATCH",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/sale/product-offers/7834566001",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json",
+          "content-type": "application/vnd.allegro.public.v1+json"
+        },
+        "body": {
+          "json": {
+            "sellingMode": {
+              "price": {
+                "amount": "42",
+                "currency": "PLN"
+              }
+            }
+          }
+        }
+      },
+      "response": {
+        "status": 409,
+        "headers": {
+          "content-type": "application/vnd.allegro.public.v1+json",
+          "date": "Sat, 10 Oct 2026 12:00:00 GMT"
+        },
+        "body": {
+          "json": {
+            "errors": [
+              {
+                "code": "OPERATION_IN_PROGRESS",
+                "message": "The previous edition of the offer is still being processed",
+                "details": null,
+                "path": null,
+                "userMessage": "The previous edition of the offer is still being processed",
+                "metadata": {}
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "PATCH",
+        "url": "https://api.allegro.pl.allegrosandbox.pl/sale/product-offers/7834566007",
+        "headers": {
+          "accept": "application/vnd.allegro.public.v1+json",
+          "content-type": "application/vnd.allegro.public.v1+json"
+        },
+        "body": {
+          "json": {
+            "sellingMode": {
+              "price": {
+                "amount": "9.99",
+                "currency": "PLN"
+              }
+            }
+          }
+        }
+      },
+      "response": {
+        "status": 403,
+        "headers": {
+          "content-type": "application/vnd.allegro.public.v1+json",
+          "date": "Sat, 10 Oct 2026 12:00:00 GMT"
+        },
+        "body": {
+          "json": {
+            "errors": [
+              {
+                "code": "ACCESS_DENIED",
+                "message": "Access denied",
+                "details": null,
+                "path": null,
+                "userMessage": "Access denied",
+                "metadata": {}
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

@@ -10,7 +10,7 @@ import { setBasePrice } from '../prices/set-price'
 import { setStock } from '../stock/set-stock'
 import { createTestOrganization } from '../testing/context'
 import { databaseUrl, useTestContext } from '../testing/db-test'
-import { uniqueSku, user } from '../testing/fixtures'
+import { orderFeedCaughtUp, uniqueSku, user } from '../testing/fixtures'
 import { pricePushJob } from './price-push'
 import { stockPushJob } from './stock-push'
 
@@ -49,6 +49,7 @@ describe.skipIf(!databaseUrl)('per-Offer push results', () => {
     const ctx = context()
     const organizationId = await createTestOrganization(ctx.db)
     const { connectionId } = await createConnection(ctx, organizationId, { connectorId, name: 'Channel', config: {}, credentials: {} }, user)
+    await orderFeedCaughtUp(ctx, organizationId, connectionId)
     const products: Record<string, string> = {}
     for (const offer of offers) {
       const sku = uniqueSku()

@@ -1,6 +1,6 @@
 # Self-hosting
 
-Hanza can run on infrastructure you control. It is currently an early-stage application whose Channel connectors are simulated and whose one real connector is InPost, a courier; this guide describes the runtime and operator responsibilities, not a certified production deployment recipe.
+Hanza can run on infrastructure you control. It is currently an early-stage application whose real connectors, Allegro (a marketplace) and InPost (a courier), have been checked against their providers' sandboxes only; this guide describes the runtime and operator responsibilities, not a certified production deployment recipe.
 
 ## Runtime components
 
@@ -20,7 +20,7 @@ Use Node.js 22+ and the pinned pnpm version. Supply the root `.env` or process e
 - `DATABASE_URL` and `REDIS_URL` to your protected services.
 - `BETTER_AUTH_URL` to the exact public origin, including `https://` when served through TLS.
 - An independently generated `BETTER_AUTH_SECRET` and `HANZA_ENCRYPTION_KEY`.
-- Any required connector installation settings. The current OAuth connector is simulated; real providers are planned.
+- Any required connector installation settings, such as Allegro's `HANZA_CONNECTOR_ALLEGRO_*` (see [Connecting Allegro](../README.md#connecting-allegro)). InPost needs none: its token is entered per Connection.
 
 Web and worker must agree on the database, Redis, encryption key and queue namespace. Leave `HANZA_QUEUE_PREFIX` unset for the ordinary installation; the E2E runner sets its own prefix. `WORKER_CONCURRENCY` is a positive integer, default 10.
 
