@@ -10,7 +10,7 @@ An open-source, self-hosted e-commerce integration hub for Orders, Products, Sto
 
 [Quick start](#quick-start) · [Try the demo](docs/demo.md) · [Documentation](docs/README.md) · [Contributing](CONTRIBUTING.md) · [Roadmap](docs/roadmap.md)
 
-> **Early development.** The panel, domain core and worker work with a simulated Channel. The real connectors are **Allegro**, a marketplace, new and checked against the Allegro sandbox, not yet a live seller account, and **InPost**, a courier, run against InPost's sandbox only. There are no shop or invoicing connectors yet. Use Hanza to evaluate the architecture, try the demo and contribute; connecting a live business is a future milestone.
+> **Early development.** The panel, domain core and worker work with a simulated Channel. The real connectors are **Allegro**, a marketplace, new and checked against the Allegro sandbox, not yet a live seller account, and **InPost**, a courier, which has run against InPost's sandbox only: a locker shipment was created, bought and labelled there, while the courier service, cash on delivery and anything after the label are not proven on a live account yet. There are **no shop or invoicing connectors yet**. Use Hanza to evaluate the architecture, try the demo and contribute; connecting a live business is a future milestone.
 
 ## Why Hanza?
 
@@ -32,6 +32,7 @@ Commerce operations need a consistent view of what was sold, what is still avail
 | Stock | Stock per Warehouse, Reservations, Shortages, Channel warehouse selection, safety buffers and channel limits |
 | Orders | Order feed, Unmatched lines, Needs attention, four fixed Order phases and organization-defined Order statuses |
 | Connections | Encrypted credentials, background synchronisation, Connection health, sync results and per-Offer push rejections |
+| Shipments | A Shipment from an Order through a courier Connection: Label download, status tracking, cancelling, and a carrier pickup that ships the Order |
 | Buyer data | Sealed Buyer snapshots, retention periods and erasure requests for Closed Orders |
 | Runtime | Separate worker, retries, shared request limits and durable workflows with Postgres state, timers and signals |
 | Connector development | SDK, conformance kit, scrubbed HTTP recordings and simulated connectors |
@@ -147,7 +148,7 @@ Database tests need `HANZA_TEST_DATABASE_URL`; Redis tests need a reachable Redi
 
 ## Direction and community
 
-The next product milestone is a proven real Order-and-Stock flow with Allegro and WooCommerce. Shipping, invoicing, automations and product-facing AI follow later. The [roadmap](docs/roadmap.md) distinguishes implemented foundations from planned work and links to the original Polish architecture plan.
+The next product milestone is a proven real Order-and-Stock flow with Allegro and WooCommerce. More Carriers, invoicing, automations and product-facing AI follow later. The [roadmap](docs/roadmap.md) distinguishes implemented foundations from planned work and links to the original Polish architecture plan.
 
 Use [GitHub Issues](https://github.com/evelumo/hanza/issues) for bugs, questions and proposals. Read [SUPPORT.md](SUPPORT.md) for reporting guidance and [SECURITY.md](SECURITY.md) for private vulnerability reports.
 

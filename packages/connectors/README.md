@@ -97,13 +97,23 @@ meaning its `stock.push` reactivates such an Offer when the number is above 0
 stale, so a connector that declares it must check at push time why the Offer
 ended, reopen it only if it sold out, and report `rejected` otherwise.
 
+A connector that makes Shipments (a `courier`, or a Channel with shipping of
+its own) implements `shipments.create`, `shipments.track` and `shipments.label`
+together and declares what it offers in `shipping.services`; `shipments.cancel`
+is optional. A create must be repeatable by its `reference`: asked twice, the
+Carrier makes one parcel (ADR 0024), and the core never repeats one whose
+outcome it does not know sooner than `SHIPMENT_CREATE_RETRY_DELAY_MS`. `ready` means a Label, not a parcel the
+Carrier has; the first status after it ships the Order (ADR 0025). The receiver
+and the address are Buyer data and never reach a log line, an error or a code.
+Details in the skill, checks S1 to S8 in the conformance kit.
+
 ## Connectors
 
 | Id | Package | Kind | What it is |
 | --- | --- | --- | --- |
 | `fake` | `@hanza/connector-fake` | marketplace | In-memory Channel for tests and demos, with every capability including `price.push`. Like Allegro, pushing 0 ends an Offer and a number above 0 reopens a sold-out one; the config field `rejectOffers` (and `channel.reject()` in tests) makes it refuse chosen Offers. The reference for how a connector looks. Not a real Channel. With `http: true` it also sends one request per call through `ctx.fetch`, answered by its in-memory `api` (for tests of rate limits and error mapping). |
 | `fake-oauth` | `@hanza/connector-fake` | marketplace | The same in-memory data behind an OAuth sign-in (device flow, rotating tokens, installation settings). Only available where `HANZA_CONNECTOR_FAKE_OAUTH_CLIENT_ID` and `_CLIENT_SECRET` are set. Not a real Channel. |
-| `fake-courier` | `@hanza/connector-fake` | courier | In-memory Carrier for tests and demos, with no credentials: a locker service (presets `small`, `medium`, `large`) and an address service (dimensions), both with cash on delivery. Each `shipments.track` moves a Shipment one step (`pending`, `ready`, `in_transit`, `delivered`); config `stuckAt` holds Shipments at a status, `rejectPickupPoints` lists pickup points it refuses (it also refuses a pickup point request without a phone), `account` keeps the Shipments of two Connections apart. The reference for a connector that makes Shipments. Not a real Carrier. |
+| `fake-courier` | `@hanza/connector-fake` | courier | In-memory Carrier for tests and demos, with no credentials: a locker service (presets `small`, `medium`, `large`) and an address service (dimensions), both with cash on delivery. Each `shipments.track` moves a Shipment one step (`pending`, `ready`, `in_transit`, `delivered`); config `stuckAt` holds Shipments at a status, `rejectPickupPoints` lists pickup points it refuses (it also refuses a pickup point request without a phone, and a cancel of a Shipment it does not know), `account` keeps the Shipments of two Connections apart. The reference for a connector that makes Shipments. Not a real Carrier. |
 | `fake-http` | `@hanza/connector-fake` | marketplace | Not registered. The same fake Channel behind a small JSON API with client-credentials tokens (`src/http/`), tested only with recorded fixtures: the reference for a connector that talks HTTP. |
 | `fake-http-oauth` | `@hanza/connector-fake` | marketplace | Not registered. The same API with an OAuth life cycle shaped like Allegro's (installation settings, device flow, rotating refresh tokens; `src/http/oauth-connector.ts`), tested with recorded fixtures through `runConformance` (`app`, `refresh`, `deviceFlow`): the reference for an OAuth connector. |
 | `allegro` | `@hanza/connector-allegro` | marketplace | The Allegro marketplace (production or sandbox). Offers in, Orders in (including Orders still awaiting payment, which get their `paid` fact once Allegro reports the payment), Stock out (0 ends the Offer; a number above 0 reopens an Offer that sold out), prices out (`price.push`: the buy-now price, refusals reported per Offer), Order phase out. No shipments or invoices yet. Signs in through the device flow and needs the installation settings `HANZA_CONNECTOR_ALLEGRO_CLIENT_ID`, `_CLIENT_SECRET`, `_ENVIRONMENT` and `_APP_NAME` (operator guide: "Connecting Allegro" in the [project README](../../README.md)); it stays hidden until they are set. Its cassettes come from an in-memory simulation of the Allegro API, written from the OpenAPI file and corrected to what the sandbox did when the connector was checked against it (2026-10-10; see its `AGENTS.md`). |
@@ -232,7 +242,9 @@ the same data again gives the same file.
 - Phone numbers without a leading `+` are found only under phone-like keys,
   not in free text.
 - Binary bodies can be neither scrubbed nor linted: they are dropped unless
-  `keepBinaryBodies` is set, and then checking them is up to you.
+  `keepBinaryBodies` is set, and then checking them is up to you. With
+  `replaceBinaryBodies` a placeholder file takes their place (a blank PDF for a
+  PDF), for a response the connector must receive non-empty, such as a Label.
 - Requests that failed at the network level are not recorded.
 - The lint matches patterns: it can be fooled, and it can flag a harmless
   value. Review the diff of every recording.

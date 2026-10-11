@@ -23,6 +23,7 @@ For focused package tests, use an existing workspace script, for example:
 
 ```sh
 pnpm --filter @hanza/connector-fake test
+pnpm --filter @hanza/connector-inpost test
 ```
 
 The workspace packages are private and consumed from source; they are not an npm installation interface. `pnpm generate`, `pnpm create-connector` and `pnpm test:connector <id>` are planned commands, not available scripts.
