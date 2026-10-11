@@ -10,7 +10,7 @@ An open-source, self-hosted e-commerce integration hub for Orders, Products, Sto
 
 [Quick start](#quick-start) · [Try the demo](docs/demo.md) · [Documentation](docs/README.md) · [Contributing](CONTRIBUTING.md) · [Roadmap](docs/roadmap.md)
 
-> **Early development.** The panel, domain core and worker work with a simulated Channel. The only real connector is **Allegro**, new and checked against the Allegro sandbox, not yet a live seller account; there are no shop, courier or invoicing connectors yet. Use Hanza to evaluate the architecture, try the demo and contribute; connecting a live business is a future milestone.
+> **Early development.** The panel, domain core and worker work with a simulated Channel. The real connectors are **Allegro**, a marketplace, new and checked against the Allegro sandbox, not yet a live seller account, and **InPost**, a courier, run against InPost's sandbox only. There are no shop or invoicing connectors yet. Use Hanza to evaluate the architecture, try the demo and contribute; connecting a live business is a future milestone.
 
 ## Why Hanza?
 
@@ -37,7 +37,7 @@ Commerce operations need a consistent view of what was sold, what is still avail
 | Connector development | SDK, conformance kit, scrubbed HTTP recordings and simulated connectors |
 | Quality | Dependency boundary checks, type checks, Vitest tests and local Playwright panel flows |
 
-The connectors are **Allegro** (`allegro`, needs an application you register; see [Connecting Allegro](#connecting-allegro)), **Test channel** (`fake`) and **Test OAuth channel** (`fake-oauth`, requires demo installation settings). The last two simulate a Channel. The HTTP reference implementations are tested on recordings and are not registered in the panel. See the [connector catalogue and author guide](packages/connectors/README.md).
+The connectors are **Allegro** (`allegro`, needs an application you register; see [Connecting Allegro](#connecting-allegro)), **Test channel** (`fake`) and **Test OAuth channel** (`fake-oauth`, requires demo installation settings), which simulate a Channel, **Test courier** (`fake-courier`), which simulates a Carrier, and **InPost** (`inpost`), a Carrier. The HTTP reference implementations are tested on recordings and are not registered in the panel. See the [connector catalogue and author guide](packages/connectors/README.md).
 
 ## Quick start
 

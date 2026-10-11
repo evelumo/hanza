@@ -12,7 +12,7 @@ Hanza is in **early development**. This page summarizes the direction in the [or
 - Buyer data sealing, retention and erasure services.
 - English/Polish panel, fake connectors, conformance tests, recorded HTTP fixtures and local browser flows.
 
-These foundations work with simulated Channels. The first real connector, Allegro, is registered and verified against the Allegro sandbox (Offers in, Orders in, Stock and prices out, Order phases out), not yet against a live seller account. The SDK has not yet been validated by two real connectors, and a workflow engine is not yet a user-facing automation builder.
+These foundations work with simulated Channels. The first real connector, Allegro, is registered and verified against the Allegro sandbox (Offers in, Orders in, Stock and prices out, Order phases out), not yet against a live seller account. The first real Carrier, InPost, has run against InPost's sandbox only. The SDK has not yet been validated by two real Channel connectors, and a workflow engine is not yet a user-facing automation builder.
 
 ## Planned milestones
 
@@ -20,7 +20,7 @@ These foundations work with simulated Channels. The first real connector, Allegr
 | --- | --- | --- |
 | Real connector validation | Allegro Order feed and Stock pushes, followed by WooCommerce, exercising one contract against two APIs | Allegro is registered and verified against the Allegro sandbox, with recorded cassettes replayed in CI; WooCommerce is the next one |
 | Connector authoring with AI agents | A third connector built from the recipe and conformance tests without changing the core | Skill/reference implementations exist; generator and third real connector are planned |
-| Shipping and invoicing | Courier labels, shipment tracking and invoicing capabilities | No working courier/invoicing connector or panel flow |
+| Shipping and invoicing | Courier labels, shipment tracking and invoicing capabilities | The InPost connector and the simulated Carrier make Shipments in the core; no panel flow for them yet, no invoicing connector |
 | Automations and product-facing AI | Rules across Orders, shipments and invoices; MCP server, in-panel assistant and mapping assistance | Workflow primitives exist; these product features are planned |
 | Connector ecosystem | Community distribution, broader author documentation and wholesale feeds | Current registry is a manually maintained build-time package |
 

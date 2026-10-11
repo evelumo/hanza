@@ -11,7 +11,7 @@ This block is written and re-added by `turbo` before repository-scoped commands 
 
 # Hanza — guide for contributors and AI agents
 
-Hanza is an open-source (MIT), self-hosted, AI-native e-commerce integration hub (an alternative to base.com / BaseLinker). A small, stable core (canonical data model + sync engine) talks to marketplaces, shops, couriers and invoicing tools through replaceable **connectors**. Stack: Next.js (panel + API), Prisma + PostgreSQL, BullMQ + Redis, a separate worker process, Better Auth, zod, pnpm + Turborepo, Vitest. Early scaffold: auth, tenants and the queue pipeline work; there are no real connectors yet, only a fake one for tests and demos. The vision and roadmap live in `docs/plan-architektury.html` (Polish).
+Hanza is an open-source (MIT), self-hosted, AI-native e-commerce integration hub (an alternative to base.com / BaseLinker). A small, stable core (canonical data model + sync engine) talks to marketplaces, shops, couriers and invoicing tools through replaceable **connectors**. Stack: Next.js (panel + API), Prisma + PostgreSQL, BullMQ + Redis, a separate worker process, Better Auth, zod, pnpm + Turborepo, Vitest. Early scaffold: auth, tenants and the queue pipeline work. The real connectors so far are Allegro (a marketplace Channel) and InPost (a Carrier); the others are fakes for tests and demos. The vision and roadmap live in `docs/plan-architektury.html` (Polish).
 
 Items marked **planned** do not exist yet. Do not assume them.
 
