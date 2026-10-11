@@ -9,7 +9,9 @@ plugin comes from a tarball of its repository (`evelumo/medusa-plugin-hanza`), n
 plugin version it was made with (`plugin.version` in every answer of its routes).
 
 **Not run yet.** The plugin was being written when this sandbox was; nothing here has started a container. The commands,
-the seed and the request shapes are written from Medusa's documentation and its default seed script. The first person
+the seed and the request shapes are written from Medusa's documentation, its default seed script and its source code;
+`app/medusa-config.ts` and the seed type-check against Medusa 2.21.2 (`npm install` in `app/`, then
+`npx tsc --noEmit`; delete `app/node_modules` afterwards, it is git-ignored and large). The first person
 to run it: fix what breaks, then tick off the items in `../AGENTS.md`, "To verify in the sandbox".
 
 ## Commands
