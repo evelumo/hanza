@@ -13,7 +13,7 @@ export type PickupOutcome =
   | { outcome: 'conflict' }
 
 /**
- * A Carrier has a parcel of the Order, so the Order is shipped (ADR 0024): it moves to the default status of phase
+ * A Carrier has a parcel of the Order, so the Order is shipped (ADR 0025): it moves to the default status of phase
  * shipped exactly as when a person chooses that phase, through the same `moveOrderToStatus`, so its Reservations are
  * consumed once, `closedAt` is set and the push to the Channel is marked pending. The first parcel ships the whole
  * Order; an Order already shipped is left as it is, whatever its status within that phase.

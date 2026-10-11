@@ -72,7 +72,7 @@ describe.skipIf(!databaseUrl)('requestShipmentCheck', () => {
     expect(await shipment()).toMatchObject({ status: 'ready', updatedAt: before.shipment.updatedAt })
     expect(await events()).toBe(before.events)
 
-    // The Carrier took the parcel in the meantime: the check sees it now, and the Order is shipped (ADR 0024).
+    // The Carrier took the parcel in the meantime: the check sees it now, and the Order is shipped (ADR 0025).
     carrier.advance(externalId, 'in_transit')
     await track()
     expect(carrier.calls.track).toEqual([[externalId]])

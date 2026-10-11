@@ -2,7 +2,7 @@ import { z } from 'zod'
 import type { SecretBox } from '../secrets'
 
 // What a Shipment keeps of its Buyer: where a person confirmed it goes, and the Label, which prints a name and an
-// address. Both are sealed like the Order's Buyer data (ADR 0016) and erased with it (ADR 0023).
+// address. Both are sealed like the Order's Buyer data (ADR 0016) and erased with it (ADR 0024).
 
 /** What a sealed value is bound to: a value copied to another Shipment or tenant does not open. */
 export interface ShipmentKey {
