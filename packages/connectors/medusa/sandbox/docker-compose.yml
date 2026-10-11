@@ -1,0 +1,74 @@
+# A throwaway Medusa 2.21.2 store with medusa-plugin-hanza, used only to record the connector's test fixtures (see
+# README.md). Started through ./sandbox.sh, which passes the project name and the ports, so several instances can run at
+# once: nothing here has a fixed name, and the volumes are prefixed with the project name.
+#
+# The image installs the plugin from plugin/medusa-plugin-hanza-*.tgz (git-ignored), which `sandbox.sh pack` makes from
+# the plugin's repository. Without it the build stops and says so.
+
+x-sandbox-admin: &sandbox-admin
+  # A local, throwaway admin; `sandbox.sh key` signs in with it to make the secret API key the recordings use.
+  MEDUSA_SANDBOX_ADMIN_EMAIL: hanza@example.com
+  MEDUSA_SANDBOX_ADMIN_PASSWORD: hanza-sandbox-password
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: medusa
+      POSTGRES_USER: medusa
+      POSTGRES_PASSWORD: medusa
+    ports:
+      # Loopback only, and not Postgres's default port (Hanza's own database is on 5442).
+      - "127.0.0.1:${MEDUSA_SANDBOX_POSTGRES_PORT:-5443}:5432"
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U medusa -d medusa"]
+      interval: 2s
+      timeout: 3s
+      retries: 60
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "127.0.0.1:${MEDUSA_SANDBOX_REDIS_PORT:-6390}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 2s
+      timeout: 3s
+      retries: 60
+
+  medusa:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      <<: *sandbox-admin
+      NODE_ENV: development
+      DATABASE_URL: postgres://medusa:medusa@postgres:5432/medusa
+      REDIS_URL: redis://redis:6379
+      STORE_CORS: http://localhost:8000
+      ADMIN_CORS: http://localhost:9000
+      AUTH_CORS: http://localhost:9000
+      JWT_SECRET: hanza-sandbox-jwt-secret
+      COOKIE_SECRET: hanza-sandbox-cookie-secret
+      # The admin UI is not needed to record; MEDUSA_SANDBOX_DISABLE_ADMIN=false turns it on, to look at Extensions → Hanza.
+      MEDUSA_DISABLE_ADMIN: ${MEDUSA_SANDBOX_DISABLE_ADMIN:-true}
+    ports:
+      # Loopback only: the sandbox's admin password is in this file.
+      - "127.0.0.1:${MEDUSA_SANDBOX_PORT:-9100}:9000"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:9000/health >/dev/null 2>&1"]
+      interval: 3s
+      timeout: 3s
+      # Migrations and the first start of `medusa develop` take a while.
+      retries: 100
+      start_period: 20s
+
+volumes:
+  postgres:
