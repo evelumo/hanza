@@ -18,7 +18,8 @@ const MAX_BATCHES = 10
  * moved since its last push. The Offers are read before the rules and Available, so a change after
  * that read leaves its bump ahead of the sequence marked here.
  *
- * Offers the Channel reports ended follow ADR 0022 (see `decideStockPush`). An Offer the Channel refuses
+ * Offers the Channel reports ended follow ADR 0022 (see `decideStockPush`), and an Offer whose Product has unset Stock
+ * (#137) is left out and counts as handled: saving that Stock marks it again. An Offer the Channel refuses
  * on its own is recorded as rejected and counts as handled; the others of the call count as pushed and the
  * Connection stays healthy. Only a failure of the whole call fails the run.
  *
@@ -51,9 +52,10 @@ export const stockPushJob = defineJob({
         const outcomes: StockPushOutcome[] = []
         const toPush: Array<{ offerId: string; seq: number; wasEnded: boolean; level: StockLevel }> = []
         for (const offer of offers) {
-          const available = channelAvailability.get(offer.productId) ?? 0
+          // Null for unset Stock: the Offer is left out until someone saves its Product's Stock (#137).
+          const available = offer.stockSet ? (channelAvailability.get(offer.productId) ?? 0) : null
           const decision = decideStockPush(available, offer.publication, reopensSoldOutOffers)
-          if (decision === 'push') {
+          if (decision === 'push' && available !== null) {
             toPush.push({
               offerId: offer.offerId,
               seq: offer.seq,
