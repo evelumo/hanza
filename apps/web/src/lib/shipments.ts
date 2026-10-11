@@ -167,7 +167,7 @@ export function shipmentSettling(
 
 /**
  * Whether the page may hold a torn read of a pickup: a Carrier has just taken a parcel, yet the Order was read as
- * open. The two change in one transaction (ADR 0024), but a page reads the Order and its Shipments in separate
+ * open. The two change in one transaction (ADR 0025), but a page reads the Order and its Shipments in separate
  * queries, so a read that straddles the commit shows the new Shipment beside the old Order. The page re-reads itself
  * then. An Order that really could not be shipped stays open (and needs attention), so this ends with the window.
  */

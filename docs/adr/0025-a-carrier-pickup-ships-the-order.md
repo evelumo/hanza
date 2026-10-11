@@ -22,7 +22,7 @@ Until now an Order became shipped when a person said so or the Channel reported 
 ## Consequences
 
 - Stock can now leave the shelf without a person: a Shipment made for the wrong Order ships that Order when the Carrier takes the parcel. The Event names the Shipment, and a final phase is never left (ADR 0003).
-- The time an Order ships is when Hanza hears of the pickup, not when the Carrier scanned the parcel: up to a check interval later, which is 15 minutes for a confirmed Shipment (ADR 0023).
+- The time an Order ships is when Hanza hears of the pickup, not when the Carrier scanned the parcel: up to a check interval later, which is 15 minutes for a confirmed Shipment (ADR 0024).
 - A Shipment of an Order that a person or the Channel already cancelled is not cancelled for them; if the Carrier takes it, the Order needs attention.
 - `shipment_conflict` on an Order awaiting payment or with an Unmatched line does not clear itself when the cause is fixed: the person ships the Order by hand and marks it reviewed.
 - Delivery problems and returns as Needs attention, and partial shipment, are follow-ups.

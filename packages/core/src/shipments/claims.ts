@@ -2,7 +2,7 @@ import { SHIPMENT_CREATE_RETRY_DELAY_MS } from '@hanza/connector-sdk'
 import type { Context } from '../context'
 import { SHIPMENT_RETRY_MS } from './schedule'
 
-// Who takes a due Shipment (ADR 0023). All times are the database's, as for the Order's status push (ADR 0012).
+// Who takes a due Shipment (ADR 0024). All times are the database's, as for the Order's status push (ADR 0012).
 
 /**
  * For `sync.tick`: claims the Connection's Shipments still waiting for their Carrier's answer by moving their due time

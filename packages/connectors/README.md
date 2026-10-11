@@ -101,9 +101,9 @@ A connector that makes Shipments (a `courier`, or a Channel with shipping of
 its own) implements `shipments.create`, `shipments.track` and `shipments.label`
 together and declares what it offers in `shipping.services`; `shipments.cancel`
 is optional. A create must be repeatable by its `reference`: asked twice, the
-Carrier makes one parcel (ADR 0023), and the core never repeats one whose
+Carrier makes one parcel (ADR 0024), and the core never repeats one whose
 outcome it does not know sooner than `SHIPMENT_CREATE_RETRY_DELAY_MS`. `ready` means a Label, not a parcel the
-Carrier has; the first status after it ships the Order (ADR 0024). The receiver
+Carrier has; the first status after it ships the Order (ADR 0025). The receiver
 and the address are Buyer data and never reach a log line, an error or a code.
 Details in the skill, checks S1 to S8 in the conformance kit.
 

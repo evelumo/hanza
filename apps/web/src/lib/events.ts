@@ -206,7 +206,7 @@ function retentionLabel(t: Translator, value: unknown): string | null {
 
 /**
  * Event types have dots, which message keys cannot contain: `order.status_changed` is `order_status_changed`. An Order
- * that a Carrier's pickup shipped (ADR 0024) says so, instead of a status change nobody made.
+ * that a Carrier's pickup shipped (ADR 0025) says so, instead of a status change nobody made.
  */
 function titleKey(type: string, payload: Payload): string {
   if (type === 'order.status_changed' && payload.cause === 'shipment') return 'order_status_changed_by_carrier'

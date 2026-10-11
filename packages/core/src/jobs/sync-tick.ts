@@ -73,7 +73,7 @@ async function sweepChannel(ctx: Context, connection: TickConnection, connector:
 }
 
 /**
- * The Shipments of a Connection whose connector follows them (ADR 0023): a `shipments.create` for each one still
+ * The Shipments of a Connection whose connector follows them (ADR 0024): a `shipments.create` for each one still
  * waiting for its Carrier's answer and overdue, claimed like a status push, and one `shipments.track` when a Shipment
  * the Carrier knows is due (that job claims its own batch, since its payload names only the Connection).
  */

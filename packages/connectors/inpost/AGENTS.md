@@ -254,7 +254,7 @@ All 53 names of `GET /v1/statuses` (the same on production and on the sandbox, 2
 | `cancelled` | `canceled` |
 | none (kept as it is) | `other`, `missing`, `oversized` |
 
-Every status from `in_transit` to `returned` says the Carrier has, or had, the parcel, and the first of them **ships the Order** (ADR 0024). So a name goes into one of those rows only when its own text says InPost held the parcel.
+Every status from `in_transit` to `returned` says the Carrier has, or had, the parcel, and the first of them **ships the Order** (ADR 0025). So a name goes into one of those rows only when its own text says InPost held the parcel.
 
 Names the groups of issue #126 do not obviously cover, placed by their documented meaning:
 

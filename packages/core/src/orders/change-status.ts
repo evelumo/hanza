@@ -20,7 +20,7 @@ import { applyStockEffect } from './stock-effect'
 /** Where a person moves an Order: one of the organization's Order statuses, or a phase, meaning that phase's default status. */
 export type StatusTarget = OrderPhase | { statusId: string }
 
-/** Who moves the Order: a person, or a Carrier taking one of its Shipments (ADR 0024). */
+/** Who moves the Order: a person, or a Carrier taking one of its Shipments (ADR 0025). */
 export type StatusMoveCause = { cause: 'user'; actor: Actor } | { cause: 'shipment'; shipmentId: string }
 
 /** What a move left to do once its transaction has committed (`requestPushesAfterStatusMove`). */
