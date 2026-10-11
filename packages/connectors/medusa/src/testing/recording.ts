@@ -18,8 +18,8 @@ export const unauthorizedCredentials: MedusaCredentials = { apiKey: 'sk_unknown_
 
 /**
  * Where a recording comes from: `sandbox` (default) is the Medusa in `sandbox/`, with the key `sandbox.sh key` wrote to
- * `.recording/credentials.json`; `fake` is the in-memory store of `src/testing/fake-medusa.ts`, which made the
- * provisional cassettes (AGENTS.md, "Tests and cassettes").
+ * `.recording/credentials.json`; `fake` is the in-memory store of `src/testing/fake-medusa.ts`, for a quick
+ * check of the connector's requests (AGENTS.md, "Tests and cassettes"); the committed cassettes come from the sandbox.
  */
 export const RECORDING_SOURCE_ENV = 'MEDUSA_RECORDING_SOURCE'
 

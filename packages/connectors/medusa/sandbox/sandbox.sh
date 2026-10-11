@@ -44,6 +44,17 @@ cmd_up() {
 
 cmd_seed() { compose exec -T medusa npx medusa exec ./src/scripts/seed.ts; }
 
+# Prunes the whole journal, then touches the newest order (an `order.updated` entry) so the journal has one entry
+# to start from: a position before the prune answers 410 `journal_expired`, which the conformance kit's C18 records.
+cmd_prune() {
+  compose exec -T medusa npx medusa exec ./src/scripts/prune.ts
+  local newest
+  newest="$(cmd_curl 'orders?order=-created_at&limit=1&fields=id' | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>console.log(JSON.parse(s).orders[0]?.id ?? ""))')"
+  if [ -z "$newest" ]; then echo "No order to touch: seed first." >&2; return 1; fi
+  cmd_curl "orders/$newest" -X POST -H 'Content-Type: application/json' -d '{"metadata":{"hanza_sandbox_touch":"1"}}' >/dev/null
+  echo "Journal pruned; order $newest touched. Wait 10 s before recording (the journal's hold-back)."
+}
+
 cmd_key() {
   mkdir -p "$recording_dir"
   node "$here/tools/key.mjs" "$origin" "$credentials" "$admin_email" "$admin_password"
@@ -72,6 +83,7 @@ Usage: sandbox.sh <command>
   up          Build and start Medusa 2.21.2 with the plugin, Postgres and Redis; migrate; create the admin. Safe to repeat.
   seed        Create the seed: region, sales channel, stock location, products, five orders, the plugin's settings. Once per store.
   key         Create a secret API key and write it to ../.recording/credentials.json (ignored by git).
+  prune       Prune the whole journal and touch the newest order: what check C18 of the conformance kit needs (README).
   reset       down, up, seed and key: a fresh, seeded store.
   down        Remove the containers, the volumes and the keys file.
   curl ...    curl against the Admin API with the secret key, e.g. sandbox.sh curl 'hanza/status'
@@ -88,6 +100,7 @@ case "${1:-}" in
   up) cmd_up ;;
   seed) cmd_seed ;;
   key) cmd_key ;;
+  prune) cmd_prune ;;
   reset) cmd_down; cmd_up; cmd_seed; cmd_key ;;
   down) cmd_down ;;
   curl) shift; cmd_curl "$@" ;;

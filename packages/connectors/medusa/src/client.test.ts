@@ -92,7 +92,7 @@ describe('request', () => {
   it('tells the person to pick a stock location for the 409 stock_location_not_set', async () => {
     const failure = get(contextAnswering(() => json({ type: 'conflict', code: 'stock_location_not_set', message: 'm' }, 409)), 'hanza/stock')
     await expect(failure).rejects.toThrow(LOCATION_NOT_SET_MESSAGE)
-    expect(LOCATION_NOT_SET_MESSAGE).toMatch(/Extensions → Hanza/)
+    expect(LOCATION_NOT_SET_MESSAGE).toMatch(/Hanza page of Medusa's admin/)
   })
 
   it('refuses a redirect instead of following it', async () => {

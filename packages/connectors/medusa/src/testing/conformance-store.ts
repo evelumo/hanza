@@ -3,7 +3,7 @@ import { FakeMedusa } from './fake-medusa'
 import { raw, rawAddress, rawItem, rawPayment } from './samples'
 
 /**
- * The store the provisional conformance cassettes were made from (`MEDUSA_RECORDING_SOURCE=fake`), shaped like the
+ * An in-memory store the conformance cassettes can be made from instead of the sandbox (`MEDUSA_RECORDING_SOURCE=fake`, a check of the connector's requests only; those cassettes are never committed), shaped like the
  * sandbox's seed (`sandbox/app/src/scripts/seed.ts`): variants of six products, and five orders placed before the
  * journal's position. Replaced by a recording from the sandbox once the plugin exists (AGENTS.md).
  */

@@ -290,7 +290,7 @@ export class FakeMedusa {
 
   private pushStock(request: FakeRequest): Response {
     if (this.settings.stock_location_id === null) {
-      return error(409, 'conflict', 'Pick a stock location in Extensions → Hanza', { code: 'stock_location_not_set' })
+      return error(409, 'conflict', 'Pick a stock location on the Hanza page of the admin', { code: 'stock_location_not_set' })
     }
     const levels = (request.body as { levels?: Array<{ variant_id: string; available: number }> } | undefined)?.levels
     if (!Array.isArray(levels) || levels.length === 0 || levels.length > 100) return error(400, 'invalid_data', 'Invalid request')

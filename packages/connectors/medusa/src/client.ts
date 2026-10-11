@@ -45,7 +45,7 @@ export const PLUGIN_MISSING_MESSAGE =
   `${PLUGIN_NAME} is not installed on this store (Medusa answered 404 to /admin/hanza/status): ` +
   `install it, add { resolve: "${PLUGIN_NAME}" } to the plugins in medusa-config.ts, run npx medusa db:migrate and restart Medusa`
 export const LOCATION_NOT_SET_MESSAGE =
-  'No stock location is chosen for Hanza in Medusa: pick one in Medusa\'s admin under Extensions → Hanza, then Hanza pushes stock again'
+  'No stock location is chosen for Hanza in Medusa: pick one on the Hanza page of Medusa\'s admin, then Hanza pushes stock again'
 
 /**
  * How Medusa reads a list in a query: `id[]=a&id[]=b` (its query parser is `qs`). Only here, so the spelling can be

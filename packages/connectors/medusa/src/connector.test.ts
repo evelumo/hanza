@@ -5,13 +5,11 @@ import { createMedusaConnector, medusaConnector } from './index'
 import { loadRecording, replayConfig, replayCredentials, unauthorizedCredentials } from './testing/recording'
 import { medusaScrub } from './testing/scrub'
 
-// The two conformance cassettes are PROVISIONAL: generated from the in-memory store of `src/testing/fake-medusa.ts`
-// (`src/testing/conformance-store.ts`) until they are recorded from the sandbox (AGENTS.md, "Tests and cassettes"):
-//
-//   MEDUSA_RECORDING_SOURCE=fake HANZA_RECORD_FIXTURES=1 pnpm --filter @hanza/connector-medusa exec vitest run src/connector.test.ts
-//
-// From the sandbox (a fresh one: `sandbox.sh reset`, then wait 10 s for the journal's 5 s hold-back), the same command
-// without MEDUSA_RECORDING_SOURCE. The kit pushes stock of 0 and 5 on the first three Offers and ships the first Order.
+// The conformance cassettes are recorded from the sandbox (Medusa 2.21.2 with medusa-plugin-hanza 0.1.0, 2026-10-11):
+// sandbox/README.md, "Recording", gives the order (`sandbox.sh reset`, `prune`, wait 10 s for the journal's 5 s hold-back,
+// then this file, then the journal scenario). The kit pushes stock of 0 and 5 on the first three Offers and ships the
+// first Order. `MEDUSA_RECORDING_SOURCE=fake` records from the in-memory store instead (`src/testing/conformance-store.ts`),
+// a quick check of the connector's requests only; never commit those cassettes.
 //
 // `journal: true` with an `expiredCursor`: the plugin's journal is pruned, and a position below what it keeps answers
 // 410 `journal_expired` (check C18). No `forbidden: false`: a 403 is a missing right, not a sign-out.
