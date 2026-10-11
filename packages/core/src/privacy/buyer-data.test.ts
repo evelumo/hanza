@@ -26,8 +26,10 @@ describe('sealBuyerData', () => {
     const secrets = box()
     const columns = sealBuyerData(secrets, key, data)
     expect(columns.shippingCountryCode).toBe('PL')
-    expect(columns.buyerData).toMatch(/^v1:/)
-    for (const personal of ['Jan', 'Kowalski', 'example.com', '600', 'Długa', 'Warszawa', 'jank']) {
+    // Base64 segments only, so no plaintext can be in the value; the sentinels are long enough that random
+    // ciphertext cannot spell them by chance (a three-letter one did, issue #111).
+    expect(columns.buyerData).toMatch(/^v1:[A-Za-z0-9+/=]+:[A-Za-z0-9+/=]+:[A-Za-z0-9+/=]+$/)
+    for (const personal of ['Kowalski', 'example.com', '600 100 200', 'Długa', 'Warszawa']) {
       expect(columns.buyerData).not.toContain(personal)
       expect(columns.buyerEmailIndex).not.toContain(personal)
     }
