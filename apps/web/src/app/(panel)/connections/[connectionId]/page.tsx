@@ -5,6 +5,7 @@ import {
   getConnection,
   getStatusMapping,
   hasCredentialsForm,
+  isStockPushHeldBy,
   listEvents,
   listRejectedOffers,
   listOrderStatuses,
@@ -75,6 +76,8 @@ export default async function ConnectionPage({ params }: { params: Promise<{ con
   const credentialsFields = connector && hasCredentialsForm(connector) ? describeFields('credentials', connector.credentialsSchema) : []
   const canReplaceCredentials = credentialsFields.length > 0
   const authExpired = connection.health === 'auth_expired'
+  // Stock waits until the Channel's open Orders are imported (#125); the Orders row shows how that pull is doing.
+  const stockPushHeld = isStockPushHeldBy(connector, connection.syncStates.find((state) => state.stream === 'orders_pull'))
   const signInAgain = (variant: 'primary' | 'secondary') => (
     <ActionForm action={signInAgainAction} className="grid gap-2">
       <input type="hidden" name="connectionId" value={connection.id} />
@@ -230,6 +233,7 @@ export default async function ConnectionPage({ params }: { params: Promise<{ con
                 <DataTableBody>
                   {connection.syncStates.map((state) => {
                     const running = isSyncRunning(state)
+                    const held = state.stream === 'stock_push' && stockPushHeld && !running
                     const result = formatSyncResult(state.lastResult, t, locale)
                     // A run that succeeded is its own last success; the line is only for a run that was not.
                     const staleSuccess = !running && state.lastFinishedAt?.getTime() !== state.lastSucceededAt?.getTime()
@@ -239,7 +243,7 @@ export default async function ConnectionPage({ params }: { params: Promise<{ con
                           {streamLabel(t, state.stream)}
                         </DataTableRowHeader>
                         <DataTableCell narrow="end">
-                          <SyncStatusBadge state={state} />
+                          <SyncStatusBadge state={state} held={held} />
                         </DataTableCell>
                         <DataTableCell narrowLabel={t('connections.detail.syncColumns.lastRun')}>
                           {running && state.lastStartedAt ? (
@@ -258,9 +262,15 @@ export default async function ConnectionPage({ params }: { params: Promise<{ con
                           ) : null}
                         </DataTableCell>
                         <DataTableCell narrowLabel={t('connections.detail.syncColumns.result')} className="break-words @2xl/table:min-w-40">
-                          {result ?? (state.lastError ? null : none)}
-                          {/* What the last run failed with, in the Channel's or the connector's own words. */}
-                          {state.lastError ? <p className="text-meta text-muted-foreground">{state.lastError}</p> : null}
+                          {held ? (
+                            t('connections.detail.stockPushHeld')
+                          ) : (
+                            <>
+                              {result ?? (state.lastError ? null : none)}
+                              {/* What the last run failed with, in the Channel's or the connector's own words. */}
+                              {state.lastError ? <p className="text-meta text-muted-foreground">{state.lastError}</p> : null}
+                            </>
+                          )}
                         </DataTableCell>
                       </DataTableRow>
                     )

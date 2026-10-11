@@ -10,6 +10,9 @@ import { ensureDefaultWarehouse } from './warehouse'
 /**
  * Sets the absolute Stock of a Product in one Warehouse (the default Warehouse when none is given).
  * An inactive Warehouse is refused: it must stay empty (ADR 0017).
+ *
+ * The first save, in any Warehouse and of any number (0 included), sets the Product's Stock (`stockSetAt`, #137,
+ * ADR 0023): from then on its Offers are pushed, so it counts as a change even when the units stay the same.
  */
 export async function setStock(
   ctx: Context,
@@ -26,6 +29,13 @@ export async function setStock(
   const connectionIds = await ctx.db.$transaction(async (tx) => {
     const product = await tx.product.findFirst({ where: { id: productId, organizationId }, select: { id: true } })
     if (!product) throw new DomainError('not_found')
+    // Conditional, so of two first saves at once only one finds the Stock unset. Taken before the Stock locks, like
+    // the Product lock of a price change (the Product row comes before Stock and Offers).
+    const { count } = await tx.product.updateMany({
+      where: { id: productId, organizationId, stockSetAt: null },
+      data: { stockSetAt: new Date() },
+    })
+    const firstSave = count === 1
     // The Warehouse is checked under its share lock, so it cannot be deactivated before this commits.
     const warehouse = (await lockStock(tx, organizationId, [productId])).find((locked) => locked.id === targetId)
     if (!warehouse) throw new DomainError('not_found')
@@ -36,14 +46,14 @@ export async function setStock(
       select: { id: true, units: true },
     })
     if (!row) throw new Error(`Stock row missing for product ${productId} in warehouse ${targetId}`)
-    if (row.units === units) return []
+    if (row.units === units && !firstSave) return []
 
     await tx.stock.updateMany({ where: { id: row.id, organizationId }, data: { units } })
     await appendEvent(tx, {
       organizationId,
       type: 'stock.set',
       subject: { type: 'product', id: productId },
-      payload: { warehouseId: targetId, from: row.units, to: units, actor },
+      payload: { warehouseId: targetId, from: firstSave ? null : row.units, to: units, actor },
     })
     return markOffersForStockPush(tx, organizationId, [productId])
   }, TX_OPTIONS)

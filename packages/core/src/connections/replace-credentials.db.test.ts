@@ -167,10 +167,10 @@ describe.skipIf(!databaseUrl)('replaceCredentials', () => {
     expect(JSON.stringify(everyEvent)).not.toContain('fresh-key-4711')
     expect(JSON.stringify(everyEvent)).not.toContain('undeclared-value')
 
-    // What "Synchronise now" enqueues: Offers (which then pull Orders), stock and prices.
+    // What "Synchronise now" enqueues: Offers (which then pull Orders) and prices. This Connection's Order feed has
+    // never caught up (its key failed on the first pull), so stock waits for the Orders pull to ask for it (#125).
     expect(enqueuedSince(before)).toEqual([
       { name: 'offers.pull', payload: { organizationId, connectionId, trigger: 'manual' }, options: { coalesceKey: coalesceKeys.offersPull(connectionId) } },
-      { name: 'stock.push', payload: { organizationId, connectionId }, options: { coalesceKey: coalesceKeys.stockPush(connectionId) } },
       { name: 'price.push', payload: { organizationId, connectionId }, options: { coalesceKey: coalesceKeys.pricePush(connectionId) } },
     ])
 

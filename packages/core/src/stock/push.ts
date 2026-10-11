@@ -6,7 +6,7 @@ import { TX_OPTIONS } from '../transaction'
 
 /**
  * An Order's Offers on its own Channel: those linked to the Products of its lines and those its lines name. They
- * are what that Channel counts on its own when the Order moves there (ADR 0023).
+ * are what that Channel counts on its own when the Order moves there (ADR 0026).
  */
 export interface OrderOffers {
   connectionId: string
@@ -34,7 +34,7 @@ export async function orderOffers(tx: Tx, organizationId: string, orderId: strin
  * concurrent bumps and Offer writes cannot deadlock on each other.
  *
  * `reassert` adds the linked Offers of one Order on its own Connection, whose number that Channel may have changed
- * itself although Available did not (ADR 0023); Offers of other Connections are left alone. Both sets go in this
+ * itself although Available did not (ADR 0026); Offers of other Connections are left alone. Both sets go in this
  * one statement: a second locking pass in the same transaction would take rows out of id order.
  */
 export async function markOffersForStockPush(
@@ -64,7 +64,7 @@ export async function markOffersForStockPush(
 
 /**
  * Marks an Order's Offers on its own Connection when nothing changed Available: the Channel was told a status and
- * may have moved its own count with it (ADR 0023). Takes Offer locks only (ADR 0017, step 4). Returns the
+ * may have moved its own count with it (ADR 0026). Takes Offer locks only (ADR 0017, step 4). Returns the
  * Connection to push, if any of its Offers was marked.
  */
 export async function reassertOrderStock(ctx: Context, organizationId: string, orderId: string): Promise<string[]> {

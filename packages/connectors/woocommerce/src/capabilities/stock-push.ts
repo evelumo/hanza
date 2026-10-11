@@ -1,4 +1,4 @@
-import { pushRejectionCodeSchema, type StockLevel, type StockPushResult } from '@hanza/connector-sdk'
+import { PermanentError, pushRejectionCodeSchema, TransientError, type StockLevel, type StockPushResult } from '@hanza/connector-sdk'
 import { WOO_MAX_PER_PAGE, WOO_PRODUCT_TYPE_FIELDS, wooBatchResponseSchema, wooProductTypesSchema, type WooBatchItem } from '../api'
 import { request } from '../client'
 import { parseOfferId } from '../mapping/offer'
@@ -22,8 +22,6 @@ export const REJECTION = {
   stockNotManaged: 'stock_not_managed',
   /** The id is a product, but no longer a simple one (it was made variable, grouped, ...): not an Offer any more. */
   notAnOffer: 'not_a_simple_product',
-  /** The batch's answer does not mention the item. */
-  notConfirmed: 'not_confirmed',
   /** WooCommerce refused the item with a code that is not a short machine code. */
   unknownError: 'unknown_error',
   /**
@@ -50,6 +48,10 @@ interface Batch {
   targets: Target[]
 }
 
+/** The whole call fails with this when every item WooCommerce took came back `stock_not_managed`. */
+export const STOCK_NOT_MANAGED_MESSAGE = 'Stock management is off in the WooCommerce settings (Products, Inventory): the shop takes no number'
+export const NOT_CONFIRMED_MESSAGE = 'WooCommerce did not confirm every item of a stock update'
+
 /** Rejection codes by Offer external id; an Offer without one was applied. */
 type Rejections = Map<string, string>
 
@@ -59,8 +61,10 @@ function chunks<T>(items: T[], size: number): T[][] {
 
 /** Why an item was not applied; null when it was. */
 function rejection(batch: Batch, target: Target, answer: WooBatchItem | undefined): string | null {
-  // An Offer left out of the results counts as applied, and nothing here says this one was.
-  if (answer === undefined) return REJECTION.notConfirmed
+  // An Offer left out of the results counts as applied, and nothing here says this one was. Nor that it was refused:
+  // whether the number is in use is unknown, so the call fails as transient and the core sends it all again (the same
+  // numbers twice change nothing), rather than recording a refusal that is never retried.
+  if (answer === undefined) throw new TransientError(NOT_CONFIRMED_MESSAGE)
   if (answer.error !== undefined) {
     // Only a code may leave the connector: a message can echo data.
     return pushRejectionCodeSchema.safeParse(answer.error.code).success ? answer.error.code : REJECTION.unknownError
@@ -170,6 +174,13 @@ export async function pushStock(ctx: WooCommerceContext, levels: StockLevel[]): 
   for (const step of steps) {
     for (const [offerExternalId, code] of await step()) rejected.set(offerExternalId, code)
   }
+
+  // Stock management is a setting of the whole shop. With it off every item WooCommerce took comes back so, and as
+  // per-Offer refusals the Connection would stay healthy while no number is in use: the call fails instead, so the
+  // Connection shows the setting. Only some of them (a plugin that changes a product's number) stay per Offer.
+  const notManaged = [...rejected.values()].filter((code) => code === REJECTION.stockNotManaged).length
+  const applied = [...unique.keys()].filter((offerExternalId) => !rejected.has(offerExternalId)).length
+  if (notManaged > 0 && applied === 0) throw new PermanentError(STOCK_NOT_MANAGED_MESSAGE)
 
   return [...unique.keys()].flatMap((offerExternalId) => {
     const code = rejected.get(offerExternalId)

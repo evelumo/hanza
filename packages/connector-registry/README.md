@@ -6,11 +6,12 @@ The build-time list of connectors available to Hanza's apps. This is the only wo
 
 ## Current registry
 
+- `allegro`: the Allegro marketplace ([`@hanza/connector-allegro`](../connectors/allegro/AGENTS.md)), usable when its installation settings `HANZA_CONNECTOR_ALLEGRO_*` are supplied; listed as "not set up" otherwise.
 - `fake`: the in-memory Test channel.
 - `fake-oauth`: the simulated Test OAuth channel, usable when required installation settings are supplied.
-- `woocommerce`: a WooCommerce shop (orders in, stock out; an API key per Connection, no installation settings). Allegro is planned.
+- `woocommerce`: a WooCommerce shop (orders in, stock out; an API key per Connection, no installation settings).
 
-The `fake-http` and `fake-http-oauth` implementations are test references, not registered panel connectors. `woocommerce` is the first real connector.
+The `fake-http` and `fake-http-oauth` implementations are test references, not registered panel connectors. `allegro` and `woocommerce` are the real connectors so far.
 
 ## Add a connector
 

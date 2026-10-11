@@ -101,8 +101,8 @@ A Channel that changes its own stock count when an order moves (a shop takes
 the units off at payment and puts them back on a cancellation) needs no code
 for it. The core sends an Order's Offers their number again after every
 `orders.updateStatus` that made a request, and after every Channel fact it had
-not recorded; and it sends a new Connection no stock until its `orders.pull`
-has reached the end of the feed (`hasMore: false`) once (ADR 0023).
+not recorded (ADR 0026). It also sends a new Connection no stock until its
+`orders.pull` has reached the end of the feed (`hasMore: false`) once (#125).
 
 ## Connectors
 
@@ -112,9 +112,10 @@ has reached the end of the feed (`hasMore: false`) once (ADR 0023).
 | `fake-oauth` | `@hanza/connector-fake` | marketplace | The same in-memory data behind an OAuth sign-in (device flow, rotating tokens, installation settings). Only available where `HANZA_CONNECTOR_FAKE_OAUTH_CLIENT_ID` and `_CLIENT_SECRET` are set. Not a real Channel. |
 | `fake-http` | `@hanza/connector-fake` | marketplace | Not registered. The same fake Channel behind a small JSON API with client-credentials tokens (`src/http/`), tested only with recorded fixtures: the reference for a connector that talks HTTP. |
 | `fake-http-oauth` | `@hanza/connector-fake` | marketplace | Not registered. The same API with an OAuth life cycle shaped like Allegro's (installation settings, device flow, rotating refresh tokens; `src/http/oauth-connector.ts`), tested with recorded fixtures through `runConformance` (`app`, `refresh`, `deviceFlow`): the reference for an OAuth connector. |
+| `allegro` | `@hanza/connector-allegro` | marketplace | The Allegro marketplace (production or sandbox). Offers in, Orders in (including Orders still awaiting payment, which get their `paid` fact once Allegro reports the payment), Stock out (0 ends the Offer; a number above 0 reopens an Offer that sold out), prices out (`price.push`: the buy-now price, refusals reported per Offer), Order phase out. No shipments or invoices yet. Signs in through the device flow and needs the installation settings `HANZA_CONNECTOR_ALLEGRO_CLIENT_ID`, `_CLIENT_SECRET`, `_ENVIRONMENT` and `_APP_NAME` (operator guide: "Connecting Allegro" in the [project README](../../README.md)); it stays hidden until they are set. Its cassettes come from an in-memory simulation of the Allegro API, written from the OpenAPI file and corrected to what the sandbox did when the connector was checked against it (2026-10-10; see its `AGENTS.md`). |
 | `woocommerce` | `@hanza/connector-woocommerce` | shop | A WooCommerce shop (7.6 and later, HTTPS) through its REST API with a consumer key and secret: Offers (simple products and variations), Orders in (including unpaid ones), Stock out, Order phases out; no `price.push`. Registered. Built on order snapshots, not a journal. Read its [`AGENTS.md`](woocommerce/AGENTS.md); its tests replay cassettes recorded from a local sandbox shop (`woocommerce/sandbox/`). |
 
-WooCommerce is the first real connector; Allegro is next (stage 2 of the plan).
+Allegro and WooCommerce are the first two real connectors (stage 2 of the plan).
 
 ## Recorded fixtures
 

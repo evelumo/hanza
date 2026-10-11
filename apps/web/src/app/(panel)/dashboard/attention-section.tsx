@@ -15,6 +15,7 @@ const look: Record<AttentionItem['kind'], { tone: Tone; icon: LucideIcon }> = {
   connection_credentials: { tone: 'warning', icon: KeyRound },
   orders: { tone: 'attention', icon: CircleAlert },
   unlinked_offers: { tone: 'attention', icon: CircleAlert },
+  stock_unset_offers: { tone: 'attention', icon: CircleAlert },
 }
 
 function describe(item: AttentionItem, t: Translator): { title: string; detail: string } {
@@ -42,6 +43,8 @@ function describe(item: AttentionItem, t: Translator): { title: string; detail: 
       }
     case 'unlinked_offers':
       return { title: t('dashboard.attention.unlinkedOffers', { count: item.count }), detail: t('dashboard.attention.unlinkedOffersHint') }
+    case 'stock_unset_offers':
+      return { title: t('dashboard.attention.stockUnsetOffers', { count: item.count }), detail: t('dashboard.attention.stockUnsetOffersHint') }
   }
 }
 

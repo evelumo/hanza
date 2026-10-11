@@ -9,7 +9,7 @@ import { importOrder } from '../orders/import'
 import { moveReservation } from '../orders/move-reservation'
 import { createTestOrganization } from '../testing/context'
 import { databaseUrl, useTestContext } from '../testing/db-test'
-import { buildOrder, createTestConnection, fact, orderLine, readOrderFeed, testChannel, user } from '../testing/fixtures'
+import { buildOrder, createTestConnection, fact, orderFeedCaughtUp, orderLine, testChannel, user } from '../testing/fixtures'
 import { uniqueApplicationName, watchLockWaits } from '../testing/lock-waits'
 import { createWarehouse, listWarehouses, setWarehouseActive, updateWarehouse } from '../warehouses/warehouses'
 import { getAvailability, getWarehouseAvailability } from './availability'
@@ -83,6 +83,7 @@ describe.skipIf(!databaseUrl)('multiple Warehouses under concurrency', () => {
       await createTestConnection(ctx, org, 'B'),
       await createTestConnection(ctx, org, 'C'),
     ]
+    for (const connectionId of connections) await orderFeedCaughtUp(ctx, org, connectionId)
     await updateChannelWarehouses(ctx, org, connections[1]!, { all: false, warehouseIds: [north] }, user)
     const offers = (reverse: boolean) =>
       (reverse ? [...skus].reverse() : skus).map((sku) => ({ externalId: `offer-${sku}`, sku, name: sku, url: null }))
@@ -137,10 +138,7 @@ describe.skipIf(!databaseUrl)('multiple Warehouses under concurrency', () => {
 
     ctx.queue.waiting.length = 0
     const run = { attempt: 1, maxAttempts: 5, retriedLater: 0 }
-    for (const connectionId of connections) {
-      await readOrderFeed(ctx, org, connectionId)
-      await stockPushJob.handler(ctx, { organizationId: org, connectionId }, run)
-    }
+    for (const connectionId of connections) await stockPushJob.handler(ctx, { organizationId: org, connectionId }, run)
 
     const rules = await ctx.db.connection.findMany({ where: { organizationId: org }, select: { id: true, safetyBuffer: true, channelLimit: true } })
     const linked = await ctx.db.offer.findMany({ where: { organizationId: org, productId: { not: null } } })

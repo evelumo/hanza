@@ -10,7 +10,7 @@ import { ordersUpdateStatusRef } from './refs'
 /**
  * Tells the Channel the Order's current status (not the one at enqueue time) while a push is pending, so
  * coalesced requests lose nothing and a request whose push already happened sends nothing (ADR 0012). A push that
- * reached the Channel is followed by a stock push of the Order's Offers there (ADR 0023).
+ * reached the Channel is followed by a stock push of the Order's Offers there (ADR 0026).
  */
 export const ordersUpdateStatusJob = defineJob({
   ...ordersUpdateStatusRef,
@@ -47,7 +47,7 @@ export const ordersUpdateStatusJob = defineJob({
       // run proves nothing about the Connection, so it must not clear auth_expired (like an empty stock push).
       const calledChannel = channelRequests() > 0
       // The Channel may have changed its own count with the status it was told (a shop puts a cancelled order's
-      // units back), whichever of this job and the stock push ran first: its Offers are sent again (ADR 0023).
+      // units back), whichever of this job and the stock push ran first: its Offers are sent again (ADR 0026).
       // Marked before the push is cleared, so a run that dies in between sends the status and marks again,
       // instead of finding nothing pending. A retry may mark twice: a mark only makes the next push send the number.
       const toPush = calledChannel ? await reassertOrderStock(ctx, organizationId, orderId) : []

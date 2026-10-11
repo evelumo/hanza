@@ -5,7 +5,7 @@ import { mapOrder } from '../mapping/order'
 import { blanksToNull, RECORDING_STORE_URL, replayConfig, replayCredentials, sandboxFetch, unauthorizedCredentials } from './recording'
 import { EMPTY_ADDRESS, rawOrder, rawSimpleProduct } from './samples'
 import { woocommerceScrub } from './scrub'
-import { configSchema, credentialsSchema } from '../settings'
+import { woocommerceConfigSchema, woocommerceCredentialsSchema } from '../settings'
 
 const scrubbed = (body: unknown) => new Scrubber(woocommerceScrub).json(body, []) as Record<string, any>
 
@@ -130,9 +130,9 @@ describe('sandboxFetch', () => {
 
 describe('what a test replays with', () => {
   it('is a valid Connection, with stand-ins long enough for the scrubber to replace', () => {
-    expect(configSchema.parse(replayConfig)).toEqual({ storeUrl: 'https://shop.example.test' })
+    expect(woocommerceConfigSchema.parse(replayConfig)).toEqual({ storeUrl: 'https://shop.example.test' })
     for (const credentials of [replayCredentials, unauthorizedCredentials]) {
-      expect(credentialsSchema.parse(credentials)).toEqual(credentials)
+      expect(woocommerceCredentialsSchema.parse(credentials)).toEqual(credentials)
       for (const value of Object.values(credentials)) expect(value.length).toBeGreaterThanOrEqual(8)
     }
   })

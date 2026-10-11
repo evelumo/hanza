@@ -39,7 +39,7 @@ export async function applyOrderUpdate(
     // Facts first: an update that cancels or ships the Order leaves its addresses alone.
     const touched = new Set<string>()
     const factsApplied = await applyNewFacts(tx, organizationId, connectionId, order.id, update.facts, touched)
-    // A new fact marks the Order's Offers on this Connection even when it moved no Stock (ADR 0023).
+    // A new fact marks the Order's Offers on this Connection even when it moved no Stock (ADR 0026).
     const reassert = factsApplied > 0 ? await orderOffers(tx, organizationId, order.id) : null
     const connectionIds = await markOffersForStockPush(tx, organizationId, [...touched], reassert)
 

@@ -45,7 +45,7 @@ export async function importOrder(
     const orderId = existing[0]?.id ?? (await insertOrder(tx, ctx.secrets, organizationId, connectionId, order, touched))
     const factsApplied = await applyNewFacts(tx, organizationId, connectionId, orderId, order.facts, touched)
     // A new fact for an Order Hanza has: the Channel may have moved its own count with it, also when it moved no
-    // Stock here (ADR 0023). An Order that comes back with nothing new marks nothing, or every pull would push.
+    // Stock here (ADR 0026). An Order that comes back with nothing new marks nothing, or every pull would push.
     const reassert = existing.length > 0 && factsApplied > 0 ? await orderOffers(tx, organizationId, orderId) : null
     const connectionIds = await markOffersForStockPush(tx, organizationId, [...touched], reassert)
     return { orderId, created: existing.length === 0, wasAwaitingPayment: existing[0]?.awaitingPayment === true, factsApplied, connectionIds }
