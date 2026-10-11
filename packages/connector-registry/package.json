@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@hanza/connector-allegro": "workspace:*",
     "@hanza/connector-fake": "workspace:*",
     "@hanza/connector-sdk": "workspace:*"
   },

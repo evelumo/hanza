@@ -6,10 +6,11 @@ The build-time list of connectors available to Hanza's apps. This is the only wo
 
 ## Current registry
 
+- `allegro`: the Allegro marketplace ([`@hanza/connector-allegro`](../connectors/allegro/AGENTS.md)), usable when its installation settings `HANZA_CONNECTOR_ALLEGRO_*` are supplied; listed as "not set up" otherwise.
 - `fake`: the in-memory Test channel.
 - `fake-oauth`: the simulated Test OAuth channel, usable when required installation settings are supplied.
 
-The `fake-http` and `fake-http-oauth` implementations are test references, not registered panel connectors. There are no real connectors yet.
+The `fake-http` and `fake-http-oauth` implementations are test references, not registered panel connectors. Allegro is the only real connector so far.
 
 ## Add a connector
 

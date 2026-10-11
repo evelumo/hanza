@@ -14,13 +14,15 @@ const MAIN_ID = 'main-content'
 export default async function PanelLayout({ children }: { children: ReactNode }) {
   const { user, organizationId } = await requireTenant()
   const ctx = getContext()
-  // The same two counts the dashboard's "Needs attention" shows, from the same services, so the sidebar and the
-  // lists it leads to cannot disagree. A page of no rows makes each call a count.
+  // The same counts the dashboard's "Needs attention" shows, from the same services, so the sidebar and the
+  // lists it leads to cannot disagree. A page of no rows makes each call a count. Offers wait when they have no
+  // Product, or a Product whose Stock is unset (#137); the Offers page lists both.
   const noRows = { skip: 0, take: 0 }
-  const [organization, attentionOrders, unlinkedOffers, cookieStore, t] = await Promise.all([
+  const [organization, attentionOrders, unlinkedOffers, stockUnsetOffers, cookieStore, t] = await Promise.all([
     ctx.db.organization.findUnique({ where: { id: organizationId } }),
     listOrders(ctx, organizationId, { needsAttention: true, ...noRows }),
     listOffers(ctx, organizationId, { linked: false, ...noRows }),
+    listOffers(ctx, organizationId, { stockUnset: true, ...noRows }),
     cookies(),
     getT(),
   ])
@@ -37,7 +39,7 @@ export default async function PanelLayout({ children }: { children: ReactNode })
       <AppSidebar
         organizationName={organization?.name ?? ''}
         user={{ name: user.name, email: user.email }}
-        counts={{ orders: attentionOrders.total, offers: unlinkedOffers.total }}
+        counts={{ orders: attentionOrders.total, offers: unlinkedOffers.total + stockUnsetOffers.total }}
       />
       <SidebarInset>
         <TopBar />

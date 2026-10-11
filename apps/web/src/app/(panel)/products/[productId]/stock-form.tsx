@@ -5,7 +5,7 @@ import { ActionButton, Field } from '@/components/form'
 import { useT } from '@/i18n/use-t'
 import { setStockAction } from './actions'
 
-/** Stock of the Product in one Warehouse, inline in the Warehouse table. */
+/** Stock of the Product in one Warehouse, inline in the Warehouse table. `stock` is null while the Product's Stock is unset: the field starts empty. */
 export function StockForm({
   productId,
   warehouseId,
@@ -15,7 +15,7 @@ export function StockForm({
   productId: string
   warehouseId: string
   warehouseName: string
-  stock: number
+  stock: number | null
 }) {
   const t = useT()
   return (
@@ -38,7 +38,7 @@ export function StockForm({
             max={1_000_000}
             step={1}
             required
-            defaultValue={state.values?.stock ?? stock}
+            defaultValue={state.values?.stock ?? stock ?? ''}
             error={state.fieldErrors?.stock}
             className="w-24 text-right tabular-nums"
           />

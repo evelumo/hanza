@@ -23,6 +23,9 @@ export function stockPushState(offer: { stockStatus: StockPushStatus; stockRejec
       return sent
     case 'pending':
       return waiting
+    // Nothing is sent until someone saves the Product's Stock (#137).
+    case 'unset':
+      return heldBack
     case 'rejected':
       if (!offer.stockRejection) return waiting
       // Hanza's own `offer_ended` (ADR 0022) changes only when the Channel reports the Offer again, so a Retry would not help.
