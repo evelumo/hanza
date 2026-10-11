@@ -108,7 +108,7 @@ What is synchronised in version 1:
 
 ## Connecting Medusa
 
-Medusa works through the plugin `medusa-plugin-hanza`, which keeps a journal of what happens to orders (Medusa's API has none), sets stock as availability and holds the settings that are Medusa concepts. Hanza refuses to connect a store without it and says so. Medusa 2.8 or later; the backend must be reachable over `https://` from Hanza's worker.
+Medusa works through the plugin `medusa-plugin-hanza`, which keeps a journal of what happens to orders (Medusa's API has none), sets stock as availability and holds the settings that are Medusa concepts. Hanza refuses to connect a store without it and says so. Medusa 2.13 or later; the backend must be reachable over `https://` from Hanza's worker.
 
 1. In the Medusa project, install the plugin and add it to `medusa-config.ts`:
 
@@ -121,7 +121,7 @@ Medusa works through the plugin `medusa-plugin-hanza`, which keeps a journal of 
    ```
 
 2. Run `npx medusa db:migrate` (the plugin's two tables) and restart Medusa.
-3. In Medusa's admin, open **Extensions → Hanza** and pick the stock location Hanza owns. The same page sets which sales channels' orders Hanza takes (none chosen: all), which payment providers mean cash on delivery, whether a payment counts once captured (default) or already when authorized, and whether shipping an order e-mails the Buyer. Until a stock location is picked, stock pushes fail with a message saying so.
+3. In Medusa's admin, open the **Hanza** page in the sidebar and pick the stock location Hanza owns. The same page sets which sales channels' orders Hanza takes (none chosen: all), which payment providers mean cash on delivery, whether a payment counts once captured (default) or already when authorized, and whether shipping an order e-mails the Buyer. Until a stock location is picked, stock pushes fail with a message saying so.
 4. Create a **secret API key** under **Settings → Secret API Keys**, preferably while signed in as an admin user made for Hanza alone, so it can be revoked on its own.
 5. In Hanza, open **Connections → Add connection → Medusa**, paste the backend's address (`https://…`, the one the Admin API answers under, not the storefront's) and the key.
 

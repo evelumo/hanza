@@ -8,11 +8,8 @@ Pinned: Medusa **2.21.2** (`app/package.json`), Node 22 (`node:22-alpine`), `pos
 plugin comes from a tarball of its repository (`evelumo/medusa-plugin-hanza`), never from npm, so a recording names the
 plugin version it was made with (`plugin.version` in every answer of its routes).
 
-**Not run yet.** The plugin was being written when this sandbox was; nothing here has started a container. The commands,
-the seed and the request shapes are written from Medusa's documentation, its default seed script and its source code;
-`app/medusa-config.ts` and the seed type-check against Medusa 2.21.2 (`npm install` in `app/`, then
-`npx tsc --noEmit`; delete `app/node_modules` afterwards, it is git-ignored and large). The first person
-to run it: fix what breaks, then tick off the items in `../AGENTS.md`, "To verify in the sandbox".
+Run on 2026-10-11 (macOS, Docker 29): the image builds in a few minutes, the seed and the key take seconds, and the
+recordings in `../src/fixtures/` come from it. To look at the plugin's settings page, start it with the admin on (below).
 
 ## Commands
 
@@ -29,6 +26,7 @@ $S reset                # down, up, seed, key: a fresh, seeded store with a secr
 | `pack [dir]` | Builds the plugin (`npm run build`, then `npm pack`) in `dir` (default: `medusa-plugin-hanza` beside this repository's checkout) and puts `medusa-plugin-hanza-<version>.tgz` in `plugin/` (git-ignored). The image refuses to build without it. |
 | `up` | Builds the image (the app in `app/`, the plugin from the tarball), starts Postgres, Redis and Medusa, which runs `npx medusa db:migrate` (Medusa's and the plugin's migrations), creates the admin `hanza@example.com` (`npx medusa user`) and starts `medusa develop`. Waits for `/health`. Safe to repeat. |
 | `seed` | Runs `npx medusa exec ./src/scripts/seed.ts` in the container (below). Once per store: a second run is refused. |
+| `prune` | Prunes the plugin's whole journal (`app/src/scripts/prune.ts`, which asks the plugin's service for everything older than 0 days) and touches the newest order (`POST /admin/orders/<id>` with a metadata key, an `order.updated` entry), so the journal has one entry to start from and a position before the prune answers 410 `journal_expired`: what the conformance kit's check C18 records. |
 | `key` | Signs in as the admin (`POST /auth/user/emailpass`), makes a secret API key (`POST /admin/api-keys`, `type: secret`) and writes `{ sandboxUrl, apiKey }` to `../.recording/credentials.json` (git-ignored). `tools/key.mjs`; the key never appears on a command line or in the output. |
 | `reset` | `down`, `up`, `seed`, `key`. |
 | `down` | Removes the containers, the volumes and the keys file. |
@@ -40,7 +38,7 @@ Ports, on 127.0.0.1 only and away from the defaults (Hanza's own Postgres and Re
 **9100**, Postgres **5443**, Redis **6390** (`MEDUSA_SANDBOX_PORT`, `MEDUSA_SANDBOX_POSTGRES_PORT`,
 `MEDUSA_SANDBOX_REDIS_PORT`). The compose project is `hanza-medusa-sandbox` (`MEDUSA_SANDBOX_PROJECT`). The admin UI is
 off (`MEDUSA_DISABLE_ADMIN`); `MEDUSA_SANDBOX_DISABLE_ADMIN=false $S up` turns it on at http://127.0.0.1:9100/app to look
-at Extensions → Hanza.
+at the Hanza page in its sidebar.
 
 ## The app
 
@@ -88,26 +86,35 @@ a real store emits and its journal fills.
 
 ## Recording
 
-The connector's cassettes are **provisional** until this is done (`../AGENTS.md`, "Tests and cassettes"):
+All three cassettes, in this order, from a fresh store (what `../src/fixtures/` holds was recorded this way on 2026-10-11):
 
 ```sh
 S=packages/connectors/medusa/sandbox/sandbox.sh
 $S pack && $S reset
-sleep 10       # the journal shows entries older than 5 s only; let the seed's settle
+$S prune                     # the journal pruned, one entry left: what C18 needs
+sleep 10                     # the journal shows entries older than 5 s only
 HANZA_RECORD_FIXTURES=1 pnpm --filter @hanza/connector-medusa exec vitest run src/connector.test.ts
+
+# Then the changes the journal scenario expects: order 2 cancelled (Medusa refunds it), order 1's payment captured.
+O1=$($S curl 'orders?order=created_at&limit=1&fields=id' | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>console.log(JSON.parse(s).orders[0].id))')
+O2=$($S curl 'orders?order=created_at&limit=2&fields=id' | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>console.log(JSON.parse(s).orders[1].id))')
+P1=$($S curl "orders/$O1?fields=id,*payment_collections.payments" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>console.log(JSON.parse(s).order.payment_collections[0].payments[0].id))')
+$S curl "orders/$O2/cancel" -X POST >/dev/null
+$S curl "payments/$P1/capture" -X POST -H 'Content-Type: application/json' -d '{}' >/dev/null
+sleep 10
+HANZA_RECORD_FIXTURES=1 pnpm --filter @hanza/connector-medusa exec vitest run src/capabilities/orders-pull.recorded.test.ts
 $S down
 ```
 
-- Run the file directly, not through `pnpm test`: Turborepo hides `HANZA_RECORD_FIXTURES`. Without
+- Run the files directly, not through `pnpm test`: Turborepo hides `HANZA_RECORD_FIXTURES`. Without
   `MEDUSA_RECORDING_SOURCE`, the recording setup (`src/testing/recording.ts`) reads `../.recording/credentials.json` and
   sends requests for `https://medusa.example.test` to the sandbox, turning `''` under scrubbed keys into `null` (#128).
-- The conformance kit pushes stock of 0 and 5 to the first three Offers and moves the first Order it gets in full
-  through every phase (a fulfillment and a shipment of order 1 or 2; the cancel is refused, the order is shipped). After
-  it the seed is no longer the seed: `reset` before recording again.
-- The kit's C18 asks the journal for `after=1` and expects 410 `journal_expired`: on a fresh store nothing was pruned,
-  so this needs the retention job to have pruned past seq 1 first (for example set `journal_retention_days` to its
-  minimum and run the plugin's job, or delete the first entries and record `pruned_through_seq`; whatever the plugin
-  offers), or a test change that records C18 from a scenario of its own. To decide when the plugin exists.
+- The conformance kit pushes stock of 0 and 5 to the first three Offers (the gift card, which manages no inventory, is
+  reported `inventory_not_managed`) and ships the first Order it gets in full (order 1: a fulfillment and a shipment;
+  its cancel is refused by the connector since the order is shipped). After it the seed is no longer the seed: `reset`
+  before recording again.
+- The journal scenario resumes from the position and boundary the conformance cassette ends with, so the two must be
+  recorded together, in this order, with nothing else changing the store in between but the two calls above.
 - Read the diff: no `127.0.0.1`, no port, no key, no `Authorization`, no name, address, phone or e-mail but the
-  placeholders. Then replay without the variable.
+  placeholders (`scrubbed-N`, `person-N@example.com`, `+0000000000N`). Then replay without the variable.
 - `.recording/` must never be committed, and holds nothing once you are done (`down` removes the keys file).

@@ -2,9 +2,9 @@
 
 A `shop` Channel for a **Medusa v2** store through Medusa's Admin API (`<storeUrl>/admin/`) and the routes of the plugin **`medusa-plugin-hanza`** (`/admin/hanza/*`), which the store must have installed. Design record: GitHub issue #171 (the decisions in its last comment are final: the plugin is required, stock goes through the plugin's route, `paid` defaults to `captured`). Registered in `@hanza/connector-registry`, so the panel lists it.
 
-Supported: Medusa **2.8 and later** with `medusa-plugin-hanza` speaking wire format 1, HTTPS. Developed against Medusa **2.21.2**.
+Supported: Medusa **2.13 and later** (what `medusa-plugin-hanza` needs) with the plugin speaking wire format 1, HTTPS. Developed and recorded against Medusa **2.21.2** with `medusa-plugin-hanza` **0.1.0**.
 
-> **Status: not yet run against a real Medusa.** The plugin was being written in parallel (`evelumo/medusa-plugin-hanza`). Everything here is read from Medusa 2.21.2's documentation and source code (`node_modules/@medusajs/*` of the sandbox app) and from the plugin's wire format, and tested on an in-memory Medusa (`src/testing/fake-medusa.ts`). The **conformance cassettes are provisional** (see [Tests and cassettes](#tests-and-cassettes)). Facts marked *verified in the source* were read in Medusa's code; facts marked *to verify* are listed in [To verify in the sandbox](#to-verify-in-the-sandbox).
+> **Status: run against the sandbox** (`sandbox/`, Medusa 2.21.2 with `medusa-plugin-hanza` 0.1.0, 2026-10-11): the conformance cassettes and the scenario `orders-journal-changes` are recorded from it, and the connector shipped an order, pushed stock and read the journal there. Nothing has run against a merchant's store. Facts marked *verified in the source* were read in Medusa 2.21.2's code; what the sandbox answered is under [Verified in the sandbox](#verified-in-the-sandbox); the in-memory Medusa (`src/testing/fake-medusa.ts`) covers the scenarios the sandbox did not.
 
 Capabilities: `offers.pull`, `orders.pull`, `stock.push`, `orders.updateStatus`. **No `price.push`** (a follow-up: Medusa prices are per currency, region and price list); `offers.pull` still reports a price so Hanza learns the currency. No `reopensSoldOutOffers` and no `ended` Offers: Medusa keeps a sold-out variant published.
 
@@ -29,7 +29,7 @@ Through the SDK's `errorFromResponse`, with no `isAuthFailure`, plus the plugin'
 | 404 on `/admin/hanza/*` | `PermanentError` | `PLUGIN_MISSING_MESSAGE`: "medusa-plugin-hanza is not installed on this store (Medusa answered 404 to /admin/hanza/status): install it, add { resolve: "medusa-plugin-hanza" } to the plugins in medusa-config.ts, run npx medusa db:migrate and restart Medusa" |
 | an answer of the plugin whose `format` is not 1 | `PermanentError` | `medusa-plugin-hanza "<version>" speaks wire format <n>; this Hanza understands format 1. …` (`readPluginAnswer` in `src/plugin.ts`; the version is shown only when it looks like one) |
 | 410 with `code: journal_expired` on `/admin/hanza/journal` | `CursorExpiredError` | The plugin pruned the cursor's position; the core restarts the feed and records it |
-| 409 with `code: stock_location_not_set` on `/admin/hanza/stock` | `PermanentError` | `LOCATION_NOT_SET_MESSAGE`: pick a stock location in Medusa's admin under Extensions → Hanza |
+| 409 with `code: stock_location_not_set` on `/admin/hanza/stock` | `PermanentError` | `LOCATION_NOT_SET_MESSAGE`: pick a stock location on the Hanza page of Medusa's admin |
 | 429 | `RateLimitedError` | Medusa core has no limit; a proxy may. `Retry-After` honoured |
 | 408, 5xx, network failure, timeout, a body that breaks off | `TransientError` | |
 | 3xx | `PermanentError` | "The Medusa address redirects elsewhere (<status>)" |
@@ -117,32 +117,32 @@ Reads the order first (`GET /admin/orders/<id>?fields=id,status,*items,*fulfillm
 - A 404 (order deleted) is a `PermanentError`. Hanza's own fulfillment and shipment make journal entries (`order.fulfillment_created`, `shipment.created`): the Order comes back once through the feed with its `shipped` fact.
 - **Requests per call:** `new`/`processing` 0; `shipped` 1 (already shipped) up to 4 + one per unshipped fulfillment; `cancelled` 1 or 2.
 
-## To verify in the sandbox
+## Verified in the sandbox
 
-Each of these is assumed by the code and covered by the in-memory tests, not yet by a real store:
+Seen in the sandbox's answers on 2026-10-11 (Medusa 2.21.2, `medusa-plugin-hanza` 0.1.0; the cassettes hold them):
 
-1. Unknown routes: a store without the plugin answers **404** (not 401 or 500) to `GET /admin/hanza/status` with a valid secret key.
-2. The list syntax `id[]=…`, `status[]=…`, `sales_channel_id[]=…` (`arrayParam` in `src/client.ts`, the one place to change it) and the operator filters `created_at[$gte]=` / `created_at[$lt]=` with ISO times in milliseconds, through Medusa's `qs` query parser. The validators accept arrays and operator maps (*verified in the source*); the URL spelling is what is left.
-3. `created_at` precision: microseconds in Postgres, milliseconds in JSON, and that `$lt` B + 1 ms includes every order of B's millisecond.
-4. `order=id` (orders and variants) sorts ids the way JavaScript compares them.
-5. Every requested field is accepted and answered: on variants `product.title`, `product.status`, `prices.price_rules.*`; on orders `is_draft_order`, `canceled_at`, `customer.phone`, `*payment_collections.payments` (with `captured_at`), `*fulfillments`, and `*fulfillments.items` (with `line_item_id`) on one order. Whether any amount field the mapper reads carries a `raw_*` twin in an admin answer (`raw_quantity` should).
-6. Whether `price_set.prices` of a variant holds price-list prices, which the admin remap shows without `price_list_id`.
-7. The payment and fulfillment statuses of the seed's orders as the feed sees them: `authorized` after checkout with `pp_system_default`, `captured` after `POST /admin/payments/<id>/capture`, `shipped` after a fulfillment and its shipment, `canceled` with `canceled_at`.
-8. The cancel's refusals (400 or 409) for a captured order and one with a fulfillment.
-9. The plugin's answers match the wire format below field for field (format, seq as numbers, the 410 and 409 bodies with `code`), and its journal's hold-back makes recorded journal pages stable.
-10. C18 in a recording: the conformance kit asks for `e1:1::` and expects 410, which needs entries pruned past seq 1 (`sandbox/README.md`, "Recording").
-11. Not needed by the connector, open in #171: whether `order.updated_at` moves on capture and fulfillment; whether a converted draft order emits `order.placed`.
+1. The list syntax `id[]=…`, `status[]=…`, `sales_channel_id[]=…` (`arrayParam` in `src/client.ts`) and the operator filters `created_at[$gte]=` / `created_at[$lt]=` with ISO times in milliseconds are accepted and filter as expected.
+2. `created_at` comes back in milliseconds; the listing's bound `$lt` B + 1 ms returned every order of the boundary's millisecond, the boundary order included.
+3. Every requested field is accepted: on variants `product.title`, `product.status`, `*prices` (and `prices.price_rules.*`); on orders `is_draft_order`, `canceled_at`, `customer.phone`, `*payment_collections.payments` with `captured_at`, `*fulfillments` and `*fulfillments.items` with `line_item_id`. Orders and items carry `raw_*` twins (`raw_total`, `raw_unit_price`, `raw_quantity`, `raw_amount` on shipping methods); **variant prices carry none** (`amount` is a JSON number), so an Offer's price is read from the number as described above. The orders routes add `items`, `summary`, `version` and the statuses whether asked for or not.
+4. The statuses the feed sees: `payment_status: authorized` after a checkout with `pp_system_default` (so such an order is awaiting payment with `paid_when: captured`), `captured` after `POST /admin/payments/<id>/capture`, `fulfillment_status: shipped` after a fulfillment and its shipment, `status: canceled` with `canceled_at` and `payment_status: canceled` for an order cancelled before capture.
+5. **`POST /admin/orders/{id}/cancel` on a captured order answers 200 and refunds the payment** through the provider (`payment_status: refunded`; Medusa's reference says such a cancel fails, 2.21.2 refunds instead). The connector therefore never asks for it: a refund stays a person's decision in Medusa. Not probed: a cancel of an order with a fulfillment.
+6. The plugin's answers match the wire format field for field: `format`, `plugin.version`, `seq` as numbers, the 410 body (`type: gone`, `code: journal_expired`, `oldest_seq`) and the 409 body; the 5 s hold-back held: a journal page read 10 s after the last change was stable across the recording. `order.updated` is emitted for a metadata change through `POST /admin/orders/{id}` and reaches the journal.
+7. `POST /admin/hanza/stock` set `stocked_quantity = available + reserved_quantity` (a variant with a Medusa reservation of 1 got `stocked` 6 for `available` 5), created nothing for the variant without inventory and answered `inventory_not_managed` for it.
+8. Check C18 is recorded after `sandbox.sh prune` (`sandbox/README.md`, "Recording").
+
+Still assumed, not seen:
+
+- A store without the plugin answers **404** to `GET /admin/hanza/status` with a valid secret key (Medusa's router answers 404 for an unknown admin route; no second store was set up to see it).
+- `order=id` sorts ids the way JavaScript compares them beyond the sandbox's seven ULID ids (a store with imported ids).
+- Whether `prices` of a variant holds price-list prices (the seed has no price list).
+- Open in #171, not needed by the connector: whether `order.updated_at` moves on capture and fulfillment; whether a converted draft order emits `order.placed`.
 
 ## Tests and cassettes
 
 - `pnpm --filter @hanza/connector-medusa test` replays everything; no network, no Docker.
-- **`src/fixtures/conformance.cassette.json` and `conformance-unauthorized.cassette.json` are PROVISIONAL.** They were generated through the SDK's recorder from the in-memory Medusa (`src/testing/conformance-store.ts`, shaped like the sandbox seed), so the conformance kit runs on the connector's real requests, but every answer is the fake's, not Medusa's: they prove the connector against its own understanding of the API. Re-record them from the sandbox once the plugin exists (`sandbox/README.md`, "Recording"), then drop this paragraph. To regenerate the provisional ones after a change to the connector's requests:
-
-  ```sh
-  MEDUSA_RECORDING_SOURCE=fake HANZA_RECORD_FIXTURES=1 pnpm --filter @hanza/connector-medusa exec vitest run src/connector.test.ts
-  ```
-
-- `src/connector.test.ts` runs `runConformance` with `journal: true` and `expiredCursor: 'e1:1::'` (the fake pruned through seq 2), without `forbidden: false`.
+- **`src/fixtures/conformance.cassette.json`, `conformance-unauthorized.cassette.json` and `orders-journal-changes.cassette.json` are recorded from the sandbox** (2026-10-11, Medusa 2.21.2, `medusa-plugin-hanza` 0.1.0), in the order `sandbox/README.md`, "Recording", gives; record them again the same way after a change to the connector's requests or to the plugin. `MEDUSA_RECORDING_SOURCE=fake` records the conformance cassettes from the in-memory Medusa instead (`src/testing/conformance-store.ts`), a quick check of the connector's requests against its own understanding of the API: never commit those.
+- `src/capabilities/orders-pull.recorded.test.ts` resumes the feed from the position and boundary the conformance run ended at (read from its cassette) and expects the journal's later entries as Order updates: order 1 shipped by the kit and then captured, order 2 cancelled and refunded by Medusa.
+- `src/connector.test.ts` runs `runConformance` with `journal: true` and `expiredCursor: 'e1:1::'` (the sandbox's journal pruned with `sandbox.sh prune`; the fake prunes through seq 2), without `forbidden: false`.
 - Scenario tests run on `FakeMedusa` (`src/testing/fake-medusa.ts`): the plugin's three routes, the variant and order lists with Medusa's query syntax, one order, fulfillments, shipments and the cancel, with a hook to change the store between two requests of a call. It ignores `fields`, has no hold-back, and orders the orders of one millisecond backwards by id, so no test leans on an order Medusa does not promise. Covered: the first pull (listing, then journal, the boundary rule, an order placed between the position and the boundary), a store without orders, keyset pages across a shared millisecond with an order closing between pages, a millisecond holding more than a page, unpaid then paid, cash on delivery, partially shipped (open), cancelled before and after the boundary, sales channel filter, an order that does not fit, journal batches and missing orders, an expired journal, the plugin missing, an unknown format, an unreadable cursor; variants deleted between pages (one page and more than a page), the step-back limit, currencies; stock results including `inventory_not_managed`, `inventory_kit`, `unknown_variant`, 409, an incomplete answer; shipping with and without an existing fulfillment, without a location, a cancelled order; cancelling an unpaid order once, a captured one (no call), one with a fulfillment.
 - Scrub config: `src/testing/scrub.ts` (names, company, address lines, city, province, postal code, phone, e-mail, `customer`, `metadata`, `data`). `country_code` is kept. The recording transport turns `''` under scrubbed keys into `null` (#128, as in WooCommerce).
 - Replay uses `https://medusa.example.test` (`RECORDING_STORE_URL`) and the stand-in key `sk_replay_secret_key_for_tests`; the recording transport sends that host to the sandbox.
@@ -168,7 +168,7 @@ The contract between this connector and the plugin, version 1, as agreed when bo
 
 Spec: https://github.com/evelumo/hanza/issues/171 (read it first; the decisions in its last comment are final).
 
-The plugin `medusa-plugin-hanza` runs inside a merchant's Medusa v2 (≥ 2.8, developed on 2.21.2) and adds admin routes
+The plugin `medusa-plugin-hanza` runs inside a merchant's Medusa v2 (≥ 2.13, developed on 2.21.2) and adds admin routes
 under `/admin/hanza/*`. They sit behind Medusa's normal admin authentication, so a **secret API key** works
 (`Authorization: Basic <token>`, the raw token). Every JSON answer of these routes carries `"format": 1` and
 `"plugin": { "name": "medusa-plugin-hanza", "version": "<semver>" }`. Hanza's connector `@hanza/connector-medusa` is the
@@ -187,7 +187,7 @@ The connector's first call on every run (so the plugin may stamp `last_seen_at`)
   "plugin": { "name": "medusa-plugin-hanza", "version": "0.1.0" },
   "store": { "default_currency_code": "pln" },
   "settings": {
-    "stock_location_id": "sloc_01…" ,            // null until a person picks one in Extensions → Hanza
+    "stock_location_id": "sloc_01…" ,            // null until a person picks one on the Hanza page of the admin
     "sales_channel_ids": [],                       // [] = every sales channel
     "pay_on_delivery_provider_ids": ["pp_system_default"],
     "paid_when": "captured",                       // "captured" | "authorized"
@@ -248,6 +248,6 @@ location is chosen in the settings; 400 for a malformed body.
 
 ### Admin UI routes of the plugin (not used by the connector)
 
-`GET /admin/hanza/settings` and `POST /admin/hanza/settings` back the settings page (Extensions → Hanza): the settings
+`GET /admin/hanza/settings` and `POST /admin/hanza/settings` back the settings page (Hanza, in the admin's sidebar): the settings
 above plus `last_seen_at` and the journal counters; `POST` validates that `stock_location_id` and `sales_channel_ids`
 exist.
