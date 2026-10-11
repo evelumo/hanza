@@ -132,6 +132,14 @@ describe.skipIf(!databaseUrl)('WooCommerce under the sync engine (real Postgres,
     if (sandbox !== null) await new Promise((resolve) => setTimeout(resolve, HOLD_BACK_WAIT_MS))
   }
 
+  /**
+   * Recording only: the stock the shop itself has for a product, asked behind the recorder's back. It is what a Buyer
+   * can order, and the proof that it equals what Hanza says; a replay has no shop to ask.
+   */
+  async function expectShopStock(productId: number, quantity: number) {
+    await inShop(async (shop) => expect((await shop.get(`products/${productId}`)).stock_quantity).toBe(quantity))
+  }
+
   async function drain() {
     const result = await ctx.queue.drain(ctx, jobs)
     expect(result.failed).toEqual([])
@@ -255,7 +263,9 @@ describe.skipIf(!databaseUrl)('WooCommerce under the sync engine (real Postgres,
     expect(await offer('12')).toMatchObject({ productId: product('POSTER-A2'), linkedBy: 'manual' })
   })
 
-  it('3. pushes Stock before any Order is known, then imports the Orders open when the Connection started', async () => {
+  it('3. imports the Orders open when the Connection started, and only then tells the shop its Stock', async () => {
+    // Nothing was written to the shop so far: the Offers are linked, and their stock waits for the Orders (#125).
+    expect(writesSince(0)).toEqual([])
     const mark = sent.length
     await drain()
     expect(await health()).toBe('ok')
@@ -340,12 +350,8 @@ describe.skipIf(!databaseUrl)('WooCommerce under the sync engine (real Postgres,
 
     const requests = requestsSince(mark).map((request) => request.replace(/&_fields=id,status,.*$/, ''))
     expect(requests).toEqual([
-      // The first push: every linked Offer with its Product's Stock, since no Order is known yet. The simple products
-      // are read first, so that a number is never set on a product that has become something else.
-      'GET products?include=10,11,12,15,16&per_page=100&_fields=id,type',
-      'POST products/batch',
-      'POST products/19/variations/batch',
-      'POST products/24/variations/batch',
+      // No stock push before the Order feed is read: the shop's own numbers, which already count its open orders, stay
+      // until Hanza knows those orders too.
       'GET orders?status=any&orderby=id&order=desc&per_page=1&_fields=id',
       'GET orders?status=trash&orderby=id&order=desc&per_page=1&_fields=id',
       'GET orders?status=pending,on-hold,processing&orderby=date&per_page=100&order=asc',
@@ -353,22 +359,23 @@ describe.skipIf(!databaseUrl)('WooCommerce under the sync engine (real Postgres,
       'GET products?include=19,24&per_page=100&_fields=id,sku',
       expect.stringMatching(/^GET orders\?status=any&orderby=modified&per_page=100&modified_after=\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ&order=asc$/),
       expect.stringMatching(/^GET orders\?status=trash&orderby=modified&per_page=100&modified_after=\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ&order=asc$/),
-      // The second push: what the Reservations left. Offer 15 reserves nothing and is not sent again.
-      'GET products?include=10,11,12,16&per_page=100&_fields=id,type',
+      // The first push, once the feed was read to its end: every linked Offer with what the Reservations of the
+      // shop's open Orders leave. The simple products are read first, so that a number is never set on a product
+      // that has become something else.
+      'GET products?include=10,11,12,15,16&per_page=100&_fields=id,type',
       'POST products/batch',
       'POST products/19/variations/batch',
       'POST products/24/variations/batch',
     ])
+    // The shop is never told 20 mugs, the Stock without its own nine open ones.
     expect(writesSince(mark)).toEqual([
-      ['POST products/batch', { update: [stockItem(10, 20), stockItem(11, 30), stockItem(12, 4), stockItem(15, 3), stockItem(16, 5)] }],
-      ['POST products/19/variations/batch', { update: [stockItem(20, 10)] }],
-      ['POST products/24/variations/batch', { update: [stockItem(25, 9)] }],
-      ['POST products/batch', { update: [stockItem(10, 11), stockItem(11, 20), stockItem(12, 3), stockItem(16, 3)] }],
+      ['POST products/batch', { update: [stockItem(10, 11), stockItem(11, 20), stockItem(12, 3), stockItem(15, 3), stockItem(16, 3)] }],
       ['POST products/19/variations/batch', { update: [stockItem(20, 8)] }],
       ['POST products/24/variations/batch', { update: [stockItem(25, 8)] }],
     ])
-    expect(await syncState('stock_push')).toMatchObject({ lastErrorKind: null, lastResult: { pushed: 6, rejected: 0, skipped: 0 } })
+    expect(await syncState('stock_push')).toMatchObject({ lastErrorKind: null, lastResult: { pushed: 7, rejected: 0, skipped: 0 } })
     expect(await offer('10')).toMatchObject({ lastPushedAvailable: 11, stockRejectedCode: null })
+    await expectShopStock(10, 11)
   })
 
   it('4. seals the Buyer data of every Order: nothing personal in a column or an Event', async () => {
