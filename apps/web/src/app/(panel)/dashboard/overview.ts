@@ -1,4 +1,5 @@
 import type { AttentionReason, ConnectionHealth, SyncErrorKind, SyncStream } from '@hanza/db'
+import { credentialsFormHref } from '@/lib/connection-credentials'
 
 export type SetupStepId = 'connect' | 'products' | 'stock'
 
@@ -59,11 +60,14 @@ export interface ConnectionState {
   name: string
   health: ConnectionHealth
   syncStates: Array<{ stream: SyncStream; lastErrorKind: SyncErrorKind | null }>
+  /** True when its credentials are typed into a form (an API key): what it waits for is new ones, not a sign-in. */
+  credentialsForm?: boolean
 }
 
 export type AttentionItem =
   | { kind: 'connection_failing'; href: string; name: string; errors: Array<{ stream: SyncStream; kind: SyncErrorKind }> }
   | { kind: 'connection_sign_in'; href: string; name: string }
+  | { kind: 'connection_credentials'; href: string; name: string }
   | ({ kind: 'orders'; href: string } & AttentionOrders)
   | { kind: 'unlinked_offers'; href: string; count: number }
 
@@ -85,7 +89,10 @@ export function attentionItems(state: {
     items.push({ kind: 'connection_failing', href: href(connection.id), name: connection.name, errors })
   }
   for (const connection of state.connections) {
-    if (connection.health === 'auth_expired') items.push({ kind: 'connection_sign_in', href: href(connection.id), name: connection.name })
+    if (connection.health !== 'auth_expired') continue
+    // Signing in again starts on the Connection's page; new credentials go into the form there, so the row leads to it.
+    if (connection.credentialsForm) items.push({ kind: 'connection_credentials', href: credentialsFormHref(connection.id), name: connection.name })
+    else items.push({ kind: 'connection_sign_in', href: href(connection.id), name: connection.name })
   }
   if (state.orders.total > 0) items.push({ kind: 'orders', href: '/orders?attention=1', ...state.orders })
   if (state.unlinkedOffers > 0) items.push({ kind: 'unlinked_offers', href: '/products/offers', count: state.unlinkedOffers })

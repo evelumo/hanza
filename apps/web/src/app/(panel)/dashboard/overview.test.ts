@@ -74,6 +74,24 @@ describe('attentionItems', () => {
       { kind: 'unlinked_offers', href: '/products/offers', count: 5 },
     ])
   })
+
+  it('leads a Connection that waits for new credentials to the form that takes them, and only while it waits', () => {
+    const items = attentionItems({
+      connections: [
+        { ...connection('key', 'auth_expired'), credentialsForm: true },
+        { ...connection('code', 'auth_expired'), credentialsForm: false },
+        { ...connection('fine', 'ok'), credentialsForm: true },
+        { ...connection('broken', 'failing'), credentialsForm: true },
+      ],
+      orders: noOrders,
+      unlinkedOffers: 0,
+    })
+    expect(items).toEqual([
+      { kind: 'connection_failing', href: '/connections/broken', name: 'Connection broken', errors: [] },
+      { kind: 'connection_credentials', href: '/connections/key#credentials', name: 'Connection key' },
+      { kind: 'connection_sign_in', href: '/connections/code', name: 'Connection code' },
+    ])
+  })
 })
 
 describe('connectionsToShow', () => {

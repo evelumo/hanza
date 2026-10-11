@@ -169,6 +169,8 @@
       "streamError": "{stream}: {error}",
       "connectionSignIn": "Połączenie {name} wymaga ponownego logowania",
       "connectionSignInHint": "Nie jest synchronizowane, dopóki ktoś nie zaloguje się ponownie.",
+      "connectionCredentials": "Połączenie {name} wymaga nowych danych dostępowych",
+      "connectionCredentialsHint": "Nie jest synchronizowane, dopóki ktoś nie zastąpi jego danych dostępowych.",
       "unlinkedOffers": "{count, plural, one {# oferta nie ma produktu} few {# oferty nie mają produktu} many {# ofert nie ma produktu} other {# oferty nie ma produktu}}",
       "unlinkedOffersHint": "Stan i cena nie są wysyłane do oferty, dopóki nie połączysz jej z produktem."
     },
@@ -584,7 +586,16 @@
       "added": "Dodano",
       "connectionId": "ID połączenia",
       "signInTitle": "Logowanie",
-      "signInHint": "Ponowne logowanie zastępuje dane dostępowe tego połączenia. Musi to być to samo konto {connector}."
+      "signInHint": "Ponowne logowanie zastępuje dane dostępowe tego połączenia. Musi to być to samo konto {connector}.",
+      "credentials": {
+        "title": "Dane dostępowe",
+        "description": "Nowe dane dostępowe zastępują zapisane, na przykład po unieważnieniu klucza. Połączenie zachowuje ustawienia, oferty i zamówienia, więc muszą one dotyczyć tego samego konta {connector}. Przechowujemy je zaszyfrowane i nie pokazujemy ich ponownie.",
+        "replace": "Zastąp dane dostępowe",
+        "replacing": "Zastępowanie…",
+        "replaced": "Dane dostępowe zastąpione. Połączenie znów się synchronizuje: odśwież stronę za chwilę.",
+        "refused": "{connector} nie akceptuje już danych dostępowych tego połączenia, więc nie jest ono synchronizowane. Zastąp je, aby wznowić.",
+        "enter": "Podaj nowe dane dostępowe"
+      }
     },
     "new": {
       "title": "Dodaj połączenie",
@@ -842,7 +853,8 @@
       "offer_channel_status_changed": "Zmienił się status oferty w kanale",
       "offer_push_rejected": "Kanał odrzucił ofertę",
       "offer_push_retried": "Ponowiono wysłanie oferty",
-      "connection_signed_in": "Zalogowano do kanału"
+      "connection_signed_in": "Zalogowano do kanału",
+      "connection_credentials_replaced": "Zastąpiono dane dostępowe"
     },
     "lines": "{count, plural, one {# pozycja} few {# pozycje} many {# pozycji} other {# pozycji}}",
     "defaultStatus": "status domyślny",
@@ -910,7 +922,8 @@
       "not_linked": "Ta oferta nie jest połączona z produktem.",
       "connector_not_configured": "Ten konektor nie jest jeszcze skonfigurowany w tej instalacji. Zapytaj osobę, która utrzymuje Hanzę.",
       "sign_in_required": "To połączenie dodaje się przez logowanie, a nie formularz.",
-      "no_sign_in": "Ten konektor nie ma logowania."
+      "no_sign_in": "Ten konektor nie ma logowania.",
+      "no_credentials": "Ten konektor nie ma danych dostępowych do zastąpienia."
     },
     "unexpected": "Coś poszło nie tak. Spróbuj ponownie.",
     "invalidInput": "Sprawdź poprawność pól.",

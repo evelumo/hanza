@@ -98,6 +98,15 @@ describe('describeEvent', () => {
     expect(describeEvent('order.addresses_updated', { shippingAddress: true }, translatorFor('pl'), formatPl).detail).toBe('adres dostawy')
   })
 
+  it('describes replaced credentials by the fact alone', () => {
+    const payload = { connectorId: 'woocommerce', actor: { type: 'user', userId: 'u1' } }
+    expect(describeEvent('connection.credentials_replaced', payload, t, format)).toEqual({ title: 'Credentials replaced', detail: null })
+    expect(describeEvent('connection.credentials_replaced', payload, translatorFor('pl'), formatPl)).toEqual({
+      title: catalogues.pl.events.title.connection_credentials_replaced,
+      detail: null,
+    })
+  })
+
   it('describes a restarted Order feed with the gap it may leave', () => {
     expect(describeEvent('connection.order_feed_restarted', {}, t, format)).toEqual({
       title: 'Order feed restarted',

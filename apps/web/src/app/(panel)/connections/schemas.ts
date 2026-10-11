@@ -13,6 +13,9 @@ export const requestSyncSchema = z.object({ connectionId: idSchema })
 
 export const signInAgainSchema = z.object({ connectionId: idSchema })
 
+/** Only the id: the credentials are read with the fields of the Connection's connector, never through a schema that could echo them. */
+export const replaceCredentialsSchema = z.object({ connectionId: idSchema })
+
 export const signInIdSchema = z.object({ signInId: idSchema })
 
 const WAREHOUSES_REQUIRED = messageKey('validation.warehousesRequired')

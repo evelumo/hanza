@@ -44,6 +44,7 @@ export type EventType =
   | 'connection.created'
   | 'connection.health_changed'
   | 'connection.signed_in'
+  | 'connection.credentials_replaced'
   | 'connection.stock_rules_changed'
   | 'connection.warehouses_changed'
   | 'connection.status_mapping_changed'

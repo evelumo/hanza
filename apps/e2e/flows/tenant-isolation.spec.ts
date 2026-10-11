@@ -68,7 +68,17 @@ test('a second organization sees none of the first one’s data and cannot act o
   await stock.getByRole('button', { name: 'Save stock' }).click()
   await expect(stock.getByRole('alert')).toHaveText('Not found.')
 
-  await addFakeConnection(other, 'Tenant B marketplace')
+  const ownConnectionId = await addFakeConnection(other, 'Tenant B marketplace')
+  // New credentials aimed at A's Connection: it would hand A's Channel to whoever holds the typed key.
+  const credentials = other.getByRole('region', { name: 'Credentials', exact: true })
+  await credentials.locator('input[name="connectionId"]').evaluate((input: HTMLInputElement, id) => (input.value = id), connectionId)
+  await credentials.getByLabel('API key').fill('tenant-b-forged-key')
+  await credentials.getByRole('button', { name: 'Replace credentials' }).click()
+  await expect(credentials.getByRole('alert')).toHaveText('Not found.')
+  const versions = await db.query<{ id: string; version: number }>(`SELECT id, "credentialsVersion" AS version FROM "connection" WHERE id = ANY($1)`, [
+    [connectionId, ownConnectionId],
+  ])
+  expect(Object.fromEntries(versions.rows.map((row) => [row.id, row.version]))).toEqual({ [connectionId]: 0, [ownConnectionId]: 0 })
   await waitForSeedOrders(other)
   await other.getByRole('link', { name: 'fake-order-1', exact: true }).click()
   await expect(other.getByRole('heading', { level: 1 })).toContainText('fake-order-1')

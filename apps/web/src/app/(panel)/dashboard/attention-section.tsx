@@ -12,6 +12,7 @@ import type { AttentionItem } from './overview'
 const look: Record<AttentionItem['kind'], { tone: Tone; icon: LucideIcon }> = {
   connection_failing: { tone: 'critical', icon: OctagonAlert },
   connection_sign_in: { tone: 'warning', icon: KeyRound },
+  connection_credentials: { tone: 'warning', icon: KeyRound },
   orders: { tone: 'attention', icon: CircleAlert },
   unlinked_offers: { tone: 'attention', icon: CircleAlert },
 }
@@ -30,6 +31,8 @@ function describe(item: AttentionItem, t: Translator): { title: string; detail: 
       }
     case 'connection_sign_in':
       return { title: t('dashboard.attention.connectionSignIn', { name: item.name }), detail: t('dashboard.attention.connectionSignInHint') }
+    case 'connection_credentials':
+      return { title: t('dashboard.attention.connectionCredentials', { name: item.name }), detail: t('dashboard.attention.connectionCredentialsHint') }
     case 'orders':
       return {
         title: t('dashboard.attention.orders', { count: item.total }),

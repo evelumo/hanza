@@ -22,7 +22,7 @@ export function clientMessages(messages: Messages) {
       new: messages.connections.new,
       stockRules: messages.connections.stockRules,
       warehouses: messages.connections.warehouses,
-      detail: { statusMapping: messages.connections.detail.statusMapping },
+      detail: { statusMapping: messages.connections.detail.statusMapping, credentials: messages.connections.detail.credentials },
     },
     warehouses: messages.warehouses,
     privacy: { retention: messages.privacy.retention, erasure: messages.privacy.erasure },

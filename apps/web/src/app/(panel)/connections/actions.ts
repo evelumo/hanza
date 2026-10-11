@@ -4,7 +4,9 @@ import {
   DomainError,
   addConnection,
   cancelSignIn,
+  getConnection,
   getSignIn,
+  replaceCredentials,
   requestSync,
   setStatusMapping,
   startSignIn,
@@ -23,6 +25,7 @@ import { requireTenant } from '@/lib/session'
 import {
   addConnectionSchema,
   channelWarehousesSchema,
+  replaceCredentialsSchema,
   requestSyncSchema,
   signInAgainSchema,
   signInIdSchema,
@@ -185,6 +188,36 @@ export async function signInAgainAction(_previous: ActionState, formData: FormDa
     return failure(error, t)
   }
   redirect(`/connections/sign-in/${signInId}`)
+}
+
+/**
+ * New credentials for a Connection whose connector takes them from a form (an API key). They go to the core and
+ * nowhere else: no value typed here is ever sent back to the browser, not even into a form that failed.
+ */
+export async function replaceCredentialsAction(_previous: ActionState, formData: FormData): Promise<ActionState> {
+  const { user, organizationId } = await requireTenant()
+  const t = await getT()
+  const parsed = replaceCredentialsSchema.safeParse({ connectionId: formData.get('connectionId') })
+  if (!parsed.success) return invalidInput(parsed.error, t)
+
+  const ctx = getContext()
+  const { connectionId } = parsed.data
+  // The server decides which fields exist, from the connector of the tenant's own Connection.
+  const connection = await getConnection(ctx, organizationId, connectionId)
+  const connector = connection ? ctx.connectors.get(connection.connectorId) : undefined
+  const fields = connector ? describeFields('credentials', connector.credentialsSchema) : []
+  try {
+    await replaceCredentials(ctx, organizationId, connectionId, readFields(fields, formData), { type: 'user', userId: user.id })
+  } catch (error) {
+    if (error instanceof DomainError && error.code === 'invalid_config') {
+      const { fieldErrors } = fieldErrorsFromIssues(fields, issuesOf(error.details), formData, t)
+      return { error: domainErrorMessage(t, 'invalid_config'), fieldErrors }
+    }
+    return failure(error, t)
+  }
+  revalidatePath('/connections', 'layout')
+  revalidatePath('/dashboard')
+  return { ok: true }
 }
 
 /** Starts a fresh sign-in with what an ended one was for. */
