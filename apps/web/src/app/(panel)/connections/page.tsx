@@ -1,4 +1,4 @@
-import { listConnections } from '@hanza/core'
+import { hasCredentialsForm, listConnections } from '@hanza/core'
 import { Cable } from 'lucide-react'
 import type { Metadata } from 'next'
 import Link from 'next/link'
@@ -11,6 +11,7 @@ import { Panel } from '@/components/section'
 import { HealthBadge } from '@/components/status-badge'
 import { TextLink } from '@/components/text-link'
 import { getActiveLocale, getT } from '@/i18n/server'
+import { credentialsFormHref } from '@/lib/connection-credentials'
 import { getContext } from '@/lib/context'
 import { getFormatters } from '@/lib/formatters'
 import { streamLabel } from '@/lib/labels'
@@ -30,6 +31,10 @@ export default async function ConnectionsPage() {
   const [t, format, locale] = await Promise.all([getT(), getFormatters(), getActiveLocale()])
   const ctx = getContext()
   const connections = await listConnections(ctx, organizationId)
+  const hasForm = (connectorId: string) => {
+    const connector = ctx.connectors.get(connectorId)
+    return connector !== undefined && hasCredentialsForm(connector)
+  }
 
   return (
     <Page>
@@ -81,6 +86,12 @@ export default async function ConnectionsPage() {
                   </DataTableCell>
                   <DataTableCell narrow="end">
                     <HealthBadge health={connection.health} />
+                    {/* A Connection that signs in with a code says how on its own page; one with an API key gets the way to its form here. */}
+                    {connection.health === 'auth_expired' && hasForm(connection.connectorId) ? (
+                      <TextLink href={credentialsFormHref(connection.id)} className="mt-1 block text-meta">
+                        {t('connections.detail.credentials.enter')}
+                      </TextLink>
+                    ) : null}
                   </DataTableCell>
                   {/* On a narrow container it has the row's whole width and no label: each line names its own kind of data. */}
                   <DataTableCell className="@4xl/table:min-w-72">

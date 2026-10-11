@@ -1,6 +1,6 @@
-import { PermanentError, type AnyConnectorDefinition } from '@hanza/connector-sdk'
+import { deviceFlowOf, PermanentError, type AnyConnectorDefinition } from '@hanza/connector-sdk'
 import type { Prisma, Tx } from '@hanza/db'
-import type { z } from 'zod'
+import { z } from 'zod'
 import type { Context } from '../context'
 import { buildAuthContext } from '../sync/auth-context'
 
@@ -10,9 +10,9 @@ export const REFRESH_MARGIN_MS = 15 * 60_000
 // The refresh request runs inside the transaction that holds the lock (bounded by the 30 s fetch timeout).
 export const REFRESH_TX_OPTIONS = { timeout: 45_000, maxWait: 10_000 } as const
 /**
- * For any other write of a Connection's credentials (a sign-in): it may wait for the lock as long as a refresh can
- * hold it (its whole transaction), and still has time for its own writes. A shorter timeout would fail an approved
- * sign-in whenever a slow refresh of the same Connection is in flight.
+ * For any other write of a Connection's credentials (a sign-in, a replacement): it may wait for the lock as long as a
+ * refresh can hold it (its whole transaction), and still has time for its own writes. A shorter timeout would fail an
+ * approved sign-in whenever a slow refresh of the same Connection is in flight.
  */
 export const CREDENTIALS_WRITE_TX_OPTIONS = { timeout: REFRESH_TX_OPTIONS.timeout + 15_000, maxWait: 10_000 } as const
 
@@ -67,8 +67,24 @@ export function canRefresh(connector: AnyConnectorDefinition): boolean {
 }
 
 /**
- * Serialises every write of a Connection's credentials (refresh, sign-in) for the transaction. An advisory
- * lock, not a row lock: `setHealth` locks the row, and must not wait on a token request (ADR 0020).
+ * True when a person types the Connection's credentials into a form (an API key): the connector has no device flow
+ * and its `credentialsSchema` declares at least one field. Only such credentials can be replaced by hand
+ * (`replaceCredentials`); a device flow's come from signing in again. Read the way the panel reads the form's fields,
+ * so the two never disagree about which connectors have the form.
+ */
+export function hasCredentialsForm(connector: AnyConnectorDefinition): boolean {
+  if (deviceFlowOf(connector)) return false
+  try {
+    const json = z.toJSONSchema(connector.credentialsSchema, { io: 'input', unrepresentable: 'any' }) as { properties?: Record<string, unknown> }
+    return Object.keys(json.properties ?? {}).length > 0
+  } catch {
+    return false
+  }
+}
+
+/**
+ * Serialises every write of a Connection's credentials (refresh, sign-in, replacement) for the transaction. An
+ * advisory lock, not a row lock: `setHealth` locks the row, and must not wait on a token request (ADR 0020).
  */
 export async function lockCredentials(tx: Tx, connectionId: string): Promise<void> {
   await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`hanza:connection-credentials:${connectionId}`}, 0))`
@@ -78,7 +94,7 @@ export interface CurrentCredentials {
   /** Decrypted, not parsed. */
   credentials: unknown
   version: number
-  /** False when another run had already refreshed (or a sign-in replaced) them; nothing was sent to the Channel. */
+  /** False when another run had already refreshed (or a sign-in or a person replaced) them; nothing was sent to the Channel. */
   refreshed: boolean
 }
 

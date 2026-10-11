@@ -1,4 +1,4 @@
-import { listConnections, listEvents, listOffers, listOrders, ORDER_PHASES, type OrderPhase } from '@hanza/core'
+import { hasCredentialsForm, listConnections, listEvents, listOffers, listOrders, ORDER_PHASES, type OrderPhase } from '@hanza/core'
 import type { Metadata } from 'next'
 import { EmptyState } from '@/components/empty-state'
 import { EventTimeline } from '@/components/event-timeline'
@@ -56,7 +56,10 @@ export default async function DashboardPage() {
 
   const steps = setupSteps({ connections: connections.length, linkedOffers, stockRows })
   const attention = attentionItems({
-    connections,
+    connections: connections.map((connection) => {
+      const connector = ctx.connectors.get(connection.connectorId)
+      return { ...connection, credentialsForm: connector !== undefined && hasCredentialsForm(connector) }
+    }),
     orders: summarizeAttention(attentionGroups.map((group) => ({ reasons: group.attentionReasons, orders: group._count._all }))),
     unlinkedOffers,
     stockUnsetOffers,

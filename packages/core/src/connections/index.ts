@@ -14,9 +14,11 @@ export {
   refreshCredentials,
   needsRefresh,
   credentialsExpiry,
+  hasCredentialsForm,
   REFRESH_MARGIN_MS,
   type CurrentCredentials,
 } from './credentials'
+export { replaceCredentials } from './replace-credentials'
 export {
   startSignIn,
   getSignIn,

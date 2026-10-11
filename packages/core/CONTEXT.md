@@ -17,7 +17,7 @@ Per Channel, which Order status an Order gets when that Channel reports an Order
 _Avoid_: Status translation, status map, channel statuses
 
 **Connection health**:
-Whether Hanza can currently work with a Connection: not checked yet, working, failing, or waiting for the organization to sign in to the connector again. It waits for sign-in only when the Channel no longer accepts the credentials; a Channel refusing one request (a 403) makes it failing.
+Whether Hanza can currently work with a Connection: not checked yet, working, failing, or waiting for the organization to sign in to the connector again. It waits for sign-in only when the Channel no longer accepts the credentials; a Channel refusing one request (a 403) makes it failing. New credentials, from a sign-in or typed in, make it not checked again until a run has used them.
 _Avoid_: Connection status, connection state
 
 **Installation settings**:
@@ -27,6 +27,10 @@ _Avoid_: App config, global config, connector credentials
 **Sign-in**:
 A person proving to a Channel that Hanza may act for their account there, so a Connection gets its credentials: Hanza shows a code, the person approves it on the Channel's page, and Hanza stores the result. "Sign in again" does the same for an existing Connection and must end with the same Channel account.
 _Avoid_: Authorization, OAuth flow, login, reconnect
+
+**Replacing credentials**:
+Giving an existing Connection new credentials that a person types in, for a connector that takes them from a form (an API key) and so has no Sign-in: after a key was rotated or revoked, or when it lacks a permission. Only the credentials change; the Connection's settings stay, which is what keeps it the same Channel with its Offers, Orders and Order feed position.
+_Avoid_: Reconnect, re-authenticate, editing the Connection
 
 **Channel account**:
 The seller's account on the Channel that a Connection signed in as. One per Connection; an organization cannot connect the same Channel account twice.

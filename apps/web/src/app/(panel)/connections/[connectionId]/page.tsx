@@ -4,6 +4,7 @@ import {
   CHANNEL_REPORTED_PHASES,
   getConnection,
   getStatusMapping,
+  hasCredentialsForm,
   isStockPushHeldBy,
   listEvents,
   listRejectedOffers,
@@ -12,8 +13,10 @@ import {
 } from '@hanza/core'
 import { KeyRound } from 'lucide-react'
 import type { Metadata } from 'next'
+import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { ActionForm } from '@/components/action-form'
+import { buttonClass } from '@/components/button-class'
 import { DataTable, DataTableBody, DataTableCell, DataTableHead, DataTableHeader, DataTableRow, DataTableRowHeader } from '@/components/data-table'
 import { DescriptionItem, DescriptionList } from '@/components/description-list'
 import { EmptyState } from '@/components/empty-state'
@@ -29,6 +32,8 @@ import { Section, SectionContent } from '@/components/section'
 import { HealthBadge } from '@/components/status-badge'
 import { TextLink } from '@/components/text-link'
 import { getActiveLocale, getT } from '@/i18n/server'
+import { CREDENTIALS_SECTION_ID } from '@/lib/connection-credentials'
+import { describeFields } from '@/lib/connector-form'
 import { getContext } from '@/lib/context'
 import { getFormatters } from '@/lib/formatters'
 import { labelOrRaw, orderStatusName, reportedPhaseLabel, streamLabel } from '@/lib/labels'
@@ -39,6 +44,7 @@ import { signInAgainAction } from '../actions'
 import { SyncStatusBadge } from '../sync-status-badge'
 import { formatSyncResult } from '../sync-summary'
 import { ChannelWarehousesForm } from './channel-warehouses-form'
+import { ReplaceCredentialsForm } from './replace-credentials-form'
 import { StatusMappingForm, type MappingRow } from './status-mapping-form'
 import { StockRulesForm } from './stock-rules-form'
 import { SyncNowButton, SyncRequest, SyncRequestResult } from './sync-request'
@@ -66,6 +72,9 @@ export default async function ConnectionPage({ params }: { params: Promise<{ con
   const connector = ctx.connectors.get(connection.connectorId)
   const connectorName = connector?.name ?? connection.connectorId
   const canSignIn = connector !== undefined && deviceFlowOf(connector) !== undefined
+  // Credentials typed into a form (an API key) are replaced on this page; a device flow signs in again instead.
+  const credentialsFields = connector && hasCredentialsForm(connector) ? describeFields('credentials', connector.credentialsSchema) : []
+  const canReplaceCredentials = credentialsFields.length > 0
   // A Carrier has nothing to synchronise on request: its Shipments are asked for as people create them and followed
   // by the worker. Its page keeps the state of those runs and leaves out everything that is about Offers and Orders.
   const channel = connector === undefined || isChannel(connector)
@@ -125,8 +134,8 @@ export default async function ConnectionPage({ params }: { params: Promise<{ con
             channel ? (
               <SyncNowButton
                 connectionId={connection.id}
-                // While the Connection waits for a sign-in, signing in is the one thing to do; a sync would only fail again.
-                variant={canSignIn && authExpired ? 'secondary' : 'primary'}
+                // While the Connection waits for a sign-in, signing in (or new credentials) is the one thing to do; a sync would only fail again.
+                variant={(canSignIn || canReplaceCredentials) && authExpired ? 'secondary' : 'primary'}
                 label={t('connections.detail.syncNow')}
                 pendingLabel={t('connections.detail.syncing')}
               />
@@ -167,6 +176,19 @@ export default async function ConnectionPage({ params }: { params: Promise<{ con
                   </SectionContent>
                 </Section>
               ) : null}
+
+              {/* Always there, not only while the Connection waits for sign-in: a key is also rotated while it works, and one that may not write fails as a permanent error. */}
+              {canReplaceCredentials ? (
+                <Section
+                  id={CREDENTIALS_SECTION_ID}
+                  title={t('connections.detail.credentials.title')}
+                  description={t('connections.detail.credentials.description', { connector: connectorName })}
+                >
+                  <SectionContent>
+                    <ReplaceCredentialsForm connectionId={connection.id} fields={credentialsFields} primary={authExpired} />
+                  </SectionContent>
+                </Section>
+              ) : null}
             </>
           }
           after={
@@ -182,6 +204,21 @@ export default async function ConnectionPage({ params }: { params: Promise<{ con
           {canSignIn && authExpired ? (
             <Notice tone="warning" icon={KeyRound} title={t('connections.detail.authExpiredTitle')} actions={signInAgain('primary')}>
               {t('connections.detail.authExpired', { connector: connectorName })}
+            </Notice>
+          ) : null}
+          {canReplaceCredentials && authExpired ? (
+            <Notice
+              tone="warning"
+              icon={KeyRound}
+              title={t('connections.detail.authExpiredTitle')}
+              actions={
+                // Leads to the form, whose own button is the page's primary one while the Connection waits.
+                <Link href={`#${CREDENTIALS_SECTION_ID}`} className={buttonClass('secondary')}>
+                  {t('connections.detail.credentials.enter')}
+                </Link>
+              }
+            >
+              {t('connections.detail.credentials.refused', { connector: connectorName })}
             </Notice>
           ) : null}
 

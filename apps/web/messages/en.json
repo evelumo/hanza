@@ -169,6 +169,8 @@
       "streamError": "{stream}: {error}",
       "connectionSignIn": "Connection {name} needs to sign in again",
       "connectionSignInHint": "It does not sync until someone signs in again.",
+      "connectionCredentials": "Connection {name} needs new credentials",
+      "connectionCredentialsHint": "It does not sync until someone replaces its credentials.",
       "unlinkedOffers": "{count, plural, one {# offer has no product} other {# offers have no product}}",
       "unlinkedOffersHint": "Stock and prices are not sent to an offer until it is linked to a product.",
       "stockUnsetOffers": "{count, plural, one {# offer waits for its product's stock} other {# offers wait for their products' stock}}",
@@ -680,7 +682,16 @@
       "added": "Added",
       "connectionId": "Connection ID",
       "signInTitle": "Sign-in",
-      "signInHint": "Signing in again replaces the credentials of this connection. It has to be the same {connector} account."
+      "signInHint": "Signing in again replaces the credentials of this connection. It has to be the same {connector} account.",
+      "credentials": {
+        "title": "Credentials",
+        "description": "New credentials replace the stored ones, for example after a key was revoked. The connection keeps its settings, offers and orders, so they have to be for the same {connector} account. We store them encrypted and never show them again.",
+        "replace": "Replace credentials",
+        "replacing": "Replacing…",
+        "replaced": "Credentials replaced. The connection is synchronising again: refresh the page in a moment.",
+        "refused": "{connector} no longer accepts the credentials of this connection, so it does not sync. Replace them to resume.",
+        "enter": "Enter new credentials"
+      }
     },
     "new": {
       "title": "Add connection",
@@ -970,6 +981,7 @@
       "offer_push_rejected": "The channel rejected an offer",
       "offer_push_retried": "Sending an offer retried",
       "connection_signed_in": "Signed in to the channel",
+      "connection_credentials_replaced": "Credentials replaced",
       "shipment_requested": "Shipment requested",
       "shipment_status_changed": "Shipment status changed",
       "shipment_carrier_status_changed": "The carrier has not confirmed the shipment yet",
@@ -1050,6 +1062,7 @@
       "connector_not_configured": "This connector is not set up on this installation yet. Ask whoever runs Hanza.",
       "sign_in_required": "This connector is connected by signing in, not with a form.",
       "no_sign_in": "This connector has no sign-in.",
+      "no_credentials": "This connector has no credentials to replace.",
       "not_a_carrier": "Shipments cannot be created through this connection.",
       "shipment_order_closed": "A shipment can be created only for a new or processing order.",
       "shipment_service_unknown": "This connection no longer offers that service. Choose another one.",

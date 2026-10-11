@@ -169,6 +169,8 @@
       "streamError": "{stream}: {error}",
       "connectionSignIn": "Połączenie {name} wymaga ponownego logowania",
       "connectionSignInHint": "Nie jest synchronizowane, dopóki ktoś nie zaloguje się ponownie.",
+      "connectionCredentials": "Połączenie {name} wymaga nowych danych dostępowych",
+      "connectionCredentialsHint": "Nie jest synchronizowane, dopóki ktoś nie zastąpi jego danych dostępowych.",
       "unlinkedOffers": "{count, plural, one {# oferta nie ma produktu} few {# oferty nie mają produktu} many {# ofert nie ma produktu} other {# oferty nie ma produktu}}",
       "unlinkedOffersHint": "Stan i cena nie są wysyłane do oferty, dopóki nie połączysz jej z produktem.",
       "stockUnsetOffers": "{count, plural, one {# oferta czeka na stan produktu} few {# oferty czekają na stan produktu} many {# ofert czeka na stan produktu} other {# oferty czeka na stan produktu}}",
@@ -680,7 +682,16 @@
       "added": "Dodano",
       "connectionId": "ID połączenia",
       "signInTitle": "Logowanie",
-      "signInHint": "Ponowne logowanie zastępuje dane dostępowe tego połączenia. Musi to być to samo konto {connector}."
+      "signInHint": "Ponowne logowanie zastępuje dane dostępowe tego połączenia. Musi to być to samo konto {connector}.",
+      "credentials": {
+        "title": "Dane dostępowe",
+        "description": "Nowe dane dostępowe zastępują zapisane, na przykład po unieważnieniu klucza. Połączenie zachowuje ustawienia, oferty i zamówienia, więc muszą one dotyczyć tego samego konta {connector}. Przechowujemy je zaszyfrowane i nie pokazujemy ich ponownie.",
+        "replace": "Zastąp dane dostępowe",
+        "replacing": "Zastępowanie…",
+        "replaced": "Dane dostępowe zastąpione. Połączenie znów się synchronizuje: odśwież stronę za chwilę.",
+        "refused": "{connector} nie akceptuje już danych dostępowych tego połączenia, więc nie jest ono synchronizowane. Zastąp je, aby wznowić.",
+        "enter": "Podaj nowe dane dostępowe"
+      }
     },
     "new": {
       "title": "Dodaj połączenie",
@@ -970,6 +981,7 @@
       "offer_push_rejected": "Kanał odrzucił ofertę",
       "offer_push_retried": "Ponowiono wysłanie oferty",
       "connection_signed_in": "Zalogowano do kanału",
+      "connection_credentials_replaced": "Zastąpiono dane dostępowe",
       "shipment_requested": "Zlecono przesyłkę",
       "shipment_status_changed": "Zmienił się status przesyłki",
       "shipment_carrier_status_changed": "Przewoźnik jeszcze nie potwierdził przesyłki",
@@ -1060,7 +1072,8 @@
       "shipment_not_cancellable": "Tej przesyłki nie można już tutaj anulować.",
       "shipment_cancel_unsupported": "Ten przewoźnik nie anuluje przesyłek przez Hanzę. Anuluj ją u przewoźnika.",
       "shipment_not_checkable": "Nie ma czego sprawdzać: przewoźnik nie przyjął jeszcze zlecenia albo przesyłka jest już zamknięta.",
-      "no_sign_in": "Ten konektor nie ma logowania."
+      "no_sign_in": "Ten konektor nie ma logowania.",
+      "no_credentials": "Ten konektor nie ma danych dostępowych do zastąpienia."
     },
     "unexpected": "Coś poszło nie tak. Spróbuj ponownie.",
     "invalidInput": "Sprawdź poprawność pól.",

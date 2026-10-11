@@ -27,7 +27,7 @@ Not an Offer, not read: grouped and external products, product types a plugin ad
 
   | Answer | Class | Meaning |
   | --- | --- | --- |
-  | 401 to a read | `AuthExpiredError` | Unknown or revoked key, wrong secret: "sign in again" |
+  | 401 to a read | `AuthExpiredError` | Unknown or revoked key, wrong secret: "sign in again". The Connection stops syncing until a new key is entered under "Credentials" on its page (the shop address stays, so it is the same Channel) |
   | 401 to a write (`PUT`, `POST`) | `AuthExpiredError`, or `PermanentError` "The WooCommerce API key is read-only: create a key with Read/Write permission" | See "A key that may only read" below |
   | 403 | `PermanentError` | The key's user lacks the capability (a subscriber's key): no sign-in prompt, conformance check C14 |
   | 429 | `RateLimitedError` | Core WooCommerce sends none; a host or WAF may |
@@ -40,7 +40,7 @@ Not an Offer, not read: grouped and external products, product types a plugin ad
 
   | The read after the refused write | The call fails as |
   | --- | --- |
-  | 2xx | `PermanentError`, "The WooCommerce API key is read-only: create a key with Read/Write permission" (`READ_ONLY_KEY_MESSAGE`): no sign-in prompt, and the reads go on |
+  | 2xx | `PermanentError`, "The WooCommerce API key is read-only: create a key with Read/Write permission" (`READ_ONLY_KEY_MESSAGE`): no sign-in prompt, and the reads go on. The new key goes in the same "Credentials" form, which is on the page whatever the Connection's health |
   | 401 | `AuthExpiredError` (the write's own 401): the shop does not accept the key at all |
   | anything else (403, 404, 429, 5xx, a redirect, the shop not reached, the core's limiter refusing the request) | `AuthExpiredError` (the write's own 401): nothing was learnt, and a sign-out is never hidden |
 

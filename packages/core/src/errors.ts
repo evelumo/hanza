@@ -11,6 +11,7 @@ export type DomainErrorCode =
   | 'connector_not_configured'
   | 'sign_in_required'
   | 'no_sign_in'
+  | 'no_credentials'
   | 'invalid_config'
   | 'combination_taken'
   | 'invalid_attributes'
