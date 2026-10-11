@@ -2,6 +2,10 @@ import { readFile } from 'node:fs/promises'
 import { loadCassette, type MatchOptions, type ScrubConfig } from '@hanza/connector-sdk/testing'
 import { z } from 'zod'
 
+/** The cassettes recorded from the sandbox, for tests outside this package that replay them (the worker's engine test). */
+export const conformanceCassette = new URL('./fixtures/conformance.cassette.json', import.meta.url)
+export const unauthorizedCassette = new URL('./fixtures/conformance-unauthorized.cassette.json', import.meta.url)
+
 /**
  * What a recording of ShipX must not keep, on top of the scrubber's defaults (the token, real e-mails). Test
  * tooling: nothing the connector itself imports.

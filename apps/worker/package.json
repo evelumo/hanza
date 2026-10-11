@@ -17,6 +17,7 @@
   "devDependencies": {
     "@hanza/connector-allegro": "workspace:*",
     "@hanza/connector-fake": "workspace:*",
+    "@hanza/connector-inpost": "workspace:*",
     "@hanza/connector-sdk": "workspace:*",
     "@hanza/db": "workspace:*",
     "@types/node": "^24.0.0",
